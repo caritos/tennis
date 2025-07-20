@@ -1,7 +1,7 @@
 # Match Recording Flow
 
 ## Overview
-Complete flow for recording a tennis match result, from initiation to final confirmation.
+Complete flow for recording a tennis match result with immediate save using honor system.
 
 ## Flow: Record a Completed Match
 
@@ -11,7 +11,7 @@ Entry Points:
 1. Club Details → [+ Record Match]
 2. Profile → Quick Actions → [+ Record Match]  
 3. Club Tab → Quick Actions → [+ Record Match]
-4. Post-match from confirmed game
+4. Post-match from completed game
 ```
 
 ### Step 2: Match Recording Form
@@ -36,15 +36,6 @@ Player 2: [Select Player ▼] [or Add Unregistered ▼]
 Player 3: [Select Player ▼] [or Add Unregistered ▼]
 Player 4: [Select Player ▼] [or Add Unregistered ▼]
 
-Court (Optional)
-[Select Court ▼] [Skip]
-┌─────────────────────────────────────────────────────┐
-│ Court 1 - Hard Court                               │
-│ Court 2 - Hard Court                               │
-│ Court 3 - Clay Court                               │
-│ Other/External Court                                │
-└─────────────────────────────────────────────────────┘
-
 Date
 Date: [📅 Today, Dec 15]
 
@@ -62,20 +53,20 @@ Notes (Optional)
                         [Cancel]    [Save]
 ```
 
-### Step 3A: Registered Opponent - Confirmation Request
+### Step 3A: Registered Opponent - Immediate Save
 ```
-📧 Match Confirmation Requested
+✅ Match Recorded!
 
-Your match result has been saved locally and 
-will sync when online.
-
-Sarah Wilson will be notified to confirm:
-• Singles match on Dec 15
+Your match has been recorded:
+• Singles vs Sarah Wilson
 • Score: 6-4, 7-6 (7-3)
-• Court 1 - Hard
+• Dec 15
 
-Both players must confirm for the match to 
-count toward rankings.
+This match immediately counts toward rankings.
+Sarah can edit the match details if needed.
+
+Your new singles record: 11-5 (69%)
+Club ranking: #3 → #2 (2,450 pts)
 
                         [OK]
 ```
@@ -87,88 +78,78 @@ count toward rankings.
 Your match has been recorded:
 • Singles vs "Mike Johnson" 
 • Score: 6-4, 7-6 (7-3)
-• Dec 15 at Court 1 - Hard
+• Dec 15
 
 This match counts toward your statistics.
-If Mike joins later, he can claim this match.
+If Mike joins later, he can claim and edit this match.
 
 Your new singles record: 11-5 (69%)
 
                         [OK]
 ```
 
-### Step 4: Opponent Receives Confirmation (Registered)
+### Step 4: Match Appears in All Participants' History
 ```
-🎾 Match Confirmation Request
+Match recorded by John Smith:
 
-John Smith recorded a match result:
+📊 All participants see in their match history:
+• Singles - Dec 15
+• Score: 6-4, 7-6 (7-3)
+• Notes: "Great competitive match!"
 
-Singles Match - Dec 15
-Score: 6-4, 7-6 (7-3) (John won)
-Court: Court 1 - Hard
-Notes: "Great competitive match!"
-
-Is this correct?
-
-                [Dispute]    [Confirm]
-```
-
-### Step 5A: Opponent Confirms
-```
-✅ Match Confirmed!
-
-Both players have confirmed the match result.
-
-This match now counts toward:
-• Club rankings
-• Personal statistics  
-• Match history
-
-Updated Rankings:
-John Smith: 69% (11-5) ↑
-Sarah Wilson: 72% (13-5) ↓
-
-                        [OK]
+✏️ Any participant can edit if corrections needed
+   - Singles: Both players can edit
+   - Doubles: All 4 players can edit
+🏆 Rankings updated immediately for all participants
 ```
 
-### Step 5B: Opponent Disputes
+### Step 5: Editing Match Details (Any Participant)
 ```
-⚠️ Match Disputed
+Edit Match
 
-Sarah Wilson disputed the match result.
+Any match participant can update details:
 
-Common reasons:
-• Incorrect score
-• Wrong date or court
-• Different match details
+Original: Singles vs Sarah Wilson - 6-4, 7-6
+Recorded by: John Smith on Dec 15
 
-You can:
-• Contact Sarah to resolve the difference
-• Re-record with correct information
-• Cancel this match entry
+Score:
+Set 1: [6] - [4]
+Set 2: [7] - [6] (7-3)
 
-        [Contact Sarah]    [Edit Match]    [Cancel Match]
+Notes:
+┌─────────────────────────────────────────────────────┐
+│ Updated: Actually was 6-4, 6-7, 6-3                │
+└─────────────────────────────────────────────────────┘
+
+                    [Cancel]    [Save Changes]
+
+✅ Changes saved - rankings updated automatically
+
+Note: For doubles, all 4 players can edit
 ```
 
-### Step 6: Match Appears in History
+### Step 6: Match History Shows All Matches
 ```
 Recent Match History
-• vs Sarah Wilson - Won 6-4, 7-6(7-3) ✅
-  Riverside Tennis Club • Today
-• vs Mike Chen - Lost 3-6, 6-4, 4-6
-  Downtown Tennis Center • 1 week ago
-• vs Lisa Park - Won 7-6(7-4), 6-3
-  Riverside Tennis Club • 1 week ago
+• vs Sarah Wilson - Won 6-4, 7-6(7-3) [Edit]
+  Riverside Tennis Club • Today • 2,450 pts (+150)
+• vs Mike Chen - Lost 3-6, 6-4, 4-6 [Edit]
+  Downtown Tennis Center • 1 week ago • 2,300 pts (-100)
+• vs Lisa Park - Won 7-6(7-4), 6-3 [Edit]
+  Riverside Tennis Club • 1 week ago • 2,400 pts (+120)
+
+Note: All participants can edit match details
+     Singles: 2 players • Doubles: 4 players
 ```
 
-## Alternative Flow: Quick Record from Confirmed Match
+## Alternative Flow: Quick Record from Scheduled Match
 
-### Post-Match Recording (From Confirmed Game)
+### Post-Match Recording (From Scheduled Game)
 ```
 🎾 Record Result
 
-Your confirmed match with Sarah Wilson:
-Singles - Today at Court 1 - Hard
+Your scheduled match with Sarah Wilson:
+Singles - Today
 
 Who won?
 (•) I won    ( ) Sarah won
@@ -189,7 +170,7 @@ Notes (Optional):
 ## Key Features
 
 **Flexible Opponent Selection:**
-- Registered club members (requires confirmation)
+- Registered club members (immediate save)
 - Unregistered opponents (immediate save, claimable later)
 - Supports both singles and doubles
 
@@ -198,10 +179,10 @@ Notes (Optional):
 - Prevents impossible scores
 - Handles tiebreak notation correctly
 
-**Honor System with Verification:**
-- Immediate save for user's records
-- Opponent confirmation for rankings
-- Dispute resolution process
+**Pure Honor System:**
+- Immediate save and ranking updates
+- Any participant can edit match details (all 4 in doubles)
+- No confirmation or dispute process needed
 
 **Offline Support:**
 - Save locally first
@@ -209,6 +190,7 @@ Notes (Optional):
 - No data loss during poor connectivity
 
 **Rankings Integration:**
-- Automatic ranking updates after confirmation
+- Instant ranking updates upon save
+- Points calculated immediately
 - Separate singles/doubles tracking
 - Club-specific rankings calculation

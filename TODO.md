@@ -10,7 +10,7 @@
 
 ### Core Database & Authentication
 - [ ] Install and configure SQLite for local data storage
-- [ ] Design complete database schema (users, clubs, matches, courts, invitations, rankings)
+- [ ] Design complete database schema (users, clubs, matches, invitations, rankings)
 - [ ] Set up Supabase project with mirrored schema
 - [ ] Install and configure authentication (email, Apple, Google Sign In)
 - [ ] Create Supabase client singleton with TypeScript
@@ -19,18 +19,18 @@
 ### Club Discovery & Management
 - [ ] Install expo-location for user location services
 - [ ] Create club creation flow (any player can create)
-- [ ] Build club join request system for players
+- [ ] Implement auto-join for all clubs (no approval needed)
 - [ ] Implement distance calculation and location-based club discovery
 - [ ] Store latitude/longitude coordinates for clubs
 - [ ] Create club card component showing distance
 
 ### Match Recording System
-- [ ] Create basic match recording form (singles/doubles, score, date, optional court)
+- [ ] Create basic match recording form (singles/doubles, score, date)
 - [ ] Add set-by-set score tracking with + Add Set button
 - [ ] Support tiebreak notation with parentheses format (7-6 (7-3))
 - [ ] Add unregistered opponent option to match recording
 - [ ] Store matches locally in SQLite first, sync to Supabase
-- [ ] Implement match validation logic
+- [ ] Implement tennis score validation (valid scores only)
 
 ### Club Member Rankings
 - [ ] Create club member ranking system based on win percentage
@@ -39,16 +39,10 @@
 - [ ] Implement horizontal scroll for members list with View All button
 - [ ] Create dedicated View All Members screen with search
 
-### Court Management
-- [ ] Create courts table (name, surface type, notes)
-- [ ] Allow any club member to add courts to club
-- [ ] Add court selection to match recording and invitations
-- [ ] Implement horizontal scroll for courts list with count display
-- [ ] Create simple court addition form
 
 ### "Looking to Play" System
 - [ ] Create "Looking to Play" section in club details
-- [ ] Build match invitation post form (singles/doubles, court, date, time, notes)
+- [ ] Build match invitation post form (singles/doubles, date, time, notes)
 - [ ] Support doubles invitations (up to 4 players total)
 - [ ] Implement one-tap match interest response ("I'm Interested")
 - [ ] Auto-match responders based on match type (singles=2, doubles=4)
@@ -125,7 +119,7 @@
 
 ### Club Management Features
 - [ ] Add club management dashboard for club owners
-- [ ] Implement club member approval/rejection for owners
+- [ ] Implement club member removal capability for owners (violations only)
 - [ ] Add privacy controls to profile (contact sharing, stats visibility)
 - [ ] Create admin panel for system management (WEB ONLY)
 - [ ] Store club timezone and display match times in local timezone

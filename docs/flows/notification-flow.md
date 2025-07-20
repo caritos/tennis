@@ -28,9 +28,9 @@ Complete notification system covering in-app alerts, badges, and user engagement
 
 #### Club-Related Notifications
 ```
-👥 Club Management (Club Owners)
-• New join requests to approve
-• Member reports or issues
+📊 Community Management (Automatic)
+• Member warning notifications
+• Community reports processed
 • Club milestone achievements
 
 🔔 Social Notifications
@@ -79,8 +79,8 @@ Profile Tab: 👤   ← No badge when no notifications
 Badge Counts Include:
 • Unread challenges
 • Unread "Looking to Play" responses  
-• Join requests (club owners)
-• Match confirmations pending
+• Community warnings and reports
+• Educational notifications
 ```
 
 ### Step 3: Contextual Notification Handling
@@ -124,32 +124,17 @@ Post-Confirmation:
 ```
 🔔 Notification Settings
 
-Match Notifications
-☑️ New challenges from club members
-☑️ Responses to my "Looking to Play" posts
-☑️ Match confirmation requests
-☑️ Match cancellations and changes
-☑️ Ranking changes and achievements
+Notifications
+☑️ Tennis Club notifications
 
-Club Notifications  
-☑️ New members join my clubs
-☑️ Club announcements
-☐ Weekly activity summaries
-☐ Member milestones and achievements
+Get notified about:
+• New challenges and match invitations
+• Match confirmations and updates  
+• Community warnings and messages
 
-Social Notifications
-☑️ Friend requests and connections
-☐ Comments on my matches
+[Toggle: ON]
 
-Club Owner Notifications (if applicable)
-☑️ New join requests to approve
-☑️ Member reports and issues
-☐ Club analytics and insights
-
-Sound & Vibration
-☑️ Play notification sounds
-☑️ Vibrate for urgent notifications
-Sound: [Default ▼]
+Uses system sound and vibration settings.
 ```
 
 ### Step 5: Batch Notification Management
@@ -181,8 +166,8 @@ Selected (3)  [Mark as Read]  [Delete]  [Cancel]
 • Mike Chen confirmed your win
 • Sarah Wilson disputed score
 
-👥 Club Management (1)
-• 1 join request pending approval
+📊 Community Reports (1) 
+• 1 educational warning sent
 ```
 
 ## Flow: Notification Response Patterns
@@ -229,10 +214,10 @@ Looking to Play Response →
 ├── View Post → Match Invitation Details
 └── Dismiss → Remove from notifications
 
-Club Join Request →  
-├── Approve → Welcome New Member Flow
-├── Decline → Send Decline Message Flow
-└── View Profile → Member Details Screen
+Community Warning →  
+├── View Details → Warning Information Flow
+├── Guidelines → Community Rules Screen
+└── Appeal → Contact Support Flow
 ```
 
 ## Key Features

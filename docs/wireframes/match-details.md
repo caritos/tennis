@@ -12,8 +12,6 @@ Set 1: 6-4
 Set 2: 7-6 (7-3)
 
 Winner: John Smith
-
-Court: Court 1 - Hard Court
 Date: December 15, 2024
 
 Notes: Great competitive match!

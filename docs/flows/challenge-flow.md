@@ -22,9 +22,6 @@
 │ ( ) Today      (•) Tomorrow    ( ) This Weekend     │
 │ ( ) Next Week  ( ) Flexible                        │
 │                                                     │
-│ Preferred Court (Optional)                          │
-│ [Court 1 - Hard ▼]                                │
-│                                                     │
 │ Message (Optional)                                  │
 │ ┌─────────────────────────────────────────────────┐ │
 │ │ Hey Lisa! Want to play a match?                │ │
@@ -54,7 +51,6 @@
 ┌─────────────────────────────────────────────────────┐
 │ John Smith wants to play singles tomorrow           │
 │ "Hey Lisa! Want to play a match?"                  │
-│ Preferred Court: Court 1 - Hard                    │
 │                                                     │
 │                   [Decline]    [Accept]             │
 └─────────────────────────────────────────────────────┘
@@ -66,10 +62,13 @@
 
 Singles Match
 📅 Tomorrow
-👥 John Smith vs Lisa Park  
-🎾 Court 1 - Hard (Riverside Tennis Club)
+👥 John Smith vs Lisa Park
 
 Contact: John Smith - (555) 123-4567
+
+📋 Community Reminder:
+Please honor your commitment. No-shows and unsportsmanlike
+behavior can be reported by other players.
 
 [Cancel Match]    [Record Result]
 ```
@@ -109,8 +108,7 @@ You can:
 ```
 Cancel Match with Lisa Park
 
-Singles Match - Tomorrow 10:00 AM
-Court 1 - Hard
+Singles Match - Tomorrow
 
 Reason (Optional)
 ┌─────────────────────────────────────────────────┐

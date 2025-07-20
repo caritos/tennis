@@ -40,93 +40,60 @@ Join the tennis community!
 ### Step 3: Complete Profile (If Email)
 ```
 Full Name: [John Smith]
-Preferred Name: [Johnny] (Optional)
 Email: [john@example.com]
 Password: [••••••••••••]
-Phone: [(555) 123-4567] (Optional)
+Phone: [(555) 123-4567]
 
                     [Create Account]
 ```
 
-### Step 4: Profile Setup
+### Step 4: Finding Tennis Clubs Near You
 ```
-Welcome to Tennis Club! 🎾
+🎾 Finding Tennis Clubs Near You
 
-Contact Preferences:
-(•) Share phone number: (555) 123-4567
-( ) In-app messages only
-( ) Don't share contact info
-
-□ Allow players to see my tennis statistics
-□ Show my match history to club members
-□ Allow location access for club discovery
-
-                [Skip for Now]    [Complete Setup]
-```
-
-### Step 5: Location Permission
-```
-🎾 Find Tennis Clubs Near You
-
-Tennis Club uses your location to discover 
+We'll use your location to discover 
 clubs in your area and show distances.
 
-Location services help you:
+This helps you:
 • Find clubs within driving distance
-• See how far courts are from you
 • Connect with nearby tennis players
+• See distance to each club
 
-                [Not Now]    [Allow Location]
+[Automatically requesting location access...]
 ```
 
-### Step 6A: With Location - Club Discovery
+### Step 5: Club Discovery
 ```
 Great! Here are tennis clubs near you:
 
 ┌─────────────────────────────────────────────────────┐
 │ 🎾 Riverside Tennis Club            0.3 mi         │
-│ 12 members • 3 courts                        [Join]│
+│ 12 members                                   [Join]│
 └─────────────────────────────────────────────────────┘
 ┌─────────────────────────────────────────────────────┐
 │ 🎾 Downtown Tennis Center           1.2 mi         │
-│ 24 members • 6 courts                        [Join]│
+│ 24 members                                   [Join]│
 └─────────────────────────────────────────────────────┘
 
 [+ Create New Club]    [Skip for Now]
 ```
 
-### Step 6B: Without Location - Manual Search
-```
-Find Tennis Clubs
-
-Search by club name or location:
-┌─────────────────────────────────────────────────────┐
-│ Search clubs...                                🔍   │
-└─────────────────────────────────────────────────────┘
-
-Or create your own club:
-[+ Create New Club]
-
-                            [Skip for Now]
-```
-
-### Step 7: Join a Club
+### Step 6: Join a Club
 ```
 🎾 Riverside Tennis Club
 
-12 members • 3 courts • 0.3 miles away
+12 members • 0.3 miles away
 "A friendly community club for players of all levels"
 
 Club Details:
-• Members play at: 3 hard courts, 1 clay court  
 • Mix of recreational and competitive players
 • Weekly social events
 • 12 active members looking for matches
 
-                [Cancel]    [Request to Join]
+                [Cancel]    [Join Club]
 ```
 
-### Step 8: Welcome to Club
+### Step 7: Welcome to Club
 ```
 🎉 Welcome to Riverside Tennis Club!
 
@@ -136,14 +103,14 @@ You're now a member! Here's what you can do:
 ✅ Record matches to track your progress  
 ✅ Post "Looking to Play" to find partners
 ✅ Challenge other members directly
-✅ See club courts and availability
+✅ Find players looking for matches
 
 Ready to play your first match?
 
                 [Explore Club]    [Record a Match]
 ```
 
-### Step 9: First Match Guidance
+### Step 8: First Match Guidance
 ```
 🎾 Ready to Play Tennis?
 
@@ -166,10 +133,10 @@ your skill level?
 - Profile setup optional but encouraged
 - Club joining can be skipped initially
 
-**Location Handling:**
-- Clear value proposition for location access
-- Graceful fallback to manual search
-- No blocking if location denied
+**Location Access:**
+- Automatic location access for optimal experience
+- Enables discovery of nearby clubs immediately
+- Essential for distance-based club recommendations
 
 **First Match Guidance:**
 - Multiple pathways explained

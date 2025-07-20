@@ -14,9 +14,6 @@ When?
 Preferred Time (Optional)
 [Morning ▼]  [Afternoon ▼]  [Evening ▼]  [Anytime ▼]
 
-Court Preference (Optional)
-[Court 1 - Hard ▼]  [Any Court ▼]
-
 Message
 ┌─────────────────────────────────────────────────┐
 │ Looking for a competitive singles match!        │
@@ -32,16 +29,14 @@ Message
 
 Looking to Play
 ┌─────────────────────────────────────────────────┐
-│ Singles - Tomorrow                              │
+│ Singles - Tomorrow Morning                      │
 │ John: "Looking for competitive singles match!"  │
-│ Preferred: Morning, Court 1 - Hard             │
 │                           [I'm Interested]      │
 │ 2 hours ago                                     │
 └─────────────────────────────────────────────────┘
 ┌─────────────────────────────────────────────────┐
 │ Doubles - Saturday 10am                         │
 │ Sarah: "Need 2 more players for doubles"        │
-│ Preferred: Any court                            │
 │                           [I'm Interested]      │
 │ 5 hours ago                                     │
 └─────────────────────────────────────────────────┘
@@ -55,7 +50,6 @@ Looking to Play
 Interested in playing with John Smith
 
 Singles - Tomorrow Morning
-Court 1 - Hard (Preferred)
 
 Add a message (Optional)
 ┌─────────────────────────────────────────────────┐
@@ -94,12 +88,16 @@ Your Contact Preference
 Singles Match
 📅 Tomorrow, 10:00 AM
 👥 John Smith vs Lisa Park  
-🎾 Court 1 - Hard (Riverside Tennis Club)
+🎾 Riverside Tennis Club
 📍 123 Tennis Way, City, State
 
 Contact Info:
 John: (555) 123-4567
 Lisa: (555) 987-6543
+
+📋 Community Reminder:
+Please honor your commitment. No-shows and unsportsmanlike
+behavior can be reported by other players.
 
 [Message John]    [Message Lisa]    [Cancel Match]
 ```
@@ -109,7 +107,7 @@ Lisa: (555) 987-6543
 Doubles Match Progress (2/4 players)
 
 📅 Saturday, 10:00 AM
-🎾 Any Court (Riverside Tennis Club)
+🎾 Riverside Tennis Club
 
 Confirmed Players:
 👥 Sarah Wilson (Creator)
@@ -132,13 +130,17 @@ Doubles Match
 📅 Saturday, 10:00 AM
 👥 Team 1: Sarah Wilson & Mike Chen
 👥 Team 2: Tom Davis & Lisa Park
-🎾 Court 2 - Hard (Riverside Tennis Club)
+🎾 Riverside Tennis Club
 
 Contact Info:
 Sarah: (555) 111-2222 (Creator)
 Mike: (555) 333-4444
 Tom: (555) 555-6666
 Lisa: (555) 777-8888
+
+📋 Community Reminder:
+Please honor your commitment. No-shows and unsportsmanlike
+behavior can be reported by other players.
 
 [Group Message]    [Cancel Match]    [Record Result]
 ```

@@ -1,14 +1,14 @@
 # Club Details Screen (With Member Rankings)
 
 ```
-< Back    Riverside Tennis Club    [⚙️ Manage]
+< Back    Riverside Tennis Club    [⚙️ Edit]
 
 Record Match
 [+ Record Match]
 
 Looking to Play
 ┌─────────────────────────────────────────┐
-│ Singles - Tomorrow 6pm Court 1          │
+│ Singles - Tomorrow 6pm                  │
 │ John: "Looking for competitive match"    │
 │                           [I'm Interested]│
 └─────────────────────────────────────────┘
@@ -19,10 +19,7 @@ Looking to Play
 └─────────────────────────────────────────┘
                             [+ Looking to Play]
 
-Courts (3)                             [+ Add Court]
-[Court 1 - Hard] [Court 2 - Hard] [Court 3 - Clay] ➤
-
-Club Rankings - Singles (45)            [View All →]
+Club Rankings (45 members)              [View All →]
 ┌─────────────────────────────────────────┐
 │ 1. [👤] Sarah Wilson    🏆 2,450 pts    │
 │ 2. [👤] Mike Chen       🥈 2,120 pts    │  
@@ -30,13 +27,7 @@ Club Rankings - Singles (45)            [View All →]
 │ 4. [👤] Lisa Park           1,620 pts P │
 │ 5. [👤] Tom Davis           1,380 pts    │
 └─────────────────────────────────────────┘
-                              [Doubles Rankings →]
 
-Recent Matches
-• John vs Sarah - 6-4, 6-2 (2 days ago)
-• Mike vs Tom - 6-3, 4-6, 6-4 (1 week ago)
-• Lisa vs John - 7-6(7-4), 6-3 (1 week ago)
-                                    [View All]
 ```
 
 ## Ranking System (Option B - Enhanced Points):

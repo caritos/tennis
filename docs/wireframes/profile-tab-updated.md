@@ -18,7 +18,7 @@ Recent Match History
                                     [View All]
 
 Club Memberships
-• Riverside Tennis Club (Owner)
+• Riverside Tennis Club (Creator)
 • Downtown Tennis Center (Member)
                                   [View Clubs]
 

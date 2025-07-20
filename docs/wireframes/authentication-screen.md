@@ -80,12 +80,6 @@ Full Name
 │ John Smith                                          │
 └─────────────────────────────────────────────────────┘
 
-Preferred Name (Optional)
-┌─────────────────────────────────────────────────────┐
-│ Johnny                                              │
-└─────────────────────────────────────────────────────┘
-How you'd like to be called during matches
-
 Email Address
 ┌─────────────────────────────────────────────────────┐
 │ john@example.com                                    │
@@ -141,17 +135,13 @@ Don't have an account? [Sign Up]
 ```
 Welcome to Tennis Club! 🎾
 
-Let's set up your tennis profile
+Let's finish setting up your profile
 
-Contact Preferences
-How would you like other players to contact you?
-
-(•) Share phone number: (555) 123-4567
-( ) In-app messages only
-( ) Don't share contact info
-
-□ Allow players to see my tennis statistics
-□ Show my match history to club members
+Phone Number
+┌─────────────────────────────────────────────────────┐
+│ (555) 123-4567                                     │
+└─────────────────────────────────────────────────────┘
+Used for match coordination and communication
 
 Location Services
 We use your location to find nearby tennis clubs.

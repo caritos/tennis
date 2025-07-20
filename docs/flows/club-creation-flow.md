@@ -36,9 +36,7 @@ Location
                               [Use Current Location]
 
 Club Type
-(•) Public - Anyone can request to join
-( ) Private - Invite only
-( ) Semi-Private - Join with approval
+(•) Public - Anyone can join automatically
 
 Contact Information (Optional)
 Phone: [(555) 123-4567                              ]
@@ -65,42 +63,23 @@ this location.
             [Choose Different]    [Confirm Location]
 ```
 
-### Step 4: Add Initial Courts
-```
-🎾 Add Tennis Courts
-
-Help members know what courts are available:
-
-Court 1
-Name: [Court 1                                      ]
-Surface: [Hard Court ▼]
-Notes: [Main competition court with lights         ]
-
-                                    [+ Add Another Court]
-
-You can add more courts later in club settings.
-
-                        [Skip for Now]    [Save Courts]
-```
-
-### Step 5: Club Created Successfully
+### Step 4: Club Created Successfully
 ```
 🎉 Club Created Successfully!
 
 Riverside Tennis Club is now live!
 
-You are the club owner and can:
-✅ Approve/reject join requests
-✅ Manage club settings and courts
-✅ Add other members as admins
-✅ Post club announcements
+As the club creator, you can:
+✅ Edit basic club details (name, description)
+✅ View club activity and members
+✅ Start recording matches
 
 Next Steps:
 1. Invite friends to join your club
-2. Add more courts and details
-3. Start recording matches
+2. Start recording matches
+3. Build your rankings together
 
-        [Invite Friends]    [Add Courts]    [View Club]
+        [Invite Friends]    [View Club]
 ```
 
 ### Step 6: Invite Friends
@@ -124,7 +103,7 @@ Email: [friend@example.com                          ]
 
 ## Alternative Flow: Location-Based Auto-Creation
 
-### Quick Club Creation (From Existing Courts)
+### Quick Club Creation (From Location)
 ```
 🎾 Create Club at This Location
 
@@ -135,88 +114,78 @@ Want to create a club here?
 
 Quick Setup:
 Club Name: [Riverside Community TC                  ]
-Type: (•) Public  ( ) Private  ( ) Semi-Private
+Type: Public (all clubs auto-join)
 
                         [Cancel]    [Create Club]
 ```
 
 ## Flow: Managing Your Club
 
-### Step 1: View Join Requests
+### Step 1: View Current Members
 ```
-🔔 Club Join Requests (3)
+🎾 Riverside Tennis Club
+              View Members                     ⚙️
 
+Current Members (12) - All joined automatically
 ┌─────────────────────────────────────────────────────┐
-│ [👤] Sarah Wilson                                   │
-│ Singles: 85% (15-2) • Joined 3 other clubs         │
-│ "Looking forward to playing with the group!"       │
-│                              [Decline]   [Approve] │
+│ [👤] Sarah Wilson - #1 • 2,450 pts                 │
+│ [👤] Mike Chen - #2 • 2,120 pts                    │
+│ [👤] John Smith - #3 • 1,840 pts                   │
+│ [👤] Lisa Park - #4 • 1,620 pts                    │
 └─────────────────────────────────────────────────────┘
 
-┌─────────────────────────────────────────────────────┐
-│ [👤] Mike Chen                                      │
-│ Singles: 72% (12-4) • Joined 1 other club          │
-│ "New to the area, hoping to find regular games"    │
-│                              [Decline]   [Approve] │
-└─────────────────────────────────────────────────────┘
+Note: Community self-polices through reporting system
 ```
 
-### Step 2: Approve Members
+### Step 2: Community Reporting System
 ```
-✅ Sarah Wilson Approved!
+📋 Member Reports
 
-Sarah has been notified and can now:
-• View club member rankings
-• Post "Looking to Play" 
-• Challenge other members
-• Record matches at your club
+Members are automatically removed by the community:
+• 2 reports = Warning notification
+• 3 reports = Temporary removal (7 days)
+• 4 reports = Permanent ban from all clubs
 
-Club Members: 5 total
+Recent Reports:
+No recent member reports
 
-                        [OK]
+Reporting available after scheduled matches only.
 ```
 
 ### Step 3: Club Settings Management
 ```
 ⚙️ Club Settings
 
-Basic Information
+Basic Information (Creator Edit Rights)
 Club Name: [Riverside Tennis Club                   ]
 Description: [Edit description...                   ]
 Location: [123 Tennis Way, Riverside, CA           ]
 
-Privacy Settings
-Club Type: [Public ▼]
-Join Approval: [Required ▼]
+Club Type: Public (all clubs auto-join)
 
-Courts Management
-Courts (3): [Court 1] [Court 2] [Court 3] [+ Add Court]
+Member Information
+Members (12): [View All Members]
+Total Matches: 45 this month
 
-Member Management
-Members (5): [View All Members]
-Admins (1): [Add Admin]
-
-Danger Zone
-[Transfer Ownership]    [Delete Club]
+Community Management
+Automatic member removal via reporting system
+No manual admin controls needed
 ```
 
 ## Key Features
 
-**Flexible Club Types:**
-- Public: Open join requests
-- Private: Invite-only membership
-- Semi-Private: Approval-required joining
+**Simple Club Type:**
+- Public: All clubs auto-join (optimistic approach)
 
 **Location Integration:**
 - GPS-based location detection
 - Manual address entry
 - Map confirmation for accuracy
 
-**Owner Permissions:**
-- Member approval/rejection
-- Club settings management
-- Court and facility management
-- Admin delegation capabilities
+**Creator Rights:**
+- Edit basic club information only
+- View club activity and statistics
+- Community handles member issues automatically
 
 **Growth Tools:**
 - Direct friend invitations

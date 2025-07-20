@@ -58,76 +58,42 @@ Contact Information
 Email: john@example.com                      [Verified]
 Phone: (555) 123-4567                        [Verified]
 
-Bio (Optional)
-┌─────────────────────────────────────────────────────┐
-│ Tennis enthusiast since college. Love competitive  │
-│ singles and social doubles. Always up for a match! │
-└─────────────────────────────────────────────────────┘
-
-Tennis Background (Optional)
-Years Playing: [15                                   ]
-Favorite Surface: [Hard Court ▼]
-Playing Style: [Aggressive Baseline ▼]
-
                         [Cancel]    [Save Changes]
 ```
 
 ### Step 4: Privacy Controls
 ```
-< Back              Privacy Controls                [Save]
+< Back              Privacy Settings                [Save]
 
-Profile Information Visibility
-☑️ Show my tennis background and bio
-☑️ Show my club memberships to other members
-
-Match Information Sharing
-☑️ Allow opponents to see match details after recording
-☑️ Include my matches in club activity feeds
-
-Discovery and Recommendations  
+Basic Settings
 ☑️ Allow other players to find me in club searches
-☑️ Include me in skill-level match recommendations
-
-Data and Analytics
 ☑️ Allow anonymous data for app improvements
 
-                        [Cancel]    [Save Privacy Settings]
+Note: Phone numbers shared automatically after matches
+Note: All match details visible to participants only
+
+                        [Cancel]    [Save Settings]
 ```
 
 ### Step 5: Notification Settings
 ```
 < Back           Notification Settings              [Save]
 
-Match Notifications
-☑️ New challenges from club members
-☑️ Responses to my "Looking to Play" posts  
-☑️ Match confirmation requests
-☑️ Match cancellations and reschedules
-☑️ Ranking changes after confirmed matches
+🔔 Notification Settings
 
-Club Activity
-☑️ New members join my clubs
-☑️ Club announcements from admins
-☐ Weekly club activity summaries
-☐ Member achievements and milestones
+Notifications
+☑️ Tennis Club notifications
 
-Social Features
-☑️ Friend requests and connections
-☐ Comments on my match records
-☐ Tournament and event invitations
+[Toggle: ON]
 
-Frequency and Timing
-Digest Option: [Real-time ▼]
-Quiet Hours: [10:00 PM to 7:00 AM]
-Weekend Notifications: [Enabled ▼]
+Get notified about:
+• New challenges and match invitations
+• Match updates and community warnings
+• Club activity and announcements
 
-Sound and Alerts
-☑️ Play notification sounds
-☑️ Vibrate for important notifications  
-☑️ Show badge counts on app icon
-Notification Sound: [Default ▼]
+Uses system sound and vibration settings.
 
-                        [Cancel]    [Save Notification Settings]
+                        [Cancel]    [Save Settings]
 ```
 
 ### Step 6: Account Management
@@ -147,9 +113,9 @@ Connected Accounts
 📱 Google: Connected                         [Disconnect]
 🍎 Apple: Not connected                      [Connect]
 
-Club Ownership
-You own 1 club:
-• Riverside Tennis Club (12 members)        [Manage]
+Clubs You Created
+You created 1 club:
+• Riverside Tennis Club (12 members)        [Edit Details]
 
 
 Danger Zone
@@ -161,29 +127,27 @@ Danger Zone
 < Back              Tennis Statistics              
 
 Overall Performance
-Total Matches: 15                    Win Rate: 60%
-Singles: 10 matches (67% win rate)
-Doubles: 5 matches (40% win rate)
-Sets Won: 22 of 30 (73%)
+Total Matches: 15                    Total Points: 1,840
+Best Club Ranking: #3                Sets Won: 22 of 30 (73%)
+Match Record: 9-6 overall            Active Since: Oct 2024
 
 Club Performance
 🎾 Riverside Tennis Club
-Rank: #3 of 12 members
-Record: 8-3 (73% win rate)
+Rank: #3 of 12 members • 1,350 pts
+Record: 8-3 overall
 Recent: 3-match win streak
 
 🎾 Downtown Tennis Center  
-Rank: #8 of 24 members
-Record: 2-4 (33% win rate)
+Rank: #8 of 24 members • 490 pts
+Record: 1-3 overall
 Recent: Lost last 2 matches
 
 Monthly Trends
 📊 [Chart showing matches per month]
-📈 [Chart showing win rate over time]
+📈 [Chart showing points over time]
 
 Playing Patterns
 Most Active Day: Saturday (6 matches)
-Favorite Court: Hard Court (12 matches)
 Common Opponents: Sarah Wilson (3 matches)
 
 Achievements
@@ -197,12 +161,10 @@ Match History Export
 
 ## Flow: Profile Privacy Scenarios
 
-### Scenario 1: High Privacy User
+### Scenario 1: Private User
 ```
 Privacy Settings Selected:
-❌ Don't show bio or background
 ❌ Don't allow discovery in searches
-❌ Don't share match details
 
 Result in Club Views:
 [👤] John Smith
@@ -212,29 +174,28 @@ Result in Club Views:
 Other members see:
 • Name and ranking only
 • Can still challenge and play
-• Phone shared automatically after match confirmation
+• Phone shared automatically after matches
 ```
 
-### Scenario 2: Open/Social User  
+### Scenario 2: Public User  
 ```
 Privacy Settings Selected:
-✅ Show tennis background and bio
-✅ Include in recommendations
-✅ Share match details
+✅ Allow discovery in searches
 
 Result in Club Views:
 [👤] John Smith  
-#3 • 1,840 pts • 3-match streak
-"Tennis enthusiast, always up for a match!"
+#3 • 1,840 pts
 [Challenge]
+
+Same view - minimal profile approach
 ```
 
 ## Key Features
 
-**Flexible Privacy:**
-- Granular control over information sharing
-- Club-specific vs. global privacy settings
-- Easy privacy level adjustments
+**Simple Privacy:**
+- Basic search discovery control only
+- Automatic phone sharing after matches
+- Minimal settings for ease of use
 
 **Comprehensive Statistics:**
 - Cross-club performance tracking

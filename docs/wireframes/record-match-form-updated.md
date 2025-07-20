@@ -21,15 +21,6 @@ Player 2: [Select Player ▼] [or Add Unregistered ▼]
 Player 3: [Select Player ▼] [or Add Unregistered ▼]
 Player 4: [Select Player ▼] [or Add Unregistered ▼]
 
-Court (Optional)
-[Select Court ▼] [Skip]
-┌─────────────────────────────────────────────────┐
-│ Court 1 - Hard Court                           │
-│ Court 2 - Hard Court                           │
-│ Court 3 - Clay Court                           │
-│ Other/External Court                            │
-└─────────────────────────────────────────────────┘
-
 Date
 Date: [📅 Tomorrow, Dec 15]
 
@@ -50,6 +41,6 @@ Notes (Optional)
 ## Updated Features:
 - ✅ Consistent [Save] button (removed duplicate "Save Match")
 - ✅ No time tracking (date only for casual tennis)
-- ✅ Optional court selection with [Skip] option
+- ✅ No court tracking (focus on scores and players only)
 - ✅ Standard tiebreak notation: "7-6 (7-3)"
 - ✅ Dynamic sets with [+ Add Set] button

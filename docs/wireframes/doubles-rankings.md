@@ -7,61 +7,38 @@ Riverside Tennis Club - 45 Members
 
 Search: [Search members...                              ]
 
-Doubles Team Rankings (12 teams)
+Individual Doubles Rankings
 ┌─────────────────────────────────────────────────────┐
-│ 1. Mike Chen & Tom Davis    🏆 1,840 pts            │
-│    Mike: 2,120 singles • Tom: 1,380 singles         │
+│ 1. [👤] Sarah Wilson    🏆 1,840 pts    [Challenge] │
 ├─────────────────────────────────────────────────────┤
-│ 2. Sarah Wilson & Lisa Park 🥈 1,720 pts            │
-│    Sarah: 2,450 singles • Lisa: 1,620 singles      │
+│ 2. [👤] Mike Chen       🥈 1,720 pts    [Challenge] │
 ├─────────────────────────────────────────────────────┤
-│ 3. John Smith & Alex Johnson 🥉 1,550 pts           │
-│    John: 1,840 singles • Alex: 980 singles          │
+│ 3. [👤] Tom Davis       🥉 1,550 pts    [Challenge] │
 ├─────────────────────────────────────────────────────┤
-│ 4. Emma Martinez & David Kim     1,320 pts P        │
-├─────────────────────────────────────────────────────┤
-│ 5. Rachel Brown & James Wilson   1,180 pts          │
-├─────────────────────────────────────────────────────┤
-│ 6. Sarah Wilson & Mike Chen      1,050 pts          │
-├─────────────────────────────────────────────────────┤
-│ 7. Lisa Park & Tom Davis         890 pts            │
-└─────────────────────────────────────────────────────┘
-
-Individual Doubles Records
-┌─────────────────────────────────────────────────────┐
-│ [👤] Sarah Wilson          80% (4-1)    [Challenge] │
-├─────────────────────────────────────────────────────┤
-│ [👤] Mike Chen             75% (6-2)    [Challenge] │
-├─────────────────────────────────────────────────────┤
-│ [👤] Tom Davis             70% (7-3)    [Challenge] │
-├─────────────────────────────────────────────────────┤
-│ [👤] Lisa Park             65% (5-3)    [Challenge] │
+│ 4. [👤] Lisa Park           1,320 pts P [Challenge] │
 └─────────────────────────────────────────────────────┘
 ```
 
 ## Features:
 
 **Unified Points System (Same as Singles)**
-- Base win: 100 points per team
+- Base win: 100 points per player
 - Game differential bonus: +10 points per game difference
-- Upset bonus: +50 points for beating higher-ranked teams
-- "P" indicator for provisional teams (< 5 matches)
-- 🏆🥈🥉 trophies for top 3 teams
+- Upset bonus: +50 points for beating higher-ranked players
+- "P" indicator for provisional ranking (< 5 matches)
+- 🏆🥈🥉 trophies for top 3 individuals
 
-**Team-Based Rankings**
-- Shows partnerships and their team points
-- Individual singles points displayed for context
-- Recognizes that doubles success is different from singles
-
-**Individual Doubles Records**
-- Players can have different partners
-- Shows personal doubles performance across all partnerships
-- Useful for finding doubles partners
+**Individual Focus**
+- Personal doubles performance only
+- Points calculated from all doubles matches
+- Same points system as singles (100 base + differential + upset bonus)
+- No team/partnership tracking
 
 **Flexibility**
-- Players can form different partnerships
-- No permanent team assignments
+- Players can partner with anyone
+- No need to track specific partnerships
 - Encourages mixing and matching for social play
+- Focus on individual improvement in doubles
 
 **Navigation**
 - Easy toggle between Singles and Doubles rankings

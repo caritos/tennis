@@ -57,7 +57,7 @@ The app uses Expo Router with file-based routing. Routes are defined by the file
 
 ### Key Design Decisions Made
 - **Optimistic Approach**: Auto-join clubs, trust match scores, share contact automatically - assume good intent
-- **Singles-Primary Rankings**: Main leaderboards show singles performance, doubles shown separately
+- **Unified Rankings**: Single leaderboard combines singles and doubles performance for simplicity
 - **Simplified Challenge Flow**: Removed counter-challenges for MVP simplicity
 - **Automatic Phone Sharing**: Phone numbers shared automatically after match confirmations
 - **Honor System**: Match recorder's score is final, no confirmation/dispute process
@@ -82,7 +82,7 @@ Currently uses React's built-in state management. No external state management l
 - **DRY (Don't Repeat Yourself)**: Create reusable components and utilities to avoid code duplication
 - **Component Reusability**: Build atomic, composable components that can be used across screens
 - **Shared Logic**: Extract common functionality into custom hooks and utility functions
-- **Optimistic Approach**: Assume good intent until proven otherwise - auto-join clubs, trust match scores, share contact info automatically
+- **Optimistic Approach**: Assume good intent until proven otherwise - auto-join all clubs, trust match scores, share contact info automatically
 
 ### Working Together
 - This is always a feature branch - no backwards compatibility needed
@@ -176,23 +176,20 @@ This app facilitates tennis clubs - groups of people who share a common interest
 **CRITICAL: What "Club" Means in This App**
 - **Tennis clubs are COMMUNITIES/GROUPS of players, NOT physical clubhouses**
 - **No operating hours, facilities, or physical locations** - these are social groups
-- **Members use whatever courts they have access to** (public courts, private facilities, etc.)
-- **Courts listed in club are just suggestions/preferences**, not owned facilities
+- **Members arrange matches at whatever courts they have access to** (public courts, private facilities, etc.)
+- **Court tracking excluded from MVP** - focus on player connections, not facility management
 - **Think "tennis meetup group" or "tennis community" rather than "country club"**
 
 ### Core Features (MVP)
 - **Club Creation**: Any authenticated user can create tennis clubs
 - **Club Purpose**: Connect tennis players and provide rankings for better matchmaking
-- **Member Rankings**: Points-based rankings within each club for compatible opponent matching
-  - **Singles Primary**: Main rankings based on singles matches only
-  - **Doubles Secondary**: Separate tracking with optional doubles rankings view
+- **Member Rankings**: Unified points-based rankings combining all matches (singles and doubles) within each club for compatible opponent matching
 - **Visual Ranking Indicators**: Trophy system (🏆🥈🥉) for top 3 players to encourage engagement
 - **Match Recording**: Players can record matches against registered or unregistered opponents
 - **Challenge System**: Direct player-to-player match invitations with simple accept/decline responses
   - **Simplified Flow**: No counter-challenges in MVP (moved to future)
   - **Optional Decline Reason**: Polite rejection with optional explanation
 - **Looking to Play**: Public match posting system for finding partners within clubs
-- **Court Management**: Club members can add and manage court information (surface type, notes)
 - **Contact Sharing**: Phone number sharing after match confirmations (no WhatsApp in MVP)
 - **Score Editing**: Context-aware permissions based on match participation
 - **Role Assignment**: All new users get 'player' role with ability to create clubs
@@ -218,11 +215,11 @@ This app facilitates tennis clubs - groups of people who share a common interest
 ### User Roles & Permissions
 - **Admin**: Superuser with full system access (manage all clubs, users, etc.)
 - **Player**: Regular user who can:
-  - Create and own clubs (becoming the owner of those clubs)
+  - Create clubs (gaining basic edit rights for those clubs)
   - Join other clubs as a member
   - Record matches within their clubs
   
-Note: Club ownership is a relationship, not a role. Any player can create multiple clubs and own them while also being a member of other clubs.
+Note: Club creation provides basic edit rights only. Community self-polices through automatic reporting system. Any player can create multiple clubs and be a member of others.
 
 ### Philosophy: DHH's Principles
 Following David Heinemeier Hansson's core programming principles:
@@ -283,19 +280,21 @@ npx expo install expo-sqlite @supabase/supabase-js expo-network
 
 ### Database Schema Approach
 Mirror structure between SQLite and Supabase for simplicity:
-- Users table (id, full_name, preferred_name, email, role, phone, contact_preference, created_at)
-- Clubs table (id, name, location, lat, lng, owner_id, created_at, description, club_type)
-- Club_members table (club_id, user_id, joined_at, status)
-- Courts table (id, club_id, name, surface_type, notes, created_by)
-- Matches table (id, club_id, player1_id, player2_id, opponent2_name, scores, date, court_id, notes, match_type)
+- Users table (id, full_name, email, role, phone, created_at)
+- Clubs table (id, name, location, lat, lng, creator_id, created_at, description)
+  - Note: creator_id provides minimal edit rights only, no ownership privileges
+- Club_members table (club_id, user_id, joined_at)
+- Matches table (id, club_id, player1_id, player2_id, opponent2_name, scores, date, notes, match_type)
   - Note: opponent2_name allows recording matches against unregistered players
   - Note: No time field - date only for casual tennis
-- Player_stats view (calculated from matches per club for singles/doubles rankings)
-- Match_invitations table (id, club_id, creator_id, match_type, date, time, court_id, notes, status)
+- Player_stats view (calculated from all matches per club for unified rankings)
+- Match_invitations table (id, club_id, creator_id, match_type, date, time, notes, status)
 - Match_invitation_responses table (invitation_id, user_id, response_type, message)
-- Looking_to_play_posts table (id, club_id, user_id, match_type, date, time, court_id, notes, created_at)
+- Looking_to_play_posts table (id, club_id, user_id, match_type, date, time, notes, created_at)
 - Unclaimed_matches table (for matches recorded against unregistered opponents)
-- Challenge_invitations table (id, from_user_id, to_user_id, club_id, match_type, preferred_date, court_id, message, status, decline_reason)
+- Player_reports table (id, reporter_id, reported_user_id, club_id, match_id, report_type, created_at)
+- Community_warnings table (id, user_id, warning_count, last_warning_date, status)
+- Challenge_invitations table (id, from_user_id, to_user_id, club_id, match_type, preferred_date, message, status)
 
 **Supabase Best Practices**:
 - Use Row Level Security (RLS) policies - see https://supabase.com/docs/guides/auth/row-level-security
@@ -317,14 +316,14 @@ Located in `/docs/wireframes/` - Individual screen layouts and components:
 - `doubles-rankings.md` - Separate doubles rankings screen for team-based play
 - `profile-tab-updated.md` - User profile with comprehensive tennis stats
 - `match-details.md` - Clean match result display (no flags, duration, or weather)
-- `record-match-form-updated.md` - Match recording form (date-only, optional court)
+- `record-match-form-updated.md` - Match recording form (date-only, no court tracking)
 - `match-invitation-form.md` - "Looking to Play" post creation form
 - `about-screen.md` - App information, developer credits, and community stats
 
 ### User Flows (Multi-Step Journeys)
 Located in `/docs/flows/` - Complete user interaction flows:
 - `onboarding-flow.md` - First-time user experience from registration to first match
-- `club-creation-flow.md` - Creating new tennis clubs with location and court setup
+- `club-creation-flow.md` - Creating new tennis clubs with location
 - `club-joining-flow.md` - Discovering and joining clubs (public vs private)
 - `match-recording-flow.md` - Recording completed matches with opponent confirmation
 - `challenge-flow.md` - Direct player invitations with simplified accept/decline
