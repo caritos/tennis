@@ -1,4 +1,4 @@
-# TODO - Tennis League App
+# TODO - Tennis Community App
 
 ## High Priority Tasks
 
@@ -19,19 +19,59 @@
 
 ### Core Features
 - [ ] Install and configure SQLite for local data storage
-- [ ] Design database schema for players, matches, and leagues
+- [ ] Design database schema for users, clubs, and matches
 - [ ] Implement local match scoring functionality with SQLite
+
+### User Roles & Permissions
+- [ ] Create user roles (admin, player) with is_admin flag
+- [ ] Set all new users to 'player' role by default
+- [ ] Implement admin access control
+- [ ] Add RLS policies for club ownership permissions
+- [ ] Create club creation flow (any player can create)
+- [ ] Add club switcher for users in multiple clubs
+
+### Social Tennis Features
+- [ ] Remove skill level field and references from schema
+- [ ] Add unregistered opponent option to match recording
+- [ ] Create match claiming system for new users
+- [ ] Implement context-aware score editing permissions
+- [ ] Add location-based club discovery
+- [ ] Create organic ranking system based on match history
+
+### Score Display Components (Tournament Style)
+- [ ] Create MatchScoreDisplay component with tournament-style layout
+- [ ] Build ScoreBox component with themed styling
+- [ ] Implement winner checkmark indicator
+
+### Design System
+- [ ] Define app color theme and design system
+
+### UI Notification System (No Alert.alert())
+- [ ] Create Toast/Snackbar component for success messages
+- [ ] Build Modal confirmation dialog component
+- [ ] Design Banner component for error messages
+- [ ] Implement notification provider/context
+- [ ] Replace all Alert.alert() with UI-based notifications
 
 ### Environment & Configuration (Expo Best Practices)
 - [ ] Convert app.json to app.config.js for environment variables
 - [ ] Set up environment files (.env.development, .env.production)
 - [ ] Install @react-native-async-storage/async-storage for Supabase auth
 
+### Authentication Setup
+- [ ] Install expo-apple-authentication for Apple Sign In
+- [ ] Configure Apple Sign In with Supabase Auth
+- [ ] Install @react-native-google-signin/google-signin
+- [ ] Configure Google Sign In with Supabase Auth
+- [ ] Create unified authentication screen with all sign-in options
+- [ ] Add authentication state management
+- [ ] Implement sign-out functionality across all auth methods
+
 ### Security Setup (Supabase Best Practices)
 - [ ] Create Supabase client singleton with TypeScript
 - [ ] Enable Row Level Security (RLS) on all Supabase tables
 - [ ] Create RLS policies for player data access
-- [ ] Create RLS policies for league-based match access
+- [ ] Create RLS policies for match visibility
 
 ## Medium Priority Tasks
 
@@ -52,13 +92,27 @@
 ### Backend Integration
 - [ ] Set up Supabase account and project
 - [ ] Design Supabase schema to mirror local SQLite structure
-- [ ] Implement authentication with Supabase Auth
+- [ ] Implement email/password authentication with Supabase Auth
 - [ ] Create sync mechanism between local SQLite and Supabase
 - [ ] Implement optimistic updates (write local first, sync later)
 
 ### Push Notifications (Expo)
 - [ ] Install expo-notifications for push notifications
 - [ ] Configure push notification permissions for iOS and Android
+
+### UI Components
+- [ ] Create bottom tab navigation (Club, Matches, Add Match, Profile)
+- [ ] Design player card component for club members
+- [ ] Create user profile screen with tennis stats
+- [ ] Build simple match recording interface
+- [ ] Implement match history list view
+
+### Club Features
+- [ ] Create club creation flow for new club owners
+- [ ] Build club join request system for players
+- [ ] Add club management dashboard for owners
+- [ ] Implement club member approval/rejection for owners
+- [ ] Create club discovery page for finding clubs to join
 
 ### Storage & Files (Supabase)
 - [ ] Set up Supabase Storage buckets for profile images
