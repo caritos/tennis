@@ -143,11 +143,34 @@ Currently uses React's built-in state management. No external state management l
 - Add new screens by creating files in the appropriate directory under `/app`
 - Follow Expo Router conventions for layouts, groups, and dynamic routes
 
-## Testing
-No testing framework is currently configured. When adding tests, follow Expo's testing guide:
+## Testing (TDD Required)
+
+**MANDATORY: Test-Driven Development (TDD)**
+- **ALL code must have tests BEFORE implementation**
+- **No commits allowed with failing tests**
+- **No pushes allowed unless ALL test cases pass**
+- Write tests first, then implement the feature
+- Red → Green → Refactor cycle
+
+**Testing Framework Setup**
+Follow Expo's testing guide for setup:
 - Refer to https://docs.expo.dev/develop/unit-testing/ for Jest setup with Expo
 - Use React Native Testing Library as recommended by Expo
 - For E2E testing, use Maestro (compatible with Expo Go and development builds)
+
+**Critical Test Coverage Required**
+- **Match Recording Logic**: Score validation, ranking calculations, points system
+- **Club Management**: Creation, joining, member management
+- **Challenge System**: Invitations, responses, match confirmations
+- **Ranking Calculations**: Points allocation, unified singles/doubles scoring
+- **Honor System**: Match editing permissions, participant validation
+- **Data Sync**: Local-first with Supabase sync, offline functionality
+- **User Authentication**: Sign up, login, profile management
+
+**Test Types**
+- **Unit Tests**: Individual functions, hooks, utilities
+- **Integration Tests**: Component interactions, API calls, database operations
+- **E2E Tests**: Complete user workflows (record match, challenge player, join club)
 
 ### AUTOMATED CHECKS ARE MANDATORY
 - ALL hook issues are BLOCKING - EVERYTHING must be ✅ GREEN!
