@@ -1,13 +1,12 @@
 # Profile Tab (Tennis-First Priority)
 
 ```
-[👤 Profile avatar - large, centered]
 John Smith                              [Edit]
 
 Tennis Stats
-Singles: 67% (10-5)         Doubles: 50% (3-2)
+Singles: 1,840 pts          Doubles: 890 pts
 Total Matches: 15           Sets Won: 22/30
-Overall Win Rate: 60%       Club Ranking: #3
+Best Club Ranking: #3       Active Since: Oct 2024
 
 Recent Match History
 • vs Sarah Wilson - Won 6-4, 6-2
@@ -24,7 +23,6 @@ Club Memberships
                                   [View Clubs]
 
 Settings
-> Contact Preferences
 > Privacy Controls
 > Help & Support
 > Sign Out

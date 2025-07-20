@@ -1,6 +1,13 @@
 {
   "name": "omega",
+  "version": "0.0.1",
   "main": "expo-router/entry",
+  "author": "Eladio Caritos",
+  "description": "Connect with tennis players in your local clubs",
+  "appMeta": {
+    "supportEmail": "eladio@caritos.com",
+    "website": "caritos.com/tennis"
+  }
   "version": "1.0.0",
   "scripts": {
     "start": "expo start",

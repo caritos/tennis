@@ -118,10 +118,10 @@ Or create your own club:
 "A friendly community club for players of all levels"
 
 Club Details:
-• 3 hard courts, 1 clay court
-• Open daily 6am - 10pm  
+• Members play at: 3 hard courts, 1 clay court  
 • Mix of recreational and competitive players
 • Weekly social events
+• 12 active members looking for matches
 
                 [Cancel]    [Request to Join]
 ```

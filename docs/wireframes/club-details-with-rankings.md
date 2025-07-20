@@ -24,11 +24,11 @@ Courts (3)                             [+ Add Court]
 
 Club Rankings - Singles (45)            [View All →]
 ┌─────────────────────────────────────────┐
-│ 1. [👤] Sarah Wilson    🏆 88% (15-2)   │
-│ 2. [👤] Mike Chen       🥈 75% (12-4)   │  
-│ 3. [👤] John Smith      🥉 67% (10-5)   │
-│ 4. [👤] Lisa Park           60% (6-4)   │
-│ 5. [👤] Tom Davis           44% (7-9)   │
+│ 1. [👤] Sarah Wilson    🏆 2,450 pts    │
+│ 2. [👤] Mike Chen       🥈 2,120 pts    │  
+│ 3. [👤] John Smith      🥉 1,840 pts    │
+│ 4. [👤] Lisa Park           1,620 pts P │
+│ 5. [👤] Tom Davis           1,380 pts    │
 └─────────────────────────────────────────┘
                               [Doubles Rankings →]
 
@@ -39,18 +39,24 @@ Recent Matches
                                     [View All]
 ```
 
-## Ranking Options:
+## Ranking System (Option B - Enhanced Points):
 
-**Option A: Win Percentage** (Shown above)
-- Simple win% with match record
+**Points Calculation:**
+- Base win: 100 points
+- Game differential bonus: +10 points per game difference
+- Upset bonus: +50 points for beating higher-ranked player
+- Examples:
+  - 6-0, 6-0 win = 100 + 120 = 220 points
+  - 7-6, 6-4 win = 100 + 30 = 130 points
+  - 6-7, 7-6, 7-5 win = 100 + 20 = 120 points
+
+**Provisional Rankings:**
+- "P" indicator for players with < 5 matches
+- Higher point volatility during provisional period
+- Bonus points for beating established players
+
+**Key Features:**
 - Visual indicators: 🏆🥈🥉 for top 3
-
-**Option B: Simple Points System**
-- Win = 3 points, Loss = 0 points
-- Tie = 1 point each player
-
-**Option C: Tennis-Style Ranking**
-- Club ranking #1, #2, #3 etc.
-- Based on head-to-head results + win%
-
-Which ranking approach feels most natural for tennis players?
+- Points reward dominant performances
+- New strong players can climb quickly
+- Fair system that prevents ranking manipulation

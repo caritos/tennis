@@ -16,8 +16,7 @@ Entry Points:
 
 ### Step 2: Main Profile Screen
 ```
-[👤 Profile avatar - large, centered]
-John Smith (Johnny)                     [Edit]
+John Smith                              [Edit]
 
 Tennis Stats
 Singles: 67% (10-5)         Doubles: 50% (3-2)
@@ -39,7 +38,6 @@ Club Memberships
                                   [View Clubs]
 
 Settings
-> Contact Preferences
 > Privacy Controls  
 > Notifications
 > Help & Support
@@ -50,21 +48,11 @@ Settings
 ```
 < Back                Edit Profile                   [Save]
 
-Profile Photo
-[📷 Change Photo]
-Current: [Large circular photo placeholder]
-
 Basic Information
 Full Name
 ┌─────────────────────────────────────────────────────┐
 │ John Smith                                          │
 └─────────────────────────────────────────────────────┘
-
-Preferred Name (Optional)
-┌─────────────────────────────────────────────────────┐
-│ Johnny                                              │
-└─────────────────────────────────────────────────────┘
-How you'd like to be called during matches
 
 Contact Information
 Email: john@example.com                      [Verified]
@@ -84,63 +72,21 @@ Playing Style: [Aggressive Baseline ▼]
                         [Cancel]    [Save Changes]
 ```
 
-### Step 4: Contact Preferences
-```
-< Back             Contact Preferences              [Save]
-
-How other players can contact you:
-
-Match Coordination
-(•) Share phone number with confirmed opponents
-( ) In-app messages only  
-( ) Don't share contact information
-
-After matches are confirmed, players can:
-☑️ Call or text for match coordination
-☑️ Share court directions and parking info
-☐ Add to personal contacts permanently
-
-Phone Number Visibility
-( ) Show to all club members
-(•) Show only after match confirmation
-( ) Never show phone number
-
-Response Time Expectations
-When someone challenges you or shows interest:
-(•) Respond within 24 hours when possible
-( ) Respond within a few hours
-( ) Respond immediately (for active players)
-
-                        [Cancel]    [Save Preferences]
-```
-
-### Step 5: Privacy Controls
+### Step 4: Privacy Controls
 ```
 < Back              Privacy Controls                [Save]
 
-Tennis Statistics Visibility
-☑️ Show my win/loss record to club members
-☑️ Show my match history to club members  
-☑️ Include me in club rankings
-☐ Show detailed statistics (sets won/lost, etc.)
-
 Profile Information Visibility
-☑️ Show my profile photo to club members
 ☑️ Show my tennis background and bio
 ☑️ Show my club memberships to other members
-☐ Show my contact information before matches
 
 Match Information Sharing
 ☑️ Allow opponents to see match details after recording
 ☑️ Include my matches in club activity feeds
-☐ Allow public viewing of my match history
-☐ Share my achievements and milestones
 
 Discovery and Recommendations  
 ☑️ Allow other players to find me in club searches
 ☑️ Include me in skill-level match recommendations
-☐ Show my profile in "suggested players" lists
-☐ Allow club admins to feature my profile
 
 Data and Analytics
 ☑️ Allow anonymous data for app improvements
@@ -148,7 +94,7 @@ Data and Analytics
                         [Cancel]    [Save Privacy Settings]
 ```
 
-### Step 6: Notification Settings
+### Step 5: Notification Settings
 ```
 < Back           Notification Settings              [Save]
 
@@ -184,7 +130,7 @@ Notification Sound: [Default ▼]
                         [Cancel]    [Save Notification Settings]
 ```
 
-### Step 7: Account Management
+### Step 6: Account Management
 ```
 < Back              Account Settings               
 
@@ -210,7 +156,7 @@ Danger Zone
 [Delete Account]
 ```
 
-### Step 8: Tennis Stats Deep Dive
+### Step 7: Tennis Stats Deep Dive
 ```
 < Back              Tennis Statistics              
 
@@ -254,37 +200,33 @@ Match History Export
 ### Scenario 1: High Privacy User
 ```
 Privacy Settings Selected:
-❌ Don't show statistics to others
-❌ Don't include in rankings  
-❌ Contact info only after matches
-✅ Show basic profile info only
+❌ Don't show bio or background
+❌ Don't allow discovery in searches
+❌ Don't share match details
 
 Result in Club Views:
 [👤] John Smith
-Member since Oct 2024
-[Challenge] [Message]
+#3 • 1,840 pts
+[Challenge]
 
 Other members see:
-• Name and photo only
-• No statistics or ranking
+• Name and ranking only
 • Can still challenge and play
-• Contact shared only after confirmation
+• Phone shared automatically after match confirmation
 ```
 
 ### Scenario 2: Open/Social User  
 ```
 Privacy Settings Selected:
-✅ Show all statistics publicly
-✅ Include in all club features
-✅ Share contact info with club members
-✅ Participate in recommendations
+✅ Show tennis background and bio
+✅ Include in recommendations
+✅ Share match details
 
 Result in Club Views:
 [👤] John Smith  
-#3 rank • 67% (10-5) • 3-match streak
+#3 • 1,840 pts • 3-match streak
 "Tennis enthusiast, always up for a match!"
-Phone: (555) 123-4567
-[Challenge] [Call/Text] [Message]
+[Challenge]
 ```
 
 ## Key Features
@@ -299,10 +241,9 @@ Phone: (555) 123-4567
 - Trend analysis and insights
 - Achievement system integration
 
-**Professional Contact Management:**
-- Context-appropriate contact sharing
-- Response time expectations
-- Communication preference controls
+**Automatic Contact Management:**
+- Phone numbers shared automatically after match confirmations
+- Simple, friction-free communication setup
 
 **Account Security:**
 - Multi-factor authentication options

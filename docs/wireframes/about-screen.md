@@ -4,35 +4,31 @@
 < Back                 About Tennis Club
 
 🎾 Tennis Club
-Version 1.0.0 (Build 23)
-Last Updated: December 15, 2024
+Version: 20241220
+Build: c5b7238
 
-Developed by [Your Name/Company]
-© 2024 Tennis Club App
+Developed by [from package.json]
+© 2024 [from package.json]
 
 Made with ❤️ for the tennis community
 
 Contact & Support
-📧 support@tennisclub.app
-🌐 www.tennisclub.app
-📞 Support: (555) TENNIS-1
+📧 [email from package.json]
+🌐 [website from package.json]
 
-Follow Us
-> Twitter/X
-> Instagram  
-> Facebook
+App Information
+📱 Rate Tennis Club
+🐛 Report a Bug or Issue
+💡 Request a Feature
+📋 Send Feedback
+📖 FAQ / Help
+📝 What's New
 
 Legal & Privacy
 > Terms of Service
 > Privacy Policy
 > Open Source Licenses
 > Data Deletion Request
-
-App Information
-📱 Rate Tennis Club on App Store
-🐛 Report a Bug or Issue
-💡 Request a Feature
-📋 Send Feedback
 
 Community Stats
 🎾 12,847 matches recorded
@@ -92,14 +88,19 @@ the tennis community for their feedback.
 ## Implementation Notes:
 
 **Dynamic Content**
-- Version numbers from app config
+- Version number from package.json (YYYYMMDD format)
+- Build number from git commit hash
 - Community stats from database
-- Last updated date automatically
+- App metadata from package.json
 
 **Links and Actions**
-- External links to social media
+- Terms of Service: github.com/caritos/tennis/blob/main/docs/terms-of-service.md
+- Privacy Policy: github.com/caritos/tennis/blob/main/docs/privacy-policy.md
+- Data Deletion: github.com/caritos/tennis/blob/main/docs/data-deletion.md
+- FAQ/Help: github.com/caritos/tennis/blob/main/docs/faq.md
+- What's New: github.com/caritos/tennis/blob/main/docs/changelog.md
+- Native app rating functionality
 - Native sharing functionality
-- Deep links to app store for ratings
 
 **Responsive Design**
 - Scrollable content for all information

@@ -56,15 +56,17 @@ The app uses Expo Router with file-based routing. Routes are defined by the file
 - **Profile Tab**: Personal tennis stats, match history, club memberships, settings, about section
 
 ### Key Design Decisions Made
+- **Optimistic Approach**: Auto-join clubs, trust match scores, share contact automatically - assume good intent
 - **Singles-Primary Rankings**: Main leaderboards show singles performance, doubles shown separately
 - **Simplified Challenge Flow**: Removed counter-challenges for MVP simplicity
-- **Phone-Only Contact Sharing**: WhatsApp integration postponed to future release
-- **No Weather Integration**: Removed from match recording and details for MVP focus
-- **Real Names + Nicknames**: Full names for trust, optional preferred names for casual use
-- **Optional Decline Reasons**: Polite rejection messages to maintain community relationships
+- **Automatic Phone Sharing**: Phone numbers shared automatically after match confirmations
+- **Honor System**: Match recorder's score is final, no confirmation/dispute process
+- **Real Names Only**: Full names for trust and verification, no nicknames/preferred names
+- **Auto-Join Clubs**: Immediate joining with ban capability for problem members
 - **Unified Member Rankings**: Single list with trophy icons for top 3 (no separate "top players" section)
 - **Date-Only Match Tracking**: No duration or real-time status tracking
 - **Scrolling vs Sub-Tabs**: Club details use vertical scrolling instead of sub-navigation
+- **Minimal Profile Setup**: Just name, email, phone - no bio or tennis background
   
 ### Theming
 - Color schemes defined in `constants/Colors.ts`
@@ -80,6 +82,7 @@ Currently uses React's built-in state management. No external state management l
 - **DRY (Don't Repeat Yourself)**: Create reusable components and utilities to avoid code duplication
 - **Component Reusability**: Build atomic, composable components that can be used across screens
 - **Shared Logic**: Extract common functionality into custom hooks and utility functions
+- **Optimistic Approach**: Assume good intent until proven otherwise - auto-join clubs, trust match scores, share contact info automatically
 
 ### Working Together
 - This is always a feature branch - no backwards compatibility needed
@@ -170,10 +173,17 @@ A tennis club app for finding players and tracking matches within local tennis c
 
 This app facilitates tennis clubs - groups of people who share a common interest in tennis and want to play with other people. Think of it as a social platform for tennis players to connect and organize matches with rankings for better matchmaking.
 
+**CRITICAL: What "Club" Means in This App**
+- **Tennis clubs are COMMUNITIES/GROUPS of players, NOT physical clubhouses**
+- **No operating hours, facilities, or physical locations** - these are social groups
+- **Members use whatever courts they have access to** (public courts, private facilities, etc.)
+- **Courts listed in club are just suggestions/preferences**, not owned facilities
+- **Think "tennis meetup group" or "tennis community" rather than "country club"**
+
 ### Core Features (MVP)
 - **Club Creation**: Any authenticated user can create tennis clubs
 - **Club Purpose**: Connect tennis players and provide rankings for better matchmaking
-- **Member Rankings**: Win percentage-based rankings within each club for compatible opponent matching
+- **Member Rankings**: Points-based rankings within each club for compatible opponent matching
   - **Singles Primary**: Main rankings based on singles matches only
   - **Doubles Secondary**: Separate tracking with optional doubles rankings view
 - **Visual Ranking Indicators**: Trophy system (🏆🥈🥉) for top 3 players to encourage engagement
@@ -191,10 +201,9 @@ This app facilitates tennis clubs - groups of people who share a common interest
 - **Simple Time Tracking**: Matches include date only (no duration tracking)
 
 ### User Profile System
-- **Real Names**: Full name required for trust and verification
-- **Preferred Names**: Optional nickname for casual interaction
-- **Contact Preferences**: Phone sharing, in-app messages, or no contact sharing
-- **Privacy Controls**: Granular control over stats visibility and information sharing
+- **Real Names**: Full name required for trust and verification (no nicknames/preferred names)
+- **Automatic Contact Sharing**: Phone numbers shared automatically after match confirmations
+- **Simplified Privacy Controls**: Basic privacy settings without complex statistics visibility options
 - **Multi-Club Support**: Players can join multiple clubs with separate rankings per club
 
 ### MVP Exclusions (Future Features)

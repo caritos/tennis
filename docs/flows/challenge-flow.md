@@ -119,30 +119,7 @@ Reason (Optional)
 
 Lisa will be notified immediately.
 
-( ) Suggest alternative time
-(•) Cancel completely
-
                         [Keep Match]    [Cancel Match]
-```
-
-## Step 7: Alternative Time Suggestion
-```
-Suggest New Time to Lisa Park
-
-Original: Singles - Tomorrow 10:00 AM
-
-New Suggestion:
-📅 [This Weekend ▼]
-⏰ [Morning ▼]  [Afternoon ▼]  [Evening ▼]
-🎾 [Court 1 - Hard ▼]
-
-Message to Lisa:
-┌─────────────────────────────────────────────────┐
-│ Sorry, work conflict came up! How about this    │
-│ weekend instead?                                │
-└─────────────────────────────────────────────────┘
-
-                        [Cancel]    [Send Suggestion]
 ```
 
 ## Key Features:
@@ -164,15 +141,15 @@ Message to Lisa:
 - Reduces friction for spontaneous matches
 - Perfect for using rankings to find compatible opponents
 
-**Cancellation & Rescheduling**
+**Cancellation**
 - Graceful cancellation with optional reason
-- Alternative time suggestion flow
 - Immediate notifications to affected players
 - Maintains good etiquette in tennis community
+- Simple binary choice: keep or cancel (no rescheduling complexity)
 
 **Integration Points**
 - Creates confirmed match in "Looking to Play" section once accepted
 - Sends in-app notifications for all status changes
-- Shares contact info (phone/WhatsApp) after acceptance
+- Shares phone number automatically after acceptance
 - Updates player activity feeds
 - Links to match recording after completion
