@@ -12,18 +12,12 @@ Complete notification system covering in-app alerts, badges, and user engagement
 🎾 Match Invitations
 • Someone challenges you directly
 • Someone responds to your "Looking to Play" post
-• Match confirmation requests
-• Match cancellations and reschedules
+• Match cancellations
 
 🏆 Match Results  
-• Opponent confirms/disputes your recorded match
-• Your ranking changes after confirmed matches
-• Achievement unlocks (win streaks, milestones)
+• Someone recorded a match you played in
+• Your ranking changes after match recordings
 
-📊 Club Activity
-• New members join your clubs
-• Club announcements from admins
-• Weekly activity summaries
 ```
 
 #### Club-Related Notifications
@@ -32,10 +26,6 @@ Complete notification system covering in-app alerts, badges, and user engagement
 • Member warning notifications
 • Community reports processed
 • Club milestone achievements
-
-🔔 Social Notifications
-• Friend requests and connections
-• Tagged in match comments/notes
 ```
 
 ### Step 2: Notification Display Patterns
@@ -52,8 +42,8 @@ Today
 └─────────────────────────────────────────────────────┘
 
 ┌─────────────────────────────────────────────────────┐
-│ ✅ Match Confirmed with Mike Chen                    │
-│ Your singles win is now official! Rank: #3 → #2     │
+│ 📊 Ranking Updated                                   │
+│ Your singles win moved you up! Rank: #3 → #2        │
 │ 1 hour ago                                    [View] │
 └─────────────────────────────────────────────────────┘
 
@@ -64,24 +54,8 @@ Yesterday
 │ Yesterday 6:30 PM                    [I'm Interested]│
 └─────────────────────────────────────────────────────┘
 
-┌─────────────────────────────────────────────────────┐
-│ 👋 New member joined Riverside Tennis Club          │
-│ Tom Davis joined your club                          │
-│ Yesterday 2:15 PM                             [View] │
-└─────────────────────────────────────────────────────┘
 ```
 
-#### Notification Badges (Tab Icons)
-```
-Club Tab: 🎾 (3)  ← 3 unread notifications
-Profile Tab: 👤   ← No badge when no notifications
-
-Badge Counts Include:
-• Unread challenges
-• Unread "Looking to Play" responses  
-• Community warnings and reports
-• Educational notifications
-```
 
 ### Step 3: Contextual Notification Handling
 
@@ -92,30 +66,25 @@ Badge Counts Include:
 Direct Actions in Notification:
 [Decline] → Shows decline reason modal
 [Accept] → Immediately confirms match
-[View] → Opens full challenge details
 
 After Action:
 ✅ Notification marked as read
-🔄 Badge count updates
 📱 Opponent gets response notification
 ```
 
 #### Match Recording Notifications
 ```
-🎾 Match Confirmation Request
+🎾 Match Recorded
 
 Tom Davis recorded a match result:
 Singles - You lost 4-6, 6-7
 
-Actions:
-[Dispute] → Opens dispute resolution flow
-[Confirm] → Confirms match, updates rankings
-[View Details] → Shows full match information
+Rankings have been updated automatically.
 
-Post-Confirmation:
-📊 Rankings updated in real-time
-🏆 Achievement check (win streaks, etc.)
-📈 Statistics automatically recalculated
+Actions:
+[View Match] → Shows full match details
+[Edit Details] → Modify match information if needed
+
 ```
 
 ### Step 4: Notification Preferences
@@ -129,120 +98,31 @@ Notifications
 
 Get notified about:
 • New challenges and match invitations
-• Match confirmations and updates  
-• Community warnings and messages
+• Match recordings and ranking updates
 
 [Toggle: ON]
 
 Uses system sound and vibration settings.
 ```
 
-### Step 5: Batch Notification Management
 
-#### Mark Multiple as Read
-```
-🔔 Notifications (8 unread)              [Select Multiple]
-
-Select notifications:
-☑️ Challenge from Sarah Wilson
-☐ Match confirmed with Mike Chen  
-☑️ Lisa looking to play doubles
-☐ New member joined club
-☑️ Weekly club summary
-
-Selected (3)  [Mark as Read]  [Delete]  [Cancel]
-```
-
-#### Smart Notification Grouping
-```
-🔔 Notifications
-
-📊 Riverside Tennis Club (4)
-• 2 new challenges
-• 1 looking to play post  
-• 1 new member
-
-🏆 Match Results (2)
-• Mike Chen confirmed your win
-• Sarah Wilson disputed score
-
-📊 Community Reports (1) 
-• 1 educational warning sent
-```
-
-## Flow: Notification Response Patterns
-
-### Quick Actions from Notifications
-```
-Notification appears → User can:
-
-1. ⚡ Quick Action (Accept/Decline/Confirm)
-   • Immediate response without leaving current screen
-   • Updates badge counts instantly
-   • Sends response to other user
-
-2. 👁️ View Details  
-   • Opens relevant screen (challenge details, match form, etc.)
-   • Preserves notification context
-   • Allows more complex responses
-
-3. 🕐 Delay Action
-   • Swipe to dismiss temporarily  
-   • Notification returns to list
-   • Badge count remains until action taken
-
-4. ❌ Dismiss Permanently
-   • Mark as read without action
-   • Removes from notification list
-   • Badge count decreases
-```
-
-### Notification-to-Action Flows
-```
-Challenge Notification →
-├── Accept → Match Confirmed Flow
-├── Decline → Decline Reason Flow  
-└── View → Challenge Details Screen
-
-Match Confirmation →
-├── Confirm → Rankings Update Flow
-├── Dispute → Dispute Resolution Flow
-└── View → Match Details Screen
-
-Looking to Play Response →
-├── I'm Interested → Contact Sharing Flow
-├── View Post → Match Invitation Details
-└── Dismiss → Remove from notifications
-
-Community Warning →  
-├── View Details → Warning Information Flow
-├── Guidelines → Community Rules Screen
-└── Appeal → Contact Support Flow
-```
 
 ## Key Features
 
-**Real-Time Updates:**
-- Instant notification delivery
-- Live badge count updates
-- Contextual action responses
+**Simple Notification List:**
+- Notifications appear in Club Tab when opened
+- No badges or counters
+- Clean, actionable list
 
-**Smart Batching:**
-- Group related notifications
-- Bulk action capabilities
-- Priority-based ordering
+**Tennis-Focused Actions:**
+- Accept/Decline challenges directly
+- View and edit match recordings
+- Simple notification dismissal
 
-**Flexible Response:**
-- Quick actions for common tasks
-- Detailed views for complex decisions
-- Dismissal options for less important items
-
-**User Control:**
-- Granular notification preferences
-- Sound and vibration settings
-- Complete disable options per category
+**Basic Settings:**
+- Single on/off toggle for all notifications
+- Uses system sound and vibration settings
 
 **Offline Support:**
 - Queue notifications while offline
-- Sync and deliver when reconnected
-- No duplicate notifications on sync
+- Sync when reconnected

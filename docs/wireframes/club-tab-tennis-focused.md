@@ -16,11 +16,6 @@ My Clubs (2)
 │ 24 members • 🔴 1 new invitation        │
 └─────────────────────────────────────────┘
 
-Recent Activity
-• Sarah posted: Looking for singles tomorrow
-• You won vs Mike Chen - 6-4, 6-2
-• 3 new match invitations this week
-
 Discover Clubs Near You
 ┌─────────────────────────────────────────┐
 │ 🎾 City Park Tennis            2.1 mi   │
@@ -37,6 +32,5 @@ Discover Clubs Near You
 ## Tennis-First Priority Order:
 1. **Quick Actions** - Instant access to core tennis activities
 2. **My Clubs** - With activity indicators (new invitations)  
-3. **Recent Activity** - Latest tennis-related updates
-4. **Discover Clubs** - Finding new tennis communities
-5. **Create Club** - Administrative function (bottom)
+3. **Discover Clubs** - Finding new tennis communities
+4. **Create Club** - Administrative function (bottom)

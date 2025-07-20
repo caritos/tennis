@@ -1,7 +1,7 @@
 # Record Match Form (Updated)
 
 ```
-< Back                 Record Match               [Save]
+< Back                 Record Match
 
 Match Type
 ( ) Singles    (•) Doubles

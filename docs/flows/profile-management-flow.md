@@ -38,15 +38,14 @@ Club Memberships
                                   [View Clubs]
 
 Settings
-> Privacy Controls  
 > Notifications
-> Help & Support
+> About
 > Sign Out
 ```
 
 ### Step 3: Edit Profile Information
 ```
-< Back                Edit Profile                   [Save]
+< Back                Edit Profile
 
 Basic Information
 Full Name
@@ -61,23 +60,9 @@ Phone: (555) 123-4567                        [Verified]
                         [Cancel]    [Save Changes]
 ```
 
-### Step 4: Privacy Controls
+### Step 4: Notification Settings
 ```
-< Back              Privacy Settings                [Save]
-
-Basic Settings
-☑️ Allow other players to find me in club searches
-☑️ Allow anonymous data for app improvements
-
-Note: Phone numbers shared automatically after matches
-Note: All match details visible to participants only
-
-                        [Cancel]    [Save Settings]
-```
-
-### Step 5: Notification Settings
-```
-< Back           Notification Settings              [Save]
+< Back           Notification Settings
 
 🔔 Notification Settings
 
@@ -88,8 +73,7 @@ Notifications
 
 Get notified about:
 • New challenges and match invitations
-• Match updates and community warnings
-• Club activity and announcements
+• Match recordings and ranking updates
 
 Uses system sound and vibration settings.
 
@@ -142,76 +126,37 @@ Rank: #8 of 24 members • 490 pts
 Record: 1-3 overall
 Recent: Lost last 2 matches
 
-Monthly Trends
-📊 [Chart showing matches per month]
-📈 [Chart showing points over time]
-
 Playing Patterns
 Most Active Day: Saturday (6 matches)
 Common Opponents: Sarah Wilson (3 matches)
-
-Achievements
-🏆 First Win (October 2024)
-🎯 5-Match Milestone (November 2024)
-🔥 3-Match Win Streak (Current)
 
 Match History Export
 [📊 Export to CSV]  [📱 Share Statistics]
 ```
 
-## Flow: Profile Privacy Scenarios
-
-### Scenario 1: Private User
-```
-Privacy Settings Selected:
-❌ Don't allow discovery in searches
-
-Result in Club Views:
-[👤] John Smith
-#3 • 1,840 pts
-[Challenge]
-
-Other members see:
-• Name and ranking only
-• Can still challenge and play
-• Phone shared automatically after matches
-```
-
-### Scenario 2: Public User  
-```
-Privacy Settings Selected:
-✅ Allow discovery in searches
-
-Result in Club Views:
-[👤] John Smith  
-#3 • 1,840 pts
-[Challenge]
-
-Same view - minimal profile approach
-```
 
 ## Key Features
 
-**Simple Privacy:**
-- Basic search discovery control only
-- Automatic phone sharing after matches
-- Minimal settings for ease of use
+**Basic Profile Management:**
+- Edit name and contact information
+- View tennis statistics across all clubs
+- Simple notification settings
 
-**Comprehensive Statistics:**
-- Cross-club performance tracking
-- Trend analysis and insights
-- Achievement system integration
+**Tennis Statistics:**
+- Overall match record and win rates
+- Performance breakdown by club
+- Recent match history
 
-**Automatic Contact Management:**
-- Phone numbers shared automatically after match confirmations
-- Simple, friction-free communication setup
+**Account Management:**
+- Email and password changes
+- Connected social accounts (Google, Apple)
+- Club creation management
 
-**Account Security:**
-- Multi-factor authentication options
-- Connected account management
-- Data export and deletion rights
+**GDPR Compliance:**
+- Data export capabilities
+- Account deletion options
+- Transparent data management
 
-**Progressive Enhancement:**
-- Basic profile for casual users
-- Detailed stats for competitive players
-- Club management tools for owners
+**Contact Sharing:**
+- Automatic phone sharing after match confirmations
+- Simple, friction-free communication

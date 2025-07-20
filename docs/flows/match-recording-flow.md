@@ -16,7 +16,7 @@ Entry Points:
 
 ### Step 2: Match Recording Form
 ```
-< Back                 Record Match               [Save]
+< Back                 Record Match
 
 Match Type
 (•) Singles    ( ) Doubles

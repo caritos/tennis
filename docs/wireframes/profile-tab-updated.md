@@ -4,7 +4,7 @@
 John Smith                              [Edit]
 
 Tennis Stats
-Singles: 1,840 pts          Doubles: 890 pts
+Total Points: 2,730         Win Rate: 67% (10-5)
 Total Matches: 15           Sets Won: 22/30
 Best Club Ranking: #3       Active Since: Oct 2024
 
@@ -23,8 +23,8 @@ Club Memberships
                                   [View Clubs]
 
 Settings
-> Privacy Controls
-> Help & Support
+> Notifications
+> About
 > Sign Out
 ```
 

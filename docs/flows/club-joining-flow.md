@@ -92,7 +92,6 @@ Welcome to the club! You can now:
 ✅ Post "Looking to Play" invitations  
 ✅ Challenge other members directly
 ✅ Record matches and build your ranking
-✅ Connect with other members
 
 Ready to play your first match?
 
@@ -115,20 +114,12 @@ My Clubs (2)
 │ 24 members • Rank: #8 • 1 looking to play          │
 └─────────────────────────────────────────────────────┘
 
-Overall Tennis Stats:
-Singles: 68% (15-7) • Doubles: 55% (6-5)
-Total Matches: 22 • Active in 2 clubs
-
                         [Join Another Club]
 ```
 
 ### Step 2: Club-Specific Engagement
 ```
 🎾 Riverside Tennis Club
-
-Your Club Stats:
-Rank: #3 (67% - 10-5 record)
-Last Match: Beat Mike Chen 6-4, 6-2
 
 Club Activity:
 🔴 2 new match invitations

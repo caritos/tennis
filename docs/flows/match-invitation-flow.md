@@ -57,11 +57,6 @@ Add a message (Optional)
 │ I'm also around 4.0 level. What time works?    │
 └─────────────────────────────────────────────────┘
 
-Your Contact Preference
-(•) Share phone number: (555) 123-4567
-( ) In-app messages only
-( ) Share after match is confirmed
-
                         [Cancel]    [Send Interest]
 ```
 
@@ -128,9 +123,10 @@ Players will be notified when we have 4 confirmed.
 
 Doubles Match
 📅 Saturday, 10:00 AM
-👥 Team 1: Sarah Wilson & Mike Chen
-👥 Team 2: Tom Davis & Lisa Park
+👥 Sarah Wilson, Mike Chen, Tom Davis, Lisa Park
 🎾 Riverside Tennis Club
+
+Teams will be decided when you meet up.
 
 Contact Info:
 Sarah: (555) 111-2222 (Creator)
@@ -153,7 +149,7 @@ behavior can be reported by other players.
 
 **Smart Matching**
 - Shows player stats to help with level matching
-- Contact sharing based on user preferences
+- Automatic contact sharing after confirmation
 
 **Progressive Disclosure**
 - Simple initial post, detailed confirmation flow
@@ -164,6 +160,5 @@ behavior can be reported by other players.
 - Status updates for all involved players
 
 **Contact Management**
-- User-controlled contact sharing preferences
-- Automatic sharing after confirmation
+- Automatic phone number sharing after match confirmation
 - Group messaging for doubles matches

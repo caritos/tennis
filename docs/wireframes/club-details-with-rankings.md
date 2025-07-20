@@ -6,6 +6,18 @@
 Record Match
 [+ Record Match]
 
+Challenges
+┌─────────────────────────────────────────┐
+│ Challenge from Sarah Wilson             │
+│ Singles tomorrow - "Want a good match?" │
+│                      [Decline] [Accept] │
+└─────────────────────────────────────────┘
+┌─────────────────────────────────────────┐
+│ Waiting for Lisa Park's response        │
+│ Doubles this weekend                    │
+│ Sent 2 hours ago                        │
+└─────────────────────────────────────────┘
+
 Looking to Play
 ┌─────────────────────────────────────────┐
 │ Singles - Tomorrow 6pm                  │

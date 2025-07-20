@@ -12,7 +12,7 @@ Complete user journey from first app launch to playing their first match.
 │                    🎾 Tennis Club                   │
 │                                                     │
 │              Find players. Track matches.           │
-│              Connect with tennis clubs.             │
+│              Connect with players in your area.     │
 │                                                     │
 │              [Get Started]                          │
 │                                                     │
@@ -87,7 +87,6 @@ Great! Here are tennis clubs near you:
 
 Club Details:
 • Mix of recreational and competitive players
-• Weekly social events
 • 12 active members looking for matches
 
                 [Cancel]    [Join Club]
@@ -121,9 +120,10 @@ Here are the best ways to find a match:
 3. ⚡ Challenge Someone - Direct invitation to a player
 
 Want to record a past match first to establish 
-your skill level?
+your skill level? You can also claim any matches 
+where you played as a guest before joining.
 
-        [Browse Members]    [Looking to Play]    [Record Past Match]
+        [Browse Members]    [Looking to Play]    [Claim Past Matches]
 ```
 
 ## Key Onboarding Decisions
