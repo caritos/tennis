@@ -2,42 +2,102 @@
 
 ## High Priority Tasks (MVP Core)
 
+### iOS Simulator Testing Setup
+- [x] Install Xcode and iOS Simulator
+- [x] Configure iPhone 15 simulator for testing
+- [x] Test app launches correctly in simulator
+- [x] Verify hot reload works for development
+- [ ] Test tennis app navigation on simulator
+- [ ] Verify location permissions for club discovery
+- [ ] Test form inputs with simulator keyboard
+- [ ] Test offline functionality in airplane mode
+- [ ] Verify tennis scoring calculations display correctly
+- [ ] Test challenge and notification flows on simulator
+
 ### Navigation & App Structure
-- [ ] Create 2-tab bottom navigation (Club Tab, Profile Tab)
-- [ ] Implement Club Tab with My Clubs and Discover Clubs sections
-- [ ] Create Profile Tab with tennis stats and settings
-- [ ] Update app branding to "Tennis Club" theme
+- [x] Install @react-navigation/bottom-tabs dependency
+- [ ] Create basic 2-tab bottom navigation structure
+- [ ] Add Club Tab with placeholder content
+- [ ] Add Profile Tab with placeholder content
+- [ ] Style tab bar with tennis theme colors
+- [ ] Add tab icons (🎾 for Club, 👤 for Profile)
+- [ ] Create Club Tab header with "My Clubs" title
+- [ ] Add "My Clubs" section placeholder in Club Tab
+- [ ] Add "Discover Clubs" section placeholder in Club Tab
+- [ ] Create Profile Tab header with user name
+- [ ] Add tennis stats placeholder in Profile Tab
+- [ ] Add settings section placeholder in Profile Tab
+- [ ] Update app.json with "Tennis Club" name and theme
 
 ### Core Database & Authentication
-- [ ] Install and configure SQLite for local data storage
-- [ ] Design complete database schema (users, clubs, matches, invitations, rankings)
-- [ ] Set up Supabase project with mirrored schema
-- [ ] Install and configure authentication (email, Apple, Google Sign In)
-- [ ] Create Supabase client singleton with TypeScript
-- [ ] Enable Row Level Security (RLS) on all tables
+- [ ] Install expo-sqlite dependency
+- [ ] Create SQLite database initialization function
+- [ ] Design users table schema (id, name, email, phone, created_at)
+- [ ] Design clubs table schema (id, name, description, geographic_area, zip_code)
+- [ ] Design matches table schema (id, player1_id, player2_id, scores, date, club_id)
+- [ ] Design club_members table schema (club_id, user_id, joined_at)
+- [ ] Create SQLite migration helper functions
+- [ ] Set up new Supabase project in dashboard
+- [ ] Create users table in Supabase with same schema as SQLite
+- [ ] Create clubs table in Supabase with same schema as SQLite
+- [ ] Create matches table in Supabase with same schema as SQLite
+- [ ] Create club_members table in Supabase with same schema as SQLite
+- [ ] Install @supabase/supabase-js dependency
+- [ ] Install @react-native-async-storage/async-storage for auth
+- [ ] Create Supabase client configuration file
+- [ ] Set up email/password authentication in Supabase
+- [ ] Configure Apple Sign In in Supabase dashboard
+- [ ] Configure Google Sign In in Supabase dashboard
+- [ ] Create basic RLS policy for users table (users can only see their own data)
+- [ ] Create basic RLS policy for clubs table (all authenticated users can read)
+- [ ] Create basic RLS policy for matches table (participants can read/write)
+- [ ] Create basic RLS policy for club_members table (members can read)
 
 ### Club Discovery & Management
-- [ ] Install expo-location for user location services
-- [ ] Create club creation flow (any player can create)
-- [ ] Implement auto-join for all clubs (no approval needed)
-- [ ] Implement distance calculation and location-based club discovery
-- [ ] Store latitude/longitude coordinates for clubs
-- [ ] Create club card component showing distance
+- [ ] Install expo-location dependency
+- [ ] Request location permissions in app.json
+- [ ] Create basic club creation form component
+- [ ] Add club name input field to creation form
+- [ ] Add club description input field to creation form
+- [ ] Add geographic area input field to creation form
+- [ ] Add zip code input field to creation form
+- [ ] Create club creation form submission logic
+- [ ] Implement auto-join when creating a club
+- [ ] Create function to calculate distance between coordinates
+- [ ] Add location-based club discovery query
+- [ ] Create club card component with basic styling
+- [ ] Add distance display to club card component
+- [ ] Add member count display to club card component
+- [ ] Add join button to club card component
 
 ### Match Recording System
-- [ ] Create basic match recording form (singles/doubles, score, date)
-- [ ] Add set-by-set score tracking with + Add Set button
-- [ ] Support tiebreak notation with parentheses format (7-6 (7-3))
-- [ ] Add unregistered opponent option to match recording
-- [ ] Store matches locally in SQLite first, sync to Supabase
-- [ ] Implement tennis score validation (valid scores only)
+- [ ] Create basic match recording form component
+- [ ] Add match type radio buttons (Singles/Doubles)
+- [ ] Add player selection dropdown for opponent
+- [ ] Add date picker for match date
+- [ ] Create set score input component (two number inputs)
+- [ ] Add "Add Set" button functionality
+- [ ] Validate tennis set scores (0-7, special cases for 6-6, 7-5, etc.)
+- [ ] Add tiebreak score input for 7-6 sets
+- [ ] Format tiebreak display as "7-6 (7-3)"
+- [ ] Add "Add Unregistered Opponent" option to player selection
+- [ ] Create unregistered opponent name input field
+- [ ] Create match save function for SQLite
+- [ ] Create match sync function for Supabase
+- [ ] Implement offline queue for match syncing
 
 ### Club Member Rankings
-- [ ] Create club member ranking system based on win percentage
-- [ ] Display rankings with visual indicators (🏆🥈🥉) for top 3 players
-- [ ] Calculate rankings based on matches within each club only
-- [ ] Implement horizontal scroll for members list with View All button
-- [ ] Create dedicated View All Members screen with search
+- [ ] Create ranking calculation function (wins/total matches)
+- [ ] Create unified points system (singles + doubles combined)
+- [ ] Create member ranking list component
+- [ ] Add trophy indicators (🏆🥈🥉) for top 3 players
+- [ ] Add provisional "P" badge for players with <5 matches
+- [ ] Filter rankings by club membership
+- [ ] Create horizontal scroll container for member list
+- [ ] Add "View All" button to member list
+- [ ] Create dedicated View All Members screen
+- [ ] Add search functionality to View All Members screen
+- [ ] Add challenge buttons to member ranking cards
 
 
 ### "Looking to Play" System
@@ -69,6 +129,10 @@
 
 ### UI Components & Design System
 - [ ] Define app color theme and design system
+- [ ] Create shared FormHeader component (< Back Title pattern)
+- [ ] Create PlayerCard component for rankings and member lists
+- [ ] Create InvitationCard component for challenges and "Looking to Play"
+- [ ] Create ClubCard component for club discovery and lists
 - [ ] Create MatchScoreDisplay component with tournament-style layout
 - [ ] Build ScoreBox component with themed styling
 - [ ] Implement winner checkmark indicator
