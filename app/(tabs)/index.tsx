@@ -12,7 +12,7 @@ import { Club } from '@/lib/supabase';
 import { useColorScheme } from '@/hooks/useColorScheme';
 import { Colors } from '@/constants/Colors';
 import { useLocation } from '@/hooks/useLocation';
-import clubService from '@/services/clubService';
+import clubService, { joinClub, getJoinedClubIds } from '@/services/clubService';
 import { seedSampleClubs } from '@/utils/seedData';
 
 export default function ClubScreen() {
@@ -27,6 +27,10 @@ export default function ClubScreen() {
   const [error, setError] = useState<string | null>(null);
   const [distances, setDistances] = useState<Map<string, number>>(new Map());
   const [joinedClubIds, setJoinedClubIds] = useState<string[]>([]);
+  const [joiningClubId, setJoiningClubId] = useState<string | null>(null);
+
+  // TODO: Replace with actual user authentication
+  const MOCK_USER_ID = 'current-user-123';
 
   const loadClubs = async (isRefresh = false) => {
     try {
@@ -85,10 +89,18 @@ export default function ClubScreen() {
         setDistances(newDistances);
       }
 
-      // Load user's clubs (mock for now)
-      // TODO: Replace with actual user clubs when auth is implemented
-      setMyClubs([]);
-      setJoinedClubIds([]);
+      // Load user's clubs and joined club IDs
+      try {
+        const userJoinedIds = await getJoinedClubIds(MOCK_USER_ID);
+        setJoinedClubIds(userJoinedIds);
+
+        const userClubs = await clubService.getUserClubs(MOCK_USER_ID);
+        setMyClubs(userClubs);
+      } catch (error) {
+        console.warn('Failed to load user clubs:', error);
+        setMyClubs([]);
+        setJoinedClubIds([]);
+      }
 
     } catch (err) {
       console.error('Failed to load clubs:', err);
@@ -107,6 +119,40 @@ export default function ClubScreen() {
   const handleClubPress = (club: Club) => {
     console.log('Club selected:', club.name);
     // TODO: Navigate to club details screen
+  };
+
+  const handleJoinClub = async (club: Club) => {
+    if (joiningClubId === club.id) {
+      return; // Prevent double-tap
+    }
+
+    setJoiningClubId(club.id);
+    setError(null);
+
+    try {
+      await joinClub(club.id, MOCK_USER_ID);
+      
+      // Update local state immediately for optimistic UI
+      setJoinedClubIds(prev => [...prev, club.id]);
+      setMyClubs(prev => [...prev, club]);
+      
+      console.log(`Successfully joined ${club.name}`);
+      
+      // Show success feedback (could be a toast notification in the future)
+      // For now, just log it
+    } catch (error: any) {
+      console.error('Failed to join club:', error);
+      
+      if (error.message === 'Already a member of this club') {
+        // Update UI state to reflect actual membership
+        setJoinedClubIds(prev => [...prev, club.id]);
+        setMyClubs(prev => [...prev, club]);
+      } else {
+        setError(`Failed to join ${club.name}. ${error.message}`);
+      }
+    } finally {
+      setJoiningClubId(null);
+    }
   };
 
   const handleCreateClub = () => {
@@ -144,6 +190,7 @@ export default function ClubScreen() {
                   key={club.id}
                   club={club}
                   onPress={handleClubPress}
+                  onJoin={handleJoinClub}
                   distance={distances?.get(club.id)}
                   isJoined={joinedClubIds.includes(club.id)}
                 />
@@ -181,17 +228,20 @@ export default function ClubScreen() {
                   </ThemedText>
                 </TouchableOpacity>
               </ThemedView>
-            ) : clubs.length === 0 ? (
+            ) : clubs.filter(club => !joinedClubIds.includes(club.id)).length === 0 ? (
               <ThemedView style={styles.emptyContainer}>
                 <ThemedText type="title" style={styles.emptyTitle}>
-                  No clubs found
+                  {clubs.length === 0 ? 'No clubs found' : 'All nearby clubs joined!'}
                 </ThemedText>
                 <ThemedText style={[styles.emptySubtitle, { color: colors.tabIconDefault }]}>
-                  Be the first to create a tennis club in your area!
+                  {clubs.length === 0 
+                    ? 'Be the first to create a tennis club in your area!' 
+                    : 'Create a new club or check back later for more clubs.'}
                 </ThemedText>
               </ThemedView>
             ) : (
               clubs
+                .filter(club => !joinedClubIds.includes(club.id)) // Only show clubs user hasn't joined
                 .sort((a, b) => {
                   if (!distances || distances.size === 0) return 0;
                   const distanceA = distances.get(a.id) ?? Infinity;
@@ -203,8 +253,9 @@ export default function ClubScreen() {
                     key={club.id}
                     club={club}
                     onPress={handleClubPress}
+                    onJoin={handleJoinClub}
                     distance={distances?.get(club.id)}
-                    isJoined={joinedClubIds.includes(club.id)}
+                    isJoined={false} // These are always unjoined clubs now
                   />
                 ))
             )}

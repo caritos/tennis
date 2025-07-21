@@ -15,12 +15,20 @@ export async function seedSampleClubs(): Promise<void> {
     console.log('Clearing existing data...');
     // Temporarily disable foreign key constraints
     await db.runAsync('PRAGMA foreign_keys = OFF');
+    await db.runAsync('DELETE FROM club_members');
     await db.runAsync('DELETE FROM clubs');
     await db.runAsync('DELETE FROM users');
     console.log('Cleared existing data');
 
     // First, create sample users (needed for foreign key constraints)
     const sampleUsers = [
+      {
+        id: 'current-user-123',
+        full_name: 'Test User',
+        email: 'testuser@example.com',
+        phone: '+1234567899',
+        role: 'player',
+      },
       {
         id: 'sample_user_1',
         full_name: 'Alice Johnson',

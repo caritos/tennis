@@ -1,0 +1,263 @@
+import React, { useState } from 'react';
+import { View, StyleSheet } from 'react-native';
+import { router } from 'expo-router';
+import { ThemedText } from '@/components/ThemedText';
+import { ThemedView } from '@/components/ThemedView';
+import { TouchableOpacity } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { Ionicons } from '@expo/vector-icons';
+import { useColorScheme } from '@/hooks/useColorScheme';
+import { Colors } from '@/constants/Colors';
+
+export default function SignInPage() {
+  const [isLoading, setIsLoading] = useState(false);
+  const colorScheme = useColorScheme();
+  const colors = Colors[colorScheme ?? 'light'];
+
+  const handleBack = () => {
+    console.log('Back pressed - navigating back');
+    router.back();
+  };
+
+  const handleEmailSignIn = async () => {
+    console.log('Email sign in pressed');
+    setIsLoading(true);
+    
+    try {
+      // TODO: Navigate to email sign in form
+      // For now, simulate success and go to main app
+      setTimeout(() => {
+        router.replace('/(tabs)');
+      }, 1000);
+    } catch (error) {
+      console.error('Email sign in error:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleAppleSignIn = async () => {
+    console.log('Apple sign in pressed');
+    setIsLoading(true);
+    
+    try {
+      // TODO: Implement Apple Sign In
+      // For now, simulate success and go to main app
+      setTimeout(() => {
+        router.replace('/(tabs)');
+      }, 1000);
+    } catch (error) {
+      console.error('Apple sign in error:', error);
+      setIsLoading(false);
+    }
+  };
+
+  const handleGoogleSignIn = async () => {
+    console.log('Google sign in pressed');
+    setIsLoading(true);
+    
+    try {
+      // TODO: Implement Google Sign In
+      // For now, simulate success and go to main app
+      setTimeout(() => {
+        router.replace('/(tabs)');
+      }, 1000);
+    } catch (error) {
+      console.error('Google sign in error:', error);
+      setIsLoading(false);
+    }
+  };
+
+  const handleSignUpPress = () => {
+    console.log('Sign up pressed - navigating to sign up');
+    router.push('/signup');
+  };
+
+  return (
+    <ThemedView 
+      style={[styles.container, { backgroundColor: colors.background }]}
+    >
+      <SafeAreaView style={styles.safeArea}>
+        {/* Header */}
+        <View style={styles.header}>
+          <TouchableOpacity
+            style={styles.backButton}
+            onPress={handleBack}
+            accessibilityRole="button"
+            accessibilityLabel="Back"
+          >
+            <Ionicons 
+              name="chevron-back" 
+              size={24} 
+              color={colors.text} 
+            />
+          </TouchableOpacity>
+          
+          <ThemedText type="title" style={styles.headerTitle}>
+            Sign In
+          </ThemedText>
+          
+          <View style={styles.headerSpacer} />
+        </View>
+
+        <ThemedView style={styles.content}>
+          {/* App Title and Message */}
+          <View style={styles.titleSection}>
+            <ThemedText type="title" style={styles.appTitle}>
+              🎾 Tennis Club
+            </ThemedText>
+            <ThemedText type="default" style={[styles.subtitle, { color: colors.tabIconDefault }]}>
+              Welcome back!
+            </ThemedText>
+          </View>
+
+          {/* Sign In Methods */}
+          <View style={styles.signInMethods}>
+            <TouchableOpacity
+              style={[
+                styles.signInButton,
+                { backgroundColor: colors.background, borderColor: colors.tabIconDefault }
+              ]}
+              onPress={handleEmailSignIn}
+              disabled={isLoading}
+            >
+              <ThemedText style={styles.signInButtonText}>
+                📧 Continue with Email
+              </ThemedText>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={[
+                styles.signInButton,
+                { backgroundColor: colors.background, borderColor: colors.tabIconDefault }
+              ]}
+              onPress={handleAppleSignIn}
+              disabled={isLoading}
+            >
+              <ThemedText style={styles.signInButtonText}>
+                🍎 Continue with Apple
+              </ThemedText>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={[
+                styles.signInButton,
+                { backgroundColor: colors.background, borderColor: colors.tabIconDefault }
+              ]}
+              onPress={handleGoogleSignIn}
+              disabled={isLoading}
+            >
+              <ThemedText style={styles.signInButtonText}>
+                📱 Continue with Google
+              </ThemedText>
+            </TouchableOpacity>
+          </View>
+
+          {/* Sign Up Link */}
+          <View style={styles.signUpSection}>
+            <ThemedText style={[styles.signUpPrompt, { color: colors.tabIconDefault }]}>
+              Don't have an account?{' '}
+            </ThemedText>
+            <TouchableOpacity
+              onPress={handleSignUpPress}
+              disabled={isLoading}
+            >
+              <ThemedText style={[styles.signUpLink, { color: colors.tint }]}>
+                Sign Up
+              </ThemedText>
+            </TouchableOpacity>
+          </View>
+
+          {/* Footer Links */}
+          <View style={styles.footer}>
+            <ThemedText style={[styles.footerText, { color: colors.tabIconDefault }]}>
+              Terms of Service | Privacy Policy
+            </ThemedText>
+          </View>
+        </ThemedView>
+      </SafeAreaView>
+    </ThemedView>
+  );
+}
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+  },
+  safeArea: {
+    flex: 1,
+  },
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: '#e0e0e0',
+  },
+  backButton: {
+    padding: 8,
+  },
+  headerTitle: {
+    flex: 1,
+    textAlign: 'center',
+    fontSize: 18,
+    fontWeight: '600',
+  },
+  headerSpacer: {
+    width: 40,
+  },
+  content: {
+    flex: 1,
+    paddingHorizontal: 32,
+    paddingVertical: 40,
+  },
+  titleSection: {
+    alignItems: 'center',
+    marginBottom: 40,
+  },
+  appTitle: {
+    fontSize: 28,
+    fontWeight: 'bold',
+    marginBottom: 8,
+  },
+  subtitle: {
+    fontSize: 16,
+  },
+  signInMethods: {
+    marginBottom: 40,
+  },
+  signInButton: {
+    paddingVertical: 16,
+    paddingHorizontal: 24,
+    borderRadius: 12,
+    borderWidth: 1,
+    marginBottom: 16,
+    alignItems: 'center',
+  },
+  signInButtonText: {
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  signUpSection: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    marginBottom: 40,
+    flexWrap: 'wrap',
+  },
+  signUpPrompt: {
+    fontSize: 16,
+  },
+  signUpLink: {
+    fontSize: 16,
+    fontWeight: '600',
+    textDecorationLine: 'underline',
+  },
+  footer: {
+    alignItems: 'center',
+    marginTop: 'auto',
+  },
+  footerText: {
+    fontSize: 14,
+  },
+});

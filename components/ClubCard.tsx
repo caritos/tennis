@@ -9,11 +9,12 @@ import { Club } from '@/lib/supabase';
 interface ClubCardProps {
   club: Club;
   onPress: (club: Club) => void;
+  onJoin?: (club: Club) => void;
   distance?: number;
   isJoined?: boolean;
 }
 
-export function ClubCard({ club, onPress, distance, isJoined }: ClubCardProps) {
+export function ClubCard({ club, onPress, onJoin, distance, isJoined }: ClubCardProps) {
   const colorScheme = useColorScheme();
   const colors = Colors[colorScheme ?? 'light'];
 
@@ -53,8 +54,14 @@ export function ClubCard({ club, onPress, distance, isJoined }: ClubCardProps) {
                 {formatDistance(distance)}
               </ThemedText>
             )}
-            {!isJoined && (
-              <TouchableOpacity style={[styles.joinButton, { backgroundColor: colors.tint }]}>
+            {!isJoined && onJoin && (
+              <TouchableOpacity 
+                style={[styles.joinButton, { backgroundColor: colors.tint }]}
+                onPress={() => onJoin(club)}
+                accessibilityRole="button"
+                accessibilityLabel={`Join ${club.name}`}
+                accessibilityHint="Tap to join this tennis club"
+              >
                 <ThemedText style={styles.joinButtonText}>Join</ThemedText>
               </TouchableOpacity>
             )}
@@ -68,8 +75,8 @@ export function ClubCard({ club, onPress, distance, isJoined }: ClubCardProps) {
           </ThemedText>
           {/* Activity indicators based on club type */}
           {isJoined && (
-            <ThemedText style={styles.activityIndicator}>
-              🔴 2 new invitations
+            <ThemedText style={[styles.activityIndicator, { color: colors.tabIconDefault }]}>
+              • Member since recently
             </ThemedText>
           )}
           {!isJoined && (

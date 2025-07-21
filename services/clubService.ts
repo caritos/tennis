@@ -79,23 +79,103 @@ export class ClubService {
   }
 
   async joinClub(clubId: string, userId: string): Promise<void> {
+    // Input validation
+    if (!clubId || typeof clubId !== 'string' || clubId.trim() === '') {
+      throw new Error('Valid club ID is required');
+    }
+    if (!userId || typeof userId !== 'string' || userId.trim() === '') {
+      throw new Error('Valid user ID is required');
+    }
+
     const db = await this.getDatabase();
 
     try {
-      // Insert into local database first
+      // Insert into local database first (offline-first)
       await db.runAsync(
         `INSERT INTO club_members (club_id, user_id) VALUES (?, ?)`,
         [clubId, userId]
       );
 
-      // Sync to Supabase
-      await this.syncClubMemberToSupabase(clubId, userId);
+      // Sync to Supabase in background (don't block on errors)
+      this.syncClubMemberToSupabase(clubId, userId).catch(error => {
+        console.warn('Failed to sync club membership to Supabase:', error);
+      });
     } catch (error: any) {
       if (error.code === 'SQLITE_CONSTRAINT') {
         throw new Error('Already a member of this club');
       }
       console.error('Failed to join club:', error);
       throw error;
+    }
+  }
+
+  async getJoinedClubIds(userId: string): Promise<string[]> {
+    if (!userId || typeof userId !== 'string' || userId.trim() === '') {
+      return [];
+    }
+
+    const db = await this.getDatabase();
+
+    try {
+      const memberships = await db.getAllAsync(
+        `SELECT club_id FROM club_members WHERE user_id = ?`,
+        [userId]
+      );
+
+      return memberships?.map((m: any) => m.club_id) || [];
+    } catch (error) {
+      console.error('Failed to get joined club IDs:', error);
+      return [];
+    }
+  }
+
+  async getUserClubs(userId: string): Promise<Club[]> {
+    if (!userId || typeof userId !== 'string' || userId.trim() === '') {
+      return [];
+    }
+
+    const db = await this.getDatabase();
+
+    try {
+      const clubs = await db.getAllAsync(
+        `SELECT c.*, 
+                COALESCE(member_counts.memberCount, 0) as memberCount
+         FROM clubs c 
+         INNER JOIN club_members cm ON c.id = cm.club_id 
+         LEFT JOIN (
+           SELECT club_id, COUNT(user_id) as memberCount 
+           FROM club_members 
+           GROUP BY club_id
+         ) member_counts ON c.id = member_counts.club_id
+         WHERE cm.user_id = ?
+         ORDER BY cm.joined_at DESC`,
+        [userId]
+      );
+
+      return clubs || [];
+    } catch (error) {
+      console.error('Failed to get user clubs:', error);
+      return [];
+    }
+  }
+
+  async isClubMember(clubId: string, userId: string): Promise<boolean> {
+    if (!clubId || !userId) {
+      return false;
+    }
+
+    const db = await this.getDatabase();
+
+    try {
+      const membership = await db.getFirstAsync(
+        `SELECT 1 FROM club_members WHERE club_id = ? AND user_id = ?`,
+        [clubId, userId]
+      );
+
+      return membership !== null;
+    } catch (error) {
+      console.error('Failed to check club membership:', error);
+      return false;
     }
   }
 
@@ -140,8 +220,14 @@ export class ClubService {
       console.log('Getting nearby clubs for location:', userLat, userLng);
       const db = await this.getDatabase();
       
-      // Get all clubs first, then calculate distances in JavaScript
-      const clubs = await db.getAllAsync('SELECT * FROM clubs');
+      // Get all clubs with member counts
+      const clubs = await db.getAllAsync(`
+        SELECT c.*, 
+               COALESCE(COUNT(cm.user_id), 0) as memberCount
+        FROM clubs c 
+        LEFT JOIN club_members cm ON c.id = cm.club_id 
+        GROUP BY c.id
+      `);
       console.log('Found clubs in database:', clubs?.length || 0);
       
       if (!clubs || clubs.length === 0) {
@@ -160,7 +246,7 @@ export class ClubService {
           return {
             ...club,
             distance,
-            memberCount: 0, // TODO: Calculate actual member count
+            memberCount: club.memberCount || 0, // Use existing memberCount from database
           };
         })
         .filter((club: any) => club !== null && club.distance <= radiusKm)
@@ -235,6 +321,9 @@ const clubService = new ClubService();
 
 export const createClub = (clubData: CreateClubData) => clubService.createClub(clubData);
 export const joinClub = (clubId: string, userId: string) => clubService.joinClub(clubId, userId);
+export const getJoinedClubIds = (userId: string) => clubService.getJoinedClubIds(userId);
+export const getUserClubs = (userId: string) => clubService.getUserClubs(userId);
+export const isClubMember = (clubId: string, userId: string) => clubService.isClubMember(clubId, userId);
 export const getClubsByLocation = (userLat: number, userLng: number, radiusKm?: number) =>
   clubService.getClubsByLocation(userLat, userLng, radiusKm);
 export const getNearbyClubs = (userLat: number, userLng: number, radiusKm?: number) =>
