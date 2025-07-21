@@ -1,5 +1,6 @@
-import { ScrollView, StyleSheet, View } from 'react-native';
+import { ScrollView, StyleSheet, View, TouchableOpacity } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { router } from 'expo-router';
 
 import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
@@ -9,6 +10,13 @@ import { Colors } from '@/constants/Colors';
 export default function ProfileScreen() {
   const colorScheme = useColorScheme();
   const colors = Colors[colorScheme ?? 'light'];
+
+  const handleSignOut = () => {
+    // TODO: Clear authentication state when context is implemented
+    // TODO: Add UI-based confirmation modal instead of Alert.alert()
+    console.log('Signing out user...');
+    router.replace('/welcome');
+  };
 
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
@@ -49,9 +57,19 @@ export default function ProfileScreen() {
 
         <ThemedView style={styles.section}>
           <ThemedText type="subtitle" style={styles.sectionTitle}>Settings</ThemedText>
-          <ThemedView style={[styles.placeholder, { borderColor: colors.icon }]}>
-            <ThemedText style={styles.placeholderText}>Settings coming soon</ThemedText>
-          </ThemedView>
+          <View style={styles.settingsContainer}>
+            <TouchableOpacity
+              style={[styles.signOutButton, { backgroundColor: colors.tint }]}
+              onPress={handleSignOut}
+              accessibilityRole="button"
+              accessibilityLabel="Sign Out"
+              accessibilityHint="Sign out of your account"
+            >
+              <ThemedText style={styles.signOutButtonText}>
+                Sign Out
+              </ThemedText>
+            </TouchableOpacity>
+          </View>
         </ThemedView>
       </ScrollView>
     </SafeAreaView>
@@ -101,5 +119,20 @@ const styles = StyleSheet.create({
   placeholderSubtext: {
     fontSize: 14,
     opacity: 0.7,
+  },
+  settingsContainer: {
+    paddingVertical: 8,
+  },
+  signOutButton: {
+    paddingVertical: 14,
+    paddingHorizontal: 24,
+    borderRadius: 10,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  signOutButtonText: {
+    color: '#ffffff',
+    fontSize: 16,
+    fontWeight: '600',
   },
 });

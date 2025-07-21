@@ -20,20 +20,8 @@ export default function SignInPage() {
   };
 
   const handleEmailSignIn = async () => {
-    console.log('Email sign in pressed');
-    setIsLoading(true);
-    
-    try {
-      // TODO: Navigate to email sign in form
-      // For now, simulate success and go to main app
-      setTimeout(() => {
-        router.replace('/(tabs)');
-      }, 1000);
-    } catch (error) {
-      console.error('Email sign in error:', error);
-    } finally {
-      setIsLoading(false);
-    }
+    console.log('Email sign in pressed - navigating to email sign in form');
+    router.push('/email-signin');
   };
 
   const handleAppleSignIn = async () => {
