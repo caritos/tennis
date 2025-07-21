@@ -1,0 +1,155 @@
+import React from 'react';
+import { TouchableOpacity, StyleSheet, View } from 'react-native';
+import { ThemedText } from './ThemedText';
+import { ThemedView } from './ThemedView';
+import { Colors } from '@/constants/Colors';
+import { useColorScheme } from '@/hooks/useColorScheme';
+import { Club } from '@/lib/supabase';
+
+interface ClubCardProps {
+  club: Club;
+  onPress: (club: Club) => void;
+  distance?: number;
+  isJoined?: boolean;
+}
+
+export function ClubCard({ club, onPress, distance, isJoined }: ClubCardProps) {
+  const colorScheme = useColorScheme();
+  const colors = Colors[colorScheme ?? 'light'];
+
+  const formatDistance = (distance: number): string => {
+    if (distance < 1) {
+      return `${(distance * 1000).toFixed(0)} m`;
+    }
+    return `${distance.toFixed(1)} mi`;
+  };
+
+  const formatMemberCount = (count: number): string => {
+    return count.toString();
+  };
+
+  const accessibilityLabel = `${club.name}, ${formatMemberCount(club.memberCount || 0)} members${distance ? `, ${formatDistance(distance)} away` : ''}`;
+
+  return (
+    <TouchableOpacity
+      style={[styles.container, { borderColor: colors.tabIconDefault + '30' }]}
+      onPress={() => onPress(club)}
+      accessibilityRole="button"
+      accessibilityLabel={accessibilityLabel}
+      activeOpacity={0.7}
+    >
+      <ThemedView style={styles.content}>
+        {/* First Row: Tennis emoji + Club name + Distance/Join */}
+        <View style={styles.firstRow}>
+          <View style={styles.nameContainer}>
+            <ThemedText style={styles.tennisEmoji}>🎾</ThemedText>
+            <ThemedText type="defaultSemiBold" style={styles.clubName} numberOfLines={1}>
+              {club.name}
+            </ThemedText>
+          </View>
+          <View style={styles.rightContainer}>
+            {distance && (
+              <ThemedText type="default" style={[styles.distance, { color: colors.tabIconDefault }]}>
+                {formatDistance(distance)}
+              </ThemedText>
+            )}
+            {!isJoined && (
+              <TouchableOpacity style={[styles.joinButton, { backgroundColor: colors.tint }]}>
+                <ThemedText style={styles.joinButtonText}>Join</ThemedText>
+              </TouchableOpacity>
+            )}
+          </View>
+        </View>
+
+        {/* Second Row: Member count + Activity indicators */}
+        <View style={styles.secondRow}>
+          <ThemedText type="default" style={[styles.memberInfo, { color: colors.tabIconDefault }]}>
+            {formatMemberCount(club.memberCount || 0)} members
+          </ThemedText>
+          {/* Activity indicators based on club type */}
+          {isJoined && (
+            <ThemedText style={styles.activityIndicator}>
+              🔴 2 new invitations
+            </ThemedText>
+          )}
+          {!isJoined && (
+            <ThemedText style={[styles.activityIndicator, { color: colors.tabIconDefault }]}>
+              • Active community
+            </ThemedText>
+          )}
+        </View>
+      </ThemedView>
+    </TouchableOpacity>
+  );
+}
+
+const styles = StyleSheet.create({
+  container: {
+    borderRadius: 8,
+    borderWidth: 1,
+    marginHorizontal: 0,
+    marginVertical: 4,
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 1,
+    },
+    shadowOpacity: 0.1,
+    shadowRadius: 2,
+    elevation: 2,
+  },
+  content: {
+    padding: 12,
+  },
+  firstRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 4,
+  },
+  nameContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flex: 1,
+  },
+  tennisEmoji: {
+    fontSize: 16,
+    marginRight: 8,
+  },
+  clubName: {
+    fontSize: 16,
+    fontWeight: '600',
+    flex: 1,
+  },
+  rightContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  distance: {
+    fontSize: 14,
+    fontWeight: '500',
+    marginRight: 8,
+  },
+  joinButton: {
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 6,
+  },
+  joinButtonText: {
+    color: '#ffffff',
+    fontSize: 12,
+    fontWeight: '600',
+  },
+  secondRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  memberInfo: {
+    fontSize: 14,
+    marginRight: 8,
+  },
+  activityIndicator: {
+    fontSize: 14,
+    flex: 1,
+  },
+});

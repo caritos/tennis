@@ -7,8 +7,8 @@
 - [x] Configure iPhone 15 simulator for testing
 - [x] Test app launches correctly in simulator
 - [x] Verify hot reload works for development
-- [ ] Test tennis app navigation on simulator
-- [ ] Verify location permissions for club discovery
+- [x] Test tennis app navigation on simulator
+- [x] Verify location permissions for club discovery
 - [ ] Test form inputs with simulator keyboard
 - [ ] Test offline functionality in airplane mode
 - [ ] Verify tennis scoring calculations display correctly
@@ -16,9 +16,9 @@
 
 ### Navigation & App Structure
 - [x] Install @react-navigation/bottom-tabs dependency
-- [ ] Create basic 2-tab bottom navigation structure
-- [ ] Add Club Tab with placeholder content
-- [ ] Add Profile Tab with placeholder content
+- [x] Create basic 2-tab bottom navigation structure
+- [x] Add Club Tab with placeholder content
+- [x] Add Profile Tab with placeholder content
 - [ ] Style tab bar with tennis theme colors
 - [ ] Add tab icons (🎾 for Club, 👤 for Profile)
 - [ ] Create Club Tab header with "My Clubs" title
@@ -30,13 +30,13 @@
 - [ ] Update app.json with "Tennis Club" name and theme
 
 ### Core Database & Authentication
-- [ ] Install expo-sqlite dependency
-- [ ] Create SQLite database initialization function
-- [ ] Design users table schema (id, name, email, phone, created_at)
-- [ ] Design clubs table schema (id, name, description, geographic_area, zip_code)
-- [ ] Design matches table schema (id, player1_id, player2_id, scores, date, club_id)
-- [ ] Design club_members table schema (club_id, user_id, joined_at)
-- [ ] Create SQLite migration helper functions
+- [x] Install expo-sqlite dependency
+- [x] Create SQLite database initialization function
+- [x] Design users table schema (id, full_name, email, phone, role, created_at)
+- [x] Design clubs table schema (id, name, description, location, lat, lng, creator_id, created_at)
+- [x] Design matches table schema (id, club_id, player1_id, player2_id, opponent2_name, scores, match_type, date, notes, created_at)
+- [x] Design club_members table schema (club_id, user_id, joined_at)
+- [x] Create SQLite table creation and management functions
 - [ ] Set up new Supabase project in dashboard
 - [ ] Create users table in Supabase with same schema as SQLite
 - [ ] Create clubs table in Supabase with same schema as SQLite

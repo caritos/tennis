@@ -26,7 +26,7 @@ export default function FormHeader({ title, onBack, rightAction }: FormHeaderPro
         accessibilityRole="button"
         hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
       >
-        <ThemedText style={styles.backText}>< Back</ThemedText>
+        <ThemedText style={styles.backText}>{'< Back'}</ThemedText>
       </TouchableOpacity>
 
       {/* Title */}

@@ -1,75 +1,314 @@
-import { Image } from 'expo-image';
-import { Platform, StyleSheet } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { StyleSheet, View, TouchableOpacity, ScrollView } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { Ionicons } from '@expo/vector-icons';
 
-import { HelloWave } from '@/components/HelloWave';
-import ParallaxScrollView from '@/components/ParallaxScrollView';
 import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
+import { ClubList } from '@/components/ClubList';
+import { ClubCard } from '@/components/ClubCard';
+import { CreateClubButton } from '@/components/CreateClubButton';
+import { Club } from '@/lib/supabase';
+import { useColorScheme } from '@/hooks/useColorScheme';
+import { Colors } from '@/constants/Colors';
+import { useLocation } from '@/hooks/useLocation';
+import clubService from '@/services/clubService';
+import { seedSampleClubs } from '@/utils/seedData';
 
-export default function HomeScreen() {
+export default function ClubScreen() {
+  const colorScheme = useColorScheme();
+  const colors = Colors[colorScheme ?? 'light'];
+  const { location, requestLocationPermission } = useLocation();
+
+  const [clubs, setClubs] = useState<Club[]>([]);
+  const [myClubs, setMyClubs] = useState<Club[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [distances, setDistances] = useState<Map<string, number>>(new Map());
+  const [joinedClubIds, setJoinedClubIds] = useState<string[]>([]);
+
+  const loadClubs = async (isRefresh = false) => {
+    try {
+      if (!isRefresh) setLoading(true);
+      setError(null);
+
+      // Seed sample data if needed
+      console.log('Starting to seed sample clubs...');
+      await seedSampleClubs();
+      console.log('Finished seeding sample clubs');
+
+      // Get nearby clubs
+      const userLat = location?.latitude || 40.7128;
+      const userLng = location?.longitude || -74.0060;
+      
+      console.log('Getting nearby clubs for location:', userLat, userLng);
+      const nearbyClubs = await clubService.getNearbyClubs(
+        userLat,
+        userLng,
+        50 // 50km radius
+      );
+
+      console.log('Nearby clubs received:', nearbyClubs.length);
+      
+      // If no clubs found, add a test club for debugging
+      if (nearbyClubs.length === 0) {
+        console.log('No clubs found, adding test club');
+        const testClub: Club = {
+          id: 'test-club-1',
+          name: 'Test Tennis Club',
+          description: 'This is a test club to verify the UI is working',
+          location: 'Test Location, NY',
+          lat: 40.7128,
+          lng: -74.0060,
+          memberCount: 5,
+          creator_id: 'test-user',
+          created_at: new Date().toISOString(),
+        };
+        setClubs([testClub]);
+      } else {
+        setClubs(nearbyClubs);
+      }
+
+      // Calculate distances if location is available
+      if (location) {
+        const newDistances = new Map<string, number>();
+        nearbyClubs.forEach(club => {
+          const distance = clubService.calculateDistance(
+            userLat,
+            userLng,
+            club.lat,
+            club.lng
+          );
+          newDistances.set(club.id, distance);
+        });
+        setDistances(newDistances);
+      }
+
+      // Load user's clubs (mock for now)
+      // TODO: Replace with actual user clubs when auth is implemented
+      setMyClubs([]);
+      setJoinedClubIds([]);
+
+    } catch (err) {
+      console.error('Failed to load clubs:', err);
+      setError('Failed to load clubs. Please check your connection.');
+    } finally {
+      setLoading(false);
+      setRefreshing(false);
+    }
+  };
+
+  const handleRefresh = () => {
+    setRefreshing(true);
+    loadClubs(true);
+  };
+
+  const handleClubPress = (club: Club) => {
+    console.log('Club selected:', club.name);
+    // TODO: Navigate to club details screen
+  };
+
+  const handleCreateClub = () => {
+    console.log('Create club pressed');
+    // TODO: Navigate to create club form
+  };
+
+  useEffect(() => {
+    requestLocationPermission();
+  }, []);
+
+  useEffect(() => {
+    // Load clubs even without location (will use default NYC coordinates)
+    loadClubs();
+  }, []);
+
+  useEffect(() => {
+    if (location) {
+      loadClubs();
+    }
+  }, [location]);
+
   return (
-    <ParallaxScrollView
-      headerBackgroundColor={{ light: '#A1CEDC', dark: '#1D3D47' }}
-      headerImage={
-        <Image
-          source={require('@/assets/images/partial-react-logo.png')}
-          style={styles.reactLogo}
-        />
-      }>
-      <ThemedView style={styles.titleContainer}>
-        <ThemedText type="title">Welcome Eladio!</ThemedText>
-        <HelloWave />
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 1: Try it</ThemedText>
-        <ThemedText>
-          Edit <ThemedText type="defaultSemiBold">app/(tabs)/index.tsx</ThemedText> to see changes.
-          Press{' '}
-          <ThemedText type="defaultSemiBold">
-            {Platform.select({
-              ios: 'cmd + d',
-              android: 'cmd + m',
-              web: 'F12',
-            })}
-          </ThemedText>{' '}
-          to open developer tools.
-        </ThemedText>
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 2: Explore</ThemedText>
-        <ThemedText>
-          {`Tap the Explore tab to learn more about what's included in this starter app.`}
-        </ThemedText>
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 3: Get a fresh start</ThemedText>
-        <ThemedText>
-          {`When you're ready, run `}
-          <ThemedText type="defaultSemiBold">npm run reset-project</ThemedText> to get a fresh{' '}
-          <ThemedText type="defaultSemiBold">app</ThemedText> directory. This will move the current{' '}
-          <ThemedText type="defaultSemiBold">app</ThemedText> to{' '}
-          <ThemedText type="defaultSemiBold">app-example</ThemedText>.
-        </ThemedText>
-      </ThemedView>
-    </ParallaxScrollView>
+    <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
+
+      <ScrollView style={styles.scrollContainer} contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
+        <ThemedView style={styles.section}>
+          <ThemedText type="subtitle" style={styles.sectionTitle}>
+            My Clubs {myClubs.length > 0 ? `(${myClubs.length})` : ''}
+          </ThemedText>
+          {myClubs.length > 0 ? (
+            <View style={styles.clubListContainer}>
+              {myClubs.map((club) => (
+                <ClubCard
+                  key={club.id}
+                  club={club}
+                  onPress={handleClubPress}
+                  distance={distances?.get(club.id)}
+                  isJoined={joinedClubIds.includes(club.id)}
+                />
+              ))}
+            </View>
+          ) : (
+            <ThemedView style={[styles.placeholder, { borderColor: colors.tabIconDefault }]}>
+              <ThemedText style={styles.placeholderText}>No clubs joined yet</ThemedText>
+              <ThemedText style={[styles.placeholderSubtext, { color: colors.tabIconDefault }]}>
+                Join a club to start playing!
+              </ThemedText>
+            </ThemedView>
+          )}
+        </ThemedView>
+
+        <ThemedView style={styles.discoverSection}>
+          <ThemedText type="subtitle" style={styles.sectionTitle}>
+            Discover Clubs Near You
+          </ThemedText>
+          <View style={styles.clubListContainer}>
+            {loading ? (
+              <ThemedView style={styles.loadingContainer}>
+                <ThemedText type="title" style={styles.loadingText}>
+                  Finding tennis clubs...
+                </ThemedText>
+              </ThemedView>
+            ) : error ? (
+              <ThemedView style={styles.errorContainer}>
+                <ThemedText type="defaultSemiBold" style={styles.errorText}>
+                  {error}
+                </ThemedText>
+                <TouchableOpacity onPress={handleRefresh} style={styles.retryButton}>
+                  <ThemedText type="link" style={styles.retryText}>
+                    Tap to retry
+                  </ThemedText>
+                </TouchableOpacity>
+              </ThemedView>
+            ) : clubs.length === 0 ? (
+              <ThemedView style={styles.emptyContainer}>
+                <ThemedText type="title" style={styles.emptyTitle}>
+                  No clubs found
+                </ThemedText>
+                <ThemedText style={[styles.emptySubtitle, { color: colors.tabIconDefault }]}>
+                  Be the first to create a tennis club in your area!
+                </ThemedText>
+              </ThemedView>
+            ) : (
+              clubs
+                .sort((a, b) => {
+                  if (!distances || distances.size === 0) return 0;
+                  const distanceA = distances.get(a.id) ?? Infinity;
+                  const distanceB = distances.get(b.id) ?? Infinity;
+                  return distanceA - distanceB;
+                })
+                .map((club) => (
+                  <ClubCard
+                    key={club.id}
+                    club={club}
+                    onPress={handleClubPress}
+                    distance={distances?.get(club.id)}
+                    isJoined={joinedClubIds.includes(club.id)}
+                  />
+                ))
+            )}
+          </View>
+        </ThemedView>
+
+        {/* Create Club Button at Bottom */}
+        <ThemedView style={styles.createClubSection}>
+          <CreateClubButton 
+            onPress={handleCreateClub}
+            size="large"
+            variant="secondary"
+          />
+        </ThemedView>
+      </ScrollView>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  titleContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
+  container: {
+    flex: 1,
+  },
+  scrollContainer: {
+    flex: 1,
+  },
+  scrollContent: {
+    paddingTop: 16,
+  },
+  section: {
+    paddingHorizontal: 20,
+    marginBottom: 24,
+  },
+  discoverSection: {
+    paddingHorizontal: 20,
+    marginBottom: 24,
+  },
+  sectionTitle: {
+    marginBottom: 12,
+  },
+  clubListContainer: {
     gap: 8,
   },
-  stepContainer: {
-    gap: 8,
+  placeholder: {
+    borderWidth: 1,
+    borderStyle: 'dashed',
+    borderRadius: 12,
+    padding: 24,
+    alignItems: 'center',
+  },
+  placeholderText: {
+    fontSize: 16,
+    fontWeight: '500',
+    marginBottom: 4,
+  },
+  placeholderSubtext: {
+    fontSize: 14,
+    opacity: 0.7,
+  },
+  loadingContainer: {
+    padding: 32,
+    alignItems: 'center',
+  },
+  loadingText: {
+    fontSize: 18,
+    textAlign: 'center',
+  },
+  errorContainer: {
+    padding: 32,
+    alignItems: 'center',
+  },
+  errorText: {
+    fontSize: 16,
+    textAlign: 'center',
+    color: '#FF6B6B',
+    marginBottom: 16,
+  },
+  retryButton: {
+    paddingVertical: 8,
+    paddingHorizontal: 16,
+  },
+  retryText: {
+    fontSize: 16,
+    fontWeight: '500',
+  },
+  emptyContainer: {
+    padding: 32,
+    alignItems: 'center',
+  },
+  emptyTitle: {
+    fontSize: 20,
+    fontWeight: '600',
+    textAlign: 'center',
     marginBottom: 8,
   },
-  reactLogo: {
-    height: 178,
-    width: 290,
-    bottom: 0,
-    left: 0,
-    position: 'absolute',
+  emptySubtitle: {
+    fontSize: 16,
+    textAlign: 'center',
+    lineHeight: 24,
+  },
+  createClubSection: {
+    paddingHorizontal: 20,
+    paddingVertical: 16,
+    borderTopWidth: 1,
+    borderTopColor: '#e0e0e0',
   },
 });

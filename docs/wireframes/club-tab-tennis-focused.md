@@ -1,11 +1,6 @@
 # Club Tab (Tennis-Activity Focused)
 
 ```
-< Clubs >                                    [Profile icon]
-
-Quick Actions
-[+ Record Match]    [+ Looking to Play]
-
 My Clubs (2)
 ┌─────────────────────────────────────────┐
 │ 🎾 Riverside Tennis Club        0.3 mi  │
@@ -30,7 +25,6 @@ Discover Clubs Near You
 ```
 
 ## Tennis-First Priority Order:
-1. **Quick Actions** - Instant access to core tennis activities
-2. **My Clubs** - With activity indicators (new invitations)  
-3. **Discover Clubs** - Finding new tennis communities
-4. **Create Club** - Administrative function (bottom)
+1. **My Clubs** - With activity indicators (new invitations)  
+2. **Discover Clubs** - Finding new tennis communities
+3. **Create Club** - Administrative function (bottom)

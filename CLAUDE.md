@@ -22,6 +22,14 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 This is an Expo React Native project that targets iOS, Android, and Web platforms. It uses TypeScript and file-based routing with Expo Router.
 
+### Design Documentation
+**Complete wireframes and user flows have been created to document how the app should look and work.** Before implementing any features, always refer to:
+
+- **`/docs/wireframes/`** - Individual screen layouts and UI components
+- **`/docs/flows/`** - Complete user interaction flows and multi-step journeys
+
+These documents provide detailed specifications for UI layouts, user interactions, navigation patterns, and feature requirements. All implementation should follow these documented designs to ensure consistency and meet user experience requirements.
+
 ## Common Commands
 
 ### Development

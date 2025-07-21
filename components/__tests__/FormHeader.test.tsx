@@ -66,7 +66,13 @@ describe('FormHeader Component', () => {
     
     const container = getByTestId('form-header-container');
     expect(container).toBeTruthy();
-    expect(container.props.style).toEqual(
+    
+    // Style can be an array, so flatten it first
+    const style = Array.isArray(container.props.style) 
+      ? Object.assign({}, ...container.props.style.filter(Boolean))
+      : container.props.style;
+    
+    expect(style).toEqual(
       expect.objectContaining({
         flexDirection: 'row',
         alignItems: 'center',
@@ -105,8 +111,14 @@ describe('FormHeader Component', () => {
     );
     
     const titleElement = getByText('Test Title');
+    
+    // Style can be an array, so flatten it first
+    const style = Array.isArray(titleElement.props.style) 
+      ? Object.assign({}, ...titleElement.props.style.filter(Boolean))
+      : titleElement.props.style;
+    
     // Title should use themed text color
-    expect(titleElement.props.style).toEqual(
+    expect(style).toEqual(
       expect.objectContaining({
         color: expect.any(String),
       })
