@@ -6,15 +6,16 @@ import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
 import { useColorScheme } from '@/hooks/useColorScheme';
 import { Colors } from '@/constants/Colors';
+import { useAuth } from '@/contexts/AuthContext';
 
 export default function ProfileScreen() {
   const colorScheme = useColorScheme();
   const colors = Colors[colorScheme ?? 'light'];
+  const { user, signOut } = useAuth();
 
-  const handleSignOut = () => {
-    // TODO: Clear authentication state when context is implemented
-    // TODO: Add UI-based confirmation modal instead of Alert.alert()
+  const handleSignOut = async () => {
     console.log('Signing out user...');
+    await signOut();
     router.replace('/welcome');
   };
 
@@ -27,7 +28,12 @@ export default function ProfileScreen() {
 
         <ThemedView style={styles.section}>
           <View style={styles.userSection}>
-            <ThemedText type="subtitle" style={styles.userName}>Eladio Caritos</ThemedText>
+            <ThemedText type="subtitle" style={styles.userName}>
+              {user?.user_metadata?.full_name || user?.email || 'Tennis Player'}
+            </ThemedText>
+            {user?.email && (
+              <ThemedText style={styles.userEmail}>{user.email}</ThemedText>
+            )}
           </View>
         </ThemedView>
 
@@ -100,6 +106,11 @@ const styles = StyleSheet.create({
   userName: {
     fontSize: 24,
     fontWeight: '600',
+  },
+  userEmail: {
+    fontSize: 14,
+    opacity: 0.7,
+    marginTop: 4,
   },
   sectionTitle: {
     marginBottom: 12,

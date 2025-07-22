@@ -77,8 +77,17 @@ export function EmailSignInForm({
           email: email.trim(),
           password,
         });
-      } catch (error) {
-        setErrors({ general: 'Invalid email or password. Please try again.' });
+      } catch (error: any) {
+        console.error('Sign in error:', error);
+        if (error?.message?.includes('Network request failed')) {
+          setErrors({ general: 'Unable to connect to the server. Please check your internet connection and try again.' });
+        } else if (error?.message?.includes('Invalid login credentials')) {
+          setErrors({ general: 'Invalid email or password. Please try again.' });
+        } else if (error?.message?.includes('Email not confirmed')) {
+          setErrors({ general: 'Please check your email to confirm your account.' });
+        } else {
+          setErrors({ general: error?.message || 'An error occurred. Please try again.' });
+        }
       }
     }
   };
@@ -249,7 +258,7 @@ export function EmailSignInForm({
           {/* Sign Up Link */}
           <View style={styles.signUpSection}>
             <ThemedText style={[styles.signUpPrompt, { color: colors.tabIconDefault }]}>
-              Don't have an account?{' '}
+              Don&apos;t have an account?{' '}
             </ThemedText>
             <TouchableOpacity
               onPress={onSignUpPress}

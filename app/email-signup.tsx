@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { router } from 'expo-router';
 import { EmailSignUpForm } from '@/components/EmailSignUpForm';
+import { supabase } from '@/lib/supabase';
 import { initializeDatabase } from '@/database/database';
 
 export default function EmailSignUpPage() {
@@ -21,17 +22,49 @@ export default function EmailSignUpPage() {
     setIsLoading(true);
     
     try {
-      // TODO: Implement actual user creation with Supabase
-      // For now, create user in local database and navigate to main app
+      // Sign up with Supabase
+      const { data: authData, error: signUpError } = await supabase.auth.signUp({
+        email: data.email,
+        password: data.password,
+        options: {
+          data: {
+            full_name: data.fullName,
+            phone: data.phone || null,
+          }
+        }
+      });
       
+      if (signUpError) {
+        throw signUpError;
+      }
+      
+      if (!authData.user) {
+        throw new Error('Failed to create user');
+      }
+      
+      // Store user data in Supabase database
+      const { error: profileError } = await supabase
+        .from('users')
+        .insert({
+          id: authData.user.id,
+          full_name: data.fullName,
+          email: data.email,
+          phone: data.phone || null,
+          role: 'player'
+        });
+      
+      if (profileError) {
+        console.error('Failed to create user profile:', profileError);
+        // Continue anyway as auth was successful
+      }
+      
+      // Also store in local SQLite for offline support
       const db = await initializeDatabase();
-      const userId = `user_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-      
       await db.runAsync(
-        `INSERT INTO users (id, full_name, email, phone, role, created_at) 
+        `INSERT OR REPLACE INTO users (id, full_name, email, phone, role, created_at) 
          VALUES (?, ?, ?, ?, ?, datetime('now'))`,
         [
-          userId,
+          authData.user.id,
           data.fullName,
           data.email,
           data.phone || null,
@@ -39,12 +72,11 @@ export default function EmailSignUpPage() {
         ]
       );
       
-      console.log('User created successfully:', userId);
+      console.log('User created successfully:', authData.user.id);
       
-      // Simulate a brief delay then navigate to main app
-      setTimeout(() => {
-        router.replace('/(tabs)');
-      }, 500);
+      // Navigate to main app
+      router.replace('/(tabs)');
+      setIsLoading(false);
       
     } catch (error) {
       console.error('Failed to create user:', error);

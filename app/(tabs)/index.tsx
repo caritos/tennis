@@ -177,6 +177,9 @@ export default function ClubScreen() {
 
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
+      <ThemedView style={styles.header}>
+        <ThemedText type="title" style={styles.headerTitle}>Clubs</ThemedText>
+      </ThemedView>
 
       <ScrollView style={styles.scrollContainer} contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
         <ThemedView style={styles.section}>
@@ -278,6 +281,15 @@ export default function ClubScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+  },
+  header: {
+    paddingHorizontal: 20,
+    paddingTop: 20,
+    paddingBottom: 10,
+  },
+  headerTitle: {
+    fontSize: 28,
+    fontWeight: 'bold',
   },
   scrollContainer: {
     flex: 1,

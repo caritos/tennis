@@ -100,4 +100,9 @@ export const supabase = createClient<Database>(config.url, config.anonKey, {
     persistSession: true,
     detectSessionInUrl: false,
   },
+  global: {
+    headers: {
+      'Content-Type': 'application/json',
+    },
+  },
 });

@@ -144,7 +144,7 @@ export default function SignInPage() {
           {/* Sign Up Link */}
           <View style={styles.signUpSection}>
             <ThemedText style={[styles.signUpPrompt, { color: colors.tabIconDefault }]}>
-              Don't have an account?{' '}
+              Don&apos;t have an account?{' '}
             </ThemedText>
             <TouchableOpacity
               onPress={handleSignUpPress}

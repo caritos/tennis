@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { router } from 'expo-router';
 import { EmailSignInForm } from '@/components/EmailSignInForm';
-import { initializeDatabase } from '@/database/database';
+import { supabase } from '@/lib/supabase';
 
 export default function EmailSignInPage() {
   const [isLoading, setIsLoading] = useState(false);
@@ -19,25 +19,20 @@ export default function EmailSignInPage() {
     setIsLoading(true);
     
     try {
-      // TODO: Implement actual authentication with Supabase
-      // For now, check if user exists in local database
+      const { data: authData, error } = await supabase.auth.signInWithPassword({
+        email: data.email,
+        password: data.password,
+      });
       
-      const db = await initializeDatabase();
-      const user = await db.getFirstAsync(
-        `SELECT * FROM users WHERE email = ?`,
-        [data.email]
-      );
-      
-      if (!user) {
-        throw new Error('User not found');
+      if (error) {
+        throw error;
       }
       
-      console.log('User found, signing in:', user.id);
+      console.log('User signed in successfully:', authData.user?.id);
       
-      // Simulate a brief delay then navigate to main app
-      setTimeout(() => {
-        router.replace('/(tabs)');
-      }, 500);
+      // Navigate to main app
+      router.replace('/(tabs)');
+      setIsLoading(false);
       
     } catch (error) {
       console.error('Failed to sign in:', error);

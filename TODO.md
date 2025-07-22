@@ -2,6 +2,15 @@
 
 ## High Priority Tasks (MVP Core)
 
+### Apple Sign In (iOS Priority)
+- [ ] Install expo-apple-authentication dependency
+- [ ] Configure Apple Sign In in app.json
+- [ ] Add Apple Developer account configuration
+- [ ] Implement Apple Sign In button functionality
+- [ ] Configure Apple Sign In in Supabase dashboard
+- [ ] Test Apple Sign In on iOS simulator
+- [ ] Handle Apple Sign In user data and profile creation
+
 ### iOS Simulator Testing Setup
 - [x] Install Xcode and iOS Simulator
 - [x] Configure iPhone 15 simulator for testing
@@ -19,15 +28,15 @@
 - [x] Create basic 2-tab bottom navigation structure
 - [x] Add Club Tab with placeholder content
 - [x] Add Profile Tab with placeholder content
-- [ ] Style tab bar with tennis theme colors
-- [ ] Add tab icons (🎾 for Club, 👤 for Profile)
-- [ ] Create Club Tab header with "My Clubs" title
-- [ ] Add "My Clubs" section placeholder in Club Tab
-- [ ] Add "Discover Clubs" section placeholder in Club Tab
-- [ ] Create Profile Tab header with user name
-- [ ] Add tennis stats placeholder in Profile Tab
-- [ ] Add settings section placeholder in Profile Tab
-- [ ] Update app.json with "Tennis Club" name and theme
+- [x] Style tab bar with tennis theme colors
+- [x] Add tab icons (🎾 for Club, 👤 for Profile)
+- [x] Create Club Tab header with "Clubs" title
+- [x] Add "My Clubs" section in Club Tab
+- [x] Add "Discover Clubs" section in Club Tab
+- [x] Create Profile Tab header with user name
+- [x] Add tennis stats placeholder in Profile Tab
+- [x] Add settings section placeholder in Profile Tab with sign out button
+- [x] Update app.json with "Tennis Club" name and theme
 
 ### Core Database & Authentication
 - [x] Install expo-sqlite dependency
@@ -42,12 +51,16 @@
 - [ ] Create clubs table in Supabase with same schema as SQLite
 - [ ] Create matches table in Supabase with same schema as SQLite
 - [ ] Create club_members table in Supabase with same schema as SQLite
-- [ ] Install @supabase/supabase-js dependency
-- [ ] Install @react-native-async-storage/async-storage for auth
-- [ ] Create Supabase client configuration file
-- [ ] Set up email/password authentication in Supabase
-- [ ] Configure Apple Sign In in Supabase dashboard
-- [ ] Configure Google Sign In in Supabase dashboard
+- [x] Install @supabase/supabase-js dependency
+- [x] Install @react-native-async-storage/async-storage for auth
+- [x] Create Supabase client configuration file
+- [x] Set up email/password authentication in Supabase
+- [x] Create AuthContext for authentication state management
+- [x] Implement email sign in functionality with Supabase
+- [x] Implement email sign up functionality with Supabase
+- [x] Add confirm password field to sign up form
+- [x] Add terms of service checkbox to sign up form
+- [x] Add proper titles and subtitles to auth screens
 - [ ] Create basic RLS policy for users table (users can only see their own data)
 - [ ] Create basic RLS policy for clubs table (all authenticated users can read)
 - [ ] Create basic RLS policy for matches table (participants can read/write)
@@ -143,10 +156,10 @@
 - [ ] Replace all Alert.alert() with UI-based notifications
 
 ### Welcome & Onboarding
-- [ ] Create welcome screen for non-authenticated users
-- [ ] Add app description and value proposition to welcome screen
-- [ ] Add Get Started button leading to authentication
-- [ ] Design welcome screen with tennis imagery and branding
+- [x] Create welcome screen for non-authenticated users
+- [x] Add app description and value proposition to welcome screen
+- [x] Add Get Started button leading to authentication
+- [x] Design welcome screen with tennis imagery and branding
 
 ## Medium Priority Tasks
 
@@ -205,6 +218,14 @@
 - [ ] Add RLS policies for club ownership permissions
 
 ## Low Priority Tasks (Future Enhancements)
+
+### Google Sign In (Cross-Platform)
+- [ ] Install expo-auth-session dependency for Google Sign In
+- [ ] Configure Google OAuth in Google Cloud Console
+- [ ] Implement Google Sign In button functionality
+- [ ] Configure Google Sign In in Supabase dashboard
+- [ ] Test Google Sign In on Android and iOS
+- [ ] Handle Google Sign In user data and profile creation
 
 ### End-to-End Testing with Maestro
 - [ ] Install Maestro CLI for E2E testing

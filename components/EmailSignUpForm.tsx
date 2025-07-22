@@ -117,8 +117,17 @@ export function EmailSignUpForm({
           password,
           phone: phone.replace(/\D/g, ''), // Remove formatting
         });
-      } catch (error) {
-        setErrors({ general: 'Failed to create account. Please try again.' });
+      } catch (error: any) {
+        console.error('Sign up error:', error);
+        if (error?.message?.includes('Network request failed')) {
+          setErrors({ general: 'Unable to connect to the server. Please check your internet connection and try again.' });
+        } else if (error?.message?.includes('already registered')) {
+          setErrors({ general: 'This email is already registered. Please sign in instead.' });
+        } else if (error?.message?.includes('Password should be')) {
+          setErrors({ password: error.message });
+        } else {
+          setErrors({ general: error?.message || 'Failed to create account. Please try again.' });
+        }
       }
     }
   };
