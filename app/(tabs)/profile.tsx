@@ -15,17 +15,21 @@ import { Club } from '@/lib/supabase';
 export default function ProfileScreen() {
   const colorScheme = useColorScheme();
   const colors = Colors[colorScheme ?? 'light'];
+  
   const { user, signOut } = useAuth();
   const [userClubs, setUserClubs] = useState<Club[]>([]);
   const [loading, setLoading] = useState(true);
 
-  // TODO: Replace with actual user authentication
-  const MOCK_USER_ID = '550e8400-e29b-41d4-a716-446655440010';
-
   const loadUserClubs = async () => {
+    if (!user?.id) {
+      setUserClubs([]);
+      setLoading(false);
+      return;
+    }
+
     try {
       setLoading(true);
-      const clubs = await clubService.getUserClubs(MOCK_USER_ID);
+      const clubs = await clubService.getUserClubs(user.id);
       setUserClubs(clubs);
     } catch (error) {
       console.error('Failed to load user clubs:', error);
@@ -37,13 +41,13 @@ export default function ProfileScreen() {
 
   useEffect(() => {
     loadUserClubs();
-  }, []);
+  }, [user?.id]); // Reload when user changes
 
   // Reload clubs whenever the profile tab comes into focus
   useFocusEffect(
     React.useCallback(() => {
       loadUserClubs();
-    }, [])
+    }, [user?.id])
   );
 
   const handleSignOut = async () => {

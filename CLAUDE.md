@@ -13,10 +13,18 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ### Supabase Documentation
 **ALWAYS refer to the official Supabase documentation at https://supabase.com/docs for backend best practices.** When implementing backend features:
-1. Check Supabase docs for React Native specific guides: https://supabase.com/docs/guides/getting-started/quickstarts/reactnative
+1. Check Supabase docs for React Native specific guides: https://supabase.com/docs/guides/getting-started/tutorials/with-expo-react-native
 2. Follow Supabase patterns for authentication, real-time subscriptions, and database queries
 3. Use Supabase client SDK methods instead of raw SQL when possible
 4. Refer to Supabase security best practices for Row Level Security (RLS)
+
+**Implemented Supabase Best Practices (from official tutorial):**
+- ✅ AsyncStorage for session persistence in React Native
+- ✅ Proper error handling with user-friendly messages (see `/utils/errorHandling.ts`)
+- ✅ User profile sync between Supabase and local SQLite
+- ✅ Secure client initialization with environment variables
+- ✅ Auto token refresh and session management
+- ✅ Comprehensive auth state management in AuthContext
 
 ## Project Overview
 
@@ -153,6 +161,13 @@ Currently uses React's built-in state management. No external state management l
 - Place reusable hooks in `/hooks` directory
 - Examples: `useMatch`, `usePlayer`, `useSyncStatus`
 - Encapsulate complex logic that multiple components need
+
+### Error Handling
+- **Centralized error handling utility** at `/utils/errorHandling.ts`
+- Provides user-friendly error messages for authentication errors
+- Consistent error logging with `logError()` function
+- Database error handling with proper constraint messages
+- All auth errors should use `getAuthErrorMessage()` for consistency
 
 ### Navigation
 - Uses Expo Router (file-based routing) - see https://docs.expo.dev/router/introduction/
@@ -294,7 +309,7 @@ Secondary store for:
 - Match invitations
 - Authentication
 
-**Implementation Note**: Follow Supabase's React Native guide at https://supabase.com/docs/guides/getting-started/quickstarts/reactnative for setup and best practices.
+**Implementation Note**: Follow Supabase's React Native guide at https://supabase.com/docs/guides/getting-started/tutorials/with-expo-react-native for setup and best practices.
 
 ### Implementation Pattern
 ```

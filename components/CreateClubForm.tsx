@@ -12,6 +12,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useColorScheme } from '@/hooks/useColorScheme';
 import { Colors } from '@/constants/Colors';
 import { useLocation } from '@/hooks/useLocation';
+import { useAuth } from '@/contexts/AuthContext';
 import { ClubService } from '@/services/clubService';
 import { Club } from '@/lib/supabase';
 
@@ -39,6 +40,7 @@ export function CreateClubForm({ onSuccess, onCancel }: CreateClubFormProps) {
   const colorScheme = useColorScheme();
   const colors = Colors[colorScheme ?? 'light'];
   const { location, loading: locationLoading } = useLocation();
+  const { user } = useAuth();
   const clubService = new ClubService();
 
   const [formData, setFormData] = useState<FormData>({
@@ -131,7 +133,10 @@ export function CreateClubForm({ onSuccess, onCancel }: CreateClubFormProps) {
   };
 
   const handleSubmit = async () => {
-    if (!validateForm()) {
+    if (!validateForm() || !user?.id) {
+      if (!user?.id) {
+        setErrors({ general: 'You must be signed in to create a club' });
+      }
       return;
     }
 
@@ -146,7 +151,7 @@ export function CreateClubForm({ onSuccess, onCancel }: CreateClubFormProps) {
         zipCode: formData.zipCode.trim(),
         lat: location?.latitude || 37.7749, // Default to SF
         lng: location?.longitude || -122.4194,
-        creator_id: '550e8400-e29b-41d4-a716-446655440010', // TODO: Get from auth context
+        creator_id: user.id,
       };
 
       const newClub = await clubService.createClub(clubData);

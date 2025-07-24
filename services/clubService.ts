@@ -81,30 +81,58 @@ export class ClubService {
   async joinClub(clubId: string, userId: string): Promise<void> {
     // Input validation
     if (!clubId || typeof clubId !== 'string' || clubId.trim() === '') {
+      console.error('joinClub: Invalid club ID:', clubId);
       throw new Error('Valid club ID is required');
     }
     if (!userId || typeof userId !== 'string' || userId.trim() === '') {
+      console.error('joinClub: Invalid user ID:', userId);
       throw new Error('Valid user ID is required');
     }
 
+    console.log(`joinClub: Attempting to join club ${clubId} with user ${userId}`);
     const db = await this.getDatabase();
 
     try {
+      // Check if user exists in users table first
+      const userExists = await db.getFirstAsync(
+        'SELECT id FROM users WHERE id = ?',
+        [userId]
+      );
+      
+      if (!userExists) {
+        console.error('joinClub: User not found in local database:', userId);
+        throw new Error('User not found in local database. Please try signing out and back in.');
+      }
+
+      // Check if club exists
+      const clubExists = await db.getFirstAsync(
+        'SELECT id FROM clubs WHERE id = ?',
+        [clubId]
+      );
+      
+      if (!clubExists) {
+        console.error('joinClub: Club not found in local database:', clubId);
+        throw new Error('Club not found in local database.');
+      }
+
       // Insert into local database first (offline-first)
+      console.log('joinClub: Inserting membership into local database');
       await db.runAsync(
         `INSERT INTO club_members (club_id, user_id) VALUES (?, ?)`,
         [clubId, userId]
       );
+
+      console.log('joinClub: Successfully joined club locally');
 
       // Sync to Supabase in background (don't block on errors)
       this.syncClubMemberToSupabase(clubId, userId).catch(error => {
         console.warn('Failed to sync club membership to Supabase:', error);
       });
     } catch (error: any) {
+      console.error('joinClub: Database error:', error);
       if (error.code === 'SQLITE_CONSTRAINT') {
         throw new Error('Already a member of this club');
       }
-      console.error('Failed to join club:', error);
       throw error;
     }
   }

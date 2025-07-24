@@ -12,6 +12,7 @@ import { Club } from '@/lib/supabase';
 import { useColorScheme } from '@/hooks/useColorScheme';
 import { Colors } from '@/constants/Colors';
 import { useLocation } from '@/hooks/useLocation';
+import { useAuth } from '@/contexts/AuthContext';
 import clubService, { joinClub, getJoinedClubIds } from '@/services/clubService';
 import { seedSampleClubs } from '@/utils/seedData';
 
@@ -29,8 +30,11 @@ export default function ClubScreen() {
   const [joinedClubIds, setJoinedClubIds] = useState<string[]>([]);
   const [joiningClubId, setJoiningClubId] = useState<string | null>(null);
 
-  // TODO: Replace with actual user authentication
-  const MOCK_USER_ID = '550e8400-e29b-41d4-a716-446655440010';
+  const { user } = useAuth();
+  
+  useEffect(() => {
+    console.log('ClubScreen: User state changed:', user ? `User: ${user.id}` : 'No user');
+  }, [user]);
 
   const loadClubs = async (isRefresh = false) => {
     try {
@@ -90,14 +94,19 @@ export default function ClubScreen() {
       }
 
       // Load user's clubs and joined club IDs
-      try {
-        const userJoinedIds = await getJoinedClubIds(MOCK_USER_ID);
-        setJoinedClubIds(userJoinedIds);
+      if (user?.id) {
+        try {
+          const userJoinedIds = await getJoinedClubIds(user.id);
+          setJoinedClubIds(userJoinedIds);
 
-        const userClubs = await clubService.getUserClubs(MOCK_USER_ID);
-        setMyClubs(userClubs);
-      } catch (error) {
-        console.warn('Failed to load user clubs:', error);
+          const userClubs = await clubService.getUserClubs(user.id);
+          setMyClubs(userClubs);
+        } catch (error) {
+          console.warn('Failed to load user clubs:', error);
+          setMyClubs([]);
+          setJoinedClubIds([]);
+        }
+      } else {
         setMyClubs([]);
         setJoinedClubIds([]);
       }
@@ -122,15 +131,17 @@ export default function ClubScreen() {
   };
 
   const handleJoinClub = async (club: Club) => {
-    if (joiningClubId === club.id) {
-      return; // Prevent double-tap
+    if (joiningClubId === club.id || !user?.id) {
+      console.log('Cannot join club: joiningClubId =', joiningClubId, 'user.id =', user?.id);
+      return; // Prevent double-tap or no user
     }
 
+    console.log(`Starting to join club: ${club.name} (${club.id}) with user ${user.id}`);
     setJoiningClubId(club.id);
     setError(null);
 
     try {
-      await joinClub(club.id, MOCK_USER_ID);
+      await joinClub(club.id, user.id);
       
       // Update local state immediately for optimistic UI
       setJoinedClubIds(prev => [...prev, club.id]);
@@ -142,6 +153,7 @@ export default function ClubScreen() {
       // For now, just log it
     } catch (error: any) {
       console.error('Failed to join club:', error);
+      console.error('Error details:', error.message, error.code);
       
       if (error.message === 'Already a member of this club') {
         // Update UI state to reflect actual membership
@@ -167,7 +179,7 @@ export default function ClubScreen() {
   useEffect(() => {
     // Load clubs even without location (will use default NYC coordinates)
     loadClubs();
-  }, []);
+  }, [user?.id]); // Reload when user changes
 
   useEffect(() => {
     if (location) {

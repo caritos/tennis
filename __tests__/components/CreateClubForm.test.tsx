@@ -5,6 +5,7 @@ import { Alert } from 'react-native';
 // Mock dependencies first
 jest.mock('../../services/clubService');
 jest.mock('../../hooks/useLocation');
+jest.mock('../../contexts/AuthContext');
 jest.mock('../../lib/supabase', () => ({
   supabase: {
     from: jest.fn(),
@@ -20,6 +21,7 @@ jest.mock('../../lib/supabase', () => ({
 import { CreateClubForm } from '../../components/CreateClubForm';
 import { ClubService } from '../../services/clubService';
 import { useLocation } from '../../hooks/useLocation';
+import { useAuth } from '../../contexts/AuthContext';
 jest.mock('react-native/Libraries/Alert/Alert', () => ({
   alert: jest.fn(),
 }));
@@ -27,6 +29,7 @@ jest.mock('react-native/Libraries/Alert/Alert', () => ({
 describe('CreateClubForm', () => {
   let mockClubService: jest.Mocked<ClubService>;
   let mockUseLocation: jest.MockedFunction<typeof useLocation>;
+  let mockUseAuth: jest.MockedFunction<typeof useAuth>;
   const mockOnSuccess = jest.fn();
   const mockOnCancel = jest.fn();
 
@@ -45,6 +48,16 @@ describe('CreateClubForm', () => {
       error: null,
       loading: false,
     });
+
+    mockUseAuth = useAuth as jest.MockedFunction<typeof useAuth>;
+    mockUseAuth.mockReturnValue({
+      user: { 
+        id: 'test-user-id',
+        email: 'test@example.com',
+        user_metadata: { full_name: 'Test User' }
+      },
+      signOut: jest.fn(),
+    } as any);
 
     (ClubService as jest.Mock).mockImplementation(() => mockClubService);
     
@@ -279,7 +292,7 @@ describe('CreateClubForm', () => {
         location: validFormData.area,
         lat: 37.7749,
         lng: -122.4194,
-        creator_id: '550e8400-e29b-41d4-a716-446655440010',
+        creator_id: 'test-user-id',
         created_at: new Date().toISOString(),
       };
 
@@ -307,7 +320,7 @@ describe('CreateClubForm', () => {
           zipCode: validFormData.zipCode,
           lat: 37.7749,
           lng: -122.4194,
-          creator_id: '550e8400-e29b-41d4-a716-446655440010',
+          creator_id: 'test-user-id',
         });
         expect(mockOnSuccess).toHaveBeenCalledWith(mockCreatedClub);
       });

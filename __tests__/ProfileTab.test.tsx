@@ -23,6 +23,7 @@ describe('Profile Tab', () => {
     // Mock auth context
     mockUseAuth.mockReturnValue({
       user: { 
+        id: 'test-user-id',
         email: 'test@example.com',
         user_metadata: { full_name: 'Test User' }
       },
@@ -142,7 +143,7 @@ describe('Profile Tab', () => {
     render(<ProfileScreen />);
     
     expect(mockClubService.getUserClubs).toHaveBeenCalledWith(
-      '550e8400-e29b-41d4-a716-446655440010'
+      'test-user-id'
     );
   });
 

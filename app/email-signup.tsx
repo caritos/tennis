@@ -3,6 +3,7 @@ import { router } from 'expo-router';
 import { EmailSignUpForm } from '@/components/EmailSignUpForm';
 import { supabase } from '@/lib/supabase';
 import { initializeDatabase } from '@/database/database';
+import { getAuthErrorMessage, logError } from '@/utils/errorHandling';
 
 export default function EmailSignUpPage() {
   const [isLoading, setIsLoading] = useState(false);
@@ -35,11 +36,16 @@ export default function EmailSignUpPage() {
       });
       
       if (signUpError) {
-        throw signUpError;
+        logError('email-signup', signUpError);
+        throw new Error(getAuthErrorMessage(signUpError));
       }
       
       if (!authData.user) {
-        throw new Error('Failed to create user');
+        throw new Error('Failed to create user account');
+      }
+      
+      if (!authData.session) {
+        console.warn('User created but no session returned - this may require email verification');
       }
       
       // Store user data in Supabase database
@@ -74,8 +80,8 @@ export default function EmailSignUpPage() {
       
       console.log('User created successfully:', authData.user.id);
       
-      // Navigate to main app
-      router.replace('/(tabs)');
+      // Navigate to index route, which will handle routing to tabs after auth is ready
+      router.replace('/');
       setIsLoading(false);
       
     } catch (error) {

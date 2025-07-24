@@ -12,6 +12,8 @@ function RootLayoutNav() {
   const colorScheme = useColorScheme();
   const { user, isLoading } = useAuth();
 
+  console.log('RootLayoutNav: Auth state -', { user: user?.id || 'none', isLoading });
+
   if (isLoading) {
     return (
       <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
