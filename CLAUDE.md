@@ -46,6 +46,15 @@ These documents provide detailed specifications for UI layouts, user interaction
 ### Project Management
 - `npm run reset-project` - Reset to blank project (moves current code to app-example/)
 
+### Issue Tracking & Task Management
+**ALL project tasks, bugs, and features MUST be managed through GitHub Issues.**
+- Use `gh issue list` to view all open issues
+- Use `gh issue view #N` to see details of specific issues
+- Use `gh issue create --title "Title" --body "Description"` to create new issues
+- Use `gh issue close #N` when tasks are completed
+- Never create TODO.md files - use GitHub Issues exclusively for task tracking
+- Each issue should have clear acceptance criteria and be broken into small, actionable tasks
+
 ## Architecture Overview
 
 ### File-Based Routing
