@@ -30,7 +30,7 @@ export default function ClubScreen() {
   const [joiningClubId, setJoiningClubId] = useState<string | null>(null);
 
   // TODO: Replace with actual user authentication
-  const MOCK_USER_ID = 'current-user-123';
+  const MOCK_USER_ID = '550e8400-e29b-41d4-a716-446655440010';
 
   const loadClubs = async (isRefresh = false) => {
     try {

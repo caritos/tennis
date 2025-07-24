@@ -1,17 +1,50 @@
 import { ScrollView, StyleSheet, View, TouchableOpacity } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
+import React, { useState, useEffect } from 'react';
+import { useFocusEffect } from '@react-navigation/native';
 
 import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
 import { useColorScheme } from '@/hooks/useColorScheme';
 import { Colors } from '@/constants/Colors';
 import { useAuth } from '@/contexts/AuthContext';
+import clubService from '@/services/clubService';
+import { Club } from '@/lib/supabase';
 
 export default function ProfileScreen() {
   const colorScheme = useColorScheme();
   const colors = Colors[colorScheme ?? 'light'];
   const { user, signOut } = useAuth();
+  const [userClubs, setUserClubs] = useState<Club[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  // TODO: Replace with actual user authentication
+  const MOCK_USER_ID = '550e8400-e29b-41d4-a716-446655440010';
+
+  const loadUserClubs = async () => {
+    try {
+      setLoading(true);
+      const clubs = await clubService.getUserClubs(MOCK_USER_ID);
+      setUserClubs(clubs);
+    } catch (error) {
+      console.error('Failed to load user clubs:', error);
+      setUserClubs([]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    loadUserClubs();
+  }, []);
+
+  // Reload clubs whenever the profile tab comes into focus
+  useFocusEffect(
+    React.useCallback(() => {
+      loadUserClubs();
+    }, [])
+  );
 
   const handleSignOut = async () => {
     console.log('Signing out user...');
@@ -54,11 +87,33 @@ export default function ProfileScreen() {
         </ThemedView>
 
         <ThemedView style={styles.section}>
-          <ThemedText type="subtitle" style={styles.sectionTitle}>Club Memberships</ThemedText>
-          <ThemedView style={[styles.placeholder, { borderColor: colors.icon }]}>
-            <ThemedText style={styles.placeholderText}>No club memberships</ThemedText>
-            <ThemedText style={styles.placeholderSubtext}>Join a club to start playing!</ThemedText>
-          </ThemedView>
+          <ThemedText type="subtitle" style={styles.sectionTitle}>
+            Club Memberships {userClubs.length > 0 ? `(${userClubs.length})` : ''}
+          </ThemedText>
+          {loading ? (
+            <ThemedView style={styles.loadingContainer}>
+              <ThemedText style={styles.loadingText}>Loading clubs...</ThemedText>
+            </ThemedView>
+          ) : userClubs.length > 0 ? (
+            <View style={styles.clubsList}>
+              {userClubs.map((club) => (
+                <View key={club.id} style={[styles.clubCard, { borderColor: colors.icon + '30' }]}>
+                  <ThemedText style={styles.clubName}>{club.name}</ThemedText>
+                  <ThemedText style={styles.clubLocation}>{club.location}</ThemedText>
+                  {club.memberCount && (
+                    <ThemedText style={styles.clubMembers}>
+                      {club.memberCount} members
+                    </ThemedText>
+                  )}
+                </View>
+              ))}
+            </View>
+          ) : (
+            <ThemedView style={[styles.placeholder, { borderColor: colors.icon }]}>
+              <ThemedText style={styles.placeholderText}>No club memberships</ThemedText>
+              <ThemedText style={styles.placeholderSubtext}>Join a club to start playing!</ThemedText>
+            </ThemedView>
+          )}
         </ThemedView>
 
         <ThemedView style={styles.section}>
@@ -130,6 +185,37 @@ const styles = StyleSheet.create({
   placeholderSubtext: {
     fontSize: 14,
     opacity: 0.7,
+  },
+  loadingContainer: {
+    padding: 20,
+    alignItems: 'center',
+  },
+  loadingText: {
+    fontSize: 16,
+    opacity: 0.7,
+  },
+  clubsList: {
+    gap: 12,
+  },
+  clubCard: {
+    borderWidth: 1,
+    borderRadius: 12,
+    padding: 16,
+    backgroundColor: 'transparent',
+  },
+  clubName: {
+    fontSize: 18,
+    fontWeight: '600',
+    marginBottom: 4,
+  },
+  clubLocation: {
+    fontSize: 14,
+    opacity: 0.7,
+    marginBottom: 4,
+  },
+  clubMembers: {
+    fontSize: 12,
+    opacity: 0.6,
   },
   settingsContainer: {
     paddingVertical: 8,

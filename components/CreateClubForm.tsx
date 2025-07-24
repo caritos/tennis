@@ -146,7 +146,7 @@ export function CreateClubForm({ onSuccess, onCancel }: CreateClubFormProps) {
         zipCode: formData.zipCode.trim(),
         lat: location?.latitude || 37.7749, // Default to SF
         lng: location?.longitude || -122.4194,
-        creator_id: 'current-user-id', // TODO: Get from auth context
+        creator_id: '550e8400-e29b-41d4-a716-446655440010', // TODO: Get from auth context
       };
 
       const newClub = await clubService.createClub(clubData);

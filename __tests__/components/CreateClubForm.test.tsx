@@ -279,7 +279,7 @@ describe('CreateClubForm', () => {
         location: validFormData.area,
         lat: 37.7749,
         lng: -122.4194,
-        creator_id: 'current-user-id',
+        creator_id: '550e8400-e29b-41d4-a716-446655440010',
         created_at: new Date().toISOString(),
       };
 
@@ -307,7 +307,7 @@ describe('CreateClubForm', () => {
           zipCode: validFormData.zipCode,
           lat: 37.7749,
           lng: -122.4194,
-          creator_id: 'current-user-id',
+          creator_id: '550e8400-e29b-41d4-a716-446655440010',
         });
         expect(mockOnSuccess).toHaveBeenCalledWith(mockCreatedClub);
       });
