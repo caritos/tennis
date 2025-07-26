@@ -1,0 +1,32 @@
+appId: com.anonymous.tennis-club
+name: Checkbox Test
+---
+# Test if checkbox works
+
+- launchApp:
+    clearState: true
+- waitForAnimationToEnd
+
+# Navigate to signup form
+- tapOn: "Get started"
+- tapOn: "Sign up" 
+- tapOn: "Sign up with email"
+- waitForAnimationToEnd
+
+# Scroll to checkbox
+- swipe:
+    start: "50%, 70%"
+    end: "50%, 30%"
+
+- takeScreenshot: "01-before-checkbox"
+
+# Try checkbox
+- tapOn:
+    id: "terms-checkbox"
+- waitForAnimationToEnd
+
+- takeScreenshot: "02-after-checkbox"
+
+# Wait a bit more to see if state updates
+- waitForAnimationToEnd
+- waitForAnimationToEnd

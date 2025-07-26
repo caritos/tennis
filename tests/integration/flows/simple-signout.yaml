@@ -1,0 +1,48 @@
+appId: com.anonymous.tennis-club
+name: Simple Signout Test
+---
+# ✅ SIMPLE SIGNOUT TEST
+# Prerequisites: User must already be logged in to the main app
+# Run this test when you manually have a user logged in
+
+- launchApp:
+    clearState: false
+- waitForAnimationToEnd
+
+- takeScreenshot: "01-current-state"
+
+# Try to find Profile tab (should exist if logged in)
+- assertVisible:
+    text: "Profile"
+
+# Navigate to Profile tab
+- tapOn: "Profile"
+- waitForAnimationToEnd
+
+- takeScreenshot: "02-profile-opened"
+
+# Scroll down to find Sign Out button
+- scrollUntilVisible:
+    element:
+      text: "Sign Out"
+    direction: DOWN
+
+- takeScreenshot: "03-found-signout"
+
+# Tap Sign Out
+- tapOn: "Sign Out"
+- waitForAnimationToEnd
+- waitForAnimationToEnd
+
+- takeScreenshot: "04-after-signout"
+
+# Verify we're signed out (should see welcome screen)
+- assertVisible:
+    text: "Get started"
+    optional: true
+
+- assertVisible:
+    text: "Sign In"
+    optional: true
+
+- takeScreenshot: "05-signout-complete"

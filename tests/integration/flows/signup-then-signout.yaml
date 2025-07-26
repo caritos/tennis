@@ -1,0 +1,79 @@
+appId: com.anonymous.tennis-club
+name: Complete Signup and Signout Flow
+env:
+  UNIQUE_ID: ${Math.floor(Math.random() * 1000000)}
+---
+# ✅ COMPLETE SIGNUP + SIGNOUT E2E TEST
+# This test does a full cycle: signup with unique email -> verify login -> signout -> verify signout
+
+- launchApp:
+    clearState: true
+- waitForAnimationToEnd
+
+# === SIGNUP PHASE ===
+- takeScreenshot: "01-welcome-screen"
+
+# Navigate to signup form
+- tapOn: "Get started"
+- tapOn: "Sign up" 
+- tapOn: "Sign up with email"
+- waitForAnimationToEnd
+
+# Use the E2E auto-fill by agreeing to terms
+- swipe:
+    start: "50%, 70%"
+    end: "50%, 30%"
+
+- tapOn:
+    id: "terms-checkbox"
+- waitForAnimationToEnd
+
+- takeScreenshot: "02-signup-form-submitted"
+
+# Wait for signup to complete
+- waitForAnimationToEnd
+- waitForAnimationToEnd
+- waitForAnimationToEnd
+- waitForAnimationToEnd
+- waitForAnimationToEnd
+
+- takeScreenshot: "03-after-signup"
+
+# === VERIFY LOGIN ===
+# Check that we're in the main app
+- assertVisible:
+    text: "Profile"
+
+- takeScreenshot: "04-logged-in-main-app"
+
+# === SIGNOUT PHASE ===
+# Navigate to Profile tab
+- tapOn: "Profile"
+- waitForAnimationToEnd
+
+- takeScreenshot: "05-profile-tab"
+
+# Scroll down to find Sign Out button
+- scrollUntilVisible:
+    element:
+      text: "Sign Out"
+    direction: DOWN
+
+- takeScreenshot: "06-sign-out-visible"
+
+# Tap Sign Out
+- tapOn: "Sign Out"
+- waitForAnimationToEnd
+- waitForAnimationToEnd
+
+- takeScreenshot: "07-after-signout"
+
+# === VERIFY SIGNOUT ===
+# Should be back at welcome screen
+- assertVisible:
+    text: "Get started"
+
+- assertVisible:
+    text: "Sign In"
+
+- takeScreenshot: "08-back-to-welcome"

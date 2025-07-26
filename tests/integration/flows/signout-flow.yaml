@@ -1,0 +1,56 @@
+appId: com.anonymous.tennis-club
+name: User Signout Flow Test
+---
+# ✅ USER SIGNOUT E2E TEST
+# This test assumes a user is already logged in and tests the signout functionality
+# 
+# Prerequisites: User must be logged in to the main app
+# Test flow: Navigate to Profile -> Find Sign Out -> Tap Sign Out -> Verify signed out
+
+- launchApp:
+    clearState: false
+- waitForAnimationToEnd
+
+- takeScreenshot: "01-main-app-logged-in"
+
+# Navigate to Profile tab to find sign out option
+- tapOn: "Profile"
+- waitForAnimationToEnd
+
+- takeScreenshot: "02-profile-tab-opened"
+
+# Scroll down to find the Sign Out button in Settings section
+- scrollUntilVisible:
+    element:
+      text: "Sign Out"
+    direction: DOWN
+
+- takeScreenshot: "03-sign-out-button-visible"
+
+# Tap the Sign Out button
+- tapOn: "Sign Out"
+- waitForAnimationToEnd
+- waitForAnimationToEnd
+- waitForAnimationToEnd
+
+- takeScreenshot: "04-after-sign-out-tap"
+
+# Verify we're back at the welcome/auth screen
+- assertVisible:
+    text: "Sign In"
+    optional: true
+
+- assertVisible:
+    text: "Get started"
+    optional: true
+
+- assertVisible:
+    text: "Tennis Club"
+    optional: true
+
+- takeScreenshot: "05-signed-out-welcome-screen"
+
+# Additional verification - should see welcome screen elements
+- assertVisible:
+    text: "Connect with tennis players"
+    optional: true

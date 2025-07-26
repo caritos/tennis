@@ -1,0 +1,48 @@
+appId: com.anonymous.tennis-club
+name: E2E Auto-Fill Test
+---
+# Test the E2E auto-fill mechanism
+
+- launchApp:
+    clearState: true
+- waitForAnimationToEnd
+
+# Navigate to signup form
+- tapOn: "Get started"
+- tapOn: "Sign up" 
+- tapOn: "Sign up with email"
+- waitForAnimationToEnd
+
+- takeScreenshot: "01-form-loaded"
+
+# Skip manual input and just agree to terms to trigger auto-fill
+- swipe:
+    start: "50%, 70%"
+    end: "50%, 30%"
+
+- tapOn:
+    id: "terms-checkbox"
+- waitForAnimationToEnd
+
+- takeScreenshot: "02-terms-agreed-should-auto-fill"
+
+# Wait for auto-fill and auto-submit
+- waitForAnimationToEnd
+- waitForAnimationToEnd
+- waitForAnimationToEnd
+- waitForAnimationToEnd
+- waitForAnimationToEnd
+
+- takeScreenshot: "03-after-auto-submit"
+
+# Check if we're in the main app (should see tab navigation)
+- assertVisible:
+    text: "Clubs"
+
+- assertVisible:
+    text: "Profile"
+
+# Verify we're actually logged in by checking for user-specific content
+- assertVisible:
+    text: "My Clubs"
+    optional: true

@@ -33,11 +33,16 @@ run_test() {
     echo -e "\n🧪 Running test: ${test_name}"
     echo "----------------------------"
     
-    if maestro test "$test_file"; then
+    # Configure debug output to tests/integration/screenshots directory
+    local debug_output="tests/integration/screenshots/${test_name}"
+    
+    if maestro test "$test_file" --debug-output="$debug_output" --flatten-debug-output; then
         echo -e "${GREEN}✅ ${test_name} passed${NC}"
+        echo -e "📸 Screenshots saved to: ${debug_output}"
         return 0
     else
         echo -e "${RED}❌ ${test_name} failed${NC}"
+        echo -e "📸 Debug output saved to: ${debug_output}"
         return 1
     fi
 }
@@ -50,7 +55,7 @@ if [ $# -eq 0 ]; then
     failed_tests=0
     total_tests=0
     
-    for test in e2e/flows/*.yaml; do
+    for test in tests/integration/flows/*.yaml; do
         if [ -f "$test" ]; then
             ((total_tests++))
             if ! run_test "$test"; then
@@ -74,7 +79,7 @@ if [ $# -eq 0 ]; then
     fi
 else
     # Run specific test
-    test_path="e2e/flows/$1"
+    test_path="tests/integration/flows/$1"
     if [[ ! "$1" =~ \.yaml$ ]]; then
         test_path="${test_path}.yaml"
     fi

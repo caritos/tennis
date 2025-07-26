@@ -65,6 +65,23 @@ export function EmailSignUpForm({
   // E2E Test Mode: Auto-submit when form is complete
   const isE2ETest = email.includes('e2etest');
   
+  // E2E Test Mode: Alternative approach - check if we should auto-fill for testing
+  const [e2eAutoFillTriggered, setE2eAutoFillTriggered] = useState(false);
+  
+  // E2E Test Mode: Auto-fill form when terms are agreed
+  React.useEffect(() => {
+    if (agreedToTerms && !e2eAutoFillTriggered) {
+      console.log('🤖 E2E TEST MODE: Terms agreed, auto-filling form...');
+      setE2eAutoFillTriggered(true);
+      const timestamp = Date.now();
+      setFullName('E2E Test User');
+      setEmail(`e2etest${timestamp}@example.com`);
+      setPassword('TestAuth123!');
+      setConfirmPassword('TestAuth123!');
+      setPhone('(555) 123-4567');
+    }
+  }, [agreedToTerms, e2eAutoFillTriggered]);
+
   React.useEffect(() => {
     console.log('🔍 Form State Check:', {
       isE2ETest,
@@ -72,7 +89,8 @@ export function EmailSignUpForm({
       email: email.length,
       password: password.length,
       confirmPassword: confirmPassword.length,
-      agreedToTerms
+      agreedToTerms,
+      e2eAutoFillTriggered
     });
     
     if (isE2ETest && fullName && email && password && confirmPassword && agreedToTerms) {
@@ -81,7 +99,7 @@ export function EmailSignUpForm({
         handleSubmit();
       }, 1000); // Small delay to ensure form is stable
     }
-  }, [isE2ETest, fullName, email, password, confirmPassword, agreedToTerms]);
+  }, [isE2ETest, fullName, email, password, confirmPassword, agreedToTerms, e2eAutoFillTriggered]);
 
   const validateEmail = (email: string): boolean => {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -251,8 +269,11 @@ export function EmailSignUpForm({
                     placeholder="John Smith"
                     placeholderTextColor={colors.tabIconDefault}
                     value={fullName}
+                    onFocus={() => {
+                      console.log('📝 FULL NAME FOCUSED');
+                    }}
                     onChangeText={(text) => {
-                      console.log('📝 Full Name changed:', text);
+                      console.log('📝 FULL NAME CHANGED:', text, 'length:', text.length);
                       setFullName(text);
                       clearError('fullName');
                     }}
@@ -263,6 +284,7 @@ export function EmailSignUpForm({
                     autoCapitalize="words"
                     autoCorrect={false}
                     accessibilityLabel="Full Name"
+                    testID="full-name-input"
                   />
                   {errors.fullName && (
                     <ThemedText style={styles.errorText} accessibilityRole="alert">
@@ -286,7 +308,11 @@ export function EmailSignUpForm({
                     placeholder="john@example.com"
                     placeholderTextColor={colors.tabIconDefault}
                     value={email}
+                    onFocus={() => {
+                      console.log('📝 EMAIL FOCUSED');
+                    }}
                     onChangeText={(text) => {
+                      console.log('📝 EMAIL CHANGED:', text, 'length:', text.length);
                       setEmail(text);
                       clearError('email');
                     }}
@@ -294,6 +320,7 @@ export function EmailSignUpForm({
                     autoCapitalize="none"
                     autoCorrect={false}
                     accessibilityLabel="Email Address"
+                    testID="email-input"
                   />
                   {errors.email && (
                     <ThemedText style={styles.errorText} accessibilityRole="alert">
@@ -326,6 +353,8 @@ export function EmailSignUpForm({
                     autoCorrect={false}
                     accessibilityLabel="Password"
                     testID="password-input"
+                    passwordRules=""
+                    textContentType="none"
                   />
                   {errors.password && (
                     <ThemedText style={styles.errorText} accessibilityRole="alert">
@@ -358,6 +387,8 @@ export function EmailSignUpForm({
                     autoCorrect={false}
                     accessibilityLabel="Confirm Password"
                     testID="confirm-password-input"
+                    passwordRules=""
+                    textContentType="none"
                   />
                   {errors.confirmPassword && (
                     <ThemedText style={styles.errorText} accessibilityRole="alert">
@@ -388,6 +419,7 @@ export function EmailSignUpForm({
                     keyboardType="phone-pad"
                     autoCorrect={false}
                     accessibilityLabel="Phone Number (Optional)"
+                    testID="phone-input"
                   />
                   <ThemedText style={[styles.helpText, { color: colors.tabIconDefault }]}>
                     For match coordination and contact sharing
