@@ -33,10 +33,17 @@ run_test() {
     echo -e "\n🧪 Running test: ${test_name}"
     echo "----------------------------"
     
-    # Configure debug output to tests/integration/screenshots directory
-    local debug_output="tests/integration/screenshots/${test_name}"
+    # Configure debug output and run from screenshots directory
+    # This ensures takeScreenshot commands save files in the right place
+    local debug_output="${test_name}"
+    local screenshots_dir="tests/integration/screenshots"
     
-    if maestro test "$test_file" --debug-output="$debug_output" --flatten-debug-output; then
+    # Create screenshots directory if it doesn't exist
+    mkdir -p "$screenshots_dir"
+    
+    # Run test from screenshots directory so takeScreenshot files land there
+    local abs_test_file="$(pwd)/$test_file"
+    if (cd "$screenshots_dir" && maestro test "$abs_test_file" --debug-output="$debug_output" --flatten-debug-output); then
         echo -e "${GREEN}✅ ${test_name} passed${NC}"
         echo -e "📸 Screenshots saved to: ${debug_output}"
         return 0
