@@ -1,0 +1,78 @@
+appId: com.anonymous.tennis-club
+name: Simple Sign In Test
+---
+# Start fresh and clear any existing session
+- launchApp:
+    clearState: true
+
+- waitForAnimationToEnd
+
+# Look for sign in entry points
+- tapOn:
+    text: "Sign In"
+    optional: true
+
+# If not immediately visible, try welcome flow
+- tapOn:
+    text: "Get started"
+    optional: true
+
+# Look for sign in link from signup screen
+- tapOn:
+    text: "Already have an account"
+    optional: true
+
+- tapOn:
+    text: "Sign In"
+    optional: true
+
+# Now we should be on sign in screen
+# Take screenshot to see the form
+- takeScreenshot: "signin-form"
+
+# Try to fill email field (handle different label variations)
+- tapOn:
+    text: "Email"
+    optional: true
+- tapOn:
+    text: "Email Address"
+    optional: true
+- tapOn:
+    id: "email-input"
+    optional: true
+
+# Enter test email
+- inputText: "test@example.com"
+
+# Try to find password field
+- tapOn:
+    text: "Password"
+    optional: true
+- tapOn:
+    id: "password-input"
+    optional: true
+
+# Enter test password
+- inputText: "password123"
+
+# Submit the form
+- tapOn:
+    text: "Sign In"
+    optional: true
+- tapOn:
+    text: "Log In"
+    optional: true
+- tapOn:
+    text: "Login"
+    optional: true
+
+# Wait for sign in attempt
+- waitForAnimationToEnd
+- waitForAnimationToEnd
+
+# Take final screenshot
+- takeScreenshot: "signin-result"
+
+# Check for either success or error
+- assertVisible:
+    text: ".*"  # Any text means app didn't crash

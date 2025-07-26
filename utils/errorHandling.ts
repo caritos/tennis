@@ -11,8 +11,9 @@ export function getAuthErrorMessage(error: AuthError | Error): string {
     return 'Invalid email or password. Please check your credentials and try again.';
   }
   
+  // Email verification is disabled - users can sign in immediately
   if (message.includes('email not confirmed') || message.includes('email_not_confirmed')) {
-    return 'Please check your email and click the confirmation link before signing in.';
+    return 'There was an issue with your account. Please try signing in again.';
   }
   
   if (message.includes('too many requests') || message.includes('rate limit')) {

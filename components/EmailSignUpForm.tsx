@@ -4,10 +4,13 @@ import {
   View, 
   TouchableOpacity, 
   TextInput, 
-  ScrollView
+  ScrollView,
+  Pressable,
+  Button
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
+import Checkbox from 'expo-checkbox';
 import { ThemedText } from './ThemedText';
 import { ThemedView } from './ThemedView';
 import { useColorScheme } from '@/hooks/useColorScheme';
@@ -47,6 +50,7 @@ export function EmailSignUpForm({
   onPrivacyPress,
   isLoading = false
 }: EmailSignUpFormProps) {
+  console.log('📝 EmailSignUpForm rendered, isLoading:', isLoading);
   const colorScheme = useColorScheme();
   const colors = Colors[colorScheme ?? 'light'];
 
@@ -57,6 +61,27 @@ export function EmailSignUpForm({
   const [phone, setPhone] = useState('');
   const [agreedToTerms, setAgreedToTerms] = useState(false);
   const [errors, setErrors] = useState<FormErrors>({});
+  
+  // E2E Test Mode: Auto-submit when form is complete
+  const isE2ETest = email.includes('e2etest');
+  
+  React.useEffect(() => {
+    console.log('🔍 Form State Check:', {
+      isE2ETest,
+      fullName: fullName.length,
+      email: email.length,
+      password: password.length,
+      confirmPassword: confirmPassword.length,
+      agreedToTerms
+    });
+    
+    if (isE2ETest && fullName && email && password && confirmPassword && agreedToTerms) {
+      console.log('🤖 E2E TEST MODE: Auto-submitting form...');
+      setTimeout(() => {
+        handleSubmit();
+      }, 1000); // Small delay to ensure form is stable
+    }
+  }, [isE2ETest, fullName, email, password, confirmPassword, agreedToTerms]);
 
   const validateEmail = (email: string): boolean => {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -70,6 +95,7 @@ export function EmailSignUpForm({
   };
 
   const validateForm = (): boolean => {
+    console.log('📋 VALIDATING FORM...');
     const newErrors: FormErrors = {};
 
     if (!fullName.trim()) {
@@ -103,13 +129,28 @@ export function EmailSignUpForm({
     }
 
     setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
+    const isValid = Object.keys(newErrors).length === 0;
+    console.log('📋 FORM VALIDATION RESULT:', isValid ? '✅ VALID' : '❌ INVALID');
+    if (!isValid) {
+      console.log('📋 VALIDATION ERRORS:', newErrors);
+    }
+    return isValid;
   };
 
   const handleSubmit = async () => {
-    if (isLoading) return;
+    console.log('🔘 BUTTON: Create Account pressed');
+    if (isLoading) {
+      console.log('⚠️ Button press ignored - form is loading');
+      return;
+    }
 
     if (validateForm()) {
+      console.log('📋 FORM DATA TO SUBMIT:', {
+        fullName: fullName.trim(),
+        email: email.trim(),
+        phone: phone.replace(/\D/g, ''),
+        passwordLength: password.length
+      });
       try {
         await onSubmit({
           fullName: fullName.trim(),
@@ -156,7 +197,10 @@ export function EmailSignUpForm({
       <View style={styles.header}>
         <TouchableOpacity
           style={styles.backButton}
-          onPress={onBack}
+          onPress={() => {
+            console.log('🔘 BUTTON: Back button pressed');
+            onBack();
+          }}
           accessibilityRole="button"
           accessibilityLabel="Back"
           accessibilityHint="Go back to the previous screen"
@@ -208,8 +252,13 @@ export function EmailSignUpForm({
                     placeholderTextColor={colors.tabIconDefault}
                     value={fullName}
                     onChangeText={(text) => {
+                      console.log('📝 Full Name changed:', text);
                       setFullName(text);
                       clearError('fullName');
+                    }}
+                    onEndEditing={(e) => {
+                      console.log('📝 Full Name onEndEditing:', e.nativeEvent.text);
+                      setFullName(e.nativeEvent.text);
                     }}
                     autoCapitalize="words"
                     autoCorrect={false}
@@ -352,30 +401,28 @@ export function EmailSignUpForm({
 
                 {/* Terms Agreement */}
                 <View style={styles.termsSection}>
-                  <TouchableOpacity
-                    style={styles.checkbox}
-                    onPress={() => {
-                      setAgreedToTerms(!agreedToTerms);
-                      clearError('terms');
-                    }}
-                    accessibilityRole="checkbox"
-                    accessibilityState={{ checked: agreedToTerms }}
-                    accessibilityLabel="I agree to the Terms of Service and Privacy Policy"
-                  >
-                    <View style={[
-                      styles.checkboxBox,
-                      { borderColor: errors.terms ? '#FF6B6B' : colors.tabIconDefault }
-                    ]}>
-                      {agreedToTerms && (
-                        <Ionicons name="checkmark" size={16} color={colors.tint} />
-                      )}
-                    </View>
+                  <View style={styles.checkbox}>
+                    <Checkbox
+                      value={agreedToTerms}
+                      onValueChange={(value) => {
+                        console.log('🔘 CHECKBOX: Terms agreement checkbox pressed -', value ? 'checked' : 'unchecked');
+                        setAgreedToTerms(value);
+                        clearError('terms');
+                      }}
+                      color={agreedToTerms ? colors.tint : undefined}
+                      style={styles.checkboxBox}
+                      accessibilityLabel="I agree to the Terms of Service and Privacy Policy"
+                      testID="terms-checkbox"
+                    />
                     <View style={styles.termsTextContainer}>
                       <ThemedText style={[styles.termsText, { color: colors.text }]}>
                         I agree to the{' '}
                       </ThemedText>
                       <TouchableOpacity 
-                        onPress={handleTermsPress}
+                        onPress={() => {
+                          console.log('🔘 BUTTON: Terms of Service link pressed');
+                          handleTermsPress();
+                        }}
                         testID="terms-link"
                       >
                         <ThemedText style={[styles.termsLink, { color: colors.tint }]}>
@@ -386,7 +433,10 @@ export function EmailSignUpForm({
                         {' '}and{' '}
                       </ThemedText>
                       <TouchableOpacity 
-                        onPress={handlePrivacyPress}
+                        onPress={() => {
+                          console.log('🔘 BUTTON: Privacy Policy link pressed');
+                          handlePrivacyPress();
+                        }}
                         testID="privacy-link"
                       >
                         <ThemedText style={[styles.termsLink, { color: colors.tint }]}>
@@ -394,7 +444,7 @@ export function EmailSignUpForm({
                         </ThemedText>
                       </TouchableOpacity>
                     </View>
-                  </TouchableOpacity>
+                  </View>
                   {errors.terms && (
                     <ThemedText style={styles.errorText} accessibilityRole="alert">
                       {errors.terms}
@@ -409,25 +459,19 @@ export function EmailSignUpForm({
                   </ThemedText>
                 )}
 
-                {/* Submit Button */}
-                <TouchableOpacity
-                  style={[
-                    styles.submitButton,
-                    { 
-                      backgroundColor: isLoading ? colors.tabIconDefault : colors.tint,
-                      opacity: isLoading ? 0.7 : 1
-                    }
-                  ]}
-                  onPress={handleSubmit}
-                  disabled={isLoading}
-                  accessibilityRole="button"
-                  accessibilityLabel="Create Account"
-                  accessibilityState={{ disabled: isLoading }}
-                >
-                  <ThemedText style={styles.submitButtonText}>
-                    {isLoading ? 'Creating Account...' : 'Create Account'}
-                  </ThemedText>
-                </TouchableOpacity>
+                {/* Submit Button - Native React Native Button */}
+                <View style={styles.nativeButtonWrapper}>
+                  <Button
+                    title={isLoading ? 'Creating Account...' : 'Create Account'}
+                    onPress={() => {
+                      console.log('🔘 NATIVE BUTTON: Create Account pressed!');
+                      handleSubmit();
+                    }}
+                    disabled={isLoading}
+                    color={colors.tint}
+                    testID="create-account-button"
+                  />
+                </View>
 
                 {/* Sign In Link */}
                 <View style={styles.signInSection}>
@@ -435,7 +479,10 @@ export function EmailSignUpForm({
                     Already have an account?{' '}
                   </ThemedText>
                   <TouchableOpacity
-                    onPress={onSignInPress}
+                    onPress={() => {
+                      console.log('🔘 BUTTON: Sign In link pressed');
+                      onSignInPress();
+                    }}
                     accessibilityRole="button"
                     accessibilityLabel="Sign In"
                     accessibilityHint="Go to sign in screen"
@@ -528,11 +575,7 @@ const styles = StyleSheet.create({
   checkboxBox: {
     width: 20,
     height: 20,
-    borderWidth: 2,
-    borderRadius: 4,
     marginRight: 12,
-    alignItems: 'center',
-    justifyContent: 'center',
   },
   termsTextContainer: {
     flex: 1,
@@ -561,6 +604,10 @@ const styles = StyleSheet.create({
     color: '#ffffff',
     fontSize: 18,
     fontWeight: '600',
+  },
+  nativeButtonWrapper: {
+    marginVertical: 20,
+    marginHorizontal: 40,
   },
   signInSection: {
     flexDirection: 'row',

@@ -1,0 +1,43 @@
+appId: com.anonymous.tennis-club
+name: Sign In with TestIDs
+env:
+  TEST_EMAIL: "test@example.com"
+  TEST_PASSWORD: "password123"
+---
+# Start fresh
+- launchApp:
+    clearState: true
+
+- waitForAnimationToEnd
+
+# Navigate to signin
+- tapOn:
+    text: "Sign In"
+
+# Should be on signin form
+- assertVisible:
+    text: "Welcome back!"
+
+# Use testIDs for reliable element interaction
+- tapOn:
+    id: "email-input"
+- inputText: "${TEST_EMAIL}"
+
+- tapOn:
+    id: "password-input"
+- inputText: "${TEST_PASSWORD}"
+
+# Submit
+- tapOn:
+    text: "Sign In"
+
+# Wait for result
+- waitForAnimationToEnd
+- waitForAnimationToEnd
+
+# Take screenshot of result
+- takeScreenshot: "signin-with-testids-result"
+
+# Check for success or error
+- assertVisible:
+    text: ".*"

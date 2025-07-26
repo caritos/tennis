@@ -3,10 +3,16 @@ import { useFonts } from 'expo-font';
 import { Stack, Redirect } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import 'react-native-reanimated';
+import { LogBox } from 'react-native';
 
 import { useColorScheme } from '@/hooks/useColorScheme';
 import { AuthProvider, useAuth } from '@/contexts/AuthContext';
 import { View, ActivityIndicator } from 'react-native';
+
+// Hide the "Open debugger" warning in development
+if (__DEV__) {
+  LogBox.ignoreLogs(['Open debugger to view warnings']);
+}
 
 function RootLayoutNav() {
   const colorScheme = useColorScheme();

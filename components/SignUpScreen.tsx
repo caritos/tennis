@@ -33,7 +33,11 @@ export function SignUpScreen({
   const [pressedButton, setPressedButton] = useState<string | null>(null);
 
   const handleButtonPress = (action: () => void, buttonId: string) => {
-    if (isLoading || pressedButton === buttonId) return;
+    console.log(`🔘 BUTTON: ${buttonId} signup pressed`);
+    if (isLoading || pressedButton === buttonId) {
+      console.log(`⚠️ Button press ignored - loading: ${isLoading}, pressed: ${pressedButton === buttonId}`);
+      return;
+    }
     
     setPressedButton(buttonId);
     
@@ -47,6 +51,7 @@ export function SignUpScreen({
   };
 
   const handleBack = () => {
+    console.log('🔘 BUTTON: Back pressed (SignUpScreen)');
     try {
       onBack();
     } catch (error) {
@@ -55,6 +60,7 @@ export function SignUpScreen({
   };
 
   const handleTermsPress = () => {
+    console.log('🔘 BUTTON: Terms of Service pressed (SignUpScreen)');
     try {
       onTermsPress?.();
     } catch (error) {
@@ -63,6 +69,7 @@ export function SignUpScreen({
   };
 
   const handlePrivacyPress = () => {
+    console.log('🔘 BUTTON: Privacy Policy pressed (SignUpScreen)');
     try {
       onPrivacyPress?.();
     } catch (error) {

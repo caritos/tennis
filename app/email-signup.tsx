@@ -19,6 +19,7 @@ export default function EmailSignUpPage() {
     password: string;
     phone: string;
   }) => {
+    console.log('=== EMAIL SIGNUP STARTING ===');
     console.log('Email sign up submitted:', { ...data, password: '[HIDDEN]' });
     setIsLoading(true);
     
@@ -48,19 +49,42 @@ export default function EmailSignUpPage() {
         console.warn('User created but no session returned - this may require email verification');
       }
       
-      // Store user data in Supabase database
-      const { error: profileError } = await supabase
-        .from('users')
-        .insert({
-          id: authData.user.id,
-          full_name: data.fullName,
-          email: data.email,
-          phone: data.phone || null,
-          role: 'player'
-        });
+      // Store user data in Supabase database with retry logic
+      let profileError = null;
+      let retryCount = 0;
+      const maxRetries = 3;
+      
+      while (retryCount < maxRetries) {
+        const { error } = await supabase
+          .from('users')
+          .insert({
+            id: authData.user.id,
+            full_name: data.fullName,
+            email: data.email,
+            phone: data.phone || null,
+            role: 'player'
+          });
+        
+        profileError = error;
+        
+        if (!error) {
+          console.log('User profile created successfully in Supabase');
+          break;
+        }
+        
+        // If it's a foreign key constraint error, wait and retry
+        if (error.code === '23503' && retryCount < maxRetries - 1) {
+          console.log(`Foreign key constraint error, retrying... (${retryCount + 1}/${maxRetries})`);
+          await new Promise(resolve => setTimeout(resolve, 1000)); // Wait 1 second
+          retryCount++;
+        } else {
+          console.error('Failed to create user profile:', error);
+          break;
+        }
+      }
       
       if (profileError) {
-        console.error('Failed to create user profile:', profileError);
+        console.error('Final error creating user profile:', profileError);
         // Continue anyway as auth was successful
       }
       
@@ -79,12 +103,15 @@ export default function EmailSignUpPage() {
       );
       
       console.log('User created successfully:', authData.user.id);
+      console.log('=== NAVIGATING TO INDEX ===');
       
       // Navigate to index route, which will handle routing to tabs after auth is ready
       router.replace('/');
       setIsLoading(false);
+      console.log('=== EMAIL SIGNUP COMPLETED ===');
       
     } catch (error) {
+      console.error('=== EMAIL SIGNUP ERROR ===');
       console.error('Failed to create user:', error);
       setIsLoading(false);
       throw error; // Let the form handle the error display

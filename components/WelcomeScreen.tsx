@@ -24,7 +24,11 @@ export function WelcomeScreen({
   const [isPressed, setIsPressed] = useState(false);
 
   const handleGetStarted = () => {
-    if (isPressed) return; // Prevent double-tap
+    console.log('🔘 BUTTON: Get Started pressed');
+    if (isPressed) {
+      console.log('⚠️ Button press ignored - double-tap prevention');
+      return; // Prevent double-tap
+    }
     setIsPressed(true);
     
     try {
@@ -38,6 +42,7 @@ export function WelcomeScreen({
   };
 
   const handleSignIn = () => {
+    console.log('🔘 BUTTON: Sign In pressed');
     try {
       onSignIn();
     } catch (error) {
@@ -46,6 +51,7 @@ export function WelcomeScreen({
   };
 
   const handleTermsPress = () => {
+    console.log('🔘 BUTTON: Terms of Service pressed');
     try {
       onTermsPress?.();
     } catch (error) {
@@ -54,6 +60,7 @@ export function WelcomeScreen({
   };
 
   const handlePrivacyPress = () => {
+    console.log('🔘 BUTTON: Privacy Policy pressed');
     try {
       onPrivacyPress?.();
     } catch (error) {

@@ -8,25 +8,25 @@ export default function AuthCallback() {
   useEffect(() => {
     const handleAuthCallback = async () => {
       try {
-        // Check if there's a session after email verification
+        // Check if there's a session
         const { data: { session }, error } = await supabase.auth.getSession();
         
         if (error) {
           console.error('Auth callback error:', error);
-          router.replace('/email-verification?error=verification_failed');
+          router.replace('/signin');
           return;
         }
 
-        if (session?.user?.email_confirmed_at) {
-          // Email verified successfully, go to main app
+        if (session?.user) {
+          // User is authenticated, go to main app
           router.replace('/(tabs)');
         } else {
-          // Still not verified, go back to verification screen
-          router.replace('/email-verification');
+          // No session, go to sign in
+          router.replace('/signin');
         }
       } catch (error) {
         console.error('Auth callback error:', error);
-        router.replace('/email-verification?error=verification_failed');
+        router.replace('/signin');
       }
     };
 
@@ -37,7 +37,7 @@ export default function AuthCallback() {
     <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
       <ActivityIndicator size="large" />
       <ThemedText style={{ marginTop: 16 }}>
-        Verifying your email...
+        Signing you in...
       </ThemedText>
     </View>
   );

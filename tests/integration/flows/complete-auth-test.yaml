@@ -1,0 +1,129 @@
+appId: com.anonymous.tennis-club
+name: Complete Authentication Test
+env:
+  RANDOM: ${Math.floor(Math.random() * 10000)}
+  TEST_EMAIL: "authtest${RANDOM}@example.com"
+  TEST_PASSWORD: "TestAuth123!"
+  TEST_NAME: "Auth Test ${RANDOM}"
+---
+# ===== STEP 1: ENSURE SIGNED OUT STATE =====
+- launchApp:
+    clearState: true
+
+- waitForAnimationToEnd
+
+# Check if already signed in - if so, sign out first
+- tapOn:
+    text: "Profile"
+    optional: true
+- scrollUntilVisible:
+    element:
+      text: "Sign Out"
+    direction: DOWN
+    optional: true
+- tapOn:
+    text: "Sign Out"
+    optional: true
+- waitForAnimationToEnd
+
+# ===== STEP 2: SIGN UP (Auto-login) =====
+# Navigate to signup
+- tapOn: "Get started"
+- tapOn: "Sign up"
+- tapOn: "Sign up with email"
+
+# Fill signup form
+- tapOn: "Full Name"
+- eraseText
+- inputText: "${TEST_NAME}"
+
+- tapOn: "Email Address"
+- eraseText
+- inputText: "${TEST_EMAIL}"
+
+- tapOn: "Password"
+- inputText: "${TEST_PASSWORD}"
+
+- tapOn: "Confirm Password"
+- inputText: "${TEST_PASSWORD}"
+
+# Accept terms
+- swipe:
+    start: "50%, 70%"
+    end: "50%, 30%"
+- tapOn:
+    id: "terms-checkbox"
+
+# Create account (user will be auto-logged in)
+- tapOn: "Create Account"
+- waitForAnimationToEnd
+- waitForAnimationToEnd
+
+# ===== STEP 2: VERIFY SIGNED IN =====
+- takeScreenshot: "after-signup-logged-in"
+
+# Should be in main app - verify by looking for Profile tab
+- assertVisible:
+    text: "Profile"
+
+# ===== STEP 3: SIGN OUT =====
+# Go to profile to find sign out button
+- tapOn: "Profile"
+- waitForAnimationToEnd
+
+# Scroll down to find Sign Out button in Settings section
+- scrollUntilVisible:
+    element:
+      text: "Sign Out"
+    direction: DOWN
+
+# Tap sign out
+- tapOn: "Sign Out"
+- waitForAnimationToEnd
+
+# ===== STEP 4: VERIFY SIGNED OUT =====
+- takeScreenshot: "after-signout"
+
+# Should be back at welcome screen
+- assertVisible:
+    text: "Sign In"
+    optional: true
+- assertVisible:
+    text: "Get started"
+    optional: true
+
+# ===== STEP 5: SIGN BACK IN =====
+# Navigate to sign in
+- tapOn: "Sign In"
+- waitForAnimationToEnd
+
+# Should see signin form
+- assertVisible:
+    text: "Welcome back!"
+
+# Fill signin form with same credentials
+- tapOn:
+    point: "50%, 40%"  # Email field
+- inputText: "${TEST_EMAIL}"
+
+- tapOn:
+    point: "50%, 50%"  # Password field
+- inputText: "${TEST_PASSWORD}"
+
+# Submit signin
+- tapOn: "Sign In"
+- waitForAnimationToEnd
+- waitForAnimationToEnd
+
+# ===== STEP 6: VERIFY SIGNED BACK IN =====
+# Should be back in main app
+- assertVisible:
+    text: "Profile"
+
+# Verify user info in profile
+- tapOn: "Profile"
+- assertVisible:
+    text: "Auth Test"
+    optional: true
+
+- takeScreenshot: "signin-cycle-complete"

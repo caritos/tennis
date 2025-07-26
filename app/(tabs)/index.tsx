@@ -126,11 +126,12 @@ export default function ClubScreen() {
   };
 
   const handleClubPress = (club: Club) => {
-    console.log('Club selected:', club.name);
+    console.log('🔘 BUTTON: Club card pressed -', club.name);
     // TODO: Navigate to club details screen
   };
 
   const handleJoinClub = async (club: Club) => {
+    console.log('🔘 BUTTON: Join club pressed -', club.name);
     if (joiningClubId === club.id || !user?.id) {
       console.log('Cannot join club: joiningClubId =', joiningClubId, 'user.id =', user?.id);
       return; // Prevent double-tap or no user
@@ -168,7 +169,7 @@ export default function ClubScreen() {
   };
 
   const handleCreateClub = () => {
-    console.log('Create club pressed');
+    console.log('🔘 BUTTON: Create Club pressed');
     // TODO: Navigate to create club form
   };
 
@@ -237,7 +238,13 @@ export default function ClubScreen() {
                 <ThemedText type="defaultSemiBold" style={styles.errorText}>
                   {error}
                 </ThemedText>
-                <TouchableOpacity onPress={handleRefresh} style={styles.retryButton}>
+                <TouchableOpacity 
+                  onPress={() => {
+                    console.log('🔘 BUTTON: Retry loading clubs pressed');
+                    handleRefresh();
+                  }} 
+                  style={styles.retryButton}
+                >
                   <ThemedText type="link" style={styles.retryText}>
                     Tap to retry
                   </ThemedText>

@@ -174,6 +174,7 @@ export function EmailSignInForm({
               autoCapitalize="none"
               autoCorrect={false}
               accessibilityLabel="Email Address"
+              testID="email-input"
             />
             {errors.email && (
               <ThemedText style={styles.errorText} accessibilityRole="alert">

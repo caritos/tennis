@@ -51,6 +51,7 @@ export default function ProfileScreen() {
   );
 
   const handleSignOut = async () => {
+    console.log('🔘 BUTTON: Sign Out pressed');
     console.log('Signing out user...');
     await signOut();
     router.replace('/welcome');

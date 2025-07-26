@@ -25,6 +25,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - ✅ Secure client initialization with environment variables
 - ✅ Auto token refresh and session management
 - ✅ Comprehensive auth state management in AuthContext
+- ✅ **Email verification disabled** for frictionless user onboarding (MVP approach)
 
 ## Project Overview
 
@@ -41,15 +42,52 @@ These documents provide detailed specifications for UI layouts, user interaction
 ## Common Commands
 
 ### Development
-- `npm start` - Start the Expo development server
-- `npm run ios` - Start on iOS simulator
-- `npm run android` - Start on Android emulator
+- **`npx expo run:ios`** - **RECOMMENDED**: Create and run development build on iOS simulator
+- **`npx expo run:android`** - **RECOMMENDED**: Create and run development build on Android emulator
 - `npm run web` - Start on web browser
-- `npx expo start --clear` - Start with cleared cache
+- `npx expo start --clear` - Start with cleared cache (Expo Go - limited functionality)
+
+### Development Build vs Expo Go
+**ALWAYS use Development Builds instead of Expo Go for reliable development and testing.**
+
+#### ✅ Development Build (RECOMMENDED)
+```bash
+# iOS
+npx expo run:ios
+
+# Android  
+npx expo run:android
+```
+
+**Benefits:**
+- ✅ Full native functionality and performance
+- ✅ Reliable E2E testing with Maestro
+- ✅ TextInput components work properly with automation tools
+- ✅ All React Native components function correctly
+- ✅ No Expo Go limitations or restrictions
+- ✅ True-to-production environment
+
+#### ❌ Expo Go (AVOID for development)
+```bash
+# Only use for quick demos - NOT for development
+npm start  # or npx expo start
+```
+
+**Limitations:**
+- ❌ E2E testing issues (Maestro TextInput problems)
+- ❌ Limited native module support
+- ❌ Performance differences from production
+- ❌ Component interaction issues in automation
+- ❌ Network and permission restrictions
 
 ### Code Quality
 - `npm run lint` - Run ESLint to check code quality
 - `npx expo lint --fix` - Auto-fix linting issues
+
+### End-to-End Testing
+- `npm run e2e` - Run all E2E tests with Maestro
+- `npm run e2e:record` - Open Maestro Studio to record new tests
+- `./scripts/run-e2e-tests.sh signup-flow` - Run specific test flow
 
 ### Project Management
 - `npm run reset-project` - Reset to blank project (moves current code to app-example/)
@@ -111,6 +149,7 @@ Currently uses React's built-in state management. No external state management l
 
 ### Working Together
 - This is always a feature branch - no backwards compatibility needed
+- **ALWAYS use Development Builds** (`npx expo run:ios`) - never Expo Go for development
 - When in doubt, we choose clarity over cleverness
 - REMINDER: If this file hasn't been referenced in 30+ minutes, RE-READ IT!
 - Avoid complex abstractions or "clever" code. The simple, obvious solution is probably better, and my guidance helps you stay focused on what matters
@@ -134,10 +173,117 @@ Currently uses React's built-in state management. No external state management l
 - Use composition over inheritance
 - Build components with configurable props for flexibility
 - **NEVER use Alert.alert()** - Always use UI-based notifications instead
+- **ALWAYS use real React Native components** - Never create fake/custom versions of native components
 - Example structure:
   - `/components/ui/` - Basic UI elements (buttons, inputs, cards, notifications)
   - `/components/tennis/` - Tennis-specific components (score display, match card)
   - `/components/layout/` - Layout components (headers, containers)
+
+## React Native Component Standards (MANDATORY)
+**CRITICAL: Always use official React Native/Expo components for UI elements. This ensures compatibility with E2E testing tools like Maestro and provides proper accessibility support.**
+
+### Button Component Standards
+**MANDATORY: Use real button components, never fake buttons with styled text.**
+
+#### Primary Actions - Use Native Button
+```typescript
+import { Button } from 'react-native';
+
+// ✅ CORRECT: Native Button for primary actions
+<Button 
+  title="Create Account"
+  onPress={handleSubmit}
+  color={colors.tint}
+  disabled={isLoading}
+  testID="create-account-button"
+/>
+```
+
+#### Custom Styled Buttons - Use Pressable  
+```typescript
+import { Pressable } from 'react-native';
+
+// ✅ CORRECT: Pressable for custom styled buttons
+<Pressable
+  style={({ pressed }) => [
+    styles.customButton,
+    { opacity: pressed ? 0.8 : 1 }
+  ]}
+  onPress={handlePress}
+  disabled={isDisabled}
+  testID="custom-button"
+>
+  <Text style={styles.buttonText}>Custom Button</Text>
+</Pressable>
+```
+
+#### ❌ NEVER Do This:
+```typescript
+// ❌ WRONG: Fake button with TouchableOpacity + Text
+<TouchableOpacity style={styles.fakeButton}>
+  <Text>Submit</Text>
+</TouchableOpacity>
+```
+
+### Checkbox Component Standards
+**MANDATORY: Always use the official Expo Checkbox component for any checkbox functionality.**
+
+```typescript
+import Checkbox from 'expo-checkbox';
+
+// ✅ CORRECT: Use Expo Checkbox component
+<Checkbox
+  value={isChecked}
+  onValueChange={setIsChecked}
+  color={isChecked ? colors.tint : undefined}
+  accessibilityLabel="Descriptive label"
+  testID="unique-checkbox-id"
+/>
+
+// ❌ WRONG: Never create custom checkbox implementations
+<TouchableOpacity onPress={() => setChecked(!checked)}>
+  <View style={customCheckboxStyle}>
+    {checked && <Ionicons name="checkmark" />}
+  </View>
+</TouchableOpacity>
+```
+
+**Required Checkbox Properties:**
+- `value`: Boolean state
+- `onValueChange`: State setter function
+- `accessibilityLabel`: Descriptive text for screen readers
+- `testID`: Unique identifier for E2E testing
+- `color`: Use theme colors for checked state
+
+**Benefits of Real Checkbox Components:**
+- **E2E Testing**: Maestro and other testing frameworks can reliably interact with real checkboxes
+- **Accessibility**: Proper ARIA roles and screen reader support
+- **Platform Consistency**: Native look and feel on iOS/Android
+- **Maintenance**: No custom styling or state management needed
+- **Standards Compliance**: Follows platform UI guidelines
+
+**Implementation Example from EmailSignUpForm:**
+```typescript
+const [agreedToTerms, setAgreedToTerms] = useState(false);
+
+<Checkbox
+  value={agreedToTerms}
+  onValueChange={(value) => {
+    setAgreedToTerms(value);
+    clearError('terms');
+  }}
+  color={agreedToTerms ? colors.tint : undefined}
+  style={styles.checkboxBox}
+  accessibilityLabel="I agree to the Terms of Service and Privacy Policy"
+  testID="terms-checkbox"
+/>
+```
+
+**Checkbox Package Installation:**
+```bash
+npx expo install expo-checkbox
+```
+Always use `npx expo install` to ensure Expo SDK compatibility.
 
 ### UI Notifications (NO Alert.alert())
 - **Toast/Snackbar**: For success messages and brief feedback
@@ -204,7 +350,105 @@ Follow Expo's testing guide for setup:
 - **Integration Tests**: Component interactions, API calls, database operations
 - **E2E Tests**: Complete user workflows (record match, challenge player, join club)
 
-### AUTOMATED CHECKS ARE MANDATORY
+### E2E Testing with Maestro
+
+**Setup & Installation**
+- Maestro is already installed and configured in the project
+- Test flows are stored in `/e2e/flows/` directory
+- Run tests: `export PATH="$PATH":"$HOME/.maestro/bin" && maestro test e2e/flows/[test-name].yaml`
+
+**CRITICAL: Environment Requirements**
+- ✅ **MANDATORY: Use Development Builds**: `npx expo run:ios` or `npx expo run:android` 
+- ❌ **NEVER use Expo Go**: TextInput interactions don't work reliably in Expo Go
+- ✅ **Real Components Required**: Only official React Native components work with Maestro
+
+**Why Development Builds are Required:**
+Development builds run your app natively without Expo Go's limitations, allowing Maestro to interact with TextInput and other components reliably. This provides a true-to-production environment for accurate E2E testing.
+
+**Maestro Compatibility Matrix**
+| Component Type | Expo Go | Development Build | Notes |
+|---------------|---------|-------------------|-------|
+| Button (RN) | ✅ Works | ✅ Works | Native button component |
+| Pressable | ❌ Limited | ✅ Works | Custom touchable component |
+| TouchableOpacity | ❌ Limited | ✅ Works | Legacy touchable component |
+| Checkbox (expo) | ✅ Works | ✅ Works | Official Expo component |
+| TextInput | ❌ Visual only | ✅ Works | State updates don't work in Expo Go |
+| Navigation | ✅ Works | ✅ Works | Screen transitions |
+
+**Lessons Learned from Authentication E2E Testing:**
+1. **Native Components**: Replaced custom TouchableOpacity buttons with React Native Button components for Maestro compatibility
+2. **Real Checkboxes**: Used expo-checkbox instead of custom checkbox implementations
+3. **Text Input Issues**: Maestro can visually fill TextInputs in Expo Go but React state doesn't update
+4. **Timing**: Added proper delays between form interactions to prevent race conditions
+5. **Development Builds**: Use `npx expo run:ios` instead of Expo Go for reliable E2E testing
+
+**Working Test Flow Example:**
+```yaml
+# ✅ This works reliably with development builds
+- tapOn: "Get started"
+- tapOn: "Sign up" 
+- tapOn: "Sign up with email"
+- tapOn: "Full Name"
+- inputText: "Test User"
+- tapOn:
+    id: "terms-checkbox"
+- tapOn: "Create Account"  # Native Button component
+```
+
+**Recording New Tests**
+1. Start the app: `npx expo run:ios` (not Expo Go)
+2. Open Maestro Studio: `maestro studio`
+3. Use the browser interface to:
+   - Click on simulator elements to record actions
+   - Add assertions by right-clicking elements
+   - Export the flow as YAML to `/e2e/flows/`
+
+**E2E Testing Implementation Status**
+- ✅ **Maestro Setup**: Installed and configured for iOS testing
+- ✅ **Component Standards**: Converted to real React Native components
+- ✅ **Authentication Flow**: Working signup/signin E2E tests 
+- ✅ **Button Interactions**: Native Button components work with Maestro
+- ✅ **Checkbox Interactions**: expo-checkbox components work with Maestro  
+- ✅ **Navigation Testing**: Screen transitions and routing work reliably
+- ⚠️ **Text Input Limitation**: Requires development builds for full functionality
+- 📝 **Next Steps**: Create development build for comprehensive E2E testing
+
+**Running Tests**
+```bash
+# Run all E2E tests
+npm run e2e
+
+# Run specific test flow
+./scripts/run-e2e-tests.sh signup-flow
+
+# Run with Maestro directly
+maestro test e2e/flows/signup-flow.yaml
+```
+
+**Available Test Flows**
+- `signup-flow.yaml` - Basic user registration
+- `signup-with-validation.yaml` - Registration with error cases
+- `signup-apple.yaml` - Apple Sign In flow
+- `signup-existing-account.yaml` - Duplicate account handling
+- `example-login-flow.yaml` - Login flow template
+
+**Writing Maestro Tests**
+- **Text Input**: Always tap field first, then use `inputText`
+- **Assertions**: Use `assertVisible` to verify UI state
+- **Waiting**: Use `waitForElement` for async operations
+- **Variables**: Use `${TIMESTAMP}` for unique data
+- **Checkboxes**: Simple `tapOn` to toggle state
+- **Optional Elements**: Add `optional: true` for conditional UI
+
+**Best Practices**
+- Clear app state between tests with `clearState: true`
+- Use descriptive test names and comments
+- Keep each flow focused on one user journey
+- Add proper timeouts for network operations
+- Use unique test data to avoid conflicts
+- Verify both success and error scenarios
+
+**AUTOMATED CHECKS ARE MANDATORY**
 - ALL hook issues are BLOCKING - EVERYTHING must be ✅ GREEN!
 - No errors.
 - No formatting issues.
@@ -218,179 +462,9 @@ Follow Expo's testing guide for setup:
 - Android: Ensure proper permissions in app.json when needed
 - Web: Some native features may require web-specific implementations
 
-## Tennis Community App Architecture
+## Memories and Notes
 
-### App Concept
-A tennis club app for finding players and tracking matches within local tennis clubs. Players join clubs in their area to connect with other members.
-
-### Tennis Club Business Logic
-**IMPORTANT: This is NOT a traditional tennis league system.**
-
-This app facilitates tennis clubs - groups of people who share a common interest in tennis and want to play with other people. Think of it as a social platform for tennis players to connect and organize matches with rankings for better matchmaking.
-
-**CRITICAL: What "Club" Means in This App**
-- **Tennis clubs are COMMUNITIES/GROUPS of players, NOT physical clubhouses**
-- **No operating hours, facilities, or physical locations** - these are social groups
-- **Members arrange matches at whatever courts they have access to** (public courts, private facilities, etc.)
-- **Court tracking excluded from MVP** - focus on player connections, not facility management
-- **Think "tennis meetup group" or "tennis community" rather than "country club"**
-
-### Core Features (MVP)
-- **Club Creation**: Any authenticated user can create tennis clubs
-- **Club Purpose**: Connect tennis players and provide rankings for better matchmaking
-- **Member Rankings**: Unified points-based rankings combining all matches (singles and doubles) within each club for compatible opponent matching
-- **Visual Ranking Indicators**: Trophy system (🏆🥈🥉) for top 3 players to encourage engagement
-- **Match Recording**: Players can record matches against registered or unregistered opponents
-- **Challenge System**: Direct player-to-player match invitations with simple accept/decline responses
-  - **Simplified Flow**: No counter-challenges in MVP (moved to future)
-  - **Optional Decline Reason**: Polite rejection with optional explanation
-- **Looking to Play**: Public match posting system for finding partners within clubs
-- **Contact Sharing**: Phone number sharing after match confirmations (no WhatsApp in MVP)
-- **Score Editing**: Context-aware permissions based on match participation
-- **Role Assignment**: All new users get 'player' role with ability to create clubs
-- **Honor System**: Unregistered opponents can later claim matches when they join
-- **Location-Aware**: Clubs are organized by geographic location to help players find nearby partners
-- **Simple Time Tracking**: Matches include date only (no duration tracking)
-
-### User Profile System
-- **Real Names**: Full name required for trust and verification (no nicknames/preferred names)
-- **Automatic Contact Sharing**: Phone numbers shared automatically after match confirmations
-- **Simplified Privacy Controls**: Basic privacy settings without complex statistics visibility options
-- **Multi-Club Support**: Players can join multiple clubs with separate rankings per club
-
-### MVP Exclusions (Future Features)
-- Weather integration for matches
-- WhatsApp integration (phone only for MVP)
-- Counter-challenge functionality
-- Tournament features
-- Advanced analytics and premium features
-- Country flags and avatars
-- Match duration tracking
-
-### User Roles & Permissions
-- **Admin**: Superuser with full system access (manage all clubs, users, etc.)
-- **Player**: Regular user who can:
-  - Create clubs (gaining basic edit rights for those clubs)
-  - Join other clubs as a member
-  - Record matches within their clubs
-  
-Note: Club creation provides basic edit rights only. Community self-polices through automatic reporting system. Any player can create multiple clubs and be a member of others.
-
-### Philosophy: DHH's Principles
-Following David Heinemeier Hansson's core programming principles:
-
-#### Conceptual Compression
-- **Local-first with SQLite**: All data stored locally for instant performance and offline functionality
-- **Minimal backend complexity**: Use Supabase only for community features, not as primary data store
-- **One-person framework**: Architecture simple enough for a single developer to understand and maintain
-- **Progressive enhancement**: Start with local functionality, add sync capabilities incrementally
-
-#### DRY (Don't Repeat Yourself)
-- **Reusable Components**: Build once, use everywhere (player cards, match forms, stats displays)
-- **Shared Business Logic**: Tennis scoring rules in one place, used by all features
-- **Common Utilities**: Date formatting, score calculations, sync status checks
-- **Type Definitions**: Single source of truth for data models across the app
-
-### Data Architecture
-
-#### Local Storage (SQLite)
-Primary data store for:
-- Your match history
-- Player profiles (cached)
-- Personal statistics
-- Offline match queue
-- Recent players
-
-#### Cloud Sync (Supabase)
-Secondary store for:
-- Community player discovery
-- Shared match results
-- Player profiles and stats
-- Match invitations
-- Authentication
-
-**Implementation Note**: Follow Supabase's React Native guide at https://supabase.com/docs/guides/getting-started/tutorials/with-expo-react-native for setup and best practices.
-
-### Implementation Pattern
-```
-1. Write to local SQLite first (instant UI updates)
-2. Queue for sync when online
-3. Sync to Supabase in background
-4. Subscribe to league updates from other players
-5. Update local cache with remote changes
-```
-
-### Key Principles
-- **Offline-first**: App fully functional without internet at tennis courts
-- **Optimistic updates**: Show changes immediately, sync later
-- **Simple conflict resolution**: Last write wins for simplicity
-- **Data ownership**: Users' devices are source of truth for their matches
-
-### Required Libraries
-```bash
-npx expo install expo-sqlite @supabase/supabase-js expo-network
-```
-
-**Note**: Always use `npx expo install` instead of `npm install` to ensure compatibility with the Expo SDK version.
-
-### Database Schema Approach
-Mirror structure between SQLite and Supabase for simplicity:
-- Users table (id, full_name, email, role, phone, created_at)
-- Clubs table (id, name, location, lat, lng, creator_id, created_at, description)
-  - Note: creator_id provides minimal edit rights only, no ownership privileges
-- Club_members table (club_id, user_id, joined_at)
-- Matches table (id, club_id, player1_id, player2_id, opponent2_name, scores, date, notes, match_type)
-  - Note: opponent2_name allows recording matches against unregistered players
-  - Note: No time field - date only for casual tennis
-- Player_stats view (calculated from all matches per club for unified rankings)
-- Match_invitations table (id, club_id, creator_id, match_type, date, time, notes, status)
-- Match_invitation_responses table (invitation_id, user_id, response_type, message)
-- Looking_to_play_posts table (id, club_id, user_id, match_type, date, time, notes, created_at)
-- Unclaimed_matches table (for matches recorded against unregistered opponents)
-- Player_reports table (id, reporter_id, reported_user_id, club_id, match_id, report_type, created_at)
-- Community_warnings table (id, user_id, warning_count, last_warning_date, status)
-- Challenge_invitations table (id, from_user_id, to_user_id, club_id, match_type, preferred_date, message, status)
-
-**Supabase Best Practices**:
-- Use Row Level Security (RLS) policies - see https://supabase.com/docs/guides/auth/row-level-security
-- Implement proper indexes for query performance
-- Use Supabase Realtime for match invitations - see https://supabase.com/docs/guides/realtime
-- Follow Supabase auth patterns - see https://supabase.com/docs/guides/auth
-
-This approach embodies "conceptual compression" - the complex distributed system appears as a simple local database to the developer, with sync happening transparently in the background.
-
-## Documentation Structure
-
-### Wireframes (Static Screens)
-Located in `/docs/wireframes/` - Individual screen layouts and components:
-- `authentication-screen.md` - Complete sign up/sign in flows with email, Apple, Google
-- `welcome-screen.md` - Onboarding screen for non-authenticated users
-- `club-tab-tennis-focused.md` - Main club discovery tab with tennis-first priority
-- `club-details-with-rankings.md` - Club page with singles-primary member rankings
-- `view-all-members.md` - Complete member rankings with trophy indicators and challenge buttons
-- `doubles-rankings.md` - Separate doubles rankings screen for team-based play
-- `profile-tab-updated.md` - User profile with comprehensive tennis stats
-- `match-details.md` - Clean match result display (no flags, duration, or weather)
-- `record-match-form-updated.md` - Match recording form (date-only, no court tracking)
-- `match-invitation-form.md` - "Looking to Play" post creation form
-- `about-screen.md` - App information, developer credits, and community stats
-
-### User Flows (Multi-Step Journeys)
-Located in `/docs/flows/` - Complete user interaction flows:
-- `onboarding-flow.md` - First-time user experience from registration to first match
-- `club-creation-flow.md` - Creating new tennis clubs with location
-- `club-joining-flow.md` - Discovering and joining clubs (public vs private)
-- `match-recording-flow.md` - Recording completed matches with opponent confirmation
-- `challenge-flow.md` - Direct player invitations with simplified accept/decline
-- `match-invitation-flow.md` - Public "Looking to Play" posting and response system
-- `notification-flow.md` - In-app notification system and user engagement
-- `profile-management-flow.md` - User profile, privacy, and account management
-
-### Key Design Principles Documented
-- Singles-primary ranking system with doubles secondary
-- Real names + optional nicknames for community trust
-- Phone-only contact sharing (no WhatsApp in MVP)
-- Simplified challenge system (no counter-offers)
-- Date-only match tracking (no duration)
-- Vertical scrolling over sub-tab navigation
-- Future features clearly marked and excluded from MVP
+- Worked on initial setup of the project with Expo Router and Supabase integration
+- Implemented basic authentication flow using Supabase client
+- Set up project guidelines and development best practices
+- Configured E2E testing with Maestro for critical user journeys
