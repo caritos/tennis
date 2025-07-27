@@ -26,6 +26,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - ✅ Auto token refresh and session management
 - ✅ Comprehensive auth state management in AuthContext
 - ✅ **Email verification disabled** for frictionless user onboarding (MVP approach)
+- ✅ **Universal Offline Queue System** for all app operations (matches, clubs, profiles, challenges)
 
 ## Project Overview
 
@@ -138,6 +139,68 @@ The app uses Expo Router with file-based routing. Routes are defined by the file
 
 ### State Management
 Currently uses React's built-in state management. No external state management library is configured.
+
+### Universal Offline Queue System
+**MANDATORY: All sync operations throughout the app must use the universal offline queue system.**
+
+#### Architecture
+- **OfflineQueueManager**: Core queue management with AsyncStorage persistence
+- **NetworkManager**: Network connectivity monitoring with auto-sync triggers
+- **SyncStrategies**: Configurable sync logic for different operations (matches, clubs, profiles, challenges)
+- **SyncService**: Unified interface for all app sync operations
+- **React Hooks**: `useSync()` and `useNetworkStatus()` for component integration
+
+#### Key Features
+- ✅ **Automatic retry** with exponential backoff
+- ✅ **Queue persistence** across app restarts
+- ✅ **Network-aware syncing** - auto-sync when connectivity returns
+- ✅ **Dead letter queue** for permanently failed operations
+- ✅ **Manual retry** options for failed operations
+- ✅ **Real-time sync status** throughout the app
+- ✅ **Conflict resolution** and error handling
+
+#### Usage Pattern
+```typescript
+import { syncService } from '@/services/sync';
+
+// Queue operations (automatically syncs when online)
+await syncService.queueMatchCreation(matchData, localMatchId);
+await syncService.queueClubJoin(clubId, userId);
+await syncService.queueProfileUpdate(userId, updateData);
+await syncService.queueChallengeCreation(challengerId, challengedId, clubId);
+
+// Monitor sync status
+const { isOnline, pendingCount, failedCount, sync, retryFailed } = useSync();
+```
+
+#### Supported Operations
+- **Matches**: create_match, update_match, delete_match
+- **Clubs**: join_club, leave_club
+- **Users**: update_profile
+- **Challenges**: create_challenge, respond_challenge
+
+#### Files Structure
+```
+/services/
+  ├── offlineQueue/
+  │   ├── OfflineQueueManager.ts     # Core queue with AsyncStorage
+  │   ├── NetworkManager.ts          # Connectivity monitoring
+  │   ├── SyncStrategies.ts          # Operation-specific sync logic
+  │   └── types.ts                   # TypeScript definitions
+  ├── sync/
+  │   └── index.ts                   # Unified SyncService interface
+/hooks/
+  └── useSync.ts                     # React hooks for components
+/components/
+  └── SyncStatusIndicator.tsx        # UI components for sync status
+```
+
+#### Implementation Requirements
+- **ALL sync operations** must use this system (no direct Supabase calls)
+- **Queue operations immediately** after local database operations
+- **Display sync status** in relevant UI components
+- **Handle offline scenarios** gracefully
+- **Test offline/online transitions** thoroughly
 
 ## Development Guidelines
 

@@ -1,6 +1,7 @@
 import { initializeDatabase } from '../database/database';
 import { supabase, Match } from '../lib/supabase';
 import { TennisScore, isValidTennisScore } from '../utils/tennisScore';
+import { syncService } from './sync';
 
 export interface CreateMatchData {
   club_id: string;
@@ -113,10 +114,22 @@ export class MatchService {
         [matchId]
       );
 
-      // Sync to Supabase in background (don't block on errors)
-      this.syncMatchToSupabase(match).catch(error => {
-        console.warn('Failed to sync match to Supabase:', error);
-      });
+      // Queue match for sync using the universal offline queue
+      try {
+        await syncService.queueMatchCreation({
+          club_id: matchData.club_id,
+          player1_id: matchData.player1_id,
+          player2_id: matchData.player2_id,
+          opponent2_name: matchData.opponent2_name,
+          scores: matchData.scores,
+          match_type: matchData.match_type,
+          date: matchData.date,
+          notes: matchData.notes,
+        }, matchId);
+        console.log('✅ Match queued for sync:', matchId);
+      } catch (error) {
+        console.warn('Failed to queue match for sync:', error);
+      }
 
       return match;
     } catch (error) {
