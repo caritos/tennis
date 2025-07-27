@@ -28,27 +28,23 @@ export interface SetsWon {
 }
 
 /**
- * Validates a tennis set score according to official tennis rules
+ * Validates a tennis set score for recreational/club play
+ * Very flexible rules to accommodate all types of friendly matches
  */
 export function validateSetScore(player1: number, player2: number): boolean {
-  // Both scores must be non-negative
-  if (player1 < 0 || player2 < 0) {
+  // Both scores must be non-negative and reasonable
+  if (player1 < 0 || player2 < 0 || player1 > 15 || player2 > 15) {
     return false;
   }
 
-  // Standard wins: 6-0, 6-1, 6-2, 6-3, 6-4
-  if (player1 === 6 && player2 <= 4) return true;
-  if (player2 === 6 && player1 <= 4) return true;
-
-  // 7-5 wins (must win by 2 when reaching 6-6)
-  if (player1 === 7 && player2 === 5) return true;
-  if (player2 === 7 && player1 === 5) return true;
-
-  // Tiebreak wins: 7-6 or 6-7
-  if (player1 === 7 && player2 === 6) return true;
-  if (player2 === 7 && player1 === 6) return true;
-
-  return false;
+  // In recreational tennis, any reasonable score is valid:
+  // - Tied scores are allowed (6-6, 7-7, etc.)
+  // - Single game wins are allowed (6-5, 7-6, 8-7, etc.)
+  // - Extended sets are allowed (10-8, 12-10, etc.)
+  // - Standard wins (6-0, 6-1, 6-2, 6-3, 6-4)
+  // - Tiebreak scores (7-6)
+  
+  return true; // Any non-negative, reasonable score is valid
 }
 
 /**
@@ -95,6 +91,7 @@ export function parseScoreString(scoreString: string): TennisSet[] {
       const player1 = parseInt(p1, 10);
       const player2 = parseInt(p2, 10);
 
+
       if (!validateSetScore(player1, player2)) {
         throw new Error(`Invalid set score: ${player1}-${player2}`);
       }
@@ -123,39 +120,58 @@ export function formatScoreDisplay(sets: TennisSet[]): string {
 
 /**
  * Calculates the winner of a tennis match based on sets won
- * Returns 'player1', 'player2', or null if match is incomplete/tied
+ * Returns 'player1', 'player2', or null if match is tied or incomplete
+ * Supports recreational rules with flexible match formats
  */
 export function calculateMatchWinner(sets: TennisSet[]): 'player1' | 'player2' | null {
   if (sets.length === 0) return null;
 
   let player1Sets = 0;
   let player2Sets = 0;
+  let tiedSets = 0;
 
   for (const set of sets) {
     if (set.player1 > set.player2) {
       player1Sets++;
-    } else {
+    } else if (set.player2 > set.player1) {
       player2Sets++;
+    } else {
+      tiedSets++; // Tied sets are valid in recreational play
     }
   }
 
-  // Best of 3: need 2 sets to win
-  if (player1Sets >= 2) return 'player1';
-  if (player2Sets >= 2) return 'player2';
+  // Single set match
+  if (sets.length === 1) {
+    if (player1Sets > player2Sets) return 'player1';
+    if (player2Sets > player1Sets) return 'player2';
+    return null; // Single tied set = no winner
+  }
 
-  return null; // Match incomplete or tied
+  // Multi-set match: whoever has more sets wins
+  // In recreational play, incomplete matches are valid
+  if (player1Sets > player2Sets) return 'player1';
+  if (player2Sets > player1Sets) return 'player2';
+  
+  return null; // Tied or no clear winner
 }
 
 /**
- * Validates that a score string represents a complete, valid tennis match
+ * Validates that a score string represents a valid tennis match
+ * Very permissive for recreational play - allows tied scores, incomplete matches
  */
 export function isValidTennisScore(scoreString: string): boolean {
   try {
     const sets = parseScoreString(scoreString);
-    const winner = calculateMatchWinner(sets);
     
-    // Must have a winner (complete match)
-    return winner !== null;
+    // Must have at least one valid set
+    if (sets.length === 0) return false;
+    
+    // In recreational tennis, any valid parsed score is acceptable:
+    // - Single sets (including tied sets like 6-6)
+    // - Multi-set matches (including incomplete like 6-4,4-6) 
+    // - Any score that passes basic validation is valid
+    
+    return true;
   } catch {
     return false;
   }

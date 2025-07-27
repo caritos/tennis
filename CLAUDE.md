@@ -285,6 +285,55 @@ npx expo install expo-checkbox
 ```
 Always use `npx expo install` to ensure Expo SDK compatibility.
 
+### Player Selection UI Pattern (MANDATORY)
+**CRITICAL: Use search-first pattern for all player selection throughout the app.**
+
+#### Search-First Player Selection Standard
+```typescript
+// ✅ CORRECT: Search-first with auto-suggest
+┌─────────────────────────────────┐
+│ 🔍 Search or add opponent...    │ ← Single search input
+└─────────────────────────────────┘
+┌─────────────────────────────────┐
+│ John Doe                        │ ← Existing members appear as you type
+│ Jane Smith                      │
+│ ──────────────────────────      │
+│ + Add "Mike Wilson" as new      │ ← Auto-suggests adding typed name
+└─────────────────────────────────┘
+```
+
+**Implementation Requirements:**
+- Single search input field that filters existing players as user types
+- Show matching players from database in real-time
+- When no matches found, show "+ Add '[typed name]' as new player" option
+- No distinction between "registered" and "unregistered" from user perspective
+- Clear visual feedback for selecting existing vs creating new
+- Works for opponents, partners, challenge targets, etc.
+
+**Benefits:**
+- **Faster workflow**: Type once, get results immediately
+- **Discoverable**: Users naturally understand they can type any name
+- **Less cognitive load**: No need to understand registration status
+- **Mobile-optimized**: Single input with intelligent suggestions
+- **Consistent**: Same pattern used everywhere players are selected
+
+**Usage Throughout App:**
+- Match recording opponent selection
+- Challenge creation target selection
+- Doubles partner selection
+- Player search in club member lists
+- Any other player selection interface
+
+#### ❌ NEVER Use Dropdown-First Pattern:
+```typescript
+// ❌ WRONG: Dropdown with "Add new" option
+<Dropdown>
+  <Option>John Doe</Option>
+  <Option>Jane Smith</Option>
+  <Option>Add Unregistered Player</Option> // Hidden, requires explanation
+</Dropdown>
+```
+
 ### UI Notifications (NO Alert.alert())
 - **Toast/Snackbar**: For success messages and brief feedback
 - **Modal Dialogs**: For confirmations and important decisions
@@ -329,6 +378,13 @@ Always use `npx expo install` to ensure Expo SDK compatibility.
 - **No pushes allowed unless ALL test cases pass**
 - Write tests first, then implement the feature
 - Red → Green → Refactor cycle
+
+**Test Directory Structure**
+- **Unit Tests**: `/tests/unit/` - Individual functions, hooks, utilities
+- **Integration Tests**: `/tests/integration/` - Component interactions, API calls
+- **E2E Tests**: `/e2e/flows/` - Complete user workflows
+- **Test Files**: Use `.test.ts` or `.test.tsx` extensions
+- **Run Tests**: `npm test` or `npm test -- path/to/test.file.ts`
 
 **Testing Framework Setup**
 Follow Expo's testing guide for setup:
@@ -573,7 +629,7 @@ Try submitting with:
 #### Technical Features
 - **React Native components**: All tested with Maestro E2E
 - **TypeScript**: Full type safety
-- **Tennis rules validation**: Proper scoring rules
+- **Tennis rules validation**: Flexible scoring rules for recreational play
 - **Responsive design**: Works on different screen sizes
 
 ### 🎯 Expected Behavior
