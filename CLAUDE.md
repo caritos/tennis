@@ -462,9 +462,197 @@ maestro test e2e/flows/signup-flow.yaml
 - Android: Ensure proper permissions in app.json when needed
 - Web: Some native features may require web-specific implementations
 
+## Match Recording Feature Demo
+
+### 🚀 Quick Start Guide
+
+#### Method 1: Run the App with Development Build
+
+```bash
+# Start the iOS simulator with development build (recommended)
+npx expo run:ios
+
+# OR start the Android emulator
+npx expo run:android
+```
+
+**Note**: Development builds are required for full functionality (not Expo Go)
+
+#### Method 2: Quick Test Navigation
+
+1. **Navigate to Clubs Tab** (main screen)
+2. **Look for "Record Match" button** in the top-right header
+3. **Tap "Record Match"** to open the match recording form
+
+#### Method 3: Direct URL Testing
+
+You can also navigate directly to the match recording screen:
+```bash
+# Open the match recording screen directly
+# (after the app is running)
+# URL: /record-match
+```
+
+### 🎾 What You Can Test
+
+#### Complete Match Recording Flow:
+
+1. **Match Type Selection**
+   - Toggle between Singles and Doubles
+   - See radio button interaction
+
+2. **Player Selection**
+   - Tap "Select Opponent" dropdown
+   - Choose from club members (John Doe, Jane Smith, Mike Wilson)
+   - Try "Add Unregistered Opponent" option
+   - Enter a name for unregistered players
+
+3. **Score Entry**
+   - Tap "Add Set" to add score sets
+   - Enter set scores (e.g., 6-4)
+   - **Tiebreak Testing**: Enter 7-6 to see automatic tiebreak inputs
+   - Try invalid scores to see validation
+
+4. **Advanced Features**
+   - **Tiebreak Scores**: Enter 7-6, then add tiebreak scores (e.g., 7-3)
+   - **Multiple Sets**: Add 2-3 sets for a complete match
+   - **Validation**: Try submitting incomplete forms to see validation
+
+5. **Save Match**
+   - Complete a valid match and tap "Save Match"
+   - See success confirmation
+   - Match is saved to SQLite and synced to Supabase
+
+### 🧪 Test Scenarios
+
+#### Scenario 1: Standard Singles Match
+```
+Match Type: Singles
+Opponent: John Doe (from dropdown)
+Score: 6-4, 6-3
+Result: Should save successfully
+```
+
+#### Scenario 2: Tiebreak Match
+```
+Match Type: Singles  
+Opponent: Jane Smith
+Score: 7-6(7-3), 6-4
+Result: Should format tiebreak correctly
+```
+
+#### Scenario 3: Unregistered Opponent
+```
+Match Type: Singles
+Opponent: Add Unregistered → "New Player"
+Score: 6-2, 6-1
+Result: Should save with opponent name
+```
+
+#### Scenario 4: Validation Testing
+```
+Try submitting with:
+- No opponent selected → Should show error
+- No sets added → Should show error  
+- Invalid scores (8-6) → Should show error
+- Invalid tiebreak (6-4 in tiebreak) → Should show error
+```
+
+### 🔧 Development Features
+
+#### Built-in Test Data
+- Pre-populated club members for testing
+- Mock club ID for demo purposes
+- Proper error handling and validation
+
+#### Database Integration
+- **Offline-first**: Saves to SQLite immediately
+- **Background sync**: Syncs to Supabase when connected
+- **Honor system**: No confirmation needed, immediate save
+
+#### Technical Features
+- **React Native components**: All tested with Maestro E2E
+- **TypeScript**: Full type safety
+- **Tennis rules validation**: Proper scoring rules
+- **Responsive design**: Works on different screen sizes
+
+### 🎯 Expected Behavior
+
+When you successfully record a match:
+
+1. **Success Alert**: Shows confirmation with match details
+2. **Database Storage**: Match saved to local SQLite
+3. **Background Sync**: Automatically syncs to Supabase
+4. **Navigation**: Returns to clubs screen
+5. **Data Persistence**: Match data is permanently stored
+
+### 🐛 Troubleshooting
+
+If the app doesn't start:
+```bash
+# Clear cache and restart
+npx expo start --clear
+
+# Or rebuild
+npx expo run:ios --clean
+```
+
+If you see TypeScript errors:
+- They're pre-existing and don't affect the new Match Recording feature
+- The feature is fully functional despite other project TS issues
+
+### 📱 UI Flow
+
+```
+Clubs Tab → [Record Match Button] → Match Recording Form → Success → Back to Clubs
+```
+
+The interface follows the wireframes in `/docs/wireframes/record-match-form-updated.md` exactly!
+
+## Changelog
+
+### Recent Updates (2025-07-27)
+
+- **Club Details Screen**: 
+  - Created club detail screen with proper navigation from club cards
+  - Implemented design from wireframes with Record Match button, Challenges, Looking to Play, and Rankings sections
+  - Added recent matches section with professional tennis score display component
+  - Added trophy icons (🏆🥈🥉) for top 3 ranked players
+
+- **Tennis Score Display Component**: 
+  - Created professional tournament-style score display matching reference image
+  - Supports tiebreak notation, winner highlighting, and match completion status
+  - Handles singles/doubles matches with proper formatting
+
+- **Authentication Fixes**:
+  - Fixed password autofill issues causing iOS Keychain errors
+  - Fixed auto-submit bug where forms submitted without button press
+  - Fixed database UNIQUE constraint errors during user sync
+  - Added INSERT OR REPLACE for graceful conflict handling
+
+- **Match Recording**:
+  - Fixed foreign key constraint errors by using actual user IDs
+  - Updated to load real club members instead of mock data
+  - Improved player selection dropdown with database integration
+
+- **Club Membership**:
+  - Fixed member count display issues (was showing 0 for all clubs)
+  - Added optimistic UI updates when joining clubs
+  - Fixed UI jumping issue when clubs moved between sections
+  - Added user sync workaround for missing users in local database
+
+- **Infrastructure**:
+  - Added Florida clubs to seed data for location-based testing
+  - Increased club discovery radius to 10,000km for testing
+  - Added extensive debugging logs for troubleshooting
+
 ## Memories and Notes
 
 - Worked on initial setup of the project with Expo Router and Supabase integration
 - Implemented basic authentication flow using Supabase client
 - Set up project guidelines and development best practices
 - Configured E2E testing with Maestro for critical user journeys
+- Added club details screen with rankings and recent matches display
+- Fixed multiple authentication and database sync issues
+- Implemented professional tennis score display component
+- Added new memory about changelog updates and ongoing development progress

@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { StyleSheet, View, TouchableOpacity, ScrollView } from 'react-native';
+import { StyleSheet, View, TouchableOpacity, ScrollView, Button } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
+import { Link, router } from 'expo-router';
 
 import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
@@ -51,32 +52,15 @@ export default function ClubScreen() {
       const userLng = location?.longitude || -74.0060;
       
       console.log('Getting nearby clubs for location:', userLat, userLng);
+      // Temporarily get ALL clubs regardless of distance since user is in Florida
       const nearbyClubs = await clubService.getNearbyClubs(
         userLat,
         userLng,
-        50 // 50km radius
+        10000 // 10,000km radius to include ALL clubs for testing
       );
 
       console.log('Nearby clubs received:', nearbyClubs.length);
-      
-      // If no clubs found, add a test club for debugging
-      if (nearbyClubs.length === 0) {
-        console.log('No clubs found, adding test club');
-        const testClub: Club = {
-          id: 'test-club-1',
-          name: 'Test Tennis Club',
-          description: 'This is a test club to verify the UI is working',
-          location: 'Test Location, NY',
-          lat: 40.7128,
-          lng: -74.0060,
-          memberCount: 5,
-          creator_id: 'test-user',
-          created_at: new Date().toISOString(),
-        };
-        setClubs([testClub]);
-      } else {
-        setClubs(nearbyClubs);
-      }
+      setClubs(nearbyClubs);
 
       // Calculate distances if location is available
       if (location) {
@@ -127,7 +111,7 @@ export default function ClubScreen() {
 
   const handleClubPress = (club: Club) => {
     console.log('🔘 BUTTON: Club card pressed -', club.name);
-    // TODO: Navigate to club details screen
+    router.push(`/club/${club.id}`);
   };
 
   const handleJoinClub = async (club: Club) => {
@@ -146,12 +130,21 @@ export default function ClubScreen() {
       
       // Update local state immediately for optimistic UI
       setJoinedClubIds(prev => [...prev, club.id]);
-      setMyClubs(prev => [...prev, club]);
+      
+      // Update the club's member count in both lists
+      const updatedClub = { ...club, memberCount: (club.memberCount || 0) + 1 };
+      
+      // Update in myClubs
+      setMyClubs(prev => [...prev, updatedClub]);
+      
+      // Update in all clubs list
+      setClubs(prev => prev.map(c => c.id === club.id ? updatedClub : c));
       
       console.log(`Successfully joined ${club.name}`);
       
-      // Show success feedback (could be a toast notification in the future)
-      // For now, just log it
+      // Don't refresh immediately - let the UI settle
+      // The next manual refresh or navigation will get the latest data
+      
     } catch (error: any) {
       console.error('Failed to join club:', error);
       console.error('Error details:', error.message, error.code);
@@ -170,7 +163,7 @@ export default function ClubScreen() {
 
   const handleCreateClub = () => {
     console.log('🔘 BUTTON: Create Club pressed');
-    // TODO: Navigate to create club form
+    router.push('/create-club');
   };
 
   useEffect(() => {
@@ -192,9 +185,19 @@ export default function ClubScreen() {
     <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
       <ThemedView style={styles.header}>
         <ThemedText type="title" style={styles.headerTitle}>Clubs</ThemedText>
+        <Link href="/record-match" asChild>
+          <TouchableOpacity style={[styles.recordMatchButton, { backgroundColor: colors.tint }]}>
+            <Ionicons name="add" size={20} color="white" />
+            <ThemedText style={styles.recordMatchText}>Record Match</ThemedText>
+          </TouchableOpacity>
+        </Link>
       </ThemedView>
 
-      <ScrollView style={styles.scrollContainer} contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
+      <ScrollView 
+        style={styles.scrollContainer} 
+        contentContainerStyle={styles.scrollContent} 
+        showsVerticalScrollIndicator={false}
+        maintainVisibleContentPosition={{ minIndexForVisible: 0 }}>
         <ThemedView style={styles.section}>
           <ThemedText type="subtitle" style={styles.sectionTitle}>
             My Clubs {myClubs.length > 0 ? `(${myClubs.length})` : ''}
@@ -305,6 +308,9 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     paddingTop: 20,
     paddingBottom: 10,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
   },
   headerTitle: {
     fontSize: 28,
@@ -392,5 +398,18 @@ const styles = StyleSheet.create({
     paddingVertical: 16,
     borderTopWidth: 1,
     borderTopColor: '#e0e0e0',
+  },
+  recordMatchButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 20,
+    gap: 6,
+  },
+  recordMatchText: {
+    color: 'white',
+    fontWeight: '600',
+    fontSize: 14,
   },
 });

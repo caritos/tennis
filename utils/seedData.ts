@@ -85,7 +85,53 @@ export async function seedSampleClubs(): Promise<void> {
     console.log(`Seeded ${sampleUsers.length} sample users`);
 
     const sampleClubs = [
-    // San Francisco Bay Area clubs (since you're in SF)
+    // Florida clubs
+    {
+      id: '550e8400-e29b-41d4-a716-446655440006',
+      name: 'Miami Beach Tennis Club',
+      description: 'Oceanfront tennis with beautiful beach views',
+      location: 'Miami Beach, FL',
+      lat: 25.7907,
+      lng: -80.1300,
+      creator_id: '550e8400-e29b-41d4-a716-446655440011',
+    },
+    {
+      id: '550e8400-e29b-41d4-a716-446655440007',
+      name: 'Orlando Tennis Academy',
+      description: 'Premier tennis facility near theme parks',
+      location: 'Orlando, FL',
+      lat: 28.5383,
+      lng: -81.3792,
+      creator_id: '550e8400-e29b-41d4-a716-446655440012',
+    },
+    {
+      id: '550e8400-e29b-41d4-a716-446655440008',
+      name: 'Tampa Bay Racquet Club',
+      description: 'Year-round tennis in the sunshine state',
+      location: 'Tampa, FL',
+      lat: 27.9506,
+      lng: -82.4572,
+      creator_id: '550e8400-e29b-41d4-a716-446655440013',
+    },
+    {
+      id: '550e8400-e29b-41d4-a716-446655440009',
+      name: 'Jacksonville Tennis Center',
+      description: 'North Florida\'s premier tennis destination',
+      location: 'Jacksonville, FL',
+      lat: 30.3322,
+      lng: -81.6557,
+      creator_id: '550e8400-e29b-41d4-a716-446655440014',
+    },
+    {
+      id: '550e8400-e29b-41d4-a716-446655440010',
+      name: 'Fort Lauderdale Tennis Club',
+      description: 'Tropical tennis paradise',
+      location: 'Fort Lauderdale, FL',
+      lat: 26.1224,
+      lng: -80.1373,
+      creator_id: '550e8400-e29b-41d4-a716-446655440015',
+    },
+    // San Francisco Bay Area clubs (keep original ones too)
     {
       id: '550e8400-e29b-41d4-a716-446655440001',
       name: 'Golden Gate Park Tennis Club',

@@ -3,10 +3,10 @@ import { render, fireEvent, waitFor } from '@testing-library/react-native';
 import { Alert } from 'react-native';
 
 // Mock dependencies first
-jest.mock('../../services/clubService');
-jest.mock('../../hooks/useLocation');
-jest.mock('../../contexts/AuthContext');
-jest.mock('../../lib/supabase', () => ({
+jest.mock('../../../services/clubService');
+jest.mock('../../../hooks/useLocation');
+jest.mock('../../../contexts/AuthContext');
+jest.mock('../../../lib/supabase', () => ({
   supabase: {
     from: jest.fn(),
     auth: {
@@ -18,10 +18,10 @@ jest.mock('../../lib/supabase', () => ({
   },
 }));
 
-import { CreateClubForm } from '../../components/CreateClubForm';
-import { ClubService } from '../../services/clubService';
-import { useLocation } from '../../hooks/useLocation';
-import { useAuth } from '../../contexts/AuthContext';
+import { CreateClubForm } from '../../../components/CreateClubForm';
+import { ClubService } from '../../../services/clubService';
+import { useLocation } from '../../../hooks/useLocation';
+import { useAuth } from '../../../contexts/AuthContext';
 jest.mock('react-native/Libraries/Alert/Alert', () => ({
   alert: jest.fn(),
 }));

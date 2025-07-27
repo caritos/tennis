@@ -15,7 +15,7 @@
           "NSAllowsArbitraryLoads": true
         }
       },
-      "bundleIdentifier": "com.anonymous.tennis-club"
+      "bundleIdentifier": "com.caritos.tennis"
     },
     "android": {
       "adaptiveIcon": {

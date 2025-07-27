@@ -101,7 +101,49 @@ export class ClubService {
       
       if (!userExists) {
         console.error('joinClub: User not found in local database:', userId);
-        throw new Error('User not found in local database. Please try signing out and back in.');
+        
+        // Debug: List all users in database
+        const allUsers = await db.getAllAsync('SELECT id, email FROM users');
+        console.log('joinClub: All users in database:', allUsers);
+        
+        // TEMPORARY WORKAROUND: Try to sync the current user from Supabase
+        console.log('joinClub: Attempting to sync missing user from Supabase...');
+        try {
+          const { supabase } = await import('../lib/supabase');
+          
+          // Get current session to verify this user should exist
+          const { data: { session } } = await supabase.auth.getSession();
+          if (session?.user?.id === userId) {
+            console.log('joinClub: Found matching session user, syncing to local database');
+            
+            // Sync user from auth metadata
+            const userData = {
+              id: session.user.id,
+              full_name: session.user.user_metadata?.full_name || session.user.email?.split('@')[0] || 'Tennis Player',
+              email: session.user.email || '',
+              phone: session.user.user_metadata?.phone || null,
+              role: 'player'
+            };
+            
+            await db.runAsync(
+              `INSERT OR REPLACE INTO users (id, full_name, email, phone, role, created_at) VALUES (?, ?, ?, ?, ?, datetime('now'))`,
+              [userData.id, userData.full_name, userData.email, userData.phone, userData.role]
+            );
+            
+            console.log('joinClub: Successfully synced user to local database');
+            
+            // Verify sync worked
+            const syncedUser = await db.getFirstAsync('SELECT id FROM users WHERE id = ?', [userId]);
+            if (!syncedUser) {
+              throw new Error('Failed to sync user to local database');
+            }
+          } else {
+            throw new Error('No matching session found for user');
+          }
+        } catch (syncError) {
+          console.error('joinClub: Failed to sync user:', syncError);
+          throw new Error('User not found in local database. Please try signing out and back in.');
+        }
       }
 
       // Check if club exists
@@ -112,6 +154,11 @@ export class ClubService {
       
       if (!clubExists) {
         console.error('joinClub: Club not found in local database:', clubId);
+        
+        // Debug: List all clubs in database
+        const allClubs = await db.getAllAsync('SELECT id, name FROM clubs');
+        console.log('joinClub: All clubs in database:', allClubs);
+        
         throw new Error('Club not found in local database.');
       }
 
@@ -171,7 +218,7 @@ export class ClubService {
          FROM clubs c 
          INNER JOIN club_members cm ON c.id = cm.club_id 
          LEFT JOIN (
-           SELECT club_id, COUNT(user_id) as memberCount 
+           SELECT club_id, COUNT(DISTINCT user_id) as memberCount 
            FROM club_members 
            GROUP BY club_id
          ) member_counts ON c.id = member_counts.club_id
@@ -180,6 +227,7 @@ export class ClubService {
         [userId]
       );
 
+      console.log('getUserClubs: User clubs with counts:', clubs);
       return clubs || [];
     } catch (error) {
       console.error('Failed to get user clubs:', error);
@@ -245,45 +293,66 @@ export class ClubService {
     radiusKm: number = 25
   ): Promise<Club[]> {
     try {
-      console.log('Getting nearby clubs for location:', userLat, userLng);
+      console.log('getNearbyClubs: Starting with location:', userLat, userLng, 'radius:', radiusKm);
       const db = await this.getDatabase();
       
       // Get all clubs with member counts
+      // Note: SQLite requires all non-aggregated columns in GROUP BY
       const clubs = await db.getAllAsync(`
-        SELECT c.*, 
-               COALESCE(COUNT(cm.user_id), 0) as memberCount
+        SELECT c.id, c.name, c.description, c.location, c.lat, c.lng, c.creator_id, c.created_at,
+               COUNT(DISTINCT cm.user_id) as memberCount
         FROM clubs c 
         LEFT JOIN club_members cm ON c.id = cm.club_id 
-        GROUP BY c.id
+        GROUP BY c.id, c.name, c.description, c.location, c.lat, c.lng, c.creator_id, c.created_at
       `);
-      console.log('Found clubs in database:', clubs?.length || 0);
+      console.log('getNearbyClubs: Raw clubs from database:', clubs);
+      console.log('getNearbyClubs: Found clubs in database:', clubs?.length || 0);
       
       if (!clubs || clubs.length === 0) {
+        console.log('getNearbyClubs: No clubs found in database');
         return [];
+      }
+
+      // Log first club for debugging
+      if (clubs.length > 0) {
+        console.log('getNearbyClubs: First club details:', clubs[0]);
       }
 
       // Calculate distances and filter
       const clubsWithDistance = clubs
         .map((club: any) => {
+          console.log(`getNearbyClubs: Processing club ${club.id} - lat: ${club.lat} (${typeof club.lat}), lng: ${club.lng} (${typeof club.lng})`);
+          
           if (!club.lat || !club.lng || typeof club.lat !== 'number' || typeof club.lng !== 'number') {
-            console.warn('Club missing valid coordinates:', club.id, club.lat, club.lng);
+            console.warn('getNearbyClubs: Club missing valid coordinates:', club.id, club.lat, club.lng);
             return null;
           }
           
           const distance = this.calculateDistance(userLat, userLng, club.lat, club.lng);
-          return {
+          console.log(`getNearbyClubs: Club ${club.name} distance: ${distance}km`);
+          
+          const clubWithDistance = {
             ...club,
             distance,
             memberCount: club.memberCount || 0, // Use existing memberCount from database
           };
+          console.log(`getNearbyClubs: Club ${club.name} memberCount: ${club.memberCount}`);
+          return clubWithDistance;
         })
-        .filter((club: any) => club !== null && club.distance <= radiusKm)
+        .filter((club: any) => {
+          const include = club !== null && club.distance <= radiusKm;
+          if (!include && club !== null) {
+            console.log(`getNearbyClubs: Excluding club ${club.name} - distance ${club.distance}km > radius ${radiusKm}km`);
+          }
+          return include;
+        })
         .sort((a: any, b: any) => a.distance - b.distance);
 
-      console.log('Clubs with distance calculated:', clubsWithDistance.length);
+      console.log('getNearbyClubs: Clubs within radius:', clubsWithDistance.length);
+      console.log('getNearbyClubs: Final clubs list:', clubsWithDistance);
       return clubsWithDistance;
     } catch (error) {
-      console.error('Failed to get nearby clubs:', error);
+      console.error('getNearbyClubs: Failed with error:', error);
       // Return empty array instead of throwing to prevent UI crash
       return [];
     }

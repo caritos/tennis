@@ -18,50 +18,51 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const syncUserToLocalDatabase = async (user: User) => {
     try {
+      console.log('AuthContext: Starting user sync for:', user.id, user.email);
       const db = await initializeDatabase();
       
-      // Check if user already exists in local database
-      const existingUser = await db.getFirstAsync(
-        'SELECT id FROM users WHERE id = ?',
-        [user.id]
-      );
+      // Try to get user profile from Supabase first
+      const { data: userProfile, error: profileError } = await supabase
+        .from('users')
+        .select('*')
+        .eq('id', user.id)
+        .single();
       
-      if (!existingUser) {
-        // Try to get user profile from Supabase first
-        const { data: userProfile, error: profileError } = await supabase
-          .from('users')
-          .select('*')
-          .eq('id', user.id)
-          .single();
-        
-        let userData;
-        if (userProfile && !profileError) {
-          // Use Supabase profile data
-          userData = {
-            id: userProfile.id,
-            full_name: userProfile.full_name,
-            email: userProfile.email,
-            phone: userProfile.phone,
-            role: userProfile.role || 'player'
-          };
-        } else {
-          // Fallback to auth metadata  
-          userData = {
-            id: user.id,
-            full_name: user.user_metadata?.full_name || user.email?.split('@')[0] || 'Tennis Player',
-            email: user.email || '',
-            phone: user.user_metadata?.phone || null,
-            role: 'player'
-          };
-        }
-        
-        // Insert user into local database
-        await db.runAsync(
-          `INSERT INTO users (id, full_name, email, phone, role) VALUES (?, ?, ?, ?, ?)`,
-          [userData.id, userData.full_name, userData.email, userData.phone, userData.role]
-        );
-        console.log('AuthContext: User synced to local database:', user.id);
+      console.log('AuthContext: Supabase profile lookup result:', userProfile ? 'found' : 'not found', profileError?.message);
+      
+      let userData;
+      if (userProfile && !profileError) {
+        // Use Supabase profile data
+        userData = {
+          id: userProfile.id,
+          full_name: userProfile.full_name,
+          email: userProfile.email,
+          phone: userProfile.phone,
+          role: userProfile.role || 'player'
+        };
+        console.log('AuthContext: Using Supabase profile data:', userData);
+      } else {
+        // Fallback to auth metadata  
+        userData = {
+          id: user.id,
+          full_name: user.user_metadata?.full_name || user.email?.split('@')[0] || 'Tennis Player',
+          email: user.email || '',
+          phone: user.user_metadata?.phone || null,
+          role: 'player'
+        };
+        console.log('AuthContext: Using auth metadata fallback:', userData);
       }
+      
+      // Always use INSERT OR REPLACE to handle any conflicts gracefully
+      await db.runAsync(
+        `INSERT OR REPLACE INTO users (id, full_name, email, phone, role, created_at) VALUES (?, ?, ?, ?, ?, datetime('now'))`,
+        [userData.id, userData.full_name, userData.email, userData.phone, userData.role]
+      );
+      console.log('AuthContext: User synced/updated in local database successfully:', user.id);
+      
+      // Verify the user was inserted
+      const insertedUser = await db.getFirstAsync('SELECT * FROM users WHERE id = ?', [user.id]);
+      console.log('AuthContext: Verification - user exists in database:', insertedUser ? 'YES' : 'NO');
     } catch (error) {
       console.error('AuthContext: Failed to sync user to local database:', error);
       // Don't throw - this shouldn't block the auth flow

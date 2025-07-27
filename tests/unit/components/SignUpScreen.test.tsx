@@ -1,6 +1,6 @@
 import React from 'react';
 import { render, screen, fireEvent } from '@testing-library/react-native';
-import { SignUpScreen } from '../../components/SignUpScreen';
+import { SignUpScreen } from '../../../components/SignUpScreen';
 
 describe('SignUpScreen', () => {
   const mockOnBack = jest.fn();

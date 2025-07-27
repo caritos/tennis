@@ -1,10 +1,10 @@
-import { createClub, joinClub, getClubsByLocation, ClubService } from '../services/clubService';
-import { initializeDatabase } from '../database/database';
-import { supabase } from '../lib/supabase';
+import { createClub, joinClub, getClubsByLocation, ClubService } from '../../services/clubService';
+import { initializeDatabase } from '../../database/database';
+import { supabase } from '../../lib/supabase';
 
 // Mock dependencies
-jest.mock('../database/database');
-jest.mock('../lib/supabase', () => ({
+jest.mock('../../database/database');
+jest.mock('../../lib/supabase', () => ({
   supabase: {
     from: jest.fn(),
     auth: {

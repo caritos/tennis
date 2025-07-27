@@ -1,6 +1,6 @@
 import React from 'react';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react-native';
-import { EmailSignInForm } from '../../components/EmailSignInForm';
+import { EmailSignInForm } from '../../../components/EmailSignInForm';
 
 describe('EmailSignInForm', () => {
   const mockOnBack = jest.fn();

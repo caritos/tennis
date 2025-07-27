@@ -1,10 +1,10 @@
-import { AuthService, signUp, signIn, signOut, getCurrentUser } from '../services/authService';
-import { initializeDatabase } from '../database/database';
-import { supabase } from '../lib/supabase';
+import { AuthService, signUp, signIn, signOut, getCurrentUser } from '../../services/authService';
+import { initializeDatabase } from '../../database/database';
+import { supabase } from '../../lib/supabase';
 
 // Mock dependencies
-jest.mock('../database/database');
-jest.mock('../lib/supabase', () => ({
+jest.mock('../../database/database');
+jest.mock('../../lib/supabase', () => ({
   supabase: {
     auth: {
       signUp: jest.fn(),

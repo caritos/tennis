@@ -43,6 +43,8 @@ export class MatchService {
   }
 
   async recordMatch(matchData: CreateMatchData): Promise<Match> {
+    console.log('📊 recordMatch: Starting with data:', matchData);
+    
     // Validate tennis score
     if (!isValidTennisScore(matchData.scores)) {
       throw new Error('Invalid tennis score: must be a complete, valid tennis match');
@@ -57,6 +59,35 @@ export class MatchService {
     const matchId = `match_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
 
     try {
+      // Debug: Check if references exist
+      console.log('📊 recordMatch: Checking foreign key references...');
+      
+      // Check club exists
+      const clubExists = await db.getFirstAsync('SELECT id FROM clubs WHERE id = ?', [matchData.club_id]);
+      console.log('📊 recordMatch: Club exists:', clubExists ? 'YES' : 'NO', matchData.club_id);
+      
+      // Check player1 exists
+      const player1Exists = await db.getFirstAsync('SELECT id FROM users WHERE id = ?', [matchData.player1_id]);
+      console.log('📊 recordMatch: Player1 exists:', player1Exists ? 'YES' : 'NO', matchData.player1_id);
+      
+      // Check player2 exists (if provided)
+      if (matchData.player2_id) {
+        const player2Exists = await db.getFirstAsync('SELECT id FROM users WHERE id = ?', [matchData.player2_id]);
+        console.log('📊 recordMatch: Player2 exists:', player2Exists ? 'YES' : 'NO', matchData.player2_id);
+      }
+      
+      console.log('📊 recordMatch: Inserting match with values:', [
+        matchId,
+        matchData.club_id,
+        matchData.player1_id,
+        matchData.player2_id || null,
+        matchData.opponent2_name || null,
+        matchData.scores,
+        matchData.match_type,
+        matchData.date,
+        matchData.notes || null,
+      ]);
+
       // Insert into local SQLite database first (offline-first)
       await db.runAsync(
         `INSERT INTO matches (

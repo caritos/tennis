@@ -1,11 +1,11 @@
-import { MatchService, CreateMatchData, recordMatch, getMatchHistory } from '../services/matchService';
-import { initializeDatabase } from '../database/database';
-import { supabase } from '../lib/supabase';
-import { TennisScore } from '../utils/tennisScore';
+import { MatchService, CreateMatchData, recordMatch, getMatchHistory } from '../../services/matchService';
+import { initializeDatabase } from '../../database/database';
+import { supabase } from '../../lib/supabase';
+import { TennisScore } from '../../utils/tennisScore';
 
 // Mock dependencies
-jest.mock('../database/database');
-jest.mock('../lib/supabase', () => ({
+jest.mock('../../database/database');
+jest.mock('../../lib/supabase', () => ({
   supabase: {
     from: jest.fn(),
   },

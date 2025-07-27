@@ -205,6 +205,11 @@ export function EmailSignInForm({
               secureTextEntry
               autoCapitalize="none"
               autoCorrect={false}
+              autoComplete="off"
+              textContentType="none"
+              passwordRules=""
+              keyboardType="default"
+              spellCheck={false}
               accessibilityLabel="Password"
               testID="password-input"
             />

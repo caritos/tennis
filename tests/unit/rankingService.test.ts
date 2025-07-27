@@ -1,8 +1,8 @@
-import { RankingService, calculatePlayerPoints, calculateClubRankings } from '../services/rankingService';
-import { initializeDatabase } from '../database/database';
+import { RankingService, calculatePlayerPoints, calculateClubRankings } from '../../services/rankingService';
+import { initializeDatabase } from '../../database/database';
 
 // Mock dependencies
-jest.mock('../database/database');
+jest.mock('../../database/database');
 
 describe('Ranking Service', () => {
   let mockDb: any;
