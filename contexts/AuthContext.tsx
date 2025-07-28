@@ -2,6 +2,7 @@ import React, { createContext, useContext, useEffect, useState } from 'react';
 import { Session, User } from '@supabase/supabase-js';
 import { supabase } from '@/lib/supabase';
 import { initializeDatabase } from '@/database/database';
+import { syncService } from '@/services/sync';
 
 interface AuthContextType {
   session: Session | null;
@@ -70,21 +71,33 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   useEffect(() => {
-    // Get initial session
-    console.log('AuthContext: Checking for existing session...');
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      console.log('AuthContext: Initial session:', session ? `Found user: ${session.user?.id}` : 'None');
-      // For development: accept any signed-in user regardless of email confirmation
-      setSession(session);
-      
-      // Sync user to local database if session exists
-      if (session?.user) {
-        console.log('AuthContext: Syncing user to local database:', session.user.id);
-        syncUserToLocalDatabase(session.user);
+    // Initialize sync service and get initial session
+    const initialize = async () => {
+      try {
+        // Initialize sync service
+        await syncService.initialize();
+        console.log('AuthContext: Sync service initialized');
+        
+        // Get initial session
+        console.log('AuthContext: Checking for existing session...');
+        const { data: { session } } = await supabase.auth.getSession();
+        console.log('AuthContext: Initial session:', session ? `Found user: ${session.user?.id}` : 'None');
+        // For development: accept any signed-in user regardless of email confirmation
+        setSession(session);
+        
+        // Sync user to local database if session exists
+        if (session?.user) {
+          console.log('AuthContext: Syncing user to local database:', session.user.id);
+          await syncUserToLocalDatabase(session.user);
+        }
+      } catch (error) {
+        console.error('AuthContext: Initialization error:', error);
+      } finally {
+        setIsLoading(false);
       }
-      
-      setIsLoading(false);
-    });
+    };
+    
+    initialize();
 
     // Listen for auth changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {

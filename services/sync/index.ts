@@ -201,6 +201,88 @@ export class SyncService {
   }
 
   // ================================
+  // INVITATION OPERATIONS
+  // ================================
+
+  /**
+   * Queue match invitation creation
+   */
+  public async queueInvitationCreation(
+    clubId: string,
+    creatorId: string,
+    matchType: 'singles' | 'doubles',
+    date: string,
+    time?: string,
+    notes?: string,
+    expiresAt?: string
+  ): Promise<string> {
+    return this.queueManager.addOperation(
+      'invitation',
+      'create_invitation',
+      {
+        id: `inv_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+        club_id: clubId,
+        creator_id: creatorId,
+        match_type: matchType,
+        date,
+        time,
+        notes,
+        expires_at: expiresAt,
+      }
+    );
+  }
+
+  /**
+   * Queue invitation response
+   */
+  public async queueInvitationResponse(
+    invitationId: string,
+    userId: string,
+    message?: string
+  ): Promise<string> {
+    return this.queueManager.addOperation(
+      'invitation',
+      'respond_invitation',
+      {
+        id: `resp_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+        invitation_id: invitationId,
+        user_id: userId,
+        message,
+      }
+    );
+  }
+
+  /**
+   * Queue invitation cancellation
+   */
+  public async queueInvitationCancellation(invitationId: string): Promise<string> {
+    return this.queueManager.addOperation(
+      'invitation',
+      'cancel_invitation',
+      {
+        invitation_id: invitationId,
+      }
+    );
+  }
+
+  /**
+   * Queue match confirmation
+   */
+  public async queueMatchConfirmation(
+    invitationId: string,
+    confirmedPlayers: string[]
+  ): Promise<string> {
+    return this.queueManager.addOperation(
+      'invitation',
+      'confirm_match',
+      {
+        invitation_id: invitationId,
+        confirmed_players: confirmedPlayers,
+      }
+    );
+  }
+
+  // ================================
   // SYNC MANAGEMENT
   // ================================
 

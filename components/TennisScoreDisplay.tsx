@@ -109,7 +109,10 @@ export function TennisScoreDisplay({
                 <Ionicons name="checkmark" size={16} color="#4CAF50" />
               )}
             </View>
-            <ThemedText style={[styles.playerName, { color: colors.text }]}>
+            <ThemedText 
+              style={[styles.playerName, { color: colors.text }]}
+              numberOfLines={matchType === 'doubles' ? 2 : 1}
+            >
               {player1Name}
             </ThemedText>
           </View>
@@ -144,7 +147,10 @@ export function TennisScoreDisplay({
                 <Ionicons name="checkmark" size={16} color="#4CAF50" />
               )}
             </View>
-            <ThemedText style={[styles.playerName, { color: colors.text }]}>
+            <ThemedText 
+              style={[styles.playerName, { color: colors.text }]}
+              numberOfLines={matchType === 'doubles' ? 2 : 1}
+            >
               {player2Name}
             </ThemedText>
           </View>

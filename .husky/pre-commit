@@ -1,0 +1,50 @@
+#!/usr/bin/env sh
+. "$(dirname -- "$0")/_/husky.sh"
+
+# ZERO TOLERANCE POLICY: ALL CHECKS MUST PASS
+# This pre-commit hook ensures immediate feedback and blocks commits if any check fails
+
+echo "🔍 Running pre-commit checks..."
+echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+
+# Set strict error handling
+set -e
+trap 'echo "❌ Pre-commit checks FAILED. Commit blocked." && exit 1' ERR
+
+# Function to run a check with status reporting
+run_check() {
+    local name="$1"
+    local command="$2"
+    
+    echo "📋 $name..."
+    
+    if eval "$command" > /tmp/hook_output 2>&1; then
+        echo "✅ $name passed"
+    else
+        echo "❌ $name FAILED"
+        echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+        echo "ERROR OUTPUT:"
+        cat /tmp/hook_output
+        echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+        echo "💡 To fix: npm run checks:fix"
+        exit 1
+    fi
+}
+
+# Run pre-commit checks in order
+echo "🔧 1/1 ESLint (Code Quality)"
+run_check "ESLint" "npm run lint"
+
+echo ""
+echo "ℹ️  Note: TypeScript and tests are checked on push"
+echo "   To run all checks now: npm run checks:all"
+
+# Success message
+echo ""
+echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+echo "✅ ALL PRE-COMMIT CHECKS PASSED!"
+echo "🚀 Commit proceeding..."
+echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+
+# Clean up
+rm -f /tmp/hook_output

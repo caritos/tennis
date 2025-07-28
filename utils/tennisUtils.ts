@@ -74,12 +74,7 @@ export function calculateMatchWinner(sets: TennisSet[]): MatchWinner {
     }
   }
 
-  // Single set match - whoever won the set wins
-  if (sets.length === 1) {
-    return player1Sets > player2Sets ? 'player1' : 'player2';
-  }
-
-  // Best of 3: need 2 sets to win
+  // Best of 3: need 2 sets to win (standard tennis format)
   if (player1Sets >= 2) return 'player1';
   if (player2Sets >= 2) return 'player2';
 

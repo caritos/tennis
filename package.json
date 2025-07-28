@@ -15,11 +15,28 @@
     "ios": "expo run:ios",
     "web": "expo start --web",
     "lint": "expo lint",
+    "lint:fix": "expo lint --fix",
+    "type-check": "npx tsc --noEmit",
     "test": "jest",
     "test:watch": "jest --watch",
     "test:coverage": "jest --coverage",
+    "test:unit": "jest --selectProjects unit",
+    "test:integration": "jest --selectProjects integration",
+    "test:unit:watch": "jest --selectProjects unit --watch",
+    "test:integration:watch": "jest --selectProjects integration --watch",
+    "test:update-snapshots": "jest --updateSnapshot",
+    "test:debug": "jest --detectOpenHandles --forceExit",
+    "test:all": "npm run test:unit && npm run test:integration",
     "e2e": "./scripts/run-e2e-tests.sh",
-    "e2e:record": "export PATH=\"$PATH\":\"$HOME/.maestro/bin\" && maestro studio"
+    "e2e:record": "export PATH=\"$PATH\":\"$HOME/.maestro/bin\" && maestro studio",
+    "e2e:check": "./scripts/check-maestro.sh",
+    "checks:pre-commit": "npm run lint && npm run type-check && npm run test:unit",
+    "checks:pre-push": "npm run lint && npm run type-check && npm run test:all && npm run e2e:check",
+    "checks:all": "npm run lint && npm run type-check && npm run test:all && npm run e2e",
+    "checks:quick": "npm run lint && npm run type-check",
+    "checks:fix": "npm run lint:fix && npm run type-check",
+    "verify:hooks": "./scripts/verify-hooks.sh",
+    "prepare": "husky"
   },
   "dependencies": {
     "@expo/vector-icons": "^14.1.0",
@@ -67,6 +84,7 @@
     "@types/react": "~19.0.10",
     "eslint": "^9.25.0",
     "eslint-config-expo": "~9.2.0",
+    "husky": "^9.1.7",
     "typescript": "~5.8.3"
   },
   "private": true

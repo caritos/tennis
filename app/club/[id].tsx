@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { View, ScrollView, StyleSheet, TouchableOpacity, ActivityIndicator } from 'react-native';
+import { View, ScrollView, StyleSheet, TouchableOpacity, ActivityIndicator, Modal } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useLocalSearchParams, router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
@@ -11,6 +11,11 @@ import { Club } from '@/lib/supabase';
 import { initializeDatabase } from '@/database/database';
 import { useAuth } from '@/contexts/AuthContext';
 import { TennisScoreDisplay } from '@/components/TennisScoreDisplay';
+import { ClubRankings, RankedPlayer } from '@/components/ClubRankings';
+import LookingToPlaySection from '@/components/LookingToPlaySection';
+import ChallengeFlowModal from '@/components/ChallengeFlowModal';
+import ChallengeNotifications from '@/components/ChallengeNotifications';
+import { getClubLeaderboard } from '@/services/matchService';
 
 export default function ClubDetailScreen() {
   const { id } = useLocalSearchParams();
@@ -20,11 +25,13 @@ export default function ClubDetailScreen() {
   
   const [club, setClub] = useState<Club | null>(null);
   const [memberCount, setMemberCount] = useState(0);
-  const [rankings, setRankings] = useState<any[]>([]);
+  const [rankings, setRankings] = useState<RankedPlayer[]>([]);
   const [recentMatches, setRecentMatches] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isCreator, setIsCreator] = useState(false);
+  const [showChallengeModal, setShowChallengeModal] = useState(false);
+  const [challengeTarget, setChallengeTarget] = useState<{ id: string; name: string } | null>(null);
 
   useEffect(() => {
     loadClubDetails();
@@ -67,38 +74,27 @@ export default function ClubDetailScreen() {
       
       setMemberCount(countResult?.count || 0);
       
-      // Get top 5 rankings (placeholder for now)
-      // TODO: Implement actual ranking calculation based on matches
-      const members = await db.getAllAsync(
-        `SELECT u.id, u.full_name, cm.joined_at 
-         FROM club_members cm 
-         JOIN users u ON cm.user_id = u.id 
-         WHERE cm.club_id = ? 
-         LIMIT 5`,
-        [id]
-      );
-      
-      // Mock rankings for now
-      const mockRankings = members?.map((member, index) => ({
-        rank: index + 1,
-        id: member.id,
-        name: member.full_name,
-        points: 2450 - (index * 200),
-        wins: 15 - index,
-        losses: 2 + index,
-        winRate: Math.round((15 - index) / (17) * 100)
-      })) || [];
-      
-      setRankings(mockRankings);
+      // Get club rankings using the match service
+      try {
+        const leaderboard = await getClubLeaderboard(id);
+        setRankings(leaderboard);
+      } catch (error) {
+        console.error('Failed to load rankings:', error);
+        setRankings([]);
+      }
       
       // Get recent matches for this club
       const matches = await db.getAllAsync(
         `SELECT m.*, 
                 p1.full_name as player1_name, 
-                p2.full_name as player2_name
+                p2.full_name as player2_name,
+                p3.full_name as player3_name,
+                p4.full_name as player4_name
          FROM matches m
          LEFT JOIN users p1 ON m.player1_id = p1.id
          LEFT JOIN users p2 ON m.player2_id = p2.id
+         LEFT JOIN users p3 ON m.player3_id = p3.id
+         LEFT JOIN users p4 ON m.player4_id = p4.id
          WHERE m.club_id = ?
          ORDER BY m.date DESC, m.created_at DESC
          LIMIT 5`,
@@ -126,10 +122,24 @@ export default function ClubDetailScreen() {
         
         const winner = player1Sets > player2Sets ? 1 : 2;
         
+        // Format player names for doubles
+        let player1DisplayName = match.player1_name || 'Unknown Player';
+        let player2DisplayName = match.player2_name || match.opponent2_name || 'Unknown Opponent';
+        
+        if (match.match_type === 'doubles') {
+          // For doubles, combine player names
+          if (match.player3_name || match.partner3_name) {
+            player1DisplayName = `${player1DisplayName} & ${match.player3_name || match.partner3_name}`;
+          }
+          if (match.player4_name || match.partner4_name) {
+            player2DisplayName = `${player2DisplayName} & ${match.player4_name || match.partner4_name}`;
+          }
+        }
+        
         return {
           ...match,
-          player1_name: match.player1_name || 'Unknown Player',
-          player2_name: match.player2_name || match.opponent2_name || 'Unknown Opponent',
+          player1_name: player1DisplayName,
+          player2_name: player2DisplayName,
           winner,
           processed: true
         };
@@ -155,6 +165,16 @@ export default function ClubDetailScreen() {
       pathname: '/record-match',
       params: { clubId: id }
     });
+  };
+
+  const handleChallengePlayer = (playerId: string, playerName: string) => {
+    setChallengeTarget({ id: playerId, name: playerName });
+    setShowChallengeModal(true);
+  };
+
+  const handleChallengeSuccess = () => {
+    // Refresh rankings or update UI as needed
+    loadClubDetails();
   };
 
   if (isLoading) {
@@ -215,72 +235,34 @@ export default function ClubDetailScreen() {
         </ThemedView>
 
         {/* Challenges Section */}
-        <ThemedView style={styles.section}>
-          <ThemedText style={styles.sectionLabel}>Challenges</ThemedText>
-          <View style={[styles.placeholder, { borderColor: colors.tabIconDefault }]}>
-            <ThemedText style={[styles.placeholderText, { color: colors.tabIconDefault }]}>
-              No active challenges
-            </ThemedText>
-          </View>
-        </ThemedView>
+        {user && (
+          <ChallengeNotifications 
+            userId={user.id} 
+            onRefresh={loadClubDetails}
+          />
+        )}
 
         {/* Looking to Play Section */}
-        <ThemedView style={styles.section}>
-          <ThemedText style={styles.sectionLabel}>Looking to Play</ThemedText>
-          <View style={[styles.placeholder, { borderColor: colors.tabIconDefault }]}>
-            <ThemedText style={[styles.placeholderText, { color: colors.tabIconDefault }]}>
-              No one is looking to play right now
-            </ThemedText>
-          </View>
-          <TouchableOpacity 
-            style={[styles.lookingToPlayButton, { borderColor: colors.tint }]}
-            onPress={() => console.log('Looking to play')}
-          >
-            <Ionicons name="add" size={20} color={colors.tint} />
-            <ThemedText style={[styles.lookingToPlayButtonText, { color: colors.tint }]}>
-              Looking to Play
-            </ThemedText>
-          </TouchableOpacity>
-        </ThemedView>
+        <LookingToPlaySection clubId={id as string} />
 
         {/* Club Rankings */}
         <ThemedView style={styles.section}>
-          <View style={styles.sectionHeader}>
-            <ThemedText style={styles.sectionLabel}>
-              Club Rankings ({memberCount} members)
-            </ThemedText>
-            <TouchableOpacity>
-              <ThemedText style={[styles.viewAllLink, { color: colors.tint }]}>
-                View All →
-              </ThemedText>
-            </TouchableOpacity>
-          </View>
-          
-          {rankings.length > 0 ? (
-            <View style={styles.rankingsList}>
-              {rankings.map((player, index) => (
-                <View key={player.id} style={styles.rankingItem}>
-                  <View style={styles.rankingLeft}>
-                    <ThemedText style={styles.rankNumber}>{player.rank}.</ThemedText>
-                    <Ionicons name="person-circle-outline" size={20} color={colors.tabIconDefault} />
-                    <ThemedText style={styles.playerName}>{player.name}</ThemedText>
-                  </View>
-                  <View style={styles.rankingRight}>
-                    {index === 0 && <ThemedText style={styles.trophy}>🏆</ThemedText>}
-                    {index === 1 && <ThemedText style={styles.trophy}>🥈</ThemedText>}
-                    {index === 2 && <ThemedText style={styles.trophy}>🥉</ThemedText>}
-                    <ThemedText style={styles.points}>{player.points} pts</ThemedText>
-                  </View>
-                </View>
-              ))}
-            </View>
-          ) : (
-            <View style={[styles.placeholder, { borderColor: colors.tabIconDefault }]}>
-              <ThemedText style={[styles.placeholderText, { color: colors.tabIconDefault }]}>
-                Rankings will appear here once matches are recorded
-              </ThemedText>
-            </View>
-          )}
+          <ClubRankings
+            rankings={rankings}
+            memberCount={memberCount}
+            currentUserId={user?.id}
+            onViewAll={() => {
+              router.push({
+                pathname: '/club/[id]/rankings',
+                params: { id }
+              });
+            }}
+            onPlayerPress={(playerId) => {
+              // TODO: Navigate to player profile
+              console.log('View player:', playerId);
+            }}
+            onChallengePress={handleChallengePlayer}
+          />
         </ThemedView>
 
         {/* Recent Matches */}
@@ -328,6 +310,19 @@ export default function ClubDetailScreen() {
           )}
         </ThemedView>
       </ScrollView>
+
+      {/* Challenge Modal */}
+      <ChallengeFlowModal
+        clubId={id as string}
+        targetPlayerId={challengeTarget?.id}
+        targetPlayerName={challengeTarget?.name}
+        isVisible={showChallengeModal}
+        onClose={() => {
+          setShowChallengeModal(false);
+          setChallengeTarget(null);
+        }}
+        onSuccess={handleChallengeSuccess}
+      />
     </SafeAreaView>
   );
 }
@@ -402,20 +397,6 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     marginLeft: 8,
   },
-  lookingToPlayButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    padding: 10,
-    borderRadius: 8,
-    borderWidth: 1,
-    marginTop: 12,
-  },
-  lookingToPlayButtonText: {
-    fontSize: 14,
-    fontWeight: '500',
-    marginLeft: 6,
-  },
   placeholder: {
     borderWidth: 1,
     borderStyle: 'dashed',
@@ -445,46 +426,6 @@ const styles = StyleSheet.create({
   },
   matchDate: {
     fontSize: 12,
-    fontWeight: '500',
-  },
-  rankingsList: {
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: '#e0e0e0',
-    overflow: 'hidden',
-  },
-  rankingItem: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    padding: 12,
-    borderBottomWidth: 1,
-    borderBottomColor: '#e0e0e0',
-  },
-  rankingLeft: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  rankingRight: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  rankNumber: {
-    fontSize: 16,
-    fontWeight: '600',
-    marginRight: 8,
-    width: 20,
-  },
-  playerName: {
-    fontSize: 16,
-    marginLeft: 8,
-  },
-  trophy: {
-    fontSize: 20,
-    marginRight: 8,
-  },
-  points: {
-    fontSize: 14,
     fontWeight: '500',
   },
   loadingContainer: {

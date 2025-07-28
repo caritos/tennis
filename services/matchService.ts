@@ -8,6 +8,10 @@ export interface CreateMatchData {
   player1_id: string;
   player2_id?: string | null;
   opponent2_name?: string | null;
+  player3_id?: string | null;
+  partner3_name?: string | null;
+  player4_id?: string | null;
+  partner4_name?: string | null;
   scores: string;
   match_type: 'singles' | 'doubles';
   date: string;
@@ -93,14 +97,19 @@ export class MatchService {
       await db.runAsync(
         `INSERT INTO matches (
           id, club_id, player1_id, player2_id, opponent2_name, 
+          player3_id, partner3_name, player4_id, partner4_name,
           scores, match_type, date, notes
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
         [
           matchId,
           matchData.club_id,
           matchData.player1_id,
           matchData.player2_id || null,
           matchData.opponent2_name || null,
+          matchData.player3_id || null,
+          matchData.partner3_name || null,
+          matchData.player4_id || null,
+          matchData.partner4_name || null,
           matchData.scores,
           matchData.match_type,
           matchData.date,
@@ -121,6 +130,10 @@ export class MatchService {
           player1_id: matchData.player1_id,
           player2_id: matchData.player2_id,
           opponent2_name: matchData.opponent2_name,
+          player3_id: matchData.player3_id,
+          partner3_name: matchData.partner3_name,
+          player4_id: matchData.player4_id,
+          partner4_name: matchData.partner4_name,
           scores: matchData.scores,
           match_type: matchData.match_type,
           date: matchData.date,
@@ -262,20 +275,23 @@ export class MatchService {
     playerName: string;
     stats: PlayerStats;
     ranking: number;
+    points: number;
+    isProvisional: boolean;
   }>> {
     try {
       const db = await this.getDatabase();
       
       // Get all players who have played matches in this club
+      // Need to check both player1_id and player2_id positions
       const playersWithMatches = await db.getAllAsync(`
-        SELECT DISTINCT 
-          CASE 
-            WHEN player1_id IS NOT NULL THEN player1_id
-            ELSE player2_id
-          END as player_id
-        FROM matches 
-        WHERE club_id = ? AND (player1_id IS NOT NULL OR player2_id IS NOT NULL)
-      `, [clubId]);
+        SELECT DISTINCT player_id FROM (
+          SELECT player1_id as player_id FROM matches 
+          WHERE club_id = ? AND player1_id IS NOT NULL
+          UNION
+          SELECT player2_id as player_id FROM matches 
+          WHERE club_id = ? AND player2_id IS NOT NULL
+        ) as all_players
+      `, [clubId, clubId]);
 
       const leaderboard = [];
 
@@ -285,18 +301,44 @@ export class MatchService {
           
           // Only include players with at least 1 match
           if (stats.totalMatches > 0) {
+            // Get player name from database
+            const userInfo = await db.getFirstAsync(
+              'SELECT full_name FROM users WHERE id = ?',
+              [player.player_id]
+            );
+            
+            // Calculate points based on tennis ranking system
+            // Base points for wins, bonus for win percentage, penalty for losses
+            const basePointsPerWin = 100;
+            const winStreakBonus = Math.min(stats.wins * 10, 200); // Max 200 bonus
+            const consistencyBonus = stats.winPercentage >= 60 ? 100 : 0;
+            const activityBonus = Math.min(stats.totalMatches * 5, 150); // Max 150 for activity
+            
+            const points = Math.round(
+              (stats.wins * basePointsPerWin) + 
+              winStreakBonus + 
+              consistencyBonus + 
+              activityBonus -
+              (stats.losses * 20) // Small penalty for losses to encourage competitive play
+            );
+            
             leaderboard.push({
               playerId: player.player_id,
-              playerName: 'Player Name', // Will be populated from user service
+              playerName: userInfo?.full_name || 'Unknown Player',
               stats,
               ranking: 0, // Will be calculated after sorting
+              points: Math.max(0, points), // Never negative
+              isProvisional: stats.totalMatches < 5, // Provisional if less than 5 matches
             });
           }
         }
       }
 
-      // Sort by win percentage (descending), then by total matches (descending)
+      // Sort by points (descending), then by win percentage (descending), then by total matches (descending)
       leaderboard.sort((a, b) => {
+        if (a.points !== b.points) {
+          return b.points - a.points;
+        }
         if (a.stats.winPercentage !== b.stats.winPercentage) {
           return b.stats.winPercentage - a.stats.winPercentage;
         }
@@ -349,5 +391,8 @@ export const getMatchStats = (playerId: string, clubId?: string) =>
   matchService.getMatchStats(playerId, clubId);
 export const getClubLeaderboard = (clubId: string) => 
   matchService.getClubLeaderboard(clubId);
+
+// Export types for component usage
+export type RankedPlayer = Awaited<ReturnType<typeof getClubLeaderboard>>[number];
 
 export default matchService;

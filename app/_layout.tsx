@@ -7,6 +7,7 @@ import { LogBox } from 'react-native';
 
 import { useColorScheme } from '@/hooks/useColorScheme';
 import { AuthProvider, useAuth } from '@/contexts/AuthContext';
+import { NotificationProvider } from '@/contexts/NotificationContext';
 import { View, ActivityIndicator } from 'react-native';
 
 // Hide the "Open debugger" warning in development
@@ -71,7 +72,9 @@ export default function RootLayout() {
 
   return (
     <AuthProvider>
-      <RootLayoutNav />
+      <NotificationProvider>
+        <RootLayoutNav />
+      </NotificationProvider>
     </AuthProvider>
   );
 }

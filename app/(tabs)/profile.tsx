@@ -11,6 +11,9 @@ import { Colors } from '@/constants/Colors';
 import { useAuth } from '@/contexts/AuthContext';
 import clubService from '@/services/clubService';
 import { Club } from '@/lib/supabase';
+import { MatchHistoryView } from '@/components/MatchHistoryView';
+import { PlayerStatsDisplay } from '@/components/PlayerStatsDisplay';
+import { usePlayerStats } from '@/hooks/usePlayerStats';
 
 export default function ProfileScreen() {
   const colorScheme = useColorScheme();
@@ -19,6 +22,9 @@ export default function ProfileScreen() {
   const { user, signOut } = useAuth();
   const [userClubs, setUserClubs] = useState<Club[]>([]);
   const [loading, setLoading] = useState(true);
+
+  // Load player statistics
+  const { stats, loading: statsLoading, error: statsError, refreshStats } = usePlayerStats(user?.id || null);
 
   const loadUserClubs = async () => {
     if (!user?.id) {
@@ -72,23 +78,43 @@ export default function ProfileScreen() {
             {user?.email && (
               <ThemedText style={styles.userEmail}>{user.email}</ThemedText>
             )}
+            {user?.phone && (
+              <ThemedText style={styles.userPhone}>{user.phone}</ThemedText>
+            )}
           </View>
         </ThemedView>
 
         <ThemedView style={styles.section}>
           <ThemedText type="subtitle" style={styles.sectionTitle}>Tennis Stats</ThemedText>
-          <ThemedView style={[styles.placeholder, { borderColor: colors.icon }]}>
-            <ThemedText style={styles.placeholderText}>No matches played yet</ThemedText>
-            <ThemedText style={styles.placeholderSubtext}>Record your first match!</ThemedText>
-          </ThemedView>
+          <PlayerStatsDisplay 
+            stats={stats || {
+              totalMatches: 0,
+              wins: 0,
+              losses: 0,
+              winPercentage: 0,
+              singlesRecord: { wins: 0, losses: 0, winPercentage: 0 },
+              doublesRecord: { wins: 0, losses: 0, winPercentage: 0 },
+              setsWon: 0,
+              setsLost: 0,
+              gamesWon: 0,
+              gamesLost: 0,
+            }}
+            loading={statsLoading}
+            error={statsError}
+          />
         </ThemedView>
 
         <ThemedView style={styles.section}>
           <ThemedText type="subtitle" style={styles.sectionTitle}>Match History</ThemedText>
-          <ThemedView style={[styles.placeholder, { borderColor: colors.icon }]}>
-            <ThemedText style={styles.placeholderText}>No matches played yet</ThemedText>
-            <ThemedText style={styles.placeholderSubtext}>Record your first match!</ThemedText>
-          </ThemedView>
+          {user?.id ? (
+            <View style={styles.matchHistoryContainer}>
+              <MatchHistoryView playerId={user.id} />
+            </View>
+          ) : (
+            <ThemedView style={[styles.placeholder, { borderColor: colors.icon }]}>
+              <ThemedText style={styles.placeholderText}>Sign in to view match history</ThemedText>
+            </ThemedView>
+          )}
         </ThemedView>
 
         <ThemedView style={styles.section}>
@@ -172,6 +198,11 @@ const styles = StyleSheet.create({
     opacity: 0.7,
     marginTop: 4,
   },
+  userPhone: {
+    fontSize: 14,
+    opacity: 0.7,
+    marginTop: 2,
+  },
   sectionTitle: {
     marginBottom: 12,
   },
@@ -221,6 +252,9 @@ const styles = StyleSheet.create({
   clubMembers: {
     fontSize: 12,
     opacity: 0.6,
+  },
+  matchHistoryContainer: {
+    maxHeight: 400,
   },
   settingsContainer: {
     paddingVertical: 8,

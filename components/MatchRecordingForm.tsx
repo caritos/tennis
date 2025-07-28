@@ -42,14 +42,20 @@ export function MatchRecordingForm({ onSave, onCancel, clubId }: MatchRecordingF
   const [matchTypeRadioId, setMatchTypeRadioId] = useState('singles');
   const [selectedOpponent, setSelectedOpponent] = useState<Player | null>(null);
   const [opponentSearchText, setOpponentSearchText] = useState('');
+  const [selectedPartner, setSelectedPartner] = useState<Player | null>(null);
+  const [partnerSearchText, setPartnerSearchText] = useState('');
+  const [selectedOpponentPartner, setSelectedOpponentPartner] = useState<Player | null>(null);
+  const [opponentPartnerSearchText, setOpponentPartnerSearchText] = useState('');
   const [filteredPlayers, setFilteredPlayers] = useState<Player[]>([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
+  const [activeSearchField, setActiveSearchField] = useState<'opponent' | 'partner' | 'opponentPartner' | null>(null);
   const [matchDate, setMatchDate] = useState(new Date().toISOString().split('T')[0]);
   // Legacy state - will be removed
   const [tennisSets, setTennisSets] = useState<TennisSet[]>([]);
   const [validationErrors, setValidationErrors] = useState<string[]>([]);
   const [clubMembers, setClubMembers] = useState<Player[]>([]);
   const [loadingMembers, setLoadingMembers] = useState(true);
+  const [notes, setNotes] = useState('');
 
   // Radio button configuration for match type
   const matchTypeRadioButtons = useMemo(() => [
@@ -73,6 +79,14 @@ export function MatchRecordingForm({ onSave, onCancel, clubId }: MatchRecordingF
   const handleMatchTypeChange = (selectedId: string) => {
     setMatchTypeRadioId(selectedId);
     setMatchType(selectedId as 'singles' | 'doubles');
+    
+    // Clear doubles fields when switching to singles
+    if (selectedId === 'singles') {
+      setSelectedPartner(null);
+      setPartnerSearchText('');
+      setSelectedOpponentPartner(null);
+      setOpponentPartnerSearchText('');
+    }
   };
 
   // Load real club members from database
@@ -80,22 +94,27 @@ export function MatchRecordingForm({ onSave, onCancel, clubId }: MatchRecordingF
     loadClubMembers();
   }, [clubId]);
 
-  // Filter players based on search text
+  // Filter players based on active search field
   useEffect(() => {
-    if (opponentSearchText.trim() === '') {
+    let searchText = '';
+    if (activeSearchField === 'opponent') searchText = opponentSearchText;
+    else if (activeSearchField === 'partner') searchText = partnerSearchText;
+    else if (activeSearchField === 'opponentPartner') searchText = opponentPartnerSearchText;
+
+    if (searchText.trim() === '') {
       setFilteredPlayers([]);
       setShowSuggestions(false);
       return;
     }
 
-    const searchLower = opponentSearchText.toLowerCase();
+    const searchLower = searchText.toLowerCase();
     const filtered = clubMembers.filter(player => 
       player.name.toLowerCase().includes(searchLower)
     );
     
     setFilteredPlayers(filtered);
     setShowSuggestions(true);
-  }, [opponentSearchText, clubMembers]);
+  }, [opponentSearchText, partnerSearchText, opponentPartnerSearchText, clubMembers, activeSearchField]);
 
   const loadClubMembers = async () => {
     if (!clubId) return;
@@ -128,36 +147,71 @@ export function MatchRecordingForm({ onSave, onCancel, clubId }: MatchRecordingF
 
   // Legacy functions - removed in favor of TennisScoreEntry component
 
-  const handlePlayerSelect = (player: Player) => {
-    setSelectedOpponent(player);
-    setOpponentSearchText(player.name);
+  const handlePlayerSelect = (player: Player, field: 'opponent' | 'partner' | 'opponentPartner') => {
+    if (field === 'opponent') {
+      setSelectedOpponent(player);
+      setOpponentSearchText(player.name);
+    } else if (field === 'partner') {
+      setSelectedPartner(player);
+      setPartnerSearchText(player.name);
+    } else if (field === 'opponentPartner') {
+      setSelectedOpponentPartner(player);
+      setOpponentPartnerSearchText(player.name);
+    }
     setShowSuggestions(false);
+    setActiveSearchField(null);
     // Clear validation errors
     if (validationErrors.length > 0) {
       setValidationErrors([]);
     }
   };
 
-  const handleAddNewPlayer = () => {
-    // Create a temporary player object for new opponent
+  const handleAddNewPlayer = (field: 'opponent' | 'partner' | 'opponentPartner') => {
+    let searchText = '';
+    if (field === 'opponent') searchText = opponentSearchText;
+    else if (field === 'partner') searchText = partnerSearchText;
+    else if (field === 'opponentPartner') searchText = opponentPartnerSearchText;
+
     const newPlayer = {
-      id: 'new-player',
-      name: opponentSearchText.trim()
+      id: `new-player-${field}`,
+      name: searchText.trim()
     };
-    setSelectedOpponent(newPlayer);
+
+    if (field === 'opponent') {
+      setSelectedOpponent(newPlayer);
+    } else if (field === 'partner') {
+      setSelectedPartner(newPlayer);
+    } else if (field === 'opponentPartner') {
+      setSelectedOpponentPartner(newPlayer);
+    }
+    
     setShowSuggestions(false);
+    setActiveSearchField(null);
     // Clear validation errors
     if (validationErrors.length > 0) {
       setValidationErrors([]);
     }
   };
 
-  const handleSearchTextChange = (text: string) => {
-    setOpponentSearchText(text);
-    // Reset selected opponent if user is typing something different
-    if (selectedOpponent && text !== selectedOpponent.name) {
-      setSelectedOpponent(null);
+  const handleSearchTextChange = (text: string, field: 'opponent' | 'partner' | 'opponentPartner') => {
+    if (field === 'opponent') {
+      setOpponentSearchText(text);
+      if (selectedOpponent && text !== selectedOpponent.name) {
+        setSelectedOpponent(null);
+      }
+    } else if (field === 'partner') {
+      setPartnerSearchText(text);
+      if (selectedPartner && text !== selectedPartner.name) {
+        setSelectedPartner(null);
+      }
+    } else if (field === 'opponentPartner') {
+      setOpponentPartnerSearchText(text);
+      if (selectedOpponentPartner && text !== selectedOpponentPartner.name) {
+        setSelectedOpponentPartner(null);
+      }
     }
+    
+    setActiveSearchField(field);
     // Clear validation errors when user starts typing
     if (validationErrors.length > 0) {
       setValidationErrors([]);
@@ -173,6 +227,25 @@ export function MatchRecordingForm({ onSave, onCancel, clubId }: MatchRecordingF
 
     if (opponentSearchText.trim() && !selectedOpponent) {
       errors.push('Please select an opponent from the list or add as new player');
+    }
+
+    // Validate doubles partners
+    if (matchType === 'doubles') {
+      if (!selectedPartner && !partnerSearchText.trim()) {
+        errors.push('Please select or enter your partner');
+      }
+
+      if (partnerSearchText.trim() && !selectedPartner) {
+        errors.push('Please select your partner from the list or add as new player');
+      }
+
+      if (!selectedOpponentPartner && !opponentPartnerSearchText.trim()) {
+        errors.push('Please select or enter opponent\'s partner');
+      }
+
+      if (opponentPartnerSearchText.trim() && !selectedOpponentPartner) {
+        errors.push('Please select opponent\'s partner from the list or add as new player');
+      }
     }
 
     if (tennisSets.length === 0) {
@@ -207,11 +280,16 @@ export function MatchRecordingForm({ onSave, onCancel, clubId }: MatchRecordingF
     const matchData: CreateMatchData = {
       club_id: clubId,
       player1_id: user.id, // Use actual user ID from auth context
-      player2_id: selectedOpponent?.id === 'new-player' ? null : selectedOpponent?.id || null,
-      opponent2_name: selectedOpponent?.id === 'new-player' ? selectedOpponent.name : null,
+      player2_id: selectedOpponent?.id?.startsWith('new-player') ? null : selectedOpponent?.id || null,
+      opponent2_name: selectedOpponent?.id?.startsWith('new-player') ? selectedOpponent.name : null,
+      player3_id: selectedPartner?.id?.startsWith('new-player') ? null : selectedPartner?.id || null,
+      partner3_name: selectedPartner?.id?.startsWith('new-player') ? selectedPartner?.name : null,
+      player4_id: selectedOpponentPartner?.id?.startsWith('new-player') ? null : selectedOpponentPartner?.id || null,
+      partner4_name: selectedOpponentPartner?.id?.startsWith('new-player') ? selectedOpponentPartner?.name : null,
       scores: scoreString,
       match_type: matchType,
       date: matchDate,
+      notes: notes.trim() || undefined,
     };
 
     onSave(matchData);
@@ -410,6 +488,17 @@ export function MatchRecordingForm({ onSave, onCancel, clubId }: MatchRecordingF
       color: colors.text,
       marginBottom: 8,
     },
+    notesInput: {
+      borderWidth: 1,
+      borderColor: colors.tabIconDefault,
+      borderRadius: 8,
+      padding: 12,
+      fontSize: 16,
+      color: colors.text,
+      backgroundColor: colors.background,
+      minHeight: 80,
+      textAlignVertical: 'top',
+    },
   });
 
   return (
@@ -440,19 +529,79 @@ export function MatchRecordingForm({ onSave, onCancel, clubId }: MatchRecordingF
           />
         </View>
 
+        {/* Your Partner - Only show for doubles matches */}
+        {matchType === 'doubles' && (
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>Your Partner</Text>
+            <TextInput
+              style={[
+                styles.searchInput,
+                showSuggestions && activeSearchField === 'partner' && styles.searchInputFocused
+              ]}
+              value={partnerSearchText}
+              onChangeText={(text) => handleSearchTextChange(text, 'partner')}
+              placeholder="🔍 Search or add partner..."
+              testID="partner-search-input"
+              onFocus={() => {
+                setActiveSearchField('partner');
+                if (partnerSearchText.trim()) {
+                  setShowSuggestions(true);
+                }
+              }}
+            />
+
+            {/* Search Suggestions for Partner */}
+            {showSuggestions && activeSearchField === 'partner' && (
+              <View style={styles.suggestionsContainer}>
+                {/* Existing Players */}
+                {filteredPlayers.map((player, index) => (
+                  <Pressable
+                    key={player.id}
+                    style={[
+                      styles.suggestionItem,
+                      index === filteredPlayers.length - 1 && filteredPlayers.length > 0 && partnerSearchText.trim() && 
+                      !filteredPlayers.some(p => p.name.toLowerCase() === partnerSearchText.toLowerCase()) && 
+                      styles.suggestionItemLast
+                    ]}
+                    onPress={() => handlePlayerSelect(player, 'partner')}
+                  >
+                    <Text style={styles.suggestionText}>{player.name}</Text>
+                  </Pressable>
+                ))}
+                
+                {/* Add New Player Option */}
+                {partnerSearchText.trim() && 
+                 !filteredPlayers.some(player => 
+                   player.name.toLowerCase() === partnerSearchText.toLowerCase()
+                 ) && (
+                  <Pressable
+                    style={styles.addNewPlayerItem}
+                    onPress={() => handleAddNewPlayer('partner')}
+                  >
+                    <Text style={styles.addNewPlayerText}>
+                      + Add &quot;{partnerSearchText.trim()}&quot; as new player
+                    </Text>
+                  </Pressable>
+                )}
+              </View>
+            )}
+          </View>
+        )}
+
         {/* Opponent Selection */}
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Opponent</Text>
+          <Text style={styles.sectionTitle}>{matchType === 'doubles' ? 'Opponent 1' : 'Opponent'}</Text>
           <TextInput
             style={[
               styles.searchInput,
               showSuggestions && styles.searchInputFocused
             ]}
             value={opponentSearchText}
-            onChangeText={handleSearchTextChange}
+            onChangeText={(text) => handleSearchTextChange(text, 'opponent')}
             placeholder="🔍 Search or add opponent..."
             testID="opponent-search-input"
             onFocus={() => {
+              setActiveSearchField('opponent');
               if (opponentSearchText.trim()) {
                 setShowSuggestions(true);
               }
@@ -472,7 +621,7 @@ export function MatchRecordingForm({ onSave, onCancel, clubId }: MatchRecordingF
                     !filteredPlayers.some(p => p.name.toLowerCase() === opponentSearchText.toLowerCase()) && 
                     styles.suggestionItemLast
                   ]}
-                  onPress={() => handlePlayerSelect(player)}
+                  onPress={() => handlePlayerSelect(player, activeSearchField || 'opponent')}
                 >
                   <Text style={styles.suggestionText}>{player.name}</Text>
                 </Pressable>
@@ -485,16 +634,75 @@ export function MatchRecordingForm({ onSave, onCancel, clubId }: MatchRecordingF
                ) && (
                 <Pressable
                   style={styles.addNewPlayerItem}
-                  onPress={handleAddNewPlayer}
+                  onPress={() => handleAddNewPlayer(activeSearchField || 'opponent')}
                 >
                   <Text style={styles.addNewPlayerText}>
-                    + Add "{opponentSearchText.trim()}" as new player
+                    + Add &quot;{opponentSearchText.trim()}&quot; as new player
                   </Text>
                 </Pressable>
               )}
             </View>
           )}
         </View>
+
+        {/* Opponent's Partner - Only show for doubles matches */}
+        {matchType === 'doubles' && (
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>Opponent 2</Text>
+            <TextInput
+                style={[
+                  styles.searchInput,
+                  showSuggestions && activeSearchField === 'opponentPartner' && styles.searchInputFocused
+                ]}
+                value={opponentPartnerSearchText}
+                onChangeText={(text) => handleSearchTextChange(text, 'opponentPartner')}
+                placeholder="🔍 Search or add opponent&apos;s partner..."
+                testID="opponent-partner-search-input"
+                onFocus={() => {
+                  setActiveSearchField('opponentPartner');
+                  if (opponentPartnerSearchText.trim()) {
+                    setShowSuggestions(true);
+                  }
+                }}
+              />
+
+              {/* Search Suggestions for Opponent's Partner */}
+              {showSuggestions && activeSearchField === 'opponentPartner' && (
+                <View style={styles.suggestionsContainer}>
+                  {/* Existing Players */}
+                  {filteredPlayers.map((player, index) => (
+                    <Pressable
+                      key={player.id}
+                      style={[
+                        styles.suggestionItem,
+                        index === filteredPlayers.length - 1 && filteredPlayers.length > 0 && opponentPartnerSearchText.trim() && 
+                        !filteredPlayers.some(p => p.name.toLowerCase() === opponentPartnerSearchText.toLowerCase()) && 
+                        styles.suggestionItemLast
+                      ]}
+                      onPress={() => handlePlayerSelect(player, 'opponentPartner')}
+                    >
+                      <Text style={styles.suggestionText}>{player.name}</Text>
+                    </Pressable>
+                  ))}
+                  
+                  {/* Add New Player Option */}
+                  {opponentPartnerSearchText.trim() && 
+                   !filteredPlayers.some(player => 
+                     player.name.toLowerCase() === opponentPartnerSearchText.toLowerCase()
+                   ) && (
+                    <Pressable
+                      style={styles.addNewPlayerItem}
+                      onPress={() => handleAddNewPlayer('opponentPartner')}
+                    >
+                      <Text style={styles.addNewPlayerText}>
+                        + Add &quot;{opponentPartnerSearchText.trim()}&quot; as new player
+                      </Text>
+                    </Pressable>
+                  )}
+                </View>
+              )}
+            </View>
+        )}
 
         {/* Match Date */}
         <View style={styles.section}>
@@ -508,11 +716,18 @@ export function MatchRecordingForm({ onSave, onCancel, clubId }: MatchRecordingF
         </View>
 
         {/* Tennis Score Entry */}
-        {selectedOpponent ? (
+        {(matchType === 'singles' && selectedOpponent) || 
+         (matchType === 'doubles' && selectedOpponent && selectedPartner && selectedOpponentPartner) ? (
           <View style={styles.section}>
             <TennisScoreEntry
-              player1Name="You"
-              player2Name={selectedOpponent.name}
+              player1Name={matchType === 'doubles' ? 
+                (selectedPartner ? `You & ${selectedPartner.name}` : "You & [Partner not selected]") : 
+                "You"}
+              player2Name={matchType === 'doubles' ? 
+                (selectedOpponentPartner ? 
+                  `${selectedOpponent.name} & ${selectedOpponentPartner.name}` : 
+                  `${selectedOpponent.name} & [Partner not selected]`) : 
+                selectedOpponent.name}
               matchType={matchType}
               onScoreChange={setTennisSets}
               initialSets={tennisSets}
@@ -523,13 +738,29 @@ export function MatchRecordingForm({ onSave, onCancel, clubId }: MatchRecordingF
         ) : (
           <View style={styles.section}>
             <View style={styles.placeholderContainer}>
-              <Text style={styles.placeholderTitle}>⏳ Select an opponent to continue</Text>
+              <Text style={styles.placeholderTitle}>⏳ Select {matchType === 'doubles' ? 'all players' : 'an opponent'} to continue</Text>
               <Text style={styles.placeholderText}>
-                Search for a club member or add a new player to start recording match scores
+                {matchType === 'doubles' ? 
+                  'Select your partner and both opponents to start recording match scores' :
+                  'Search for a club member or add a new player to start recording match scores'}
               </Text>
             </View>
           </View>
         )}
+
+        {/* Notes */}
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Notes (Optional)</Text>
+          <TextInput
+            style={styles.notesInput}
+            value={notes}
+            onChangeText={setNotes}
+            placeholder="Great competitive match!"
+            placeholderTextColor={colors.tabIconDefault}
+            multiline
+            testID="notes-input"
+          />
+        </View>
       </ScrollView>
 
       {/* Action Buttons */}

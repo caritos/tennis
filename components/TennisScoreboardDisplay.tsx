@@ -87,9 +87,11 @@ export function TennisScoreboardDisplay({
       borderBottomWidth: 0,
     },
     playerNameCell: {
-      flex: 3,
+      flex: matchType === 'doubles' ? 4 : 3,
       padding: compact ? 8 : 12,
+      paddingVertical: matchType === 'doubles' ? 12 : (compact ? 8 : 12),
       justifyContent: 'center',
+      minHeight: matchType === 'doubles' ? 60 : undefined,
     },
     setHeaderCell: {
       flex: 1,
@@ -117,11 +119,13 @@ export function TennisScoreboardDisplay({
       fontSize: compact ? 14 : 16,
       fontWeight: '600',
       color: colors.text,
+      flexWrap: 'wrap',
     },
     winnerName: {
       fontSize: compact ? 14 : 16,
       fontWeight: '700',
       color: '#4CAF50',
+      flexWrap: 'wrap',
     },
     setHeader: {
       fontSize: compact ? 10 : 12,
@@ -192,12 +196,38 @@ export function TennisScoreboardDisplay({
       matchComplete && isWinner ? styles.winnerRow : {},
     ];
     
+    // For doubles, format team names nicely
+    const formatDoublesName = () => {
+      if (matchType === 'doubles' && name.includes(' & ')) {
+        const players = name.split(' & ');
+        return (
+          <View>
+            <Text style={matchComplete && isWinner ? styles.winnerName : styles.playerName}>
+              {players[0]}
+            </Text>
+            <Text style={[matchComplete && isWinner ? styles.winnerName : styles.playerName, { fontSize: compact ? 12 : 14, marginTop: 2 }]}>
+              & {players[1]}
+            </Text>
+          </View>
+        );
+      }
+      return name;
+    };
+    
+    const displayName = formatDoublesName();
+    
     return (
       <View style={rowStyle}>
         <View style={styles.playerNameCell}>
-          <Text style={matchComplete && isWinner ? styles.winnerName : styles.playerName}>
-            {name}
-          </Text>
+          {typeof displayName === 'string' ? (
+            <Text style={matchComplete && isWinner ? styles.winnerName : styles.playerName}>
+              {displayName}
+            </Text>
+          ) : (
+            <View>
+              {displayName}
+            </View>
+          )}
         </View>
         {[0, 1, 2, 3, 4].map((setIndex) => (
           <View 

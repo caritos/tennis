@@ -336,6 +336,179 @@ export const challengeSyncStrategies: SyncStrategy[] = [
 ];
 
 /**
+ * Match invitation sync strategies
+ */
+export const invitationSyncStrategies: SyncStrategy[] = [
+  {
+    entity: 'invitation',
+    operation: 'create_invitation',
+    validate: (payload: any) => {
+      return !!(payload.club_id && payload.creator_id && payload.match_type && payload.date);
+    },
+    execute: async (operation: QueueOperation): Promise<SyncResult> => {
+      try {
+        const invitationData = operation.payload;
+        
+        const { data, error } = await supabase
+          .from('match_invitations')
+          .insert({
+            ...invitationData,
+            created_at: new Date().toISOString(),
+            status: 'active',
+          })
+          .select()
+          .single();
+
+        if (error) {
+          throw new Error(`Supabase error: ${error.message}`);
+        }
+
+        return {
+          success: true,
+          data: data,
+        };
+      } catch (error) {
+        console.error('Failed to sync invitation creation:', error);
+        return {
+          success: false,
+          error: error instanceof Error ? error.message : 'Unknown error',
+          shouldRetry: true,
+        };
+      }
+    },
+  },
+
+  {
+    entity: 'invitation',
+    operation: 'respond_invitation',
+    validate: (payload: any) => {
+      return !!(payload.invitation_id && payload.user_id);
+    },
+    execute: async (operation: QueueOperation): Promise<SyncResult> => {
+      try {
+        const responseData = operation.payload;
+        
+        const { data, error } = await supabase
+          .from('invitation_responses')
+          .insert({
+            ...responseData,
+            created_at: new Date().toISOString(),
+            status: 'interested',
+          })
+          .select()
+          .single();
+
+        if (error) {
+          throw new Error(`Supabase error: ${error.message}`);
+        }
+
+        return {
+          success: true,
+          data: data,
+        };
+      } catch (error) {
+        console.error('Failed to sync invitation response:', error);
+        return {
+          success: false,
+          error: error instanceof Error ? error.message : 'Unknown error',
+          shouldRetry: true,
+        };
+      }
+    },
+  },
+
+  {
+    entity: 'invitation',
+    operation: 'cancel_invitation',
+    validate: (payload: any) => {
+      return !!(payload.invitation_id);
+    },
+    execute: async (operation: QueueOperation): Promise<SyncResult> => {
+      try {
+        const { invitation_id } = operation.payload;
+        
+        const { data, error } = await supabase
+          .from('match_invitations')
+          .update({
+            status: 'cancelled',
+            updated_at: new Date().toISOString(),
+          })
+          .eq('id', invitation_id)
+          .select()
+          .single();
+
+        if (error) {
+          throw new Error(`Supabase error: ${error.message}`);
+        }
+
+        return {
+          success: true,
+          data: data,
+        };
+      } catch (error) {
+        console.error('Failed to sync invitation cancellation:', error);
+        return {
+          success: false,
+          error: error instanceof Error ? error.message : 'Unknown error',
+          shouldRetry: true,
+        };
+      }
+    },
+  },
+
+  {
+    entity: 'invitation',
+    operation: 'confirm_match',
+    validate: (payload: any) => {
+      return !!(payload.invitation_id && payload.confirmed_players);
+    },
+    execute: async (operation: QueueOperation): Promise<SyncResult> => {
+      try {
+        const { invitation_id, confirmed_players } = operation.payload;
+        
+        // Update invitation status to matched
+        const { error: invitationError } = await supabase
+          .from('match_invitations')
+          .update({
+            status: 'matched',
+            updated_at: new Date().toISOString(),
+          })
+          .eq('id', invitation_id);
+
+        if (invitationError) {
+          throw new Error(`Supabase error: ${invitationError.message}`);
+        }
+
+        // Update confirmed players' responses
+        const { error: responseError } = await supabase
+          .from('invitation_responses')
+          .update({
+            status: 'confirmed',
+            updated_at: new Date().toISOString(),
+          })
+          .eq('invitation_id', invitation_id)
+          .in('user_id', confirmed_players);
+
+        if (responseError) {
+          throw new Error(`Supabase error: ${responseError.message}`);
+        }
+
+        return {
+          success: true,
+        };
+      } catch (error) {
+        console.error('Failed to sync match confirmation:', error);
+        return {
+          success: false,
+          error: error instanceof Error ? error.message : 'Unknown error',
+          shouldRetry: true,
+        };
+      }
+    },
+  },
+];
+
+/**
  * Get all sync strategies
  */
 export function getAllSyncStrategies(): SyncStrategy[] {
@@ -344,5 +517,6 @@ export function getAllSyncStrategies(): SyncStrategy[] {
     ...clubSyncStrategies,
     ...userSyncStrategies,
     ...challengeSyncStrategies,
+    ...invitationSyncStrategies,
   ];
 }

@@ -100,6 +100,7 @@ npm start  # or npx expo start
 - Use `gh issue create --title "Title" --body "Description"` to create new issues
 - Use `gh issue close #N` when tasks are completed
 - Never create TODO.md files - use GitHub Issues exclusively for task tracking
+- **Do NOT use Claude's TodoWrite tool** - rely on GitHub Issues as the single source of truth for tasks
 - Each issue should have clear acceptance criteria and be broken into small, actionable tasks
 
 ## Architecture Overview
@@ -749,10 +750,59 @@ The interface follows the wireframes in `/docs/wireframes/record-match-form-upda
   - Fixed database UNIQUE constraint errors during user sync
   - Added INSERT OR REPLACE for graceful conflict handling
 
-- **Match Recording**:
+- **Match Recording** (COMPLETED):
   - Fixed foreign key constraint errors by using actual user IDs
   - Updated to load real club members instead of mock data
   - Improved player selection dropdown with database integration
+  - Added comprehensive error handling with UI notifications (no Alert.alert)
+  - Integrated offline queue for automatic sync when back online
+  - Created match history view component for profile tab
+  - **Documentation**: Complete feature docs at `/docs/features/match-recording.md`
+  - **Testing**: Component tests for MatchHistoryView with 100% coverage
+
+- **Club Rankings** (COMPLETED):
+  - Implemented comprehensive points-based ranking system
+  - Trophy icons (🏆🥈🥉) for top 3 players
+  - Provisional badges for players with <5 matches
+  - Full rankings screen with "View All" navigation
+  - Real-time ranking calculations based on match results
+  - **Documentation**: Complete feature docs at `/docs/features/club-rankings.md`
+  - **Testing**: Component tests for ClubRankings with edge case coverage
+
+- **Looking to Play System** (COMPLETED):
+  - Full match invitation system for finding tennis partners
+  - Singles (2 players) and doubles (4 players) support with auto-matching
+  - One-tap interest responses with real-time progress tracking
+  - Smart date selection (Today/Tomorrow shortcuts)
+  - Match cancellation for creators with proper ownership validation
+  - Offline-first architecture with automatic sync using universal queue
+  - UI-based notification system (no Alert.alert) with animated banners
+  - **Documentation**: Complete feature docs at `/docs/features/looking-to-play.md`
+  - **Database**: New tables for match_invitations and invitation_responses
+
+- **Challenge System** (COMPLETED):
+  - Direct player-to-player challenge invitations from club rankings
+  - Complete 3-step challenge flow (player selection → match details → confirmation)
+  - Accept/decline/counter-challenge functionality with match detail modifications
+  - Automatic contact information sharing after challenge acceptance
+  - WhatsApp and phone integration based on user contact preferences
+  - Contact preference field added to user profiles (Phone/WhatsApp/Text)
+  - Challenge expiration (7 days) with proper cleanup and notifications
+  - Offline-first architecture with full sync support
+  - **Documentation**: Complete feature docs at `/docs/features/challenge-system.md`
+  - **Database**: New tables for challenges and challenge_responses
+
+- **Profile & Stats System** (COMPLETED):
+  - Comprehensive ProfileStatsDisplay component with professional layout
+  - Win/loss records with percentages prominently displayed (theme color highlighting)
+  - Singles vs doubles breakdown with separate win rates and tracking
+  - Total matches played counter and detailed set/game statistics
+  - Real-time statistics that refresh when profile tab comes into focus
+  - Custom usePlayerStats hook for efficient data management and loading states
+  - Tennis-first priority ordering in profile (Stats → History → Clubs → Settings)
+  - Professional design with responsive layout and theme integration
+  - **Documentation**: Complete feature docs at `/docs/features/profile-stats-system.md`
+  - **Testing**: Comprehensive unit tests for component and hook functionality
 
 - **Club Membership**:
   - Fixed member count display issues (was showing 0 for all clubs)

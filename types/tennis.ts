@@ -54,3 +54,28 @@ export interface MatchDisplayProps {
   showStatus?: boolean;
   compact?: boolean;
 }
+
+// Match invitation types
+export interface MatchInvitation {
+  id: string;
+  club_id: string;
+  creator_id: string;
+  match_type: 'singles' | 'doubles';
+  date: string;
+  time?: string;
+  notes?: string;
+  status: 'active' | 'matched' | 'cancelled';
+  created_at: string;
+  expires_at?: string;
+  creator_name?: string;
+}
+
+export interface InvitationResponse {
+  id: string;
+  invitation_id: string;
+  user_id: string;
+  message?: string;
+  status: 'interested' | 'confirmed' | 'declined';
+  created_at: string;
+  user_name?: string;
+}

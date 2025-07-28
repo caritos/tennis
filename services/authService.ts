@@ -1,5 +1,6 @@
 import { initializeDatabase } from '../database/database';
 import { supabase, User } from '../lib/supabase';
+import { syncService } from './sync';
 
 export interface SignUpData {
   email: string;
@@ -78,14 +79,26 @@ export class AuthService {
         ]
       );
 
-      // Sync to Supabase users table
-      await this.syncUserToSupabase({
-        id: userId,
-        full_name: userData.full_name.trim(),
-        email: userData.email.toLowerCase(),
-        phone: userData.phone,
-        role: 'player',
-      });
+      // Queue user profile creation using offline queue
+      try {
+        await syncService.queueProfileUpdate(userId, {
+          full_name: userData.full_name.trim(),
+          email: userData.email.toLowerCase(),
+          phone: userData.phone,
+          role: 'player',
+        });
+        console.log('Successfully queued user profile creation for sync:', userId);
+      } catch (error) {
+        console.warn('Failed to queue user profile creation, falling back to direct sync:', error);
+        // Fallback to direct sync
+        await this.syncUserToSupabase({
+          id: userId,
+          full_name: userData.full_name.trim(),
+          email: userData.email.toLowerCase(),
+          phone: userData.phone,
+          role: 'player',
+        });
+      }
 
       // Get the created user
       const user = await db.getFirstAsync(
@@ -194,10 +207,17 @@ export class AuthService {
         updateValues
       );
 
-      // Sync to Supabase (non-blocking)
-      this.syncUserProfileToSupabase(userId, updateData).catch(error => {
-        console.warn('Failed to sync profile update to Supabase:', error);
-      });
+      // Queue profile update using offline queue
+      try {
+        await syncService.queueProfileUpdate(userId, updateData);
+        console.log('Successfully queued profile update for sync:', userId);
+      } catch (error) {
+        console.warn('Failed to queue profile update, falling back to direct sync:', error);
+        // Fallback to direct sync
+        this.syncUserProfileToSupabase(userId, updateData).catch(error => {
+          console.warn('Failed to sync profile update to Supabase:', error);
+        });
+      }
 
       // Return updated user
       const user = await db.getFirstAsync(

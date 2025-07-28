@@ -1,5 +1,6 @@
 import { initializeDatabase } from '../database/database';
 import { supabase, Club } from '../lib/supabase';
+import { syncService } from './sync';
 
 export interface CreateClubData {
   name: string;
@@ -62,19 +63,72 @@ export class ClubService {
         [clubId]
       );
 
-      // Sync to Supabase in background (don't block on errors)
-      this.syncClubToSupabase(club).catch(error => {
-        console.warn('Failed to sync club to Supabase:', error);
-      });
+      // Queue club creation for sync using offline queue
+      try {
+        // Create club creation operation (need to add this to sync strategies)
+        console.log('Queueing club creation for sync:', clubId);
+        // Note: Club creation sync strategy would need to be added to handle this case
+        // For now, keep the direct sync as fallback
+        this.syncClubToSupabase(club).catch(error => {
+          console.warn('Failed to sync club to Supabase:', error);
+        });
+      } catch (error) {
+        console.warn('Failed to queue club creation:', error);
+        // Fallback to direct sync
+        this.syncClubToSupabase(club).catch(error => {
+          console.warn('Failed to sync club to Supabase:', error);
+        });
+      }
 
-      this.syncClubMemberToSupabase(clubId, clubData.creator_id).catch(error => {
-        console.warn('Failed to sync club membership to Supabase:', error);
-      });
+      // Queue club membership using offline queue
+      try {
+        await syncService.queueClubJoin(clubId, clubData.creator_id);
+        console.log('Successfully queued club membership for sync:', clubId, clubData.creator_id);
+      } catch (error) {
+        console.warn('Failed to queue club membership, falling back to direct sync:', error);
+        this.syncClubMemberToSupabase(clubId, clubData.creator_id).catch(error => {
+          console.warn('Failed to sync club membership to Supabase:', error);
+        });
+      }
 
       return club;
     } catch (error) {
       console.error('Failed to create club:', error);
       throw error;
+    }
+  }
+
+  async leaveClub(clubId: string, userId: string): Promise<void> {
+    // Input validation
+    if (!clubId || typeof clubId !== 'string' || clubId.trim() === '') {
+      throw new Error('Valid club ID is required');
+    }
+    if (!userId || typeof userId !== 'string' || userId.trim() === '') {
+      throw new Error('Valid user ID is required');
+    }
+
+    console.log(`leaveClub: Attempting to leave club ${clubId} for user ${userId}`);
+    const db = await this.getDatabase();
+
+    try {
+      // Remove from local database first (offline-first)
+      await db.runAsync(
+        `DELETE FROM club_members WHERE club_id = ? AND user_id = ?`,
+        [clubId, userId]
+      );
+
+      console.log('leaveClub: Successfully left club locally');
+
+      // Queue club leave using offline queue
+      try {
+        await syncService.queueClubLeave(clubId, userId);
+        console.log('Successfully queued club leave for sync:', clubId, userId);
+      } catch (error) {
+        console.warn('Failed to queue club leave, data may be out of sync:', error);
+      }
+    } catch (error) {
+      console.error('leaveClub: Database error:', error);
+      throw new Error('Failed to leave club');
     }
   }
 
@@ -171,10 +225,16 @@ export class ClubService {
 
       console.log('joinClub: Successfully joined club locally');
 
-      // Sync to Supabase in background (don't block on errors)
-      this.syncClubMemberToSupabase(clubId, userId).catch(error => {
-        console.warn('Failed to sync club membership to Supabase:', error);
-      });
+      // Queue club membership using offline queue
+      try {
+        await syncService.queueClubJoin(clubId, userId);
+        console.log('Successfully queued club join for sync:', clubId, userId);
+      } catch (error) {
+        console.warn('Failed to queue club join, falling back to direct sync:', error);
+        this.syncClubMemberToSupabase(clubId, userId).catch(error => {
+          console.warn('Failed to sync club membership to Supabase:', error);
+        });
+      }
     } catch (error: any) {
       console.error('joinClub: Database error:', error);
       if (error.code === 'SQLITE_CONSTRAINT') {
@@ -418,6 +478,7 @@ const clubService = new ClubService();
 
 export const createClub = (clubData: CreateClubData) => clubService.createClub(clubData);
 export const joinClub = (clubId: string, userId: string) => clubService.joinClub(clubId, userId);
+export const leaveClub = (clubId: string, userId: string) => clubService.leaveClub(clubId, userId);
 export const getJoinedClubIds = (userId: string) => clubService.getJoinedClubIds(userId);
 export const getUserClubs = (userId: string) => clubService.getUserClubs(userId);
 export const isClubMember = (clubId: string, userId: string) => clubService.isClubMember(clubId, userId);

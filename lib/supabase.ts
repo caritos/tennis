@@ -30,6 +30,10 @@ export interface Match {
   player1_id: string;
   player2_id?: string;
   opponent2_name?: string;
+  player3_id?: string;
+  partner3_name?: string;
+  player4_id?: string;
+  partner4_name?: string;
   scores: string;
   match_type: 'singles' | 'doubles';
   date: string;

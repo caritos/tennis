@@ -1,0 +1,226 @@
+import React, { useEffect, useState } from 'react';
+import { View, StyleSheet, TouchableOpacity, Animated } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
+import { ThemedText } from './ThemedText';
+import { useColorScheme } from '@/hooks/useColorScheme';
+import { Colors } from '@/constants/Colors';
+
+export type NotificationType = 'success' | 'error' | 'warning' | 'info';
+
+export interface NotificationData {
+  id: string;
+  type: NotificationType;
+  title: string;
+  message?: string;
+  duration?: number; // in milliseconds, 0 means permanent
+  actionLabel?: string;
+  onAction?: () => void;
+}
+
+interface NotificationBannerProps {
+  notification: NotificationData;
+  onDismiss: (id: string) => void;
+}
+
+const NotificationBanner: React.FC<NotificationBannerProps> = ({
+  notification,
+  onDismiss,
+}) => {
+  const colorScheme = useColorScheme();
+  const colors = Colors[colorScheme ?? 'light'];
+  const [slideAnim] = useState(new Animated.Value(-100));
+
+  const getNotificationColors = (type: NotificationType) => {
+    switch (type) {
+      case 'success':
+        return {
+          background: '#4CAF50',
+          text: '#FFFFFF',
+          icon: 'checkmark-circle' as const,
+        };
+      case 'error':
+        return {
+          background: '#F44336',
+          text: '#FFFFFF',
+          icon: 'alert-circle' as const,
+        };
+      case 'warning':
+        return {
+          background: '#FF9800',
+          text: '#FFFFFF',
+          icon: 'warning' as const,
+        };
+      case 'info':
+        return {
+          background: colors.tint,
+          text: '#FFFFFF',
+          icon: 'information-circle' as const,
+        };
+    }
+  };
+
+  const notificationColors = getNotificationColors(notification.type);
+
+  useEffect(() => {
+    // Slide in animation
+    Animated.timing(slideAnim, {
+      toValue: 0,
+      duration: 300,
+      useNativeDriver: true,
+    }).start();
+
+    // Auto-dismiss after duration
+    if (notification.duration && notification.duration > 0) {
+      const timer = setTimeout(() => {
+        handleDismiss();
+      }, notification.duration);
+
+      return () => clearTimeout(timer);
+    }
+  }, [notification]);
+
+  const handleDismiss = () => {
+    Animated.timing(slideAnim, {
+      toValue: -100,
+      duration: 200,
+      useNativeDriver: true,
+    }).start(() => {
+      onDismiss(notification.id);
+    });
+  };
+
+  const handleAction = () => {
+    if (notification.onAction) {
+      notification.onAction();
+    }
+    handleDismiss();
+  };
+
+  return (
+    <Animated.View
+      style={[
+        styles.container,
+        {
+          backgroundColor: notificationColors.background,
+          transform: [{ translateY: slideAnim }],
+        },
+      ]}
+    >
+      <View style={styles.content}>
+        <Ionicons 
+          name={notificationColors.icon} 
+          size={24} 
+          color={notificationColors.text} 
+          style={styles.icon}
+        />
+        
+        <View style={styles.textContainer}>
+          <ThemedText 
+            style={[styles.title, { color: notificationColors.text }]}
+            numberOfLines={1}
+          >
+            {notification.title}
+          </ThemedText>
+          
+          {notification.message && (
+            <ThemedText 
+              style={[styles.message, { color: notificationColors.text }]}
+              numberOfLines={2}
+            >
+              {notification.message}
+            </ThemedText>
+          )}
+        </View>
+
+        <View style={styles.actions}>
+          {notification.actionLabel && notification.onAction && (
+            <TouchableOpacity 
+              style={[styles.actionButton, { borderColor: notificationColors.text }]}
+              onPress={handleAction}
+            >
+              <ThemedText 
+                style={[styles.actionText, { color: notificationColors.text }]}
+              >
+                {notification.actionLabel}
+              </ThemedText>
+            </TouchableOpacity>
+          )}
+          
+          <TouchableOpacity 
+            style={styles.dismissButton}
+            onPress={handleDismiss}
+          >
+            <Ionicons 
+              name="close" 
+              size={20} 
+              color={notificationColors.text} 
+            />
+          </TouchableOpacity>
+        </View>
+      </View>
+    </Animated.View>
+  );
+};
+
+export default NotificationBanner;
+
+const styles = StyleSheet.create({
+  container: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    zIndex: 1000,
+    paddingTop: 50, // Account for status bar
+    paddingBottom: 16,
+    paddingHorizontal: 16,
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
+    elevation: 5,
+  },
+  content: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: 12,
+  },
+  icon: {
+    marginTop: 2,
+  },
+  textContainer: {
+    flex: 1,
+  },
+  title: {
+    fontSize: 16,
+    fontWeight: '600',
+    lineHeight: 20,
+  },
+  message: {
+    fontSize: 14,
+    lineHeight: 18,
+    marginTop: 2,
+    opacity: 0.9,
+  },
+  actions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  actionButton: {
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderWidth: 1,
+    borderRadius: 6,
+  },
+  actionText: {
+    fontSize: 14,
+    fontWeight: '500',
+  },
+  dismissButton: {
+    padding: 4,
+  },
+});
