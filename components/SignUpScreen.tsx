@@ -1,16 +1,19 @@
 import React, { useState } from 'react';
-import { StyleSheet, View, TouchableOpacity } from 'react-native';
+import { StyleSheet, View, TouchableOpacity, Platform } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { ThemedText } from './ThemedText';
 import { ThemedView } from './ThemedView';
 import { useColorScheme } from '@/hooks/useColorScheme';
 import { Colors } from '@/constants/Colors';
+import AppleSignInButton from './AppleSignInButton';
+import { useNotification } from '@/contexts/NotificationContext';
 
 interface SignUpScreenProps {
   onBack: () => void;
   onEmailSignUp: () => void;
-  onAppleSignUp: () => void;
+  onAppleSignUpSuccess: () => void;
+  onAppleSignUpError: (error: string) => void;
   onGoogleSignUp: () => void;
   onSignInPress: () => void;
   onTermsPress?: () => void;
@@ -21,7 +24,8 @@ interface SignUpScreenProps {
 export function SignUpScreen({ 
   onBack,
   onEmailSignUp,
-  onAppleSignUp,
+  onAppleSignUpSuccess,
+  onAppleSignUpError,
   onGoogleSignUp,
   onSignInPress,
   onTermsPress,
@@ -30,6 +34,7 @@ export function SignUpScreen({
 }: SignUpScreenProps) {
   const colorScheme = useColorScheme();
   const colors = Colors[colorScheme ?? 'light'];
+  const { showInfo } = useNotification();
   const [pressedButton, setPressedButton] = useState<string | null>(null);
 
   const handleButtonPress = (action: () => void, buttonId: string) => {
@@ -136,23 +141,35 @@ export function SignUpScreen({
               </ThemedText>
             </TouchableOpacity>
 
-            <TouchableOpacity
-              style={[
-                styles.signUpButton,
-                { backgroundColor: colors.background, borderColor: colors.tabIconDefault }
-              ]}
-              onPress={() => handleButtonPress(onAppleSignUp, 'apple')}
-              accessibilityRole="button"
-              accessibilityLabel="Continue with Apple"
-              accessibilityHint="Sign up using your Apple ID"
-              accessibilityState={{ disabled: isLoading }}
-              testID="apple-signup-button"
-              disabled={isLoading}
-            >
-              <ThemedText style={styles.signUpButtonText}>
-                🍎 Continue with Apple
-              </ThemedText>
-            </TouchableOpacity>
+            {Platform.OS === 'ios' ? (
+              <View style={styles.appleSignUpContainer}>
+                <AppleSignInButton
+                  onSuccess={onAppleSignUpSuccess}
+                  onError={onAppleSignUpError}
+                  disabled={isLoading}
+                />
+              </View>
+            ) : (
+              <TouchableOpacity
+                style={[
+                  styles.signUpButton,
+                  { backgroundColor: colors.background, borderColor: colors.tabIconDefault }
+                ]}
+                onPress={() => {
+                  showInfo('Not Available', 'Apple Sign In is only available on iOS devices');
+                }}
+                accessibilityRole="button"
+                accessibilityLabel="Continue with Apple"
+                accessibilityHint="Sign up using your Apple ID"
+                accessibilityState={{ disabled: isLoading }}
+                testID="apple-signup-button"
+                disabled={isLoading}
+              >
+                <ThemedText style={styles.signUpButtonText}>
+                  🍎 Continue with Apple
+                </ThemedText>
+              </TouchableOpacity>
+            )}
 
             <TouchableOpacity
               style={[
@@ -284,6 +301,9 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     marginBottom: 16,
     alignItems: 'center',
+  },
+  appleSignUpContainer: {
+    marginBottom: 16,
   },
   signUpButtonText: {
     fontSize: 16,

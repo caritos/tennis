@@ -1,0 +1,110 @@
+appId: com.anonymous.tennis-club
+name: TextInput Alternative Approaches Test
+---
+# ALTERNATIVE APPROACHES TEST: Try different methods to trigger onChangeText
+# This test explores various approaches to work around the onChangeText issue
+
+- launchApp:
+    clearState: true
+- waitForAnimationToEnd
+
+# Navigate to email signup form
+- tapOn: "Get started"
+- tapOn: "Sign up" 
+- tapOn: "Sign up with email"
+- waitForAnimationToEnd
+
+- takeScreenshot: "01-form-loaded"
+
+# Approach 1: Clear field first, then input
+- tapOn:
+    id: "full-name-input"
+- waitForAnimationToEnd
+- key: "Command+A"  # Select all (iOS)
+- key: "Backspace"  # Clear
+- inputText: "Alternative Test User"
+- waitForAnimationToEnd
+
+- takeScreenshot: "02-clear-then-input"
+
+# Approach 2: Use keyboard shortcuts
+- tapOn:
+    id: "email-input"
+- waitForAnimationToEnd
+- key: "Command+A"
+- inputText: "alternative@test.com"
+- waitForAnimationToEnd
+
+- takeScreenshot: "03-keyboard-shortcuts"
+
+# Approach 3: Focus, blur, then focus again
+- tapOn:
+    id: "password-input"
+- waitForAnimationToEnd
+- tapOn: "Create Account"  # Tap somewhere else to blur
+- waitForAnimationToEnd
+- tapOn:
+    id: "password-input"  # Focus again
+- waitForAnimationToEnd
+- inputText: "AlternativeTest123!"
+- waitForAnimationToEnd
+
+- takeScreenshot: "04-focus-blur-focus"
+
+# Approach 4: Use keyboard type hints
+- tapOn:
+    id: "confirm-password-input"
+- waitForAnimationToEnd
+- inputText: "AlternativeTest123!"
+- key: "Return"  # Press return/done
+- waitForAnimationToEnd
+
+- takeScreenshot: "05-keyboard-return"
+
+# Approach 5: Simulate real user behavior with swipes/gestures
+- tapOn:
+    id: "phone-input"
+- waitForAnimationToEnd
+# Simulate typing slowly like a real user
+- inputText: "5"
+- waitForAnimationToEnd:
+    timeout: 200
+- inputText: "5"
+- waitForAnimationToEnd:
+    timeout: 200
+- inputText: "5"
+- waitForAnimationToEnd:
+    timeout: 200
+- inputText: "1234567"
+- waitForAnimationToEnd
+
+- takeScreenshot: "06-human-like-typing"
+
+# Test if any approach worked
+- swipe:
+    start: "50%, 70%"
+    end: "50%, 30%"
+
+- tapOn:
+    id: "terms-checkbox"
+- waitForAnimationToEnd
+
+- tapOn:
+    id: "create-account-button"
+- waitForAnimationToEnd
+- waitForAnimationToEnd
+
+- takeScreenshot: "07-final-result"
+
+# Check for validation errors (indicates onChangeText didn't work)
+- assertVisible:
+    text: "Full name is required"
+    optional: true
+
+- assertVisible:
+    text: "Email is required"  
+    optional: true
+
+- assertVisible:
+    text: "Password is required"
+    optional: true

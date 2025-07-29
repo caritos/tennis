@@ -353,6 +353,17 @@ export class ClubService {
     radiusKm: number = 25
   ): Promise<Club[]> {
     try {
+      // Validate input parameters
+      if (!this.isValidCoordinate(userLat, userLng)) {
+        console.warn('getNearbyClubs: Invalid coordinates provided:', userLat, userLng);
+        throw new Error('Invalid location coordinates provided');
+      }
+
+      if (radiusKm <= 0 || radiusKm > 10000) {
+        console.warn('getNearbyClubs: Invalid radius:', radiusKm);
+        radiusKm = 25; // Default to 25km
+      }
+
       console.log('getNearbyClubs: Starting with location:', userLat, userLng, 'radius:', radiusKm);
       const db = await this.getDatabase();
       
@@ -365,7 +376,6 @@ export class ClubService {
         LEFT JOIN club_members cm ON c.id = cm.club_id 
         GROUP BY c.id, c.name, c.description, c.location, c.lat, c.lng, c.creator_id, c.created_at
       `);
-      console.log('getNearbyClubs: Raw clubs from database:', clubs);
       console.log('getNearbyClubs: Found clubs in database:', clubs?.length || 0);
       
       if (!clubs || clubs.length === 0) {
@@ -373,49 +383,73 @@ export class ClubService {
         return [];
       }
 
-      // Log first club for debugging
-      if (clubs.length > 0) {
-        console.log('getNearbyClubs: First club details:', clubs[0]);
-      }
+      // Calculate distances and filter with improved error handling
+      const clubsWithDistance = [];
+      let invalidCoordinatesCount = 0;
 
-      // Calculate distances and filter
-      const clubsWithDistance = clubs
-        .map((club: any) => {
-          console.log(`getNearbyClubs: Processing club ${club.id} - lat: ${club.lat} (${typeof club.lat}), lng: ${club.lng} (${typeof club.lng})`);
-          
-          if (!club.lat || !club.lng || typeof club.lat !== 'number' || typeof club.lng !== 'number') {
-            console.warn('getNearbyClubs: Club missing valid coordinates:', club.id, club.lat, club.lng);
-            return null;
+      for (const club of clubs) {
+        try {
+          // Validate club coordinates
+          if (!this.isValidCoordinate(club.lat, club.lng)) {
+            console.warn('getNearbyClubs: Club has invalid coordinates:', club.id, club.name, club.lat, club.lng);
+            invalidCoordinatesCount++;
+            continue;
           }
           
           const distance = this.calculateDistance(userLat, userLng, club.lat, club.lng);
-          console.log(`getNearbyClubs: Club ${club.name} distance: ${distance}km`);
           
-          const clubWithDistance = {
-            ...club,
-            distance,
-            memberCount: club.memberCount || 0, // Use existing memberCount from database
-          };
-          console.log(`getNearbyClubs: Club ${club.name} memberCount: ${club.memberCount}`);
-          return clubWithDistance;
-        })
-        .filter((club: any) => {
-          const include = club !== null && club.distance <= radiusKm;
-          if (!include && club !== null) {
-            console.log(`getNearbyClubs: Excluding club ${club.name} - distance ${club.distance}km > radius ${radiusKm}km`);
+          // Only include clubs within radius
+          if (distance <= radiusKm) {
+            const clubWithDistance = {
+              ...club,
+              distance,
+              memberCount: club.memberCount || 0,
+            };
+            clubsWithDistance.push(clubWithDistance);
           }
-          return include;
-        })
-        .sort((a: any, b: any) => a.distance - b.distance);
+        } catch (error) {
+          console.warn('getNearbyClubs: Error processing club:', club.id, error);
+          continue;
+        }
+      }
 
-      console.log('getNearbyClubs: Clubs within radius:', clubsWithDistance.length);
-      console.log('getNearbyClubs: Final clubs list:', clubsWithDistance);
+      // Log statistics
+      if (invalidCoordinatesCount > 0) {
+        console.warn(`getNearbyClubs: Skipped ${invalidCoordinatesCount} clubs with invalid coordinates`);
+      }
+
+      // Sort by distance (closest first)
+      clubsWithDistance.sort((a, b) => a.distance - b.distance);
+
+      console.log('getNearbyClubs: Returning', clubsWithDistance.length, 'clubs within', radiusKm, 'km radius');
       return clubsWithDistance;
     } catch (error) {
       console.error('getNearbyClubs: Failed with error:', error);
-      // Return empty array instead of throwing to prevent UI crash
+      
+      // If it's a validation error, throw it so the UI can show appropriate message
+      if (error instanceof Error && error.message.includes('Invalid location coordinates')) {
+        throw error;
+      }
+      
+      // For other errors, return empty array to prevent UI crash
       return [];
     }
+  }
+
+  /**
+   * Validates if the provided coordinates are valid
+   */
+  private isValidCoordinate(lat: number, lng: number): boolean {
+    return (
+      typeof lat === 'number' && 
+      typeof lng === 'number' && 
+      !isNaN(lat) && 
+      !isNaN(lng) && 
+      lat >= -90 && 
+      lat <= 90 && 
+      lng >= -180 && 
+      lng <= 180
+    );
   }
 
   calculateDistance(lat1: number, lon1: number, lat2: number, lon2: number): number {

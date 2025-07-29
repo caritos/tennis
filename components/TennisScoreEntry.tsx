@@ -4,9 +4,8 @@ import {
   Text,
   StyleSheet,
   TextInput,
-  Pressable,
+  TouchableOpacity,
   Modal,
-  Alert,
 } from 'react-native';
 import { Colors } from '@/constants/Colors';
 import { useColorScheme } from '@/hooks/useColorScheme';
@@ -14,6 +13,7 @@ import { TennisScoreboardDisplay } from './TennisScoreboardDisplay';
 import { TennisSet } from '@/types/tennis';
 import { validateSetScore } from '../utils/tennisScore';
 import { calculateMatchWinner, isMatchComplete } from '../utils/tennisUtils';
+import { useNotification } from '@/contexts/NotificationContext';
 
 interface SetInput {
   playerScore: string;
@@ -43,6 +43,7 @@ export function TennisScoreEntry({
 }: TennisScoreEntryProps) {
   const colorScheme = useColorScheme();
   const colors = Colors[colorScheme ?? 'light'];
+  const { showError } = useNotification();
 
   const [setInputs, setSetInputs] = useState<SetInput[]>([
     { playerScore: '', opponentScore: '' }
@@ -167,7 +168,7 @@ export function TennisScoreEntry({
 
   const handleTiebreakSave = () => {
     if (!validateTiebreakScore(tiebreakPlayerScore, tiebreakOpponentScore)) {
-      Alert.alert('Invalid Tiebreak', 'Tiebreak must be won by at least 2 points with a minimum of 7 points.');
+      showError('Invalid Tiebreak', 'Tiebreak must be won by at least 2 points with a minimum of 7 points.');
       return;
     }
 
@@ -404,16 +405,17 @@ export function TennisScoreEntry({
               </View>
 
               {showTiebreakButton && (
-                <Pressable 
+                <TouchableOpacity 
                   style={styles.tiebreakButton}
                   onPress={() => {
                     setCurrentTiebreakSet(index);
                     setTiebreakPlayerScore(setInput.tiebreakPlayerScore || '');
                     setTiebreakOpponentScore(setInput.tiebreakOpponentScore || '');
                   }}
+                  activeOpacity={0.7}
                 >
                   <Text style={styles.tiebreakButtonText}>Add Tiebreak Score</Text>
-                </Pressable>
+                </TouchableOpacity>
               )}
 
               {setInput.tiebreakPlayerScore && setInput.tiebreakOpponentScore && (
@@ -462,18 +464,20 @@ export function TennisScoreEntry({
             </View>
 
             <View style={styles.modalButtonContainer}>
-              <Pressable 
+              <TouchableOpacity 
                 style={[styles.modalButton, styles.cancelButton]}
                 onPress={() => setCurrentTiebreakSet(null)}
+                activeOpacity={0.7}
               >
                 <Text style={styles.modalButtonText}>Cancel</Text>
-              </Pressable>
-              <Pressable 
+              </TouchableOpacity>
+              <TouchableOpacity 
                 style={[styles.modalButton, styles.saveButton]}
                 onPress={handleTiebreakSave}
+                activeOpacity={0.7}
               >
                 <Text style={styles.modalButtonText}>Save</Text>
-              </Pressable>
+              </TouchableOpacity>
             </View>
           </View>
         </View>

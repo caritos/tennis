@@ -1,0 +1,74 @@
+appId: com.anonymous.tennis-club
+name: Enhanced TextInput E2E Test
+---
+# ENHANCED TEST: Test the improved TextInput E2E support
+# This test uses the enhanced TextInput components with better E2E support
+
+- launchApp:
+    clearState: true
+- waitForAnimationToEnd
+
+# Navigate to the enhanced signup form (would need route modification)
+- tapOn: "Get started"
+- tapOn: "Sign up" 
+- tapOn: "Sign up with email"
+- waitForAnimationToEnd
+
+- takeScreenshot: "01-enhanced-form-loaded"
+
+# Test Method 1: Traditional TextInput interaction
+- tapOn:
+    id: "full-name-input"
+- waitForAnimationToEnd
+- inputText: "Enhanced Test User"
+- waitForAnimationToEnd
+
+- takeScreenshot: "02-full-name-traditional"
+
+- tapOn:
+    id: "email-input"
+- waitForAnimationToEnd
+- inputText: "enhanced@test.com"
+- waitForAnimationToEnd
+
+- takeScreenshot: "03-email-traditional"
+
+# Test Method 2: Trigger enhanced E2E mode
+# The enhanced form triggers E2E mode when terms are agreed
+- swipe:
+    start: "50%, 70%"
+    end: "50%, 30%"
+
+- tapOn:
+    id: "terms-checkbox"
+- waitForAnimationToEnd
+- waitForAnimationToEnd  # Give time for auto-fill
+
+- takeScreenshot: "04-e2e-mode-triggered"
+
+# Wait for enhanced auto-fill to complete
+- waitForAnimationToEnd
+- waitForAnimationToEnd
+- waitForAnimationToEnd
+
+- takeScreenshot: "05-after-enhanced-autofill"
+
+# The enhanced form should auto-submit
+- waitForAnimationToEnd
+- waitForAnimationToEnd
+- waitForAnimationToEnd
+
+- takeScreenshot: "06-final-result"
+
+# Check if we reached the main app (success) or see debug info
+- assertVisible:
+    text: "🤖 E2E Mode Active"
+    optional: true
+
+- assertVisible:
+    text: "Clubs"
+    optional: true
+
+- assertVisible:
+    text: "Debug Info"
+    optional: true

@@ -47,18 +47,23 @@ export default function ClubScreen() {
       await seedSampleClubs();
       console.log('Finished seeding sample clubs');
 
-      // Get nearby clubs
-      const userLat = location?.latitude || 40.7128;
-      const userLng = location?.longitude || -74.0060;
+      // Get nearby clubs with improved location handling
+      let userLat, userLng;
+      let radius = 25; // Default 25km radius
       
-      console.log('Getting nearby clubs for location:', userLat, userLng);
-      // Temporarily get ALL clubs regardless of distance since user is in Florida
-      const nearbyClubs = await clubService.getNearbyClubs(
-        userLat,
-        userLng,
-        10000 // 10,000km radius to include ALL clubs for testing
-      );
-
+      if (location?.latitude && location?.longitude) {
+        userLat = location.latitude;
+        userLng = location.longitude;
+        console.log('Using actual user location:', userLat, userLng);
+      } else {
+        // Fallback to default location (NYC) with wider radius when no location available
+        userLat = 40.7128;
+        userLng = -74.0060;
+        radius = 10000; // Much wider radius when location is unknown
+        console.log('Using fallback location (NYC) with wide radius:', userLat, userLng, 'radius:', radius);
+      }
+      
+      const nearbyClubs = await clubService.getNearbyClubs(userLat, userLng, radius);
       console.log('Nearby clubs received:', nearbyClubs.length);
       setClubs(nearbyClubs);
 
@@ -199,9 +204,11 @@ export default function ClubScreen() {
         showsVerticalScrollIndicator={false}
         maintainVisibleContentPosition={{ minIndexForVisible: 0 }}>
         <ThemedView style={styles.section}>
-          <ThemedText type="subtitle" style={styles.sectionTitle}>
-            My Clubs {myClubs.length > 0 ? `(${myClubs.length})` : ''}
-          </ThemedText>
+          <View style={styles.sectionHeader}>
+            <ThemedText type="subtitle" style={styles.sectionTitle}>
+              My Clubs {myClubs.length > 0 ? `(${myClubs.length})` : ''}
+            </ThemedText>
+          </View>
           {myClubs.length > 0 ? (
             <View style={styles.clubListContainer}>
               {myClubs.map((club) => (
@@ -226,9 +233,25 @@ export default function ClubScreen() {
         </ThemedView>
 
         <ThemedView style={styles.discoverSection}>
-          <ThemedText type="subtitle" style={styles.sectionTitle}>
-            Discover Clubs Near You
-          </ThemedText>
+          <View style={styles.discoverHeader}>
+            <ThemedText type="subtitle" style={styles.sectionTitle}>
+              Discover Clubs Near You
+            </ThemedText>
+            {!location && (
+              <TouchableOpacity 
+                onPress={() => {
+                  console.log('🔘 BUTTON: Enable location pressed');
+                  requestLocationPermission();
+                }}
+                style={[styles.locationPrompt, { borderColor: colors.tint }]}
+              >
+                <Ionicons name="location-outline" size={16} color={colors.tint} />
+                <ThemedText style={[styles.locationPromptText, { color: colors.tint }]}>
+                  Enable Location
+                </ThemedText>
+              </TouchableOpacity>
+            )}
+          </View>
           <View style={styles.clubListContainer}>
             {loading ? (
               <ThemedView style={styles.loadingContainer}>
@@ -326,12 +349,34 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     marginBottom: 24,
   },
+  sectionHeader: {
+    marginBottom: 12,
+  },
   discoverSection: {
     paddingHorizontal: 20,
     marginBottom: 24,
   },
-  sectionTitle: {
+  discoverHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
     marginBottom: 12,
+  },
+  locationPrompt: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderWidth: 1,
+    borderRadius: 16,
+    gap: 4,
+  },
+  locationPromptText: {
+    fontSize: 12,
+    fontWeight: '500',
+  },
+  sectionTitle: {
+    flex: 1,
   },
   clubListContainer: {
     gap: 8,

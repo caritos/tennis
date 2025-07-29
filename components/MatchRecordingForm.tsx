@@ -6,7 +6,7 @@ import {
   ScrollView,
   Button,
   TextInput,
-  Pressable,
+  TouchableOpacity,
 } from 'react-native';
 import RadioGroup from 'react-native-radio-buttons-group';
 import { Colors } from '@/constants/Colors';
@@ -555,7 +555,7 @@ export function MatchRecordingForm({ onSave, onCancel, clubId }: MatchRecordingF
               <View style={styles.suggestionsContainer}>
                 {/* Existing Players */}
                 {filteredPlayers.map((player, index) => (
-                  <Pressable
+                  <TouchableOpacity
                     key={player.id}
                     style={[
                       styles.suggestionItem,
@@ -564,9 +564,10 @@ export function MatchRecordingForm({ onSave, onCancel, clubId }: MatchRecordingF
                       styles.suggestionItemLast
                     ]}
                     onPress={() => handlePlayerSelect(player, 'partner')}
+                    activeOpacity={0.7}
                   >
                     <Text style={styles.suggestionText}>{player.name}</Text>
-                  </Pressable>
+                  </TouchableOpacity>
                 ))}
                 
                 {/* Add New Player Option */}
@@ -574,14 +575,15 @@ export function MatchRecordingForm({ onSave, onCancel, clubId }: MatchRecordingF
                  !filteredPlayers.some(player => 
                    player.name.toLowerCase() === partnerSearchText.toLowerCase()
                  ) && (
-                  <Pressable
+                  <TouchableOpacity
                     style={styles.addNewPlayerItem}
                     onPress={() => handleAddNewPlayer('partner')}
+                    activeOpacity={0.7}
                   >
                     <Text style={styles.addNewPlayerText}>
                       + Add &quot;{partnerSearchText.trim()}&quot; as new player
                     </Text>
-                  </Pressable>
+                  </TouchableOpacity>
                 )}
               </View>
             )}
@@ -613,7 +615,7 @@ export function MatchRecordingForm({ onSave, onCancel, clubId }: MatchRecordingF
             <View style={styles.suggestionsContainer}>
               {/* Existing Players */}
               {filteredPlayers.map((player, index) => (
-                <Pressable
+                <TouchableOpacity
                   key={player.id}
                   style={[
                     styles.suggestionItem,
@@ -622,9 +624,10 @@ export function MatchRecordingForm({ onSave, onCancel, clubId }: MatchRecordingF
                     styles.suggestionItemLast
                   ]}
                   onPress={() => handlePlayerSelect(player, activeSearchField || 'opponent')}
+                  activeOpacity={0.7}
                 >
                   <Text style={styles.suggestionText}>{player.name}</Text>
-                </Pressable>
+                </TouchableOpacity>
               ))}
               
               {/* Add New Player Option */}
@@ -632,14 +635,15 @@ export function MatchRecordingForm({ onSave, onCancel, clubId }: MatchRecordingF
                !filteredPlayers.some(player => 
                  player.name.toLowerCase() === opponentSearchText.toLowerCase()
                ) && (
-                <Pressable
+                <TouchableOpacity
                   style={styles.addNewPlayerItem}
                   onPress={() => handleAddNewPlayer(activeSearchField || 'opponent')}
+                  activeOpacity={0.7}
                 >
                   <Text style={styles.addNewPlayerText}>
                     + Add &quot;{opponentSearchText.trim()}&quot; as new player
                   </Text>
-                </Pressable>
+                </TouchableOpacity>
               )}
             </View>
           )}
@@ -671,7 +675,7 @@ export function MatchRecordingForm({ onSave, onCancel, clubId }: MatchRecordingF
                 <View style={styles.suggestionsContainer}>
                   {/* Existing Players */}
                   {filteredPlayers.map((player, index) => (
-                    <Pressable
+                    <TouchableOpacity
                       key={player.id}
                       style={[
                         styles.suggestionItem,
@@ -680,9 +684,10 @@ export function MatchRecordingForm({ onSave, onCancel, clubId }: MatchRecordingF
                         styles.suggestionItemLast
                       ]}
                       onPress={() => handlePlayerSelect(player, 'opponentPartner')}
+                      activeOpacity={0.7}
                     >
                       <Text style={styles.suggestionText}>{player.name}</Text>
-                    </Pressable>
+                    </TouchableOpacity>
                   ))}
                   
                   {/* Add New Player Option */}
@@ -690,14 +695,15 @@ export function MatchRecordingForm({ onSave, onCancel, clubId }: MatchRecordingF
                    !filteredPlayers.some(player => 
                      player.name.toLowerCase() === opponentPartnerSearchText.toLowerCase()
                    ) && (
-                    <Pressable
+                    <TouchableOpacity
                       style={styles.addNewPlayerItem}
                       onPress={() => handleAddNewPlayer('opponentPartner')}
+                      activeOpacity={0.7}
                     >
                       <Text style={styles.addNewPlayerText}>
                         + Add &quot;{opponentPartnerSearchText.trim()}&quot; as new player
                       </Text>
-                    </Pressable>
+                    </TouchableOpacity>
                   )}
                 </View>
               )}

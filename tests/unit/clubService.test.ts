@@ -4,11 +4,18 @@ import { supabase } from '../../lib/supabase';
 
 // Mock dependencies
 jest.mock('../../database/database');
+jest.mock('../../services/sync', () => ({
+  syncService: {
+    queueClubJoin: jest.fn(),
+    queueClubLeave: jest.fn(),
+  },
+}));
 jest.mock('../../lib/supabase', () => ({
   supabase: {
     from: jest.fn(),
     auth: {
       getUser: jest.fn(),
+      getSession: jest.fn(),
     },
   },
 }));
@@ -28,6 +35,17 @@ describe('Club Service', () => {
     
     clubService = new ClubService();
     jest.clearAllMocks();
+    
+    // Mock user exists for joinClub tests
+    mockDb.getFirstAsync.mockImplementation((query) => {
+      if (query.includes('SELECT id FROM users')) {
+        return Promise.resolve({ id: 'user-123' });
+      }
+      if (query.includes('SELECT id FROM clubs')) {
+        return Promise.resolve({ id: 'club-456' });
+      }
+      return Promise.resolve(null);
+    });
   });
 
   describe('createClub', () => {
@@ -89,6 +107,8 @@ describe('Club Service', () => {
         name: 'SF Tennis Club',
         description: 'A great tennis club',
         location: 'San Francisco, CA',
+        lat: 37.7749,
+        lng: -122.4194,
         creator_id: 'user-123',
       };
 
@@ -114,7 +134,10 @@ describe('Club Service', () => {
     it('should auto-join creator to the club', async () => {
       const clubData = {
         name: 'SF Tennis Club',
+        description: 'A great tennis club',
         location: 'San Francisco, CA',
+        lat: 37.7749,
+        lng: -122.4194,
         creator_id: 'user-123',
       };
 
@@ -137,15 +160,18 @@ describe('Club Service', () => {
       );
     });
 
-    it('should require name and location', async () => {
+    it('should require name, description, and location', async () => {
       const invalidClubData = {
         name: '',
+        description: '',
         location: '',
+        lat: 0,
+        lng: 0,
         creator_id: 'user-123',
       };
 
       await expect(clubService.createClub(invalidClubData)).rejects.toThrow(
-        'Club name and location are required'
+        'Club name, description, and location are required'
       );
     });
   });

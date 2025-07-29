@@ -100,19 +100,126 @@ export function CreateClubForm({ onSuccess, onCancel }: CreateClubFormProps) {
   };
 
   const estimateLocationFromCoordinates = (lat: number, lng: number) => {
-    // Simple estimation based on known coordinates
-    // In a real app, you'd use a geocoding service
+    // Enhanced location estimation based on coordinates
+    // This provides better coverage of major tennis-playing areas
+    
+    // San Francisco Bay Area
     if (lat >= 37.4 && lat <= 37.9 && lng >= -122.6 && lng <= -122.1) {
       return {
         area: 'San Francisco Bay Area',
-        zipCode: '94102', // Default SF zip
+        zipCode: '94102',
       };
     }
-    // Default fallback
+    
+    // Los Angeles Area
+    if (lat >= 33.7 && lat <= 34.3 && lng >= -118.7 && lng <= -117.6) {
+      return {
+        area: 'Los Angeles Area',
+        zipCode: '90210',
+      };
+    }
+    
+    // New York City Area
+    if (lat >= 40.4 && lat <= 40.9 && lng >= -74.3 && lng <= -73.7) {
+      return {
+        area: 'New York City Area',
+        zipCode: '10001',
+      };
+    }
+    
+    // Miami Area
+    if (lat >= 25.6 && lat <= 26.0 && lng >= -80.4 && lng <= -80.1) {
+      return {
+        area: 'Miami Area',
+        zipCode: '33101',
+      };
+    }
+    
+    // Chicago Area
+    if (lat >= 41.6 && lat <= 42.1 && lng >= -88.0 && lng <= -87.5) {
+      return {
+        area: 'Chicago Area',
+        zipCode: '60601',
+      };
+    }
+    
+    // Austin Area
+    if (lat >= 30.1 && lat <= 30.5 && lng >= -97.9 && lng <= -97.6) {
+      return {
+        area: 'Austin Area',
+        zipCode: '78701',
+      };
+    }
+    
+    // Seattle Area
+    if (lat >= 47.4 && lat <= 47.8 && lng >= -122.5 && lng <= -122.2) {
+      return {
+        area: 'Seattle Area',
+        zipCode: '98101',
+      };
+    }
+    
+    // Boston Area
+    if (lat >= 42.2 && lat <= 42.5 && lng >= -71.3 && lng <= -70.9) {
+      return {
+        area: 'Boston Area',
+        zipCode: '02101',
+      };
+    }
+    
+    // Atlanta Area
+    if (lat >= 33.6 && lat <= 33.9 && lng >= -84.6 && lng <= -84.2) {
+      return {
+        area: 'Atlanta Area',
+        zipCode: '30301',
+      };
+    }
+    
+    // Phoenix Area
+    if (lat >= 33.3 && lat <= 33.7 && lng >= -112.4 && lng <= -111.8) {
+      return {
+        area: 'Phoenix Area',
+        zipCode: '85001',
+      };
+    }
+    
+    // General regional estimation based on coordinates
+    if (lat >= 25 && lat <= 49 && lng >= -125 && lng <= -66) {
+      // Continental US
+      const state = estimateUSState(lat, lng);
+      return {
+        area: `${state} Area`,
+        zipCode: getStateDefaultZip(state),
+      };
+    }
+    
+    // International or unrecognized location
     return {
       area: 'Your Area',
-      zipCode: '00000',
+      zipCode: '',
     };
+  };
+
+  const estimateUSState = (lat: number, lng: number): string => {
+    // Simplified state estimation
+    if (lat >= 32 && lat <= 37 && lng >= -106 && lng <= -93) return 'Texas';
+    if (lat >= 25 && lat <= 31 && lng >= -87 && lng <= -80) return 'Florida';
+    if (lat >= 32 && lat <= 42 && lng >= -124 && lng <= -114) return 'California';
+    if (lat >= 40 && lat <= 45 && lng >= -74 && lng <= -71) return 'New York';
+    if (lat >= 39 && lat <= 42 && lng >= -88 && lng <= -84) return 'Illinois';
+    return 'United States';
+  };
+
+  const getStateDefaultZip = (state: string): string => {
+    const stateZips: { [key: string]: string } = {
+      'Texas': '75201',
+      'Florida': '33101',
+      'California': '90210',
+      'New York': '10001',
+      'Illinois': '60601',
+      'United States': '10001',
+    };
+    return stateZips[state] || '10001';
   };
 
   const handleUseCurrentLocation = () => {

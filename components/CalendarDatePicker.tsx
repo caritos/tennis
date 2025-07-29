@@ -3,7 +3,7 @@ import {
   View,
   Text,
   StyleSheet,
-  Pressable,
+  TouchableOpacity,
   Modal,
 } from 'react-native';
 import { Colors } from '@/constants/Colors';
@@ -282,14 +282,15 @@ export function CalendarDatePicker({
     <View style={styles.container}>
       {label && <Text style={styles.label}>{label}</Text>}
       
-      <Pressable
+      <TouchableOpacity
         style={styles.dateSelector}
         onPress={() => setShowCalendar(true)}
+        activeOpacity={0.7}
       >
         <Text style={styles.dateText}>
           {selectedDate ? formatDisplayDate(selectedDate) : placeholder}
         </Text>
-      </Pressable>
+      </TouchableOpacity>
 
       <Modal
         visible={showCalendar}
@@ -301,23 +302,25 @@ export function CalendarDatePicker({
           <View style={styles.calendarContainer}>
             {/* Calendar Header */}
             <View style={styles.calendarHeader}>
-              <Pressable
+              <TouchableOpacity
                 style={styles.navButton}
                 onPress={() => navigateMonth('prev')}
+                activeOpacity={0.7}
               >
                 <Text style={styles.navButtonText}>‹</Text>
-              </Pressable>
+              </TouchableOpacity>
               
               <Text style={styles.monthText}>
                 {monthNames[currentMonth.getMonth()]} {currentMonth.getFullYear()}
               </Text>
               
-              <Pressable
+              <TouchableOpacity
                 style={styles.navButton}
                 onPress={() => navigateMonth('next')}
+                activeOpacity={0.7}
               >
                 <Text style={styles.navButtonText}>›</Text>
-              </Pressable>
+              </TouchableOpacity>
             </View>
 
             {/* Day Names */}
@@ -336,7 +339,7 @@ export function CalendarDatePicker({
                   {week.map((date, dayIndex) => (
                     <View key={dayIndex} style={styles.dayCell}>
                       {date && (
-                        <Pressable
+                        <TouchableOpacity
                           style={[
                             styles.dayButton,
                             isToday(date) && styles.todayButton,
@@ -345,6 +348,7 @@ export function CalendarDatePicker({
                           ]}
                           onPress={() => handleDateSelect(date)}
                           disabled={isDateDisabled(date)}
+                          activeOpacity={0.7}
                         >
                           <Text
                             style={[
@@ -356,7 +360,7 @@ export function CalendarDatePicker({
                           >
                             {date.getDate()}
                           </Text>
-                        </Pressable>
+                        </TouchableOpacity>
                       )}
                     </View>
                   ))}
@@ -366,19 +370,21 @@ export function CalendarDatePicker({
 
             {/* Action Buttons */}
             <View style={styles.actionButtons}>
-              <Pressable
+              <TouchableOpacity
                 style={[styles.actionButton, styles.cancelButton]}
                 onPress={() => setShowCalendar(false)}
+                activeOpacity={0.7}
               >
                 <Text style={styles.cancelButtonText}>Cancel</Text>
-              </Pressable>
+              </TouchableOpacity>
               
-              <Pressable
+              <TouchableOpacity
                 style={[styles.actionButton, styles.confirmButton]}
                 onPress={() => setShowCalendar(false)}
+                activeOpacity={0.7}
               >
                 <Text style={styles.confirmButtonText}>Done</Text>
-              </Pressable>
+              </TouchableOpacity>
             </View>
           </View>
         </View>

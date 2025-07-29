@@ -5,7 +5,6 @@ import {
   TouchableOpacity, 
   TextInput, 
   ScrollView,
-  Pressable,
   Button
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';

@@ -19,14 +19,49 @@ export function ClubCard({ club, onPress, onJoin, distance, isJoined }: ClubCard
   const colors = Colors[colorScheme ?? 'light'];
 
   const formatDistance = (distance: number): string => {
-    if (distance < 1) {
-      return `${(distance * 1000).toFixed(0)} m`;
+    // Distance is in kilometers, convert and format appropriately
+    if (distance < 0.1) {
+      return 'Nearby';
     }
-    return `${distance.toFixed(1)} mi`;
+    
+    if (distance < 1) {
+      // Show in meters for very close distances
+      const meters = Math.round(distance * 1000);
+      return `${meters}m`;
+    }
+    
+    if (distance < 10) {
+      // Show 1 decimal place for distances under 10km
+      return `${distance.toFixed(1)}km`;
+    }
+    
+    if (distance < 100) {
+      // Show whole numbers for distances under 100km
+      return `${Math.round(distance)}km`;
+    }
+    
+    // For very far distances, show approximate range
+    if (distance < 500) {
+      return `${Math.round(distance / 10) * 10}km+`;
+    }
+    
+    return 'Far';
   };
 
   const formatMemberCount = (count: number): string => {
-    return count.toString();
+    if (count === 0) {
+      return 'New club';
+    }
+    if (count === 1) {
+      return '1 member';
+    }
+    if (count < 100) {
+      return `${count} members`;
+    }
+    if (count < 1000) {
+      return `${Math.round(count / 10) * 10}+ members`;
+    }
+    return `${Math.round(count / 100) * 100}+ members`;
   };
 
   const accessibilityLabel = `${club.name}, ${formatMemberCount(club.memberCount || 0)} members${distance ? `, ${formatDistance(distance)} away` : ''}`;
@@ -71,7 +106,7 @@ export function ClubCard({ club, onPress, onJoin, distance, isJoined }: ClubCard
         {/* Second Row: Member count + Activity indicators */}
         <View style={styles.secondRow}>
           <ThemedText type="default" style={[styles.memberInfo, { color: colors.tabIconDefault }]}>
-            {formatMemberCount(club.memberCount || 0)} members
+            {formatMemberCount(club.memberCount || 0)}
           </ThemedText>
           {/* Activity indicators based on club type */}
           {isJoined && (

@@ -50,7 +50,8 @@
           "locationAlwaysAndWhenInUsePermission": "This app uses location to help you discover nearby tennis clubs and find players in your area."
         }
       ],
-      "expo-sqlite"
+      "expo-sqlite",
+      "expo-apple-authentication"
     ],
     "experiments": {
       "typedRoutes": true

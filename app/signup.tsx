@@ -1,9 +1,11 @@
 import React, { useState } from 'react';
 import { router } from 'expo-router';
 import { SignUpScreen } from '@/components/SignUpScreen';
+import { useNotification } from '@/contexts/NotificationContext';
 
 export default function SignUpPage() {
   const [isLoading, setIsLoading] = useState(false);
+  const { showError } = useNotification();
 
   const handleBack = () => {
     console.log('Back pressed - navigating to welcome');
@@ -24,20 +26,15 @@ export default function SignUpPage() {
     }
   };
 
-  const handleAppleSignUp = async () => {
-    console.log('Apple sign up pressed');
-    setIsLoading(true);
-    
-    try {
-      // TODO: Implement Apple Sign In
-      // For now, simulate success and go to main app
-      setTimeout(() => {
-        router.replace('/(tabs)');
-      }, 1000);
-    } catch (error) {
-      console.error('Apple sign up error:', error);
-      setIsLoading(false);
-    }
+  const handleAppleSignUpSuccess = () => {
+    console.log('Apple sign up successful - navigating to main app');
+    router.replace('/(tabs)');
+  };
+
+  const handleAppleSignUpError = (error: string) => {
+    console.error('Apple sign up error:', error);
+    showError('Sign Up Error', error);
+    setIsLoading(false);
   };
 
   const handleGoogleSignUp = async () => {
@@ -75,7 +72,8 @@ export default function SignUpPage() {
     <SignUpScreen 
       onBack={handleBack}
       onEmailSignUp={handleEmailSignUp}
-      onAppleSignUp={handleAppleSignUp}
+      onAppleSignUpSuccess={handleAppleSignUpSuccess}
+      onAppleSignUpError={handleAppleSignUpError}
       onGoogleSignUp={handleGoogleSignUp}
       onSignInPress={handleSignInPress}
       onTermsPress={handleTermsPress}

@@ -52,15 +52,29 @@ export function useLocation(): UseLocationReturn {
 
   const requestLocationPermission = async (): Promise<void> => {
     try {
+      // First check if permission is already granted
+      const { status: existingStatus } = await Location.getForegroundPermissionsAsync();
+      
+      if (existingStatus === 'granted') {
+        // If already granted, just get the location
+        await requestLocation();
+        return;
+      }
+
+      // Request permission if not already granted
       const { status } = await Location.requestForegroundPermissionsAsync();
+      
       if (status === 'granted') {
         // If permission is granted, also get the location
         await requestLocation();
+      } else if (status === 'denied') {
+        setError('Location access denied. You can enable it in Settings to discover nearby tennis clubs.');
       } else {
-        setError('Location permission denied');
+        setError('Location permission is required to discover nearby tennis clubs.');
       }
     } catch (err) {
-      setError(`Failed to request location permission: ${err instanceof Error ? err.message : 'Unknown error'}`);
+      console.error('Location permission error:', err);
+      setError(`Unable to access location: ${err instanceof Error ? err.message : 'Unknown error'}`);
     }
   };
 

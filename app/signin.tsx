@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, StyleSheet } from 'react-native';
+import { View, StyleSheet, Platform } from 'react-native';
 import { router } from 'expo-router';
 import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
@@ -8,11 +8,14 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useColorScheme } from '@/hooks/useColorScheme';
 import { Colors } from '@/constants/Colors';
+import AppleSignInButton from '@/components/AppleSignInButton';
+import { useNotification } from '@/contexts/NotificationContext';
 
 export default function SignInPage() {
   const [isLoading, setIsLoading] = useState(false);
   const colorScheme = useColorScheme();
   const colors = Colors[colorScheme ?? 'light'];
+  const { showError, showInfo } = useNotification();
 
   const handleBack = () => {
     console.log('Back pressed - navigating back');
@@ -24,20 +27,15 @@ export default function SignInPage() {
     router.push('/email-signin');
   };
 
-  const handleAppleSignIn = async () => {
-    console.log('Apple sign in pressed');
-    setIsLoading(true);
-    
-    try {
-      // TODO: Implement Apple Sign In
-      // For now, simulate success and go to main app
-      setTimeout(() => {
-        router.replace('/(tabs)');
-      }, 1000);
-    } catch (error) {
-      console.error('Apple sign in error:', error);
-      setIsLoading(false);
-    }
+  const handleAppleSignInSuccess = () => {
+    console.log('Apple sign in successful - navigating to main app');
+    router.replace('/(tabs)');
+  };
+
+  const handleAppleSignInError = (error: string) => {
+    console.error('Apple sign in error:', error);
+    showError('Sign In Error', error);
+    setIsLoading(false);
   };
 
   const handleGoogleSignIn = async () => {
@@ -114,18 +112,30 @@ export default function SignInPage() {
               </ThemedText>
             </TouchableOpacity>
 
-            <TouchableOpacity
-              style={[
-                styles.signInButton,
-                { backgroundColor: colors.background, borderColor: colors.tabIconDefault }
-              ]}
-              onPress={handleAppleSignIn}
-              disabled={isLoading}
-            >
-              <ThemedText style={styles.signInButtonText}>
-                🍎 Continue with Apple
-              </ThemedText>
-            </TouchableOpacity>
+            {Platform.OS === 'ios' ? (
+              <View style={styles.appleSignInContainer}>
+                <AppleSignInButton
+                  onSuccess={handleAppleSignInSuccess}
+                  onError={handleAppleSignInError}
+                  disabled={isLoading}
+                />
+              </View>
+            ) : (
+              <TouchableOpacity
+                style={[
+                  styles.signInButton,
+                  { backgroundColor: colors.background, borderColor: colors.tabIconDefault }
+                ]}
+                onPress={() => {
+                  showInfo('Not Available', 'Apple Sign In is only available on iOS devices');
+                }}
+                disabled={isLoading}
+              >
+                <ThemedText style={styles.signInButtonText}>
+                  🍎 Continue with Apple
+                </ThemedText>
+              </TouchableOpacity>
+            )}
 
             <TouchableOpacity
               style={[
@@ -222,6 +232,9 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     marginBottom: 16,
     alignItems: 'center',
+  },
+  appleSignInContainer: {
+    marginBottom: 16,
   },
   signInButtonText: {
     fontSize: 16,

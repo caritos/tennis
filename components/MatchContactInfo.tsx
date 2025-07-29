@@ -1,16 +1,17 @@
-import React from 'react';
+import React, { useState } from 'react';
 import {
   View,
   StyleSheet,
   TouchableOpacity,
-  Alert,
   Linking,
+  Modal,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { ThemedText } from './ThemedText';
 import { ThemedView } from './ThemedView';
 import { useColorScheme } from '@/hooks/useColorScheme';
 import { Colors } from '@/constants/Colors';
+import { useNotification } from '@/contexts/NotificationContext';
 
 interface ContactInfo {
   name: string;
@@ -29,6 +30,9 @@ const MatchContactInfo: React.FC<MatchContactInfoProps> = ({
 }) => {
   const colorScheme = useColorScheme();
   const colors = Colors[colorScheme ?? 'light'];
+  const { showError } = useNotification();
+  const [modalVisible, setModalVisible] = useState(false);
+  const [selectedContact, setSelectedContact] = useState<ContactInfo | null>(null);
 
   const formatPhoneNumber = (phone: string) => {
     // Simple US phone number formatting
@@ -39,54 +43,42 @@ const MatchContactInfo: React.FC<MatchContactInfoProps> = ({
     return phone;
   };
 
-  const handlePhonePress = (phone: string, name: string, preference: string) => {
-    if (!phone) return;
+  const handlePhonePress = (contact: ContactInfo) => {
+    if (!contact.phone) return;
+    setSelectedContact(contact);
+    setModalVisible(true);
+  };
 
-    const options = [];
+  const handleContactAction = async (action: 'whatsapp' | 'text' | 'call') => {
+    if (!selectedContact?.phone) return;
     
-    if (preference === 'whatsapp' || preference === 'text') {
-      options.push({
-        text: 'WhatsApp',
-        onPress: () => {
-          const whatsappUrl = `whatsapp://send?phone=${phone.replace(/\D/g, '')}`;
-          Linking.canOpenURL(whatsappUrl).then((supported) => {
-            if (supported) {
-              Linking.openURL(whatsappUrl);
-            } else {
-              Alert.alert('WhatsApp not installed', 'Please install WhatsApp to send messages.');
-            }
-          });
-        },
-      });
+    const phone = selectedContact.phone.replace(/\D/g, '');
+    let url = '';
+    
+    switch (action) {
+      case 'whatsapp':
+        url = `whatsapp://send?phone=${phone}`;
+        const supported = await Linking.canOpenURL(url);
+        if (!supported) {
+          showError('WhatsApp not installed', 'Please install WhatsApp to send messages.');
+          setModalVisible(false);
+          return;
+        }
+        break;
+      case 'text':
+        url = `sms:${selectedContact.phone}`;
+        break;
+      case 'call':
+        url = `tel:${selectedContact.phone}`;
+        break;
     }
-
-    if (preference === 'text') {
-      options.push({
-        text: 'Text Message',
-        onPress: () => {
-          const smsUrl = `sms:${phone}`;
-          Linking.openURL(smsUrl);
-        },
-      });
+    
+    try {
+      await Linking.openURL(url);
+      setModalVisible(false);
+    } catch (error) {
+      showError('Unable to open app', 'Please try again or use a different contact method.');
     }
-
-    if (preference === 'phone') {
-      options.push({
-        text: 'Call',
-        onPress: () => {
-          const phoneUrl = `tel:${phone}`;
-          Linking.openURL(phoneUrl);
-        },
-      });
-    }
-
-    options.push({ text: 'Cancel', style: 'cancel' });
-
-    Alert.alert(
-      `Contact ${name}`,
-      `How would you like to contact ${name}?`,
-      options
-    );
   };
 
   const getContactIcon = (preference: string) => {
@@ -121,7 +113,7 @@ const MatchContactInfo: React.FC<MatchContactInfoProps> = ({
       {contact.phone && (
         <TouchableOpacity
           style={[styles.contactButton, { borderColor: colors.tint }]}
-          onPress={() => handlePhonePress(contact.phone!, contact.name, contact.contact_preference)}
+          onPress={() => handlePhonePress(contact)}
         >
           <Ionicons 
             name={getContactIcon(contact.contact_preference) as any} 
@@ -158,6 +150,72 @@ const MatchContactInfo: React.FC<MatchContactInfoProps> = ({
           Community Reminder: Please honor your commitment. No-shows and unsportsmanlike behavior can be reported.
         </ThemedText>
       </View>
+
+      {/* Contact Options Modal */}
+      <Modal
+        animationType="slide"
+        transparent={true}
+        visible={modalVisible}
+        onRequestClose={() => setModalVisible(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={[styles.modalContent, { backgroundColor: colors.background }]}>
+            <View style={styles.modalHeader}>
+              <ThemedText style={styles.modalTitle}>
+                Contact {selectedContact?.name}
+              </ThemedText>
+              <TouchableOpacity
+                style={styles.modalCloseButton}
+                onPress={() => setModalVisible(false)}
+              >
+                <Ionicons name="close" size={24} color={colors.text} />
+              </TouchableOpacity>
+            </View>
+
+            <ThemedText style={[styles.modalSubtitle, { color: colors.tabIconDefault }]}>
+              How would you like to contact {selectedContact?.name}?
+            </ThemedText>
+
+            <View style={styles.modalActions}>
+              {(selectedContact?.contact_preference === 'whatsapp' || selectedContact?.contact_preference === 'text') && (
+                <TouchableOpacity
+                  style={[styles.modalActionButton, { borderColor: colors.tint }]}
+                  onPress={() => handleContactAction('whatsapp')}
+                >
+                  <Ionicons name="logo-whatsapp" size={24} color={colors.tint} />
+                  <ThemedText style={[styles.modalActionText, { color: colors.tint }]}>
+                    WhatsApp
+                  </ThemedText>
+                </TouchableOpacity>
+              )}
+
+              {selectedContact?.contact_preference === 'text' && (
+                <TouchableOpacity
+                  style={[styles.modalActionButton, { borderColor: colors.tint }]}
+                  onPress={() => handleContactAction('text')}
+                >
+                  <Ionicons name="chatbubble" size={24} color={colors.tint} />
+                  <ThemedText style={[styles.modalActionText, { color: colors.tint }]}>
+                    Text Message
+                  </ThemedText>
+                </TouchableOpacity>
+              )}
+
+              {selectedContact?.contact_preference === 'phone' && (
+                <TouchableOpacity
+                  style={[styles.modalActionButton, { borderColor: colors.tint }]}
+                  onPress={() => handleContactAction('call')}
+                >
+                  <Ionicons name="call" size={24} color={colors.tint} />
+                  <ThemedText style={[styles.modalActionText, { color: colors.tint }]}>
+                    Call
+                  </ThemedText>
+                </TouchableOpacity>
+              )}
+            </View>
+          </View>
+        </View>
+      </Modal>
     </ThemedView>
   );
 };
@@ -249,5 +307,52 @@ const styles = StyleSheet.create({
     flex: 1,
     fontSize: 14,
     lineHeight: 20,
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'flex-end',
+  },
+  modalContent: {
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+    padding: 24,
+    paddingBottom: 40,
+    minHeight: 200,
+  },
+  modalHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  modalTitle: {
+    fontSize: 20,
+    fontWeight: '700',
+  },
+  modalCloseButton: {
+    padding: 4,
+  },
+  modalSubtitle: {
+    fontSize: 16,
+    marginBottom: 24,
+    lineHeight: 22,
+  },
+  modalActions: {
+    gap: 12,
+  },
+  modalActionButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 16,
+    paddingHorizontal: 20,
+    borderWidth: 1,
+    borderRadius: 12,
+    gap: 12,
+  },
+  modalActionText: {
+    fontSize: 18,
+    fontWeight: '600',
   },
 });

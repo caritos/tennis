@@ -1,0 +1,88 @@
+appId: com.anonymous.tennis-club
+name: TextInput Timing Test - Different Delays
+---
+# TIMING TEST: Test different timing approaches for TextInput onChangeText events
+# This test tries various timing strategies to see if delays help
+
+- launchApp:
+    clearState: true
+- waitForAnimationToEnd
+
+# Navigate to email signup form
+- tapOn: "Get started"
+- tapOn: "Sign up" 
+- tapOn: "Sign up with email"
+- waitForAnimationToEnd
+
+- takeScreenshot: "01-form-loaded"
+
+# Strategy 1: Immediate input after tap
+- tapOn:
+    id: "full-name-input"
+- inputText: "Timing Test User"
+- waitForAnimationToEnd
+
+- takeScreenshot: "02-immediate-input"
+
+# Strategy 2: Short delay after tap
+- tapOn:
+    id: "email-input"
+- waitForAnimationToEnd:
+    timeout: 500
+- inputText: "timing@test.com"
+- waitForAnimationToEnd
+
+- takeScreenshot: "03-short-delay-input"
+
+# Strategy 3: Long delay after tap  
+- tapOn:
+    id: "password-input"
+- waitForAnimationToEnd:
+    timeout: 1000
+- inputText: "TimingTest123!"
+- waitForAnimationToEnd:
+    timeout: 1000
+
+- takeScreenshot: "04-long-delay-input"
+
+# Strategy 4: Multiple taps before input
+- tapOn:
+    id: "confirm-password-input"
+- tapOn:
+    id: "confirm-password-input"
+- waitForAnimationToEnd
+- inputText: "TimingTest123!"
+- waitForAnimationToEnd
+
+- takeScreenshot: "05-multiple-taps-input"
+
+# Strategy 5: Slow character input (if possible)
+- tapOn:
+    id: "phone-input"
+- waitForAnimationToEnd
+- inputText: "555"
+- waitForAnimationToEnd:
+    timeout: 500
+- inputText: "123"
+- waitForAnimationToEnd:
+    timeout: 500
+- inputText: "4567"
+- waitForAnimationToEnd
+
+- takeScreenshot: "06-slow-character-input"
+
+# Test if any strategy worked by attempting form submission
+- swipe:
+    start: "50%, 70%"
+    end: "50%, 30%"
+
+- tapOn:
+    id: "terms-checkbox"
+- waitForAnimationToEnd
+
+- tapOn:
+    id: "create-account-button"
+- waitForAnimationToEnd
+- waitForAnimationToEnd
+
+- takeScreenshot: "07-final-result"

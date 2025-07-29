@@ -1,6 +1,6 @@
 // Sync status indicator component for the universal offline queue
 import React from 'react';
-import { View, Text, StyleSheet, Pressable } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { useSync } from '../hooks/useSync';
 import { Colors } from '@/constants/Colors';
 import { useColorScheme } from '@/hooks/useColorScheme';
@@ -129,12 +129,13 @@ export function SyncStatusIndicator({ showDetails = false, onPress }: SyncStatus
 
   if (onPress || failedCount > 0 || (pendingCount > 0 && isOnline)) {
     return (
-      <Pressable 
+      <TouchableOpacity 
         style={styles.pressableContainer}
         onPress={handlePress}
+        activeOpacity={0.7}
       >
         {content}
-      </Pressable>
+      </TouchableOpacity>
     );
   }
 

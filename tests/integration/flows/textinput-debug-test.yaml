@@ -1,0 +1,98 @@
+appId: com.anonymous.tennis-club
+name: TextInput Debug Test - onChangeText Events
+---
+# DEBUG TEST: TextInput onChangeText Event Reproduction
+# This test reproduces the issue where Maestro can visually input text but onChangeText events don't fire
+
+- launchApp:
+    clearState: true
+- waitForAnimationToEnd
+
+# Navigate to email signup form (has multiple TextInputs)
+- tapOn: "Get started"
+- tapOn: "Sign up" 
+- tapOn: "Sign up with email"
+- waitForAnimationToEnd
+
+- takeScreenshot: "01-signup-form-loaded"
+
+# Test 1: Full Name Input - Should trigger onChangeText
+- tapOn:
+    id: "full-name-input"
+- waitForAnimationToEnd
+- inputText: "Debug Test User"
+- waitForAnimationToEnd
+
+- takeScreenshot: "02-full-name-after-input"
+
+# Test 2: Email Input - Should trigger onChangeText  
+- tapOn:
+    id: "email-input"
+- waitForAnimationToEnd
+- inputText: "debug@test.com"
+- waitForAnimationToEnd
+
+- takeScreenshot: "03-email-after-input"
+
+# Test 3: Password Input - Should trigger onChangeText
+- tapOn:
+    id: "password-input"
+- waitForAnimationToEnd
+- inputText: "DebugPassword123!"
+- waitForAnimationToEnd
+
+- takeScreenshot: "04-password-after-input"
+
+# Test 4: Confirm Password Input - Should trigger onChangeText
+- tapOn:
+    id: "confirm-password-input"
+- waitForAnimationToEnd
+- inputText: "DebugPassword123!"
+- waitForAnimationToEnd
+
+- takeScreenshot: "05-confirm-password-after-input"
+
+# Test 5: Phone Input - Should trigger onChangeText
+- tapOn:
+    id: "phone-input"
+- waitForAnimationToEnd
+- inputText: "5551234567"
+- waitForAnimationToEnd
+
+- takeScreenshot: "06-phone-after-input"
+
+# Test 6: Try to submit form - Should fail if onChangeText didn't work
+# If onChangeText events didn't fire, the form state won't have the values
+# and validation will fail
+- swipe:
+    start: "50%, 70%"
+    end: "50%, 30%"
+
+- tapOn:
+    id: "terms-checkbox"
+- waitForAnimationToEnd
+
+- takeScreenshot: "07-terms-checked"
+
+- tapOn:
+    id: "create-account-button"
+- waitForAnimationToEnd
+- waitForAnimationToEnd
+
+- takeScreenshot: "08-after-submit-attempt"
+
+# If onChangeText worked, we should see success or navigate to main app
+# If onChangeText failed, we should see validation errors
+- assertVisible:
+    text: "Full name is required"
+    optional: true
+
+- assertVisible:
+    text: "Email is required"
+    optional: true
+
+- assertVisible:
+    text: "Password is required"
+    optional: true
+
+- takeScreenshot: "09-final-state"
