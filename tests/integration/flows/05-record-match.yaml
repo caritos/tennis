@@ -1,4 +1,4 @@
-appId: com.anonymous.tennis-club
+appId: com.caritos.tennis
 ---
 # Record Match Flow E2E Test
 # Tests: Club Details → Record Match → Fill Form → Save → View in History

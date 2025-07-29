@@ -27,6 +27,26 @@ export class ClubService {
     return this.db;
   }
 
+  // Helper method to ensure user exists in local database
+  private async ensureUserExists(userId: string): Promise<void> {
+    const db = await this.getDatabase();
+    
+    const userExists = await db.getFirstAsync(
+      'SELECT id FROM users WHERE id = ?',
+      [userId]
+    );
+    
+    if (!userExists) {
+      console.error('ClubService: User not found in local database:', userId);
+      
+      // Debug: List all users in database
+      const allUsers = await db.getAllAsync('SELECT id, email FROM users');
+      console.log('ClubService: All users in database:', allUsers);
+      
+      throw new Error('Your account information is not available. Please sign out and sign back in to refresh your account.');
+    }
+  }
+
   async createClub(clubData: CreateClubData): Promise<Club> {
     if (!clubData.name || !clubData.location || !clubData.description) {
       throw new Error('Club name, description, and location are required');
@@ -147,58 +167,8 @@ export class ClubService {
     const db = await this.getDatabase();
 
     try {
-      // Check if user exists in users table first
-      const userExists = await db.getFirstAsync(
-        'SELECT id FROM users WHERE id = ?',
-        [userId]
-      );
-      
-      if (!userExists) {
-        console.error('joinClub: User not found in local database:', userId);
-        
-        // Debug: List all users in database
-        const allUsers = await db.getAllAsync('SELECT id, email FROM users');
-        console.log('joinClub: All users in database:', allUsers);
-        
-        // TEMPORARY WORKAROUND: Try to sync the current user from Supabase
-        console.log('joinClub: Attempting to sync missing user from Supabase...');
-        try {
-          const { supabase } = await import('../lib/supabase');
-          
-          // Get current session to verify this user should exist
-          const { data: { session } } = await supabase.auth.getSession();
-          if (session?.user?.id === userId) {
-            console.log('joinClub: Found matching session user, syncing to local database');
-            
-            // Sync user from auth metadata
-            const userData = {
-              id: session.user.id,
-              full_name: session.user.user_metadata?.full_name || session.user.email?.split('@')[0] || 'Tennis Player',
-              email: session.user.email || '',
-              phone: session.user.user_metadata?.phone || null,
-              role: 'player'
-            };
-            
-            await db.runAsync(
-              `INSERT OR REPLACE INTO users (id, full_name, email, phone, role, created_at) VALUES (?, ?, ?, ?, ?, datetime('now'))`,
-              [userData.id, userData.full_name, userData.email, userData.phone, userData.role]
-            );
-            
-            console.log('joinClub: Successfully synced user to local database');
-            
-            // Verify sync worked
-            const syncedUser = await db.getFirstAsync('SELECT id FROM users WHERE id = ?', [userId]);
-            if (!syncedUser) {
-              throw new Error('Failed to sync user to local database');
-            }
-          } else {
-            throw new Error('No matching session found for user');
-          }
-        } catch (syncError) {
-          console.error('joinClub: Failed to sync user:', syncError);
-          throw new Error('User not found in local database. Please try signing out and back in.');
-        }
-      }
+      // Ensure user exists in local database
+      await this.ensureUserExists(userId);
 
       // Check if club exists
       const clubExists = await db.getFirstAsync(

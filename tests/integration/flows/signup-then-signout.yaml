@@ -1,4 +1,4 @@
-appId: com.anonymous.tennis-club
+appId: com.caritos.tennis
 name: Complete Signup and Signout Flow
 env:
   UNIQUE_ID: ${Math.floor(Math.random() * 1000000)}

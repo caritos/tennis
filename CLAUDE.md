@@ -112,3 +112,79 @@ cd tests/integration && maestro test flows/01-signup-reliable.yaml
 - `02-validation-testing.yaml` - Form validation testing
 - `03-terms-validation-isolated.yaml` - Specific isolated tests
 - Use leading numbers for execution order when needed
+
+## Task Management & Project Organization
+
+**MANDATORY: All tasks, bugs, and features MUST be managed through GitHub Issues.**
+
+### GitHub Issues Workflow
+
+**Creating Issues:**
+```bash
+# Create new issue
+gh issue create --title "Issue title" --body "Description"
+
+# Create issue with labels
+gh issue create --title "Fix login bug" --body "Details..." --label "bug"
+
+# Create feature request
+gh issue create --title "Add dark mode" --body "User story..." --label "enhancement"
+```
+
+**Managing Issues:**
+```bash
+# List all open issues
+gh issue list
+
+# View specific issue
+gh issue view #123
+
+# Close completed issue
+gh issue close #123
+
+# Assign issue to yourself
+gh issue edit #123 --add-assignee @me
+```
+
+**Issue Labels:**
+- `bug` - Something isn't working
+- `enhancement` - New feature or request
+- `documentation` - Improvements or additions to docs
+- `e2e-testing` - End-to-end testing related
+- `priority-high` - Critical issues that block development
+- `priority-medium` - Important but not blocking
+- `priority-low` - Nice to have improvements
+
+### Task Organization Rules
+
+1. **NO TodoWrite Tool**: Never use Claude's TodoWrite tool - rely exclusively on GitHub Issues
+2. **Issue Granularity**: Break large features into small, actionable issues
+3. **Clear Acceptance Criteria**: Each issue should have clear completion requirements
+4. **Link Related Issues**: Use "Related to #123" or "Fixes #456" in descriptions
+5. **Status Updates**: Comment on issues with progress updates
+
+### Current Open Issues
+
+Use `gh issue list` to see all current tasks. Key areas being tracked:
+- **E2E Testing Reliability** (Issues #35, #37, #38)
+- **Authentication Bugs** (Issues #27, #28, #30, #33)
+- **Core Infrastructure** (Issues #3, #26, #36)
+
+### Working with Issues
+
+**Before Starting Work:**
+1. Check `gh issue list` for current priorities
+2. Assign yourself to the issue you're working on
+3. Comment on the issue when you start work
+
+**During Development:**
+1. Reference issue numbers in commit messages: "Fix password validation (resolves #35)"
+2. Update issue with progress or blockers
+3. Link any related discoveries or new issues
+
+**After Completion:**
+1. Ensure all acceptance criteria are met
+2. Close issue with `gh issue close #123`
+3. Update any related documentation
+
+This approach ensures all project work is visible, trackable, and collaboratively managed through GitHub's native issue system.

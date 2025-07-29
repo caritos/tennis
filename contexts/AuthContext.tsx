@@ -17,10 +17,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [session, setSession] = useState<Session | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
-  const syncUserToLocalDatabase = async (user: User) => {
+  const syncUserToLocalDatabase = async (user: User): Promise<boolean> => {
     try {
       console.log('AuthContext: Starting user sync for:', user.id, user.email);
       const db = await initializeDatabase();
+      
+      // First, check if user already exists in local database
+      const existingUser = await db.getFirstAsync('SELECT id FROM users WHERE id = ?', [user.id]);
+      if (existingUser) {
+        console.log('AuthContext: User already exists in local database:', user.id);
+        return true;
+      }
       
       // Try to get user profile from Supabase first
       const { data: userProfile, error: profileError } = await supabase
@@ -63,10 +70,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       
       // Verify the user was inserted
       const insertedUser = await db.getFirstAsync('SELECT * FROM users WHERE id = ?', [user.id]);
-      console.log('AuthContext: Verification - user exists in database:', insertedUser ? 'YES' : 'NO');
+      const success = !!insertedUser;
+      console.log('AuthContext: Verification - user exists in database:', success ? 'YES' : 'NO');
+      return success;
     } catch (error) {
       console.error('AuthContext: Failed to sync user to local database:', error);
-      // Don't throw - this shouldn't block the auth flow
+      return false;
     }
   };
 
@@ -88,7 +97,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         // Sync user to local database if session exists
         if (session?.user) {
           console.log('AuthContext: Syncing user to local database:', session.user.id);
-          await syncUserToLocalDatabase(session.user);
+          const syncSuccess = await syncUserToLocalDatabase(session.user);
+          if (!syncSuccess) {
+            console.warn('AuthContext: Initial user sync failed, but continuing with auth flow');
+          }
         }
       } catch (error) {
         console.error('AuthContext: Initialization error:', error);
@@ -107,7 +119,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       // Sync user to local database when they sign in
       if (session?.user && (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED')) {
         console.log('AuthContext: Syncing user after auth change:', session.user.id);
-        syncUserToLocalDatabase(session.user);
+        syncUserToLocalDatabase(session.user).then(success => {
+          if (!success) {
+            console.warn('AuthContext: User sync failed after auth change');
+          }
+        });
       }
     });
 

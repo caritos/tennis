@@ -1,4 +1,4 @@
-appId: com.anonymous.tennis-club
+appId: com.caritos.tennis
 name: TextInput Timing Test - Different Delays
 ---
 # TIMING TEST: Test different timing approaches for TextInput onChangeText events

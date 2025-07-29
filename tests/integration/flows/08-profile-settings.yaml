@@ -1,4 +1,4 @@
-appId: com.anonymous.tennis-club
+appId: com.caritos.tennis
 ---
 # Profile and Settings Flow E2E Test
 # Tests: Profile Tab → View Stats → Settings → Edit Profile → Sign Out

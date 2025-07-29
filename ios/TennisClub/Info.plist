@@ -28,7 +28,7 @@
         <key>CFBundleURLSchemes</key>
         <array>
           <string>tennisclub</string>
-          <string>com.anonymous.tennis-club</string>
+          <string>com.caritos.tennis</string>
         </array>
       </dict>
     </array>

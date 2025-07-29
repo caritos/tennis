@@ -1,4 +1,4 @@
-appId: com.anonymous.tennis-club
+appId: com.caritos.tennis
 ---
 # Complete Sign Up Flow E2E Test
 # Tests: Welcome → Sign Up → Email Sign Up → Create Account → Home Screen
