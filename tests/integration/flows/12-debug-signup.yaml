@@ -1,0 +1,46 @@
+appId: com.anonymous.tennis-club
+---
+# Debug Sign Up Flow
+# Try different approaches to bypass password autofill
+
+- launchApp:
+    clearState: true
+
+- tapOn: "Get Started"
+- tapOn: "Sign up"
+- tapOn: "Sign up with Email"
+
+# Fill name first
+- tapOn:
+    id: "full-name-input"
+- inputText: "Debug Test User"
+
+# Try tapping away from password field first
+- tapOn: "Email Address"
+- tapOn:
+    id: "email-input"  
+- inputText: "debugtest@example.com"
+
+# Try phone field first
+- tapOn: "Phone Number (Optional)"
+- tapOn:
+    id: "phone-input"
+- inputText: "5559876543"
+
+# Now try password - tap the label first
+- tapOn: "Password"
+- takeScreenshot: "password-field-before"
+
+# Try multiple taps
+- tapOn:
+    point: "50%, 40%"  # Approximate password field location
+    
+- takeScreenshot: "password-field-after-tap"
+
+# Try dismissing keyboard and retapping
+- tapOn:
+    point: "50%, 90%"  # Tap outside to dismiss keyboard
+    
+- tapOn: "Password"
+
+- takeScreenshot: "password-field-final"

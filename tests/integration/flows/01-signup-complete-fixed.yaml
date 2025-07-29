@@ -1,0 +1,87 @@
+appId: com.anonymous.tennis-club
+---
+# Complete Sign Up Flow E2E Test - Fixed Version
+# Tests: Welcome → Sign Up → Email Sign Up → Create Account → Home Screen
+
+- launchApp:
+    clearState: true
+
+# Welcome Screen
+- assertVisible: "Tennis Club"
+- assertVisible: "Connect with tennis players in your area"
+- assertVisible: "Get Started"
+- tapOn: "Get Started"
+
+# Sign Up Screen
+- assertVisible: "Sign Up"
+- assertVisible: "Join the tennis community!"
+- assertVisible: "Sign up with Email"
+- tapOn: "Sign up with Email"
+
+# Email Sign Up Form
+- assertVisible: "Create Account"
+- assertVisible: "Full Name"
+- assertVisible: "Email Address"
+- assertVisible: "Password"
+- assertVisible: "Confirm Password"
+
+# Fill out the form with delays to avoid triggering autofill
+- tapOn:
+    id: "full-name-input"
+- inputText: "Test User E2E"
+
+# Small delay before email
+- waitForAnimationToEnd
+
+- tapOn:
+    id: "email-input"
+- inputText: "testusere2e@example.com"
+
+# Delay before password and try dismissing keyboard first
+- waitForAnimationToEnd
+- tapOn:
+    point: "50%, 85%"  # Tap outside to dismiss keyboard
+
+# Now handle password carefully
+- tapOn:
+    id: "password-input"
+- waitForAnimationToEnd
+
+# Password field should work now with the fix
+
+- inputText: "TestPass123!"
+
+# Confirm password
+- tapOn:
+    id: "confirm-password-input"
+- inputText: "TestPass123!"
+
+# Phone number
+- tapOn:
+    id: "phone-input"
+- inputText: "5551234567"
+
+# Agree to terms
+- tapOn:
+    id: "terms-checkbox"
+
+# Submit form
+- tapOn:
+    id: "create-account-button"
+
+# Wait for account creation with longer timeout
+- runFlow:
+    when:
+      visible: "My Clubs"
+    commands:
+      - assertVisible: "My Clubs"
+      - assertVisible: "Nearby Clubs"
+
+# Verify we can see the Record Match button
+- assertVisible: "Record Match"
+
+# Test navigation to profile
+- tapOn: "Profile"
+- assertVisible: "Test User E2E"
+- assertVisible: "Profile"
+- assertVisible: "Match History"

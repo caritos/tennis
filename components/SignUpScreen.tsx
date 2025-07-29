@@ -14,7 +14,6 @@ interface SignUpScreenProps {
   onEmailSignUp: () => void;
   onAppleSignUpSuccess: () => void;
   onAppleSignUpError: (error: string) => void;
-  onGoogleSignUp: () => void;
   onSignInPress: () => void;
   onTermsPress?: () => void;
   onPrivacyPress?: () => void;
@@ -26,7 +25,6 @@ export function SignUpScreen({
   onEmailSignUp,
   onAppleSignUpSuccess,
   onAppleSignUpError,
-  onGoogleSignUp,
   onSignInPress,
   onTermsPress,
   onPrivacyPress,
@@ -95,6 +93,7 @@ export function SignUpScreen({
             accessibilityRole="button"
             accessibilityLabel="Back"
             accessibilityHint="Go back to the previous screen"
+            testID="back-button"
           >
             <Ionicons 
               name="chevron-back" 
@@ -171,23 +170,6 @@ export function SignUpScreen({
               </TouchableOpacity>
             )}
 
-            <TouchableOpacity
-              style={[
-                styles.signUpButton,
-                { backgroundColor: colors.background, borderColor: colors.tabIconDefault }
-              ]}
-              onPress={() => handleButtonPress(onGoogleSignUp, 'google')}
-              accessibilityRole="button"
-              accessibilityLabel="Continue with Google"
-              accessibilityHint="Sign up using your Google account"
-              accessibilityState={{ disabled: isLoading }}
-              testID="google-signup-button"
-              disabled={isLoading}
-            >
-              <ThemedText style={styles.signUpButtonText}>
-                📱 Continue with Google
-              </ThemedText>
-            </TouchableOpacity>
           </View>
 
           {/* Sign In Link */}
@@ -201,6 +183,7 @@ export function SignUpScreen({
               accessibilityLabel="Sign In"
               accessibilityHint="Go to sign in screen for existing users"
               disabled={isLoading}
+              testID="signin-link"
             >
               <ThemedText style={[styles.signInLink, { color: colors.tint }]}>
                 Sign In
@@ -219,6 +202,7 @@ export function SignUpScreen({
                 accessibilityRole="button"
                 accessibilityLabel="Terms of Service"
                 style={styles.legalLink}
+                testID="terms-link"
               >
                 <ThemedText style={[styles.legalLinkText, { color: colors.tint }]}>
                   Terms of Service
@@ -234,6 +218,7 @@ export function SignUpScreen({
                 accessibilityRole="button"
                 accessibilityLabel="Privacy Policy"
                 style={styles.legalLink}
+                testID="privacy-link"
               >
                 <ThemedText style={[styles.legalLinkText, { color: colors.tint }]}>
                   Privacy Policy

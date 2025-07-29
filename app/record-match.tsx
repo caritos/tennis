@@ -6,7 +6,7 @@ import { recordMatch } from '../services/matchService';
 import { CreateMatchData } from '../services/matchService';
 import { logError, getDatabaseErrorMessage } from '../utils/errorHandling';
 import { useColorScheme } from '@/hooks/useColorScheme';
-import Colors from '@/constants/Colors';
+import { Colors } from '@/constants/Colors';
 import { Ionicons } from '@expo/vector-icons';
 
 export default function RecordMatchScreen() {

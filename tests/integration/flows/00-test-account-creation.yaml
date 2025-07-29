@@ -1,0 +1,57 @@
+appId: com.anonymous.tennis-club
+---
+# Test Account Creation
+# Simple test to verify account creation works
+
+- launchApp:
+    clearState: true
+
+# Navigate to sign up
+- tapOn: "Get Started"
+- tapOn: "Sign up"
+- tapOn: "Sign up with Email"
+
+# Fill form methodically
+- tapOn:
+    id: "full-name-input"
+- inputText: "Maestro Test"
+
+- tapOn:
+    id: "email-input"
+- inputText: "maestro.test.fix1@example.com"
+
+# Handle password with care
+- scrollUntilVisible:
+    element: "Password"
+    direction: DOWN
+    
+- tapOn: "Password"
+- tapOn:
+    id: "password-input"
+    
+# Input password directly
+- inputText: "Test123456!"
+
+- tapOn:
+    id: "confirm-password-input"
+- inputText: "Test123456!"
+
+- tapOn:
+    id: "terms-checkbox"
+
+# Before submitting, take a screenshot
+- takeScreenshot: "before-submit"
+
+- tapOn:
+    id: "create-account-button"
+
+# Wait for result
+- waitForAnimationToEnd
+
+# Check what happened
+- takeScreenshot: "after-submit"
+
+# Success scenarios
+- assertVisible:
+    text: "My Clubs|Creating Account|error"
+    optional: true

@@ -1,0 +1,54 @@
+appId: com.anonymous.tennis-club
+---
+# Create Club Flow E2E Test
+# Tests: Home → Create Club → Fill Form → Submit → View Club
+
+# Assume user is already signed in
+- launchApp
+
+# Verify we're on clubs screen
+- assertVisible: "My Clubs"
+
+# Look for create club button
+- assertVisible: "Create a Club"
+- tapOn: "Create a Club"
+
+# Create Club Form
+- assertVisible: "Create New Club"
+- assertVisible: "Club Name"
+- assertVisible: "Description"
+- assertVisible: "Location"
+
+# Fill form
+- tapOn:
+    id: "club-name-input"
+- inputText: "Test Club ${TIMESTAMP}"
+
+- tapOn:
+    id: "description-input"
+- inputText: "A test tennis club for E2E testing"
+
+- tapOn:
+    id: "location-input"
+- inputText: "123 Test Street, Test City, TC 12345"
+
+# Submit
+- tapOn: "Create Club"
+
+# Wait for creation
+- waitForAnimationToEnd
+
+# Should return to clubs screen with new club visible
+- assertVisible: "Test Club ${TIMESTAMP}"
+- assertVisible: "1 member"
+
+# Tap on the club to view details
+- tapOn: "Test Club ${TIMESTAMP}"
+
+# Club Details Screen
+- assertVisible: "Test Club ${TIMESTAMP}"
+- assertVisible: "Record Match"
+- assertVisible: "Challenges"
+- assertVisible: "Looking to Play"
+- assertVisible: "Rankings"
+- assertVisible: "Recent Matches"

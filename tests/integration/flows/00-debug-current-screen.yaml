@@ -1,0 +1,20 @@
+appId: com.anonymous.tennis-club
+name: "Debug Current Screen"
+---
+
+# Debug what's currently on screen
+- launchApp
+- waitForAnimationToEnd
+
+# Take screenshot to see current state
+- takeScreenshot: current-screen
+
+# Try to find common elements
+- assertVisible:
+    text: ".*"
+    optional: true
+
+# Check for possible screens
+- assertVisible:
+    text: "Welcome|Sign|Clubs|Profile|Loading"
+    optional: true

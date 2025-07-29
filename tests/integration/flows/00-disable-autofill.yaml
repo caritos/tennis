@@ -1,0 +1,22 @@
+appId: com.apple.Preferences
+name: "Disable AutoFill Passwords for E2E Testing"
+---
+
+# Open iOS Settings app
+- launchApp
+- waitForAnimationToEnd
+
+# Navigate to Passwords settings
+- tapOn: "Passwords"
+- waitForAnimationToEnd
+
+# Tap on Password Options
+- tapOn: "Password Options"
+- waitForAnimationToEnd
+
+# Disable AutoFill Passwords
+- tapOn:
+    id: "AutoFill Passwords"
+    
+# Go back to home
+- pressKey: Home

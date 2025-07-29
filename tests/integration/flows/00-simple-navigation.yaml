@@ -1,0 +1,36 @@
+appId: com.anonymous.tennis-club
+---
+# Simple Navigation Test
+# Tests: Welcome → Sign Up → Back → Sign In
+
+- launchApp:
+    clearState: true
+
+# Welcome Screen
+- assertVisible: "Tennis Club"
+- assertVisible: "Get Started"
+- tapOn:
+    id: "get-started-button"
+
+# Sign Up Screen
+- assertVisible: "Sign Up"
+- assertVisible: "Sign up with Email"
+
+# Navigate to Sign In
+- assertVisible: "Sign In"
+- tapOn:
+    id: "signin-link"
+
+# Sign In Screen
+- assertVisible: "Sign In"
+- assertVisible: "Welcome back!"
+
+# Go back
+- tapOn:
+    id: "back-button"
+    optional: true
+- tapOn:
+    point: "5%, 10%"  # Tap top-left corner for back
+
+# Should be back on Sign Up screen
+- assertVisible: "Sign Up"

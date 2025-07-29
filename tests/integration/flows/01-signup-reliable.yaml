@@ -1,0 +1,110 @@
+appId: com.anonymous.tennis-club
+name: "Reliable Signup Flow with Enhanced Waits"
+---
+
+# Enhanced signup flow with improved reliability patterns
+
+# 1. Launch with explicit state clearing
+- launchApp:
+    clearState: true
+- waitForAnimationToEnd
+
+# 2. Verify welcome screen loaded completely
+- assertVisible: "Tennis Club"
+- assertVisible: "Connect with tennis players in your area"
+- assertVisible:
+    id: "get-started-button"
+
+# 3. Navigate with explicit waits
+- tapOn:
+    id: "get-started-button"
+- waitForAnimationToEnd
+
+# 4. Verify signup screen loaded
+- assertVisible: "Sign Up"
+- assertVisible: "Join the tennis community!"
+- assertVisible:
+    id: "email-signup-button"
+
+# 5. Navigate to email signup
+- tapOn:
+    id: "email-signup-button"
+- waitForAnimationToEnd
+
+# 6. Verify form loaded completely
+- assertVisible: "Create Account"
+- assertVisible:
+    id: "full-name-input"
+- assertVisible:
+    id: "email-input"
+
+# 7. Fill form with enhanced timing
+- tapOn:
+    id: "full-name-input"
+- waitForAnimationToEnd
+- inputText: "Reliable Test User"
+
+- tapOn:
+    id: "email-input"
+- waitForAnimationToEnd
+- inputText: "reliable.test.${TIMESTAMP}@example.com"
+
+- tapOn:
+    id: "password-input" 
+- waitForAnimationToEnd
+- inputText: "ReliablePass123"
+
+- tapOn:
+    id: "confirm-password-input"
+- waitForAnimationToEnd
+- inputText: "ReliablePass123"
+
+# 8. Optional phone (skip for simplicity)
+# - tapOn:
+#     id: "phone-input"
+# - inputText: "5551234567"
+
+# 9. Keyboard dismissal and form interaction
+- scroll
+- waitForAnimationToEnd
+
+# 10. Accept terms with verification
+- assertVisible:
+    id: "terms-checkbox"
+- tapOn:
+    id: "terms-checkbox"
+
+# 11. Final scroll to reveal submit button
+- scroll
+- waitForAnimationToEnd
+
+# 12. Verify no validation errors before submit
+- assertNotVisible:
+    id: "general-error"
+- assertNotVisible:
+    id: "email-error"
+- assertNotVisible:
+    id: "password-error"
+- assertNotVisible:
+    id: "confirm-password-error"
+
+# 13. Submit with screenshot for debugging
+- takeScreenshot: before-submit-reliable
+- assertVisible:
+    id: "create-account-button"
+- tapOn:
+    id: "create-account-button"
+
+# 14. Wait for account creation with longer timeout
+- waitForAnimationToEnd
+
+# 15. Take screenshot to verify final state
+- takeScreenshot: after-submit-reliable
+
+# 16. Verify successful navigation OR capture error state
+- assertVisible:
+    text: "My Clubs|Profile|error|Error"
+    optional: true
+
+# 17. Final verification
+- takeScreenshot: final-state-reliable

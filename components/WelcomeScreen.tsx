@@ -114,7 +114,7 @@ export function WelcomeScreen({
             accessibilityLabel="Get Started"
             accessibilityHint="Start the sign up process to create a new tennis club account"
             activeOpacity={0.8}
-            testID="primary-button"
+            testID="get-started-button"
           >
             <ThemedText style={styles.primaryButtonText}>
               Get Started
@@ -132,7 +132,7 @@ export function WelcomeScreen({
               accessibilityLabel="Sign In"
               accessibilityHint="Sign in to your existing tennis club account"
               activeOpacity={0.8}
-              testID="secondary-button"
+              testID="sign-in-button"
             >
               <ThemedText style={[styles.secondaryButtonText, { color: colors.tint }]}>
                 Sign In
@@ -148,6 +148,7 @@ export function WelcomeScreen({
             accessibilityRole="button"
             accessibilityLabel="Terms of Service"
             style={styles.footerLink}
+            testID="terms-of-service-link"
           >
             <ThemedText style={[styles.footerLinkText, { color: colors.tabIconDefault }]}>
               Terms of Service
@@ -163,6 +164,7 @@ export function WelcomeScreen({
             accessibilityRole="button"
             accessibilityLabel="Privacy Policy"
             style={styles.footerLink}
+            testID="privacy-policy-link"
           >
             <ThemedText style={[styles.footerLinkText, { color: colors.tabIconDefault }]}>
               Privacy Policy

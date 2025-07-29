@@ -8,7 +8,7 @@ import {
   RefreshControl,
 } from 'react-native';
 import { useColorScheme } from '@/hooks/useColorScheme';
-import Colors from '@/constants/Colors';
+import { Colors } from '@/constants/Colors';
 import { getMatchHistory } from '@/services/matchService';
 import { Match } from '@/lib/supabase';
 import { TennisScoreDisplay } from './TennisScoreDisplay';

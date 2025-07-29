@@ -1,0 +1,65 @@
+appId: com.anonymous.tennis-club
+name: "Debug Signup Result"
+---
+
+# Test signup and check what happens after submit
+- launchApp:
+    clearState: true
+- waitForAnimationToEnd
+
+# Quick signup
+- tapOn: "Get Started"
+- tapOn: "Sign up"
+- tapOn: "Sign up with Email"
+
+# Fill form with unique email
+- tapOn:
+    id: "full-name-input"
+- inputText: "Debug User"
+
+- tapOn:
+    id: "email-input"
+- inputText: "debug${TIMESTAMP}@example.com"
+
+- tapOn:
+    id: "password-input"
+- inputText: "DebugPass123!"
+
+- tapOn:
+    id: "confirm-password-input"
+- inputText: "DebugPass123!"
+
+- tapOn:
+    id: "terms-checkbox"
+
+# Take screenshot before submit
+- takeScreenshot: before-submit
+
+# Submit and wait
+- tapOn:
+    id: "create-account-button"
+- waitForAnimationToEnd
+
+# Take screenshot immediately after
+- takeScreenshot: after-submit-immediate
+
+# Wait longer for any async operations
+- waitForAnimationToEnd
+
+# Take screenshot after longer wait
+- takeScreenshot: after-submit-delayed
+
+# Check for error messages
+- assertVisible:
+    text: "error|Error|failed|Failed|invalid|Invalid"
+    optional: true
+
+# Check for success indicators  
+- assertVisible:
+    text: "My Clubs|Welcome|Profile|Clubs"
+    optional: true
+    
+# Check if still on signup form
+- assertVisible:
+    text: "Create Account|Full Name"
+    optional: true

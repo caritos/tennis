@@ -1,0 +1,62 @@
+appId: com.anonymous.tennis-club
+name: "Test Navigation Fix After Account Creation"
+---
+
+# Clear app state first
+- clearState
+
+# Launch app fresh
+- launchApp
+- waitForAnimationToEnd
+
+# Should see welcome screen
+- assertVisible: "Welcome to Tennis Club"
+
+# Navigate to sign up
+- tapOn: "Get Started"
+- waitForAnimationToEnd
+
+# Should see sign up options
+- assertVisible: "Sign up with Email"
+- tapOn: "Sign up with Email"
+- waitForAnimationToEnd
+
+# Fill out signup form with unique email
+- tapOn: "Full Name"
+- inputText: "Navigation Test User"
+
+- tapOn: "Email Address"
+- inputText: "navtest${TIMESTAMP}@example.com"
+
+- tapOn: "Password"
+- inputText: "TestPass123!"
+
+- tapOn: "Confirm Password"
+- inputText: "TestPass123!"
+
+# Optional phone number - skip
+
+# Agree to terms
+- tapOn:
+    id: "terms-checkbox"
+
+# Create account
+- tapOn: "Create Account"
+
+# Wait for navigation to complete
+- waitForAnimationToEnd
+
+# Wait for auth state and navigation (may take a few seconds)
+- waitForAnimationToEnd
+- assertVisible:
+    text: "My Clubs|Profile"
+
+# VERIFY: Should now be on home screen (tabs), not signup screen
+- assertNotVisible: 
+    text: "Create Account"
+    
+- assertVisible:
+    text: "My Clubs|Profile"
+    
+# Take screenshot to verify
+- takeScreenshot: navigation-success

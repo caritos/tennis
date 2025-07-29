@@ -1,0 +1,50 @@
+appId: com.anonymous.tennis-club
+---
+# Successful Sign Up Test
+# Creates a new account and verifies navigation to home screen
+
+- launchApp:
+    clearState: true
+
+# Navigate to sign up
+- tapOn: "Get Started"
+- tapOn: "Sign up"
+- tapOn: "Sign up with Email"
+
+# Fill form with unique email
+- tapOn:
+    id: "full-name-input"
+- inputText: "E2E Test User"
+
+- tapOn:
+    id: "email-input"
+- inputText: "e2e.test.unique99@example.com"
+
+- tapOn:
+    id: "password-input"
+- inputText: "TestPass123!"
+
+- tapOn:
+    id: "confirm-password-input"
+- inputText: "TestPass123!"
+
+- tapOn:
+    id: "phone-input"
+- inputText: "5559998888"
+
+- tapOn:
+    id: "terms-checkbox"
+
+# Submit and wait
+- tapOn:
+    id: "create-account-button"
+
+# Wait for navigation with timeout
+- waitForAnimationToEnd
+
+# Check for success indicators
+- assertVisible:
+    text: "My Clubs|Nearby Clubs|Creating"
+
+# Take screenshot of result
+- takeScreenshot: "signup-result"

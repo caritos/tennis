@@ -37,21 +37,6 @@ export default function SignUpPage() {
     setIsLoading(false);
   };
 
-  const handleGoogleSignUp = async () => {
-    console.log('Google sign up pressed');
-    setIsLoading(true);
-    
-    try {
-      // TODO: Implement Google Sign In
-      // For now, simulate success and go to main app
-      setTimeout(() => {
-        router.replace('/(tabs)');
-      }, 1000);
-    } catch (error) {
-      console.error('Google sign up error:', error);
-      setIsLoading(false);
-    }
-  };
 
   const handleSignInPress = () => {
     console.log('Sign in pressed - navigating to sign in');
@@ -74,7 +59,6 @@ export default function SignUpPage() {
       onEmailSignUp={handleEmailSignUp}
       onAppleSignUpSuccess={handleAppleSignUpSuccess}
       onAppleSignUpError={handleAppleSignUpError}
-      onGoogleSignUp={handleGoogleSignUp}
       onSignInPress={handleSignInPress}
       onTermsPress={handleTermsPress}
       onPrivacyPress={handlePrivacyPress}

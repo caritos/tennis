@@ -1,0 +1,37 @@
+appId: com.anonymous.tennis-club
+name: "Investigate Current Sign In UI"
+---
+
+# Check what the current Sign In flow looks like
+- launchApp:
+    clearState: true
+- waitForAnimationToEnd
+
+# Take screenshot of welcome screen
+- takeScreenshot: current-welcome-screen
+
+# Navigate through Sign In flow to see current UI
+- tapOn: "Get Started"
+- waitForAnimationToEnd
+
+# Take screenshot of signup options page
+- takeScreenshot: current-signup-options
+
+# Look for sign in option
+- assertVisible:
+    text: "Sign In|Already have an account"
+    optional: true
+
+# Try to find sign in link/button
+- tapOn:
+    text: "Sign In"
+    optional: true
+
+- takeScreenshot: after-signin-tap
+
+# Check if we're on sign in screen
+- assertVisible:
+    text: "Welcome back|Sign In|Email|Password"
+    optional: true
+
+- takeScreenshot: current-signin-screen

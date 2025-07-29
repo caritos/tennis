@@ -1,0 +1,33 @@
+appId: com.anonymous.tennis-club
+---
+# Manual Sign In Check
+# Navigate to sign in and take screenshots
+
+- launchApp
+
+# Go to sign in
+- tapOn: "Get Started"
+- tapOn: "Sign In"
+
+# Take screenshot of sign in form
+- takeScreenshot: "signin-form"
+
+# Try to sign in with test account
+- tapOn:
+    id: "email-input"
+- inputText: "test@example.com"
+
+- tapOn:
+    id: "password-input"
+- inputText: "Test123!"
+
+- takeScreenshot: "signin-filled"
+
+# Try to submit
+- tapOn:
+    id: "sign-in-button"
+
+# Wait and screenshot result
+- waitForAnimationToEnd
+    
+- takeScreenshot: "signin-result"

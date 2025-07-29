@@ -38,21 +38,6 @@ export default function SignInPage() {
     setIsLoading(false);
   };
 
-  const handleGoogleSignIn = async () => {
-    console.log('Google sign in pressed');
-    setIsLoading(true);
-    
-    try {
-      // TODO: Implement Google Sign In
-      // For now, simulate success and go to main app
-      setTimeout(() => {
-        router.replace('/(tabs)');
-      }, 1000);
-    } catch (error) {
-      console.error('Google sign in error:', error);
-      setIsLoading(false);
-    }
-  };
 
   const handleSignUpPress = () => {
     console.log('Sign up pressed - navigating to sign up');
@@ -71,6 +56,7 @@ export default function SignInPage() {
             onPress={handleBack}
             accessibilityRole="button"
             accessibilityLabel="Back"
+            testID="back-button"
           >
             <Ionicons 
               name="chevron-back" 
@@ -106,6 +92,7 @@ export default function SignInPage() {
               ]}
               onPress={handleEmailSignIn}
               disabled={isLoading}
+              testID="email-signin-button"
             >
               <ThemedText style={styles.signInButtonText}>
                 📧 Continue with Email
@@ -137,18 +124,6 @@ export default function SignInPage() {
               </TouchableOpacity>
             )}
 
-            <TouchableOpacity
-              style={[
-                styles.signInButton,
-                { backgroundColor: colors.background, borderColor: colors.tabIconDefault }
-              ]}
-              onPress={handleGoogleSignIn}
-              disabled={isLoading}
-            >
-              <ThemedText style={styles.signInButtonText}>
-                📱 Continue with Google
-              </ThemedText>
-            </TouchableOpacity>
           </View>
 
           {/* Sign Up Link */}
@@ -159,6 +134,7 @@ export default function SignInPage() {
             <TouchableOpacity
               onPress={handleSignUpPress}
               disabled={isLoading}
+              testID="signup-link"
             >
               <ThemedText style={[styles.signUpLink, { color: colors.tint }]}>
                 Sign Up

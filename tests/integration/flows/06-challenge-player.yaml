@@ -1,0 +1,77 @@
+appId: com.anonymous.tennis-club
+---
+# Challenge Player Flow E2E Test
+# Tests: Club Details → Rankings → Challenge → Fill Details → Send
+
+# Assume user is signed in and in a club
+- launchApp
+
+# Navigate to a club
+- assertVisible: "My Clubs"
+- tapOn:
+    text: ".*Club.*"
+    index: 0
+
+# Club details screen - scroll to rankings
+- scrollUntilVisible:
+    element: "Rankings"
+    direction: DOWN
+
+# Tap on rankings section
+- tapOn: "View All"
+
+# Rankings screen
+- assertVisible: "Rankings"
+- assertVisible: "Unified singles and doubles"
+
+# Find a player to challenge
+- scrollUntilVisible:
+    element: "Challenge"
+    direction: DOWN
+    timeout: 5000
+
+# Tap challenge button
+- tapOn: "Challenge"
+
+# Challenge flow - Step 1: Player selection
+- assertVisible: "Challenge Player"
+- assertVisible: "Selected Player"
+- tapOn: "Next"
+
+# Step 2: Match details
+- assertVisible: "Match Details"
+- assertVisible: "Match Type"
+- assertVisible: "Proposed Date"
+
+# Select doubles
+- tapOn: "Doubles"
+
+# Set date (use tomorrow)
+- tapOn: "Tomorrow"
+
+# Add time preference
+- assertVisible: "Time Preference"
+- tapOn:
+    id: "time-input"
+- inputText: "4:00 PM"
+
+# Add message
+- tapOn:
+    id: "message-input"
+- inputText: "Looking forward to a great match!"
+
+- tapOn: "Next"
+
+# Step 3: Confirm
+- assertVisible: "Confirm Challenge"
+- assertVisible: "Doubles"
+- assertVisible: "Tomorrow"
+- assertVisible: "4:00 PM"
+
+- tapOn: "Send Challenge"
+
+# Wait for send
+- waitForAnimationToEnd
+
+# Should return to rankings
+- assertVisible: "Challenge sent successfully"

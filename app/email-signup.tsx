@@ -103,7 +103,24 @@ export default function EmailSignUpPage() {
       );
       
       console.log('User created successfully:', authData.user.id);
-      console.log('=== NAVIGATING TO INDEX ===');
+      console.log('=== WAITING FOR AUTH STATE UPDATE ===');
+      
+      // Wait for auth state to update in the context before navigating
+      // This ensures the useAuth hook will return the correct user when index.tsx runs
+      await new Promise(resolve => {
+        const checkAuthUpdate = () => {
+          supabase.auth.getSession().then(({ data: { session } }) => {
+            if (session?.user?.id === authData.user?.id) {
+              console.log('=== AUTH STATE CONFIRMED - NAVIGATING TO INDEX ===');
+              resolve(true);
+            } else {
+              console.log('Auth state not updated yet, checking again...');
+              setTimeout(checkAuthUpdate, 100);
+            }
+          });
+        };
+        checkAuthUpdate();
+      });
       
       // Navigate to index route, which will handle routing to tabs after auth is ready
       router.replace('/');

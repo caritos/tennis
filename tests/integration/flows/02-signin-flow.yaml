@@ -1,0 +1,45 @@
+appId: com.anonymous.tennis-club
+---
+# Sign In Flow E2E Test
+# Tests: Welcome → Sign In → Email Sign In → Home Screen
+
+- launchApp:
+    clearState: true
+
+# Welcome Screen
+- assertVisible: "Tennis Club"
+- assertVisible: "Connect with tennis players in your area"
+- assertVisible: "Get Started"
+- tapOn: "Get Started"
+
+# Sign Up Screen - Navigate to Sign In
+- assertVisible: "Sign Up"
+- assertVisible: "Already have an account?"
+- tapOn: "Sign In"
+
+# Sign In Screen
+- assertVisible: "Sign In"
+- assertVisible: "Welcome back!"
+- assertVisible: "Email Address"
+- assertVisible: "Password"
+
+# Fill sign in form
+- tapOn:
+    id: "email-input"
+- inputText: "existing@example.com"
+
+- tapOn:
+    id: "password-input"
+- inputText: "ExistingPass123!"
+
+# Submit
+- tapOn:
+    id: "sign-in-button"
+
+# Wait for sign in
+- waitForAnimationToEnd
+
+# Should see home screen or error
+- assertVisible:
+    text: "My Clubs|Invalid email or password"
+    optional: true

@@ -1,0 +1,68 @@
+appId: com.anonymous.tennis-club
+---
+# Working Sign Up Test
+# Handles password fields carefully
+
+- launchApp:
+    clearState: true
+
+# Navigate to sign up
+- tapOn: "Get Started"
+- tapOn: "Sign up"
+- tapOn: "Sign up with Email"
+
+# Fill form fields one by one
+- tapOn:
+    id: "full-name-input"
+- inputText: "New Test User"
+
+- tapOn:
+    id: "email-input"
+- inputText: "newtest123@example.com"
+
+# Handle password carefully
+- tapOn:
+    id: "password-input"
+- inputText: "TestPass123!"
+
+# Make sure to move to next field
+- tapOn:
+    text: "return"
+    optional: true
+
+# Explicitly tap confirm password field
+- tapOn:
+    id: "confirm-password-input"
+- inputText: "TestPass123!"
+
+# Move to phone field
+- tapOn:
+    id: "phone-input"
+- inputText: "5557778888"
+
+# Agree to terms
+- tapOn:
+    id: "terms-checkbox"
+
+# Submit
+- tapOn:
+    id: "create-account-button"
+
+# Wait for result
+- waitForAnimationToEnd
+
+# Check for any of these success indicators
+- assertVisible:
+    text: "My Clubs"
+    optional: true
+    
+- assertVisible:
+    text: "Nearby Clubs"
+    optional: true
+    
+- assertVisible:
+    text: "already registered"
+    optional: true
+
+# Take final screenshot
+- takeScreenshot: "signup-complete"

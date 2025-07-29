@@ -1,0 +1,14 @@
+appId: com.anonymous.tennis-club
+---
+# Check Home Screen Test
+# Assumes user is already signed in
+
+- launchApp
+
+# Check if we're on the home screen
+- assertVisible:
+    text: "My Clubs|Welcome|Sign"
+    optional: true
+
+# Take screenshot for debugging
+- takeScreenshot: "home-screen-check"

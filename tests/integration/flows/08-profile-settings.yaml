@@ -1,0 +1,66 @@
+appId: com.anonymous.tennis-club
+---
+# Profile and Settings Flow E2E Test
+# Tests: Profile Tab → View Stats → Settings → Edit Profile → Sign Out
+
+# Assume user is signed in
+- launchApp
+
+# Navigate to Profile tab
+- tapOn: "Profile"
+
+# Profile Screen
+- assertVisible: "Profile"
+- assertVisible: "Match Statistics"
+- assertVisible: "Total Matches"
+- assertVisible: "Win Rate"
+- assertVisible: "Singles"
+- assertVisible: "Doubles"
+
+# Scroll to see more sections
+- scrollUntilVisible:
+    element: "Match History"
+    direction: DOWN
+
+- assertVisible: "Match History"
+- assertVisible: "My Clubs"
+
+# Continue scrolling to settings
+- scrollUntilVisible:
+    element: "Settings"
+    direction: DOWN
+
+# Tap on Settings
+- tapOn: "Settings"
+
+# Settings Screen
+- assertVisible: "Settings"
+- assertVisible: "Contact Preferences"
+- assertVisible: "Notifications"
+- assertVisible: "Privacy"
+
+# Edit contact preference
+- tapOn: "Contact Preferences"
+- assertVisible: "Phone"
+- assertVisible: "WhatsApp"
+- assertVisible: "Text"
+- tapOn: "WhatsApp"
+
+# Go back
+- tapOn:
+    id: "back-button"
+
+# Test Sign Out
+- scrollUntilVisible:
+    element: "Sign Out"
+    direction: DOWN
+
+- tapOn: "Sign Out"
+
+# Confirm dialog
+- assertVisible: "Are you sure you want to sign out?"
+- tapOn: "Sign Out"
+
+# Should return to welcome screen
+- waitForAnimationToEnd
+- assertVisible: "Welcome to Tennis Club"

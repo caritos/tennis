@@ -1,0 +1,86 @@
+appId: com.anonymous.tennis-club
+---
+# Record Match Flow E2E Test
+# Tests: Club Details → Record Match → Fill Form → Save → View in History
+
+# Assume user is signed in and in a club
+- launchApp
+
+# Navigate to a club
+- assertVisible: "My Clubs"
+- tapOn:
+    text: ".*Club.*"
+    index: 0
+
+# Club details screen
+- assertVisible: "Record Match"
+- tapOn: "Record Match"
+
+# Match Recording Form
+- assertVisible: "Record a Match"
+- assertVisible: "Match Type"
+- assertVisible: "Singles"
+- assertVisible: "Doubles"
+
+# Select Singles (should be default)
+- assertVisible:
+    id: "singles-radio"
+    
+# Select opponent
+- assertVisible: "Select Opponent"
+- tapOn: "Select Opponent"
+
+# Opponent selection dropdown
+- assertVisible: "Select from club members"
+- tapOn:
+    text: "John Doe|Jane Smith|Mike Wilson"
+    index: 0
+
+# Add score
+- assertVisible: "Match Score"
+- tapOn: "Add Set"
+
+# Enter first set score
+- tapOn:
+    id: "my-score-0"
+- inputText: "6"
+
+- tapOn:
+    id: "opponent-score-0"
+- inputText: "4"
+
+# Add second set
+- tapOn: "Add Set"
+
+- tapOn:
+    id: "my-score-1"
+- inputText: "7"
+
+- tapOn:
+    id: "opponent-score-1"
+- inputText: "6"
+
+# Enter tiebreak score
+- assertVisible: "Tiebreak"
+- tapOn:
+    id: "tiebreak-my-score-1"
+- inputText: "7"
+
+- tapOn:
+    id: "tiebreak-opponent-score-1"  
+- inputText: "5"
+
+# Save match
+- tapOn: "Save Match"
+
+# Wait for save
+- waitForAnimationToEnd
+
+# Should return to club details
+- assertVisible: "Recent Matches"
+
+# Navigate to profile to check match history
+- tapOn: "Profile"
+- assertVisible: "Match History"
+- assertVisible: "6-4"
+- assertVisible: "7-6"

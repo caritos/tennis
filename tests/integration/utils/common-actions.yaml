@@ -1,0 +1,84 @@
+# Common E2E Test Actions and Patterns
+# These can be included/referenced in other test flows
+
+# Reliable app launch with clear state
+- name: "Launch Fresh App"
+  steps:
+    - launchApp:
+        clearState: true
+    - waitForAnimationToEnd
+
+# Navigate from welcome to signup form
+- name: "Navigate to Email Signup"
+  steps:
+    - tapOn:
+        id: "get-started-button"
+    - waitForAnimationToEnd
+    - tapOn:
+        id: "email-signup-button" 
+    - waitForAnimationToEnd
+
+# Form input with proper timing for E2E
+- name: "Fill Signup Form Safely"
+  steps:
+    - tapOn:
+        id: "full-name-input"
+    - inputText: "${FULL_NAME}"
+    - waitForAnimationToEnd
+    
+    - tapOn:
+        id: "email-input"
+    - inputText: "${EMAIL}"
+    - waitForAnimationToEnd
+    
+    - tapOn:
+        id: "password-input"
+    - inputText: "${PASSWORD}"
+    - waitForAnimationToEnd
+    
+    - tapOn:
+        id: "confirm-password-input"
+    - inputText: "${PASSWORD}"
+    - waitForAnimationToEnd
+    
+    # Optional phone number
+    - tapOn:
+        id: "phone-input"
+        optional: true
+    - inputText: "${PHONE}"
+      optional: true
+    
+    # Dismiss keyboard and scroll
+    - scroll
+    
+    # Accept terms
+    - tapOn:
+        id: "terms-checkbox"
+    
+    # Final scroll to reveal submit button
+    - scroll
+
+# Error validation patterns
+- name: "Check for Form Errors"
+  steps:
+    - assertVisible:
+        id: "general-error"
+        optional: true
+    - assertVisible:
+        id: "email-error"
+        optional: true  
+    - assertVisible:
+        id: "password-error"
+        optional: true
+    - assertVisible:
+        id: "confirm-password-error"
+        optional: true
+
+# Success navigation validation
+- name: "Verify Successful Navigation"
+  steps:
+    - assertVisible:
+        text: "My Clubs|Profile|Clubs"
+        timeout: 10000
+    - assertNotVisible:
+        text: "Create Account|Sign Up"

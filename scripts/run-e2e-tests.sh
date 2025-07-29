@@ -57,7 +57,7 @@ run_test() {
 # Parse command line arguments
 if [ $# -eq 0 ]; then
     # Run all tests
-    echo "Running all tests in e2e/flows/"
+    echo "Running all tests in tests/integration/flows/"
     
     failed_tests=0
     total_tests=0

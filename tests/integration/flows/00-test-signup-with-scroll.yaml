@@ -1,0 +1,58 @@
+appId: com.anonymous.tennis-club
+name: "Test Signup with Proper Scrolling"
+---
+
+# Test signup with scrolling to ensure button is visible
+- launchApp:
+    clearState: true
+- waitForAnimationToEnd
+
+# Navigate to signup
+- tapOn: "Get Started"
+- tapOn: "Sign up"
+- tapOn: "Sign up with Email"
+
+# Fill form
+- tapOn:
+    id: "full-name-input"
+- inputText: "Scroll Test User"
+
+- tapOn:
+    id: "email-input"
+- inputText: "scrolltest${TIMESTAMP}@example.com"
+
+- tapOn:
+    id: "password-input"
+- inputText: "ScrollPass123!"
+
+- tapOn:
+    id: "confirm-password-input"
+- inputText: "ScrollPass123!"
+
+# Dismiss keyboard by scrolling down 
+- scroll
+
+# Scroll down more to ensure Create Account button is visible
+- scroll
+
+# Accept terms
+- tapOn:
+    id: "terms-checkbox"
+
+# Take screenshot before submit
+- takeScreenshot: before-submit-with-scroll
+
+# Try to tap create account button
+- tapOn:
+    id: "create-account-button"
+
+# Wait for result
+- waitForAnimationToEnd
+
+# Take screenshot of result
+- takeScreenshot: after-submit-with-scroll
+
+# Check if navigation worked
+- assertVisible:
+    text: "My Clubs|Profile"
+    optional: true

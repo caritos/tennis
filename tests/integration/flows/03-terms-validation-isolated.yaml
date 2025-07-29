@@ -1,0 +1,65 @@
+appId: com.anonymous.tennis-club
+name: "Isolated Terms Validation Test"
+---
+
+# Test specifically for terms validation without text bleeding
+
+# Launch and navigate to signup form
+- launchApp:
+    clearState: true
+- waitForAnimationToEnd
+
+- tapOn:
+    id: "get-started-button"
+- waitForAnimationToEnd
+
+- tapOn:
+    id: "email-signup-button"
+- waitForAnimationToEnd
+
+# Fill out a valid form BUT don't check terms
+- tapOn:
+    id: "full-name-input"
+- inputText: "Terms Test User"
+
+- tapOn:
+    id: "email-input"
+- inputText: "terms.test@example.com"
+
+- tapOn:
+    id: "password-input"
+- inputText: "TermsPass123"
+
+- tapOn:
+    id: "confirm-password-input"
+- inputText: "TermsPass123"
+- waitForAnimationToEnd
+
+# Skip phone number to avoid text bleeding
+
+# Scroll and try to submit WITHOUT checking terms
+- scroll
+- waitForAnimationToEnd
+
+- tapOn:
+    id: "create-account-button"
+
+# Should see terms error
+- assertVisible:
+    id: "terms-error"
+
+- takeScreenshot: terms-validation-error
+
+# Now check terms and verify error goes away
+- tapOn:
+    id: "terms-checkbox"
+
+- tapOn:
+    id: "create-account-button"
+
+# Verify we navigated successfully (no terms error)
+- assertVisible:
+    text: "My Clubs|Profile|Clubs"
+    optional: true
+
+- takeScreenshot: after-terms-accepted

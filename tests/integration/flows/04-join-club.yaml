@@ -1,0 +1,33 @@
+appId: com.anonymous.tennis-club
+---
+# Join Club Flow E2E Test
+# Tests: Home → Nearby Clubs → Join Club → View Member Status
+
+# Assume user is already signed in
+- launchApp
+
+# Verify we're on clubs screen
+- assertVisible: "My Clubs"
+- assertVisible: "Nearby Clubs"
+
+# Scroll to find a club to join
+- scrollUntilVisible:
+    element: "Join"
+    direction: DOWN
+    timeout: 10000
+
+# Join the first available club
+- tapOn: "Join"
+
+# Wait for join action
+- waitForAnimationToEnd
+
+# Club should move to "My Clubs" section
+- assertVisible: "My Clubs"
+- scrollUntilVisible:
+    element: "Joined"
+    direction: UP
+    timeout: 5000
+
+# Verify joined status
+- assertVisible: "Joined"

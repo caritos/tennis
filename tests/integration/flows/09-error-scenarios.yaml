@@ -1,0 +1,131 @@
+appId: com.anonymous.tennis-club
+---
+# Error Scenarios E2E Test
+# Tests various error conditions and edge cases
+
+- launchApp:
+    clearState: true
+
+# Test 1: Sign up with existing email
+- tapOn: "Get started"
+- tapOn: "Sign up"
+- tapOn: "Sign up with Email"
+
+- tapOn:
+    id: "full-name-input"
+- inputText: "Duplicate User"
+
+- tapOn:
+    id: "email-input"
+- inputText: "existing@example.com"
+
+- tapOn:
+    id: "password-input"
+- inputText: "TestPass123!"
+
+- tapOn:
+    id: "confirm-password-input"
+- inputText: "TestPass123!"
+
+- tapOn:
+    id: "terms-checkbox"
+
+- tapOn:
+    id: "create-account-button"
+
+# Should see error
+- waitForAnimationToEnd
+- assertVisible: "already registered"
+
+# Test 2: Password mismatch
+- clearText:
+    id: "confirm-password-input"
+- tapOn:
+    id: "confirm-password-input"
+- inputText: "DifferentPass123!"
+
+- tapOn:
+    id: "create-account-button"
+
+- assertVisible: "Passwords do not match"
+
+# Test 3: Invalid email format
+- clearText:
+    id: "email-input"
+- tapOn:
+    id: "email-input"
+- inputText: "notanemail"
+
+- tapOn:
+    id: "create-account-button"
+
+- assertVisible: "valid email"
+
+# Test 4: Short password
+- clearText:
+    id: "password-input"
+- tapOn:
+    id: "password-input"
+- inputText: "123"
+
+- clearText:
+    id: "confirm-password-input"
+- tapOn:
+    id: "confirm-password-input"
+- inputText: "123"
+
+- tapOn:
+    id: "create-account-button"
+
+- assertVisible: "at least 6 characters"
+
+# Test 5: Record match without opponent
+- back
+- back
+- tapOn: "Sign In"
+
+# Sign in with test account
+- tapOn:
+    id: "email-input"
+- inputText: "test@example.com"
+
+- tapOn:
+    id: "password-input"
+- inputText: "TestPass123!"
+
+- tapOn:
+    id: "sign-in-button"
+
+- waitForAnimationToEnd
+
+# Navigate to match recording
+- tapOn:
+    text: ".*Club.*"
+    index: 0
+    optional: true
+
+- tapOn: "Record Match"
+
+# Try to save without selecting opponent
+- tapOn: "Save Match"
+
+- assertVisible: "select an opponent"
+
+# Test 6: Invalid tennis score
+- tapOn: "Select Opponent"
+- tapOn:
+    text: "John Doe|Jane Smith"
+    index: 0
+
+- tapOn: "Add Set"
+- tapOn:
+    id: "my-score-0"
+- inputText: "8"
+
+- tapOn:
+    id: "opponent-score-0"
+- inputText: "6"
+
+- tapOn: "Save Match"
+
+- assertVisible: "Invalid score"

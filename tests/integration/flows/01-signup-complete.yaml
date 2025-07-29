@@ -1,0 +1,80 @@
+appId: com.anonymous.tennis-club
+---
+# Complete Sign Up Flow E2E Test
+# Tests: Welcome → Sign Up → Email Sign Up → Create Account → Home Screen
+
+- launchApp:
+    clearState: true
+
+# Welcome Screen
+- assertVisible: "Tennis Club"
+- assertVisible: "Connect with tennis players in your area"
+- assertVisible: "Get Started"
+- tapOn:
+    id: "get-started-button"
+
+# Sign Up Screen
+- assertVisible: "Sign Up"
+- assertVisible: "Join the tennis community!"
+- assertVisible: "Sign up with Email"
+- tapOn:
+    id: "email-signup-button"
+
+# Email Sign Up Form
+- assertVisible: "Create Account"
+- assertVisible: "Full Name"
+- assertVisible: "Email Address"
+- assertVisible: "Password"
+- assertVisible: "Confirm Password"
+
+# Fill out the form
+- tapOn:
+    id: "full-name-input"
+- inputText: "Test User E2E"
+
+- tapOn:
+    id: "email-input"
+- inputText: "testusere2e@example.com"
+
+- tapOn:
+    id: "password-input"
+- inputText: "TestPass123"
+
+- tapOn:
+    id: "confirm-password-input"
+- inputText: "TestPass123"
+- waitForAnimationToEnd
+
+- tapOn:
+    id: "phone-input"
+- inputText: "5551234567"
+
+# Dismiss keyboard and scroll to reveal lower form elements
+- scroll
+
+# Agree to terms
+- tapOn:
+    id: "terms-checkbox"
+
+# Scroll to ensure Create Account button is visible
+- scroll
+
+# Submit form
+- tapOn:
+    id: "create-account-button"
+
+# Wait for account creation
+- waitForAnimationToEnd
+
+# Verify we're on the home screen (clubs tab)
+- assertVisible: "My Clubs"
+- assertVisible: "Nearby Clubs"
+
+# Verify we can see the Record Match button
+- assertVisible: "Record Match"
+
+# Test navigation to profile
+- tapOn: "Profile"
+- assertVisible: "Test User E2E"
+- assertVisible: "Profile"
+- assertVisible: "Match History"
