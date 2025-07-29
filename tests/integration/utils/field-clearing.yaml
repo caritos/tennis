@@ -1,0 +1,44 @@
+# Reusable field clearing patterns for Maestro E2E tests
+# These patterns solve the text input bleeding issue on iOS
+
+# Pattern 1: Clear field with existing content (RECOMMENDED)
+# Use this when you need to replace text in a field that already has content
+- name: "Clear Field with Content"
+  steps:
+    - longPressOn:
+        id: "${FIELD_ID}"
+    - tapOn: "Select All"
+    - eraseText
+    - waitForAnimationToEnd
+
+# Pattern 2: Clear field with direct erase (for newer content)
+# Use this for fields that were just filled in the same test
+- name: "Clear Recent Content" 
+  steps:
+    - tapOn:
+        id: "${FIELD_ID}"
+    - eraseText: ${CHARACTER_COUNT}
+    - waitForAnimationToEnd
+
+# Pattern 3: Safe field input with clearing
+# Complete pattern for reliable field replacement
+- name: "Replace Field Content"
+  steps:
+    - longPressOn:
+        id: "${FIELD_ID}"
+    - tapOn: "Select All"
+    - eraseText
+    - waitForAnimationToEnd
+    - inputText: "${NEW_TEXT}"
+    - waitForAnimationToEnd
+
+# Pattern 4: Fallback clearing method
+# If Select All is not available, try multiple erases
+- name: "Fallback Clear Field"
+  steps:
+    - tapOn:
+        id: "${FIELD_ID}"
+    - eraseText: 50
+    - waitForAnimationToEnd
+    - eraseText: 50  # Double erase for safety
+    - waitForAnimationToEnd

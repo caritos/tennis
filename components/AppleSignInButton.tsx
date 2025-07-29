@@ -1,8 +1,11 @@
 import React from 'react';
 import { Platform, Alert } from 'react-native';
 import * as AppleAuthentication from 'expo-apple-authentication';
+import * as Device from 'expo-device';
+import Constants from 'expo-constants';
 import { supabase } from '@/lib/supabase';
 import { getAuthErrorMessage } from '@/utils/errorHandling';
+import { logAppleSignInDebugInfo, isAppleSignInSupported } from '@/utils/appleSignInDebug';
 
 interface AppleSignInButtonProps {
   onSuccess?: () => void;
@@ -20,11 +23,14 @@ export default function AppleSignInButton({
     try {
       console.log('AppleSignInButton: Starting Apple Sign In...');
       
-      // Check if Apple Authentication is available
-      const isAvailable = await AppleAuthentication.isAvailableAsync();
-      if (!isAvailable) {
-        const errorMessage = 'Apple Sign In is not available on this device';
-        console.error('AppleSignInButton:', errorMessage);
+      // Log comprehensive debug information for troubleshooting
+      await logAppleSignInDebugInfo();
+      
+      // Quick support check with detailed error message
+      const supportCheck = await isAppleSignInSupported();
+      if (!supportCheck.supported) {
+        const errorMessage = supportCheck.reason || 'Apple Sign In is not supported in current environment';
+        console.error('AppleSignInButton: Support check failed:', errorMessage);
         onError?.(errorMessage);
         return;
       }
@@ -112,11 +118,39 @@ export default function AppleSignInButton({
 
     } catch (error: any) {
       console.error('AppleSignInButton: Apple Sign In failed:', error);
+      console.error('AppleSignInButton: Error details:', {
+        code: error?.code,
+        message: error?.message,
+        domain: error?.domain,
+        userInfo: error?.userInfo
+      });
       
       let errorMessage = 'Apple Sign In failed';
       
-      if (error?.code === 'ERR_CANCELED') {
-        errorMessage = 'Apple Sign In was cancelled';
+      // Handle specific Apple Authentication error codes
+      if (error?.code === 'ERR_CANCELED' || error?.code === 1001) {
+        errorMessage = 'Apple Sign In was cancelled by user';
+      } else if (error?.code === 1000) {
+        errorMessage = 'Apple Sign In failed: Unknown error. Please try again or contact support.';
+      } else if (error?.code === 1002) {
+        errorMessage = 'Apple Sign In failed: Invalid response from Apple. Please try again.';
+      } else if (error?.code === 1003) {
+        errorMessage = 'Apple Sign In failed: Not handled. This device may not support Apple Sign In.';
+      } else if (error?.code === 1004) {
+        errorMessage = 'Apple Sign In failed: Request failed. Please check your internet connection.';
+      } else if (error?.code === -7003) {
+        // AKAuthenticationError Code=-7003 (common configuration issue)
+        errorMessage = 'Apple Sign In configuration error. Please ensure your app is properly configured in Apple Developer Portal.';
+      } else if (error?.message?.includes('Network request failed')) {
+        errorMessage = 'Apple Sign In failed: Network error. Please check your internet connection and try again.';
+      } else if (error?.message?.includes('Invalid login credentials')) {
+        errorMessage = 'Apple Sign In failed: Invalid credentials. Please try signing in again.';
+      } else if (error?.message?.includes('authorization attempt failed')) {
+        if (!Device.isDevice) {
+          errorMessage = 'Apple Sign In requires a real iOS device. Testing on a simulator is not supported.';
+        } else {
+          errorMessage = 'Apple Sign In authorization failed. Please ensure you are signed into iCloud and try again. If the problem persists, please contact support.';
+        }
       } else if (error?.message) {
         errorMessage = getAuthErrorMessage(error);
       }

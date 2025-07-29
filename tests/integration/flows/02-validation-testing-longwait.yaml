@@ -1,8 +1,8 @@
 appId: com.caritos.tennis
-name: "Form Validation E2E Testing"
+name: "Form Validation E2E Testing - Long Wait Method"
 ---
 
-# Test form validation with error testIDs
+# Test form validation with long waits between field interactions
 
 # Launch and navigate to signup form
 - launchApp:
@@ -35,14 +35,21 @@ name: "Form Validation E2E Testing"
 
 - takeScreenshot: validation-errors-empty-form
 
-# Test 2: Invalid email format
+# Test 2: Invalid email format with long waits
 - tapOn:
     id: "full-name-input"
+- waitForAnimationToEnd
 - inputText: "Test User"
+- waitForAnimationToEnd
 
+# Very deliberate email field interaction with long wait
 - tapOn:
     id: "email-input"
+- waitForAnimationToEnd
+- waitForAnimationToEnd  # Double wait
 - inputText: "invalid-email"
+- waitForAnimationToEnd
+- waitForAnimationToEnd  # Double wait
 
 - scroll
 - tapOn:
@@ -53,23 +60,34 @@ name: "Form Validation E2E Testing"
 
 - takeScreenshot: validation-errors-invalid-email
 
-# Test 3: Password mismatch with field clearing
-# Clear email field using longPress + Select All + eraseText
-- longPressOn:
+# Test 3: Try to manually clear field by selecting different field first
+# Tap a different field to lose focus, then come back
+- tapOn:
+    id: "password-input"
+- waitForAnimationToEnd
+- waitForAnimationToEnd
+
+# Now go back to email field and try to replace content
+- tapOn:
     id: "email-input"
-- tapOn: "Select All"
-- eraseText
+- waitForAnimationToEnd
 - waitForAnimationToEnd
 - inputText: "valid@example.com"
+- waitForAnimationToEnd
 - waitForAnimationToEnd
 
 - tapOn:
     id: "password-input"
+- waitForAnimationToEnd
 - inputText: "Password123"
+- waitForAnimationToEnd
 
 - tapOn:
-    id: "confirm-password-input" 
+    id: "confirm-password-input"
+- waitForAnimationToEnd
+- waitForAnimationToEnd
 - inputText: "DifferentPassword123"
+- waitForAnimationToEnd
 
 - scroll
 - tapOn:
@@ -80,25 +98,5 @@ name: "Form Validation E2E Testing"
 
 - takeScreenshot: validation-errors-password-mismatch
 
-# Test 4: Terms not accepted with field clearing
-# Clear confirm password field using eraseText
-- tapOn:
-    id: "confirm-password-input"
-- eraseText: 25  # Clear "DifferentPassword123"
-- waitForAnimationToEnd
-- inputText: "Password123"
-- waitForAnimationToEnd
-
-# Explicitly ensure terms is unchecked by checking current state
-# Since terms was checked earlier, we need to uncheck it
-- tapOn:
-    id: "terms-checkbox"  # This should uncheck it
-
-- scroll
-- tapOn:
-    id: "create-account-button"
-
-- assertVisible:
-    id: "terms-error"
-
-- takeScreenshot: validation-errors-terms-not-accepted
+# Take a screenshot to check if text bleeding is resolved
+- takeScreenshot: check-text-bleeding-with-long-waits

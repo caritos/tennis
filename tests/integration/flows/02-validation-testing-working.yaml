@@ -1,8 +1,8 @@
 appId: com.caritos.tennis
-name: "Form Validation E2E Testing"
+name: "Form Validation E2E Testing - Working Solution"
 ---
 
-# Test form validation with error testIDs
+# Test form validation with confirmed text bleeding fix
 
 # Launch and navigate to signup form
 - launchApp:
@@ -53,8 +53,7 @@ name: "Form Validation E2E Testing"
 
 - takeScreenshot: validation-errors-invalid-email
 
-# Test 3: Password mismatch with field clearing
-# Clear email field using longPress + Select All + eraseText
+# Test 3: Fix email using the confirmed working field clearing method
 - longPressOn:
     id: "email-input"
 - tapOn: "Select All"
@@ -80,20 +79,37 @@ name: "Form Validation E2E Testing"
 
 - takeScreenshot: validation-errors-password-mismatch
 
-# Test 4: Terms not accepted with field clearing
-# Clear confirm password field using eraseText
+# Test 4: Create a fresh form with everything valid except terms
+- launchApp:
+    clearState: true
+- waitForAnimationToEnd
+
+- tapOn:
+    id: "get-started-button"
+- waitForAnimationToEnd
+
+- tapOn:
+    id: "email-signup-button"
+- waitForAnimationToEnd
+
+# Fill form completely with valid data
+- tapOn:
+    id: "full-name-input"
+- inputText: "Test User"
+
+- tapOn:
+    id: "email-input"
+- inputText: "test@example.com"
+
+- tapOn:
+    id: "password-input"
+- inputText: "Password123"
+
 - tapOn:
     id: "confirm-password-input"
-- eraseText: 25  # Clear "DifferentPassword123"
-- waitForAnimationToEnd
 - inputText: "Password123"
-- waitForAnimationToEnd
 
-# Explicitly ensure terms is unchecked by checking current state
-# Since terms was checked earlier, we need to uncheck it
-- tapOn:
-    id: "terms-checkbox"  # This should uncheck it
-
+# DO NOT check terms - leave it unchecked
 - scroll
 - tapOn:
     id: "create-account-button"
@@ -102,3 +118,16 @@ name: "Form Validation E2E Testing"
     id: "terms-error"
 
 - takeScreenshot: validation-errors-terms-not-accepted
+
+# Test 5: Final successful submission
+- tapOn:
+    id: "terms-checkbox"
+- scroll
+- tapOn:
+    id: "create-account-button"
+
+# Wait for successful navigation
+- waitForAnimationToEnd:
+    timeout: 5000
+
+- takeScreenshot: successful-signup-after-validation

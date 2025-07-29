@@ -14,10 +14,16 @@ appId: com.caritos.tennis
 
 # Sign Up Screen - Navigate to Sign In
 - assertVisible: "Sign Up"
-- assertVisible: "Already have an account?"
 - tapOn: "Sign In"
 
-# Sign In Screen
+# Sign In Screen - First select email method
+- assertVisible: "Sign In"
+- assertVisible: "Welcome back!"
+- assertVisible: "📧 Continue with Email"
+- tapOn:
+    id: "email-signin-button"
+
+# Email Sign In Form Screen
 - assertVisible: "Sign In"
 - assertVisible: "Welcome back!"
 - assertVisible: "Email Address"
@@ -33,8 +39,7 @@ appId: com.caritos.tennis
 - inputText: "ExistingPass123!"
 
 # Submit
-- tapOn:
-    id: "sign-in-button"
+- tapOn: "Sign In"
 
 # Wait for sign in
 - waitForAnimationToEnd

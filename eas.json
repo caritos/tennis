@@ -1,0 +1,49 @@
+{
+  "cli": {
+    "version": ">= 7.8.0"
+  },
+  "build": {
+    "development": {
+      "developmentClient": true,
+      "distribution": "internal",
+      "ios": {
+        "resourceClass": "m-medium"
+      }
+    },
+    "preview": {
+      "distribution": "internal",
+      "ios": {
+        "simulator": true,
+        "resourceClass": "m-medium"
+      },
+      "android": {
+        "buildType": "apk",
+        "resourceClass": "medium"
+      }
+    },
+    "production": {
+      "autoIncrement": true,
+      "ios": {
+        "resourceClass": "m-medium",
+        "bundleIdentifier": "com.caritos.tennis"
+      },
+      "android": {
+        "resourceClass": "medium",
+        "buildType": "app-bundle"
+      }
+    }
+  },
+  "submit": {
+    "production": {
+      "ios": {
+        "appleId": "your-apple-developer-email@example.com",
+        "ascAppId": "your-app-store-connect-app-id",
+        "bundleIdentifier": "com.caritos.tennis"
+      },
+      "android": {
+        "serviceAccountKeyPath": "./private/google-service-account.json",
+        "track": "production"
+      }
+    }
+  }
+}

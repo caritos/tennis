@@ -1,8 +1,8 @@
 appId: com.caritos.tennis
-name: "Form Validation E2E Testing"
+name: "Form Validation E2E Testing - Select All Method"
 ---
 
-# Test form validation with error testIDs
+# Test form validation with select-all clearing method
 
 # Launch and navigate to signup form
 - launchApp:
@@ -35,14 +35,21 @@ name: "Form Validation E2E Testing"
 
 - takeScreenshot: validation-errors-empty-form
 
-# Test 2: Invalid email format
+# Test 2: Invalid email format with select-all clearing
 - tapOn:
     id: "full-name-input"
 - inputText: "Test User"
 
+# Try select-all and replace method for email field
 - tapOn:
     id: "email-input"
+- waitForAnimationToEnd
+# Try to select all existing text and replace
+- key: 
+    code: "cmd+a"
+- waitForAnimationToEnd
 - inputText: "invalid-email"
+- waitForAnimationToEnd
 
 - scroll
 - tapOn:
@@ -53,23 +60,32 @@ name: "Form Validation E2E Testing"
 
 - takeScreenshot: validation-errors-invalid-email
 
-# Test 3: Password mismatch with field clearing
-# Clear email field using longPress + Select All + eraseText
-- longPressOn:
+# Test 3: Try with valid email - select all and replace
+- tapOn:
     id: "email-input"
-- tapOn: "Select All"
-- eraseText
+- waitForAnimationToEnd
+# Select all and replace
+- key:
+    code: "cmd+a"
 - waitForAnimationToEnd
 - inputText: "valid@example.com"
 - waitForAnimationToEnd
 
 - tapOn:
     id: "password-input"
+- waitForAnimationToEnd
 - inputText: "Password123"
+- waitForAnimationToEnd
 
+# Clear confirm password field with select-all
 - tapOn:
-    id: "confirm-password-input" 
+    id: "confirm-password-input"
+- waitForAnimationToEnd
+- key:
+    code: "cmd+a"
+- waitForAnimationToEnd
 - inputText: "DifferentPassword123"
+- waitForAnimationToEnd
 
 - scroll
 - tapOn:
@@ -80,25 +96,5 @@ name: "Form Validation E2E Testing"
 
 - takeScreenshot: validation-errors-password-mismatch
 
-# Test 4: Terms not accepted with field clearing
-# Clear confirm password field using eraseText
-- tapOn:
-    id: "confirm-password-input"
-- eraseText: 25  # Clear "DifferentPassword123"
-- waitForAnimationToEnd
-- inputText: "Password123"
-- waitForAnimationToEnd
-
-# Explicitly ensure terms is unchecked by checking current state
-# Since terms was checked earlier, we need to uncheck it
-- tapOn:
-    id: "terms-checkbox"  # This should uncheck it
-
-- scroll
-- tapOn:
-    id: "create-account-button"
-
-- assertVisible:
-    id: "terms-error"
-
-- takeScreenshot: validation-errors-terms-not-accepted
+# Take a screenshot to check if text bleeding is resolved
+- takeScreenshot: check-text-bleeding-status

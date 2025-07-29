@@ -1,8 +1,8 @@
 appId: com.caritos.tennis
-name: "Form Validation E2E Testing"
+name: "Form Validation E2E Testing - EraseText Method"
 ---
 
-# Test form validation with error testIDs
+# Test form validation using Maestro's recommended field clearing method
 
 # Launch and navigate to signup form
 - launchApp:
@@ -35,14 +35,17 @@ name: "Form Validation E2E Testing"
 
 - takeScreenshot: validation-errors-empty-form
 
-# Test 2: Invalid email format
+# Test 2: Invalid email format using proper field clearing
 - tapOn:
     id: "full-name-input"
 - inputText: "Test User"
 
+# Proper email field input
 - tapOn:
     id: "email-input"
+- waitForAnimationToEnd
 - inputText: "invalid-email"
+- waitForAnimationToEnd
 
 - scroll
 - tapOn:
@@ -53,23 +56,30 @@ name: "Form Validation E2E Testing"
 
 - takeScreenshot: validation-errors-invalid-email
 
-# Test 3: Password mismatch with field clearing
-# Clear email field using longPress + Select All + eraseText
+# Test 3: Clear email field using recommended iOS workaround
+# Use longPressOn + Select All + eraseText pattern
 - longPressOn:
     id: "email-input"
 - tapOn: "Select All"
 - eraseText
 - waitForAnimationToEnd
+
+# Now input the valid email
 - inputText: "valid@example.com"
 - waitForAnimationToEnd
 
 - tapOn:
     id: "password-input"
+- waitForAnimationToEnd
 - inputText: "Password123"
+- waitForAnimationToEnd
 
+# Clear confirm password field the same way
 - tapOn:
-    id: "confirm-password-input" 
+    id: "confirm-password-input"
+- waitForAnimationToEnd
 - inputText: "DifferentPassword123"
+- waitForAnimationToEnd
 
 - scroll
 - tapOn:
@@ -80,19 +90,18 @@ name: "Form Validation E2E Testing"
 
 - takeScreenshot: validation-errors-password-mismatch
 
-# Test 4: Terms not accepted with field clearing
-# Clear confirm password field using eraseText
-- tapOn:
+# Test 4: Fix password mismatch using field clearing
+- longPressOn:
     id: "confirm-password-input"
-- eraseText: 25  # Clear "DifferentPassword123"
+- tapOn: "Select All"
+- eraseText
 - waitForAnimationToEnd
 - inputText: "Password123"
 - waitForAnimationToEnd
 
-# Explicitly ensure terms is unchecked by checking current state
-# Since terms was checked earlier, we need to uncheck it
+# Uncheck terms to test terms validation
 - tapOn:
-    id: "terms-checkbox"  # This should uncheck it
+    id: "terms-checkbox"
 
 - scroll
 - tapOn:
@@ -102,3 +111,17 @@ name: "Form Validation E2E Testing"
     id: "terms-error"
 
 - takeScreenshot: validation-errors-terms-not-accepted
+
+# Test 5: Final successful submission
+- tapOn:
+    id: "terms-checkbox"
+- scroll
+- tapOn:
+    id: "create-account-button"
+
+# Should navigate successfully
+- assertVisible:
+    text: "My Clubs|Profile|Clubs"
+    optional: true
+
+- takeScreenshot: successful-signup-after-validation

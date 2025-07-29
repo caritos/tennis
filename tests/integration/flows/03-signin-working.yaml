@@ -1,0 +1,70 @@
+appId: com.caritos.tennis
+name: "Working Sign In Flow"
+---
+
+# Complete sign-in flow that demonstrates the updated UI
+# This test shows the correct navigation path: Welcome → Sign Up → Sign In → Email Sign In
+
+# Launch and get to welcome screen
+- launchApp:
+    clearState: true
+- waitForAnimationToEnd
+
+# Welcome Screen
+- assertVisible: "Tennis Club"
+- assertVisible: "Connect with tennis players in your area"
+- assertVisible: "Get Started" 
+- tapOn: "Get Started"
+- waitForAnimationToEnd
+
+# Sign Up Screen - Navigate to Sign In
+- assertVisible: "Sign Up"
+- assertVisible: "Join the tennis community!"
+- tapOn: "Sign In"
+- waitForAnimationToEnd
+
+# Sign In Options Screen - Select Email
+- assertVisible: "Sign In"
+- assertVisible: "Welcome back!"
+- assertVisible: "📧 Continue with Email"
+- assertVisible:
+    text: "🍎 Sign in with Apple|Continue with Apple"
+    optional: true
+- tapOn:
+    id: "email-signin-button"
+- waitForAnimationToEnd
+
+# Email Sign In Form Screen
+- assertVisible: "Sign In"
+- assertVisible: "Welcome back!"
+- assertVisible: "Email Address"
+- assertVisible: "Password"
+- assertVisible: "Forgot Password?"
+
+# Take screenshot showing the complete form
+- takeScreenshot: signin-form-ready
+
+# Test form validation - try empty form
+- tapOn: "Sign In"
+- waitForAnimationToEnd
+
+# Should see some form of validation (error or no navigation)
+- takeScreenshot: signin-validation-test
+
+# Fill form with invalid credentials to test error handling
+- tapOn:
+    id: "email-input"
+- inputText: "test@example.com"
+
+- tapOn:
+    id: "password-input"  
+- inputText: "InvalidPassword123"
+
+- tapOn: "Sign In"
+- waitForAnimationToEnd
+
+# Wait a moment for potential error message
+- waitForAnimationToEnd:
+    timeout: 3000
+
+- takeScreenshot: signin-error-handling

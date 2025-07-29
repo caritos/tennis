@@ -1,0 +1,27 @@
+appId: com.caritos.tennis
+name: "Debug Signup Screen Text"
+---
+
+# Launch and navigate to signup form
+- launchApp:
+    clearState: true
+- waitForAnimationToEnd
+
+- tapOn: "Get started"
+- waitForAnimationToEnd
+
+# Take screenshot to see what's on the signup screen
+- takeScreenshot: signup-screen-debug
+
+# Try different variations of the sign in link text
+- assertVisible:
+    text: "Already have an account?"
+    optional: true
+
+- assertVisible:
+    text: "Sign In"
+    optional: true
+    
+- assertVisible:
+    text: "Already have an account? Sign In"
+    optional: true
