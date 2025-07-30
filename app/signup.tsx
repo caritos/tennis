@@ -45,12 +45,12 @@ export default function SignUpPage() {
 
   const handleTermsPress = () => {
     console.log('Terms of Service pressed');
-    // TODO: Navigate to terms screen or open web view
+    router.push('/terms-of-service');
   };
 
   const handlePrivacyPress = () => {
     console.log('Privacy Policy pressed');
-    // TODO: Navigate to privacy screen or open web view
+    router.push('/privacy-policy');
   };
 
   return (
