@@ -9,6 +9,7 @@ import { matchInvitationService, MatchInvitation, InvitationResponse } from '@/s
 import MatchInvitationForm from './MatchInvitationForm';
 import { useNotification } from '@/contexts/NotificationContext';
 import { useAuth } from '@/contexts/AuthContext';
+import { DoublesMatchParticipants } from './DoublesMatchParticipants';
 
 interface LookingToPlaySectionProps {
   clubId: string;
@@ -183,35 +184,19 @@ const LookingToPlaySection: React.FC<LookingToPlaySectionProps> = ({ clubId }) =
         </View>
 
         <View style={styles.invitationContent}>
-          <ThemedText style={styles.creatorName}>
-            {invitation.creator_name || 'Unknown Player'}
-          </ThemedText>
-          
           {invitation.notes && (
             <ThemedText style={[styles.invitationNotes, { color: colors.tabIconDefault }]}>
               &ldquo;{invitation.notes}&rdquo;
             </ThemedText>
           )}
 
-          {invitation.responses.length > 0 && (
-            <View style={styles.responsesContainer}>
-              <ThemedText style={[styles.responsesLabel, { color: colors.tabIconDefault }]}>
-                Interested players:
-              </ThemedText>
-              <View style={styles.responsesList}>
-                {invitation.responses.slice(0, 3).map((response) => (
-                  <ThemedText key={response.id} style={[styles.responseName, { color: colors.tabIconDefault }]}>
-                    {response.user_name || 'Unknown'}
-                  </ThemedText>
-                ))}
-                {invitation.responses.length > 3 && (
-                  <ThemedText style={[styles.responseName, { color: colors.tabIconDefault }]}>
-                    +{invitation.responses.length - 3} more
-                  </ThemedText>
-                )}
-              </View>
-            </View>
-          )}
+          {/* Enhanced participant display for better visibility */}
+          <DoublesMatchParticipants
+            creatorName={invitation.creator_name || 'Unknown Player'}
+            responses={invitation.responses}
+            matchType={invitation.match_type}
+            isMatched={isMatched}
+          />
         </View>
 
         <View style={styles.invitationFooter}>
