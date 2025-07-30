@@ -17,7 +17,6 @@ export default function SignUpPage() {
     setIsLoading(true);
     
     try {
-      // TODO: Navigate to email sign up form
       router.push('/email-signup');
     } catch (error) {
       console.error('Email sign up error:', error);

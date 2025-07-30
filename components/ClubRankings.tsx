@@ -57,11 +57,7 @@ export function ClubRankings({
 
     return (
       <View key={player.playerId} style={styles.rankingItem}>
-        <TouchableOpacity
-          style={styles.playerContent}
-          onPress={() => onPlayerPress?.(player.playerId)}
-          disabled={!onPlayerPress}
-        >
+        <View style={styles.playerContent}>
           <View style={styles.rankingLeft}>
             <ThemedText style={styles.rankNumber}>{player.ranking}.</ThemedText>
             <Ionicons name="person-circle-outline" size={24} color={colors.tabIconDefault} />
@@ -92,7 +88,7 @@ export function ClubRankings({
               )}
             </View>
           </View>
-        </TouchableOpacity>
+        </View>
         
         {/* Challenge Button */}
         {!isCurrentUser && onChallengePress && (

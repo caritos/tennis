@@ -257,10 +257,7 @@ export default function ClubDetailScreen() {
                 params: { id: id as string }
               });
             }}
-            onPlayerPress={(playerId) => {
-              // TODO: Navigate to player profile
-              console.log('View player:', playerId);
-            }}
+            onPlayerPress={undefined}
             onChallengePress={handleChallengePlayer}
           />
         </ThemedView>

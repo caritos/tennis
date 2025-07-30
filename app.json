@@ -4,6 +4,8 @@
     "slug": "play-serve",
     "version": "1.0.0",
     "orientation": "portrait",
+    "description": "Connect with tennis players in your local clubs. Find matches, track scores, and build your tennis community.",
+    "primaryColor": "#007AFF",
     "icon": "./assets/images/icon.png",
     "scheme": "playserve",
     "userInterfaceStyle": "automatic",
@@ -14,10 +16,15 @@
       "infoPlist": {
         "NSAppTransportSecurity": {
           "NSAllowsArbitraryLoads": true
-        }
+        },
+        "NSLocationWhenInUseUsageDescription": "Play Serve uses your location to find tennis clubs and players near you.",
+        "NSPhotoLibraryUsageDescription": "Play Serve needs access to your photo library to upload profile photos.",
+        "NSCameraUsageDescription": "Play Serve needs access to your camera to take profile photos.",
+        "ITSAppUsesNonExemptEncryption": false
       },
       "bundleIdentifier": "com.caritos.tennis",
-      "appleTeamId": "3U8L77G9QV"
+      "appleTeamId": "3U8L77G9QV",
+      "buildNumber": "1"
     },
     "android": {
       "adaptiveIcon": {

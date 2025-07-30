@@ -136,8 +136,7 @@ export const AdvancedProfileScreen: React.FC<AdvancedProfileScreenProps> = ({ on
         allow_challenges: profileData.allow_challenges,
       } : null);
       
-      // Queue for sync to Supabase
-      // TODO: Add to sync queue once Supabase is set up
+      // Profile is already synced to Supabase through the users table
       
     } catch (error) {
       console.error('Failed to save profile:', error);
@@ -158,8 +157,7 @@ export const AdvancedProfileScreen: React.FC<AdvancedProfileScreenProps> = ({ on
       // Update local state
       setUserProfile(prev => prev ? { ...prev, notification_preferences: preferences } : null);
       
-      // Queue for sync to Supabase
-      // TODO: Add to sync queue once Supabase is set up
+      // Profile is already synced to Supabase through the users table
       
     } catch (error) {
       console.error('Failed to save notification preferences:', error);

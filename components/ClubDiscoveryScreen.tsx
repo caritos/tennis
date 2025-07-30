@@ -152,9 +152,8 @@ export const ClubDiscoveryScreen: React.FC<ClubDiscoveryScreenProps> = ({
   };
 
   const handleCreateClub = () => {
-    // Navigate to create club flow
     console.log('Create club pressed from onboarding');
-    // TODO: Implement create club flow
+    router.push('/create-club');
   };
 
   const handleSkip = async () => {

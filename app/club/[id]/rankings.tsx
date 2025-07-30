@@ -74,10 +74,6 @@ export default function ClubRankingsScreen() {
     router.back();
   };
 
-  const handlePlayerPress = (playerId: string) => {
-    // TODO: Navigate to player profile
-    console.log('View player profile:', playerId);
-  };
 
   if (isLoading) {
     return (
@@ -137,7 +133,7 @@ export default function ClubRankingsScreen() {
           <ClubRankings
             rankings={rankings}
             memberCount={memberCount}
-            onPlayerPress={handlePlayerPress}
+            onPlayerPress={undefined}
             showAll={true}
           />
         </ThemedView>

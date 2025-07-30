@@ -105,7 +105,7 @@ export default function EmailSignInPage() {
 
   const handleForgotPasswordPress = () => {
     console.log('Forgot password pressed');
-    // TODO: Navigate to forgot password screen or show modal
+    router.push('/forgot-password');
   };
 
   return (
