@@ -19,6 +19,12 @@ export interface CreateMatchData {
   notes?: string;
 }
 
+export interface UpdateMatchData {
+  scores?: string;
+  notes?: string;
+  date?: string;
+}
+
 export interface MatchRecord {
   wins: number;
   losses: number;
@@ -214,6 +220,144 @@ export class MatchService {
       return match;
     } catch (error) {
       console.error('Failed to record match:', error);
+      throw error;
+    }
+  }
+
+  async updateMatch(matchId: string, updateData: UpdateMatchData, editedByUserId: string): Promise<Match> {
+    console.log('📊 updateMatch: Starting with data:', { matchId, updateData, editedByUserId });
+    
+    const db = await this.getDatabase();
+
+    try {
+      // First, get the existing match to validate permissions
+      const existingMatch = await db.getFirstAsync(
+        'SELECT * FROM matches WHERE id = ?',
+        [matchId]
+      ) as Match | null;
+
+      if (!existingMatch) {
+        throw new Error('Match not found');
+      }
+
+      // Check if the user is a participant in the match (honor system allows any participant to edit)
+      const isParticipant = 
+        existingMatch.player1_id === editedByUserId ||
+        existingMatch.player2_id === editedByUserId ||
+        existingMatch.player3_id === editedByUserId ||
+        existingMatch.player4_id === editedByUserId;
+
+      if (!isParticipant) {
+        throw new Error('Only match participants can edit match results');
+      }
+
+      // Validate tennis score if it's being updated
+      if (updateData.scores && !isValidTennisScore(updateData.scores)) {
+        throw new Error('Invalid tennis score: must be a complete, valid tennis match');
+      }
+
+      // Build the update query dynamically
+      const updateFields = [];
+      const updateValues = [];
+
+      if (updateData.scores) {
+        updateFields.push('scores = ?');
+        updateValues.push(updateData.scores);
+      }
+
+      if (updateData.notes !== undefined) {
+        updateFields.push('notes = ?');
+        updateValues.push(updateData.notes);
+      }
+
+      if (updateData.date) {
+        updateFields.push('date = ?');
+        updateValues.push(updateData.date);
+      }
+
+      // Always update tracking fields
+      updateFields.push('updated_at = CURRENT_TIMESTAMP');
+      updateFields.push('last_edited_by = ?');
+      updateFields.push('edit_count = edit_count + 1');
+      updateValues.push(editedByUserId);
+      updateValues.push(matchId); // For WHERE clause
+
+      if (updateFields.length === 3) { // Only tracking fields were added
+        throw new Error('No match data to update');
+      }
+
+      const updateQuery = `
+        UPDATE matches 
+        SET ${updateFields.join(', ')}
+        WHERE id = ?
+      `;
+
+      console.log('📊 updateMatch: Executing query:', updateQuery, 'with values:', updateValues);
+
+      await db.runAsync(updateQuery, updateValues);
+
+      // Get the updated match
+      const updatedMatch = await db.getFirstAsync(
+        'SELECT * FROM matches WHERE id = ?',
+        [matchId]
+      ) as Match;
+
+      // Create notifications for other participants about the match edit
+      try {
+        const notificationService = new NotificationService(db);
+        
+        // Get editor name for notifications
+        const editor = await db.getFirstAsync(
+          'SELECT full_name FROM users WHERE id = ?',
+          [editedByUserId]
+        ) as { full_name: string } | null;
+
+        if (editor) {
+          // Notify all other participants about the edit
+          const otherParticipants = [
+            existingMatch.player1_id,
+            existingMatch.player2_id,
+            existingMatch.player3_id,
+            existingMatch.player4_id,
+          ].filter(id => id && id !== editedByUserId);
+
+          for (const participantId of otherParticipants) {
+            await notificationService.createMatchResultNotification(
+              participantId,
+              editor.full_name,
+              matchId,
+              `Match updated: ${updatedMatch.scores}`
+            );
+          }
+        }
+      } catch (error) {
+        console.warn('Failed to create match edit notifications:', error);
+      }
+
+      // Queue match update for sync
+      try {
+        await syncService.queueMatchUpdate(matchId, {
+          club_id: updatedMatch.club_id,
+          player1_id: updatedMatch.player1_id,
+          player2_id: updatedMatch.player2_id,
+          opponent2_name: updatedMatch.opponent2_name,
+          player3_id: updatedMatch.player3_id,
+          partner3_name: updatedMatch.partner3_name,
+          player4_id: updatedMatch.player4_id,
+          partner4_name: updatedMatch.partner4_name,
+          scores: updatedMatch.scores,
+          match_type: updatedMatch.match_type,
+          date: updatedMatch.date,
+          notes: updatedMatch.notes,
+        });
+        console.log('✅ Match update queued for sync:', matchId);
+      } catch (error) {
+        console.warn('Failed to queue match update for sync:', error);
+      }
+
+      return updatedMatch;
+    } catch (error) {
+      console.error('Failed to update match:', error);
       throw error;
     }
   }
@@ -452,6 +596,8 @@ export class MatchService {
 const matchService = new MatchService();
 
 export const recordMatch = (matchData: CreateMatchData) => matchService.recordMatch(matchData);
+export const updateMatch = (matchId: string, updateData: UpdateMatchData, editedByUserId: string) => 
+  matchService.updateMatch(matchId, updateData, editedByUserId);
 export const getMatchHistory = (playerId: string, clubId?: string) => 
   matchService.getMatchHistory(playerId, clubId);
 export const getMatchStats = (playerId: string, clubId?: string) => 

@@ -2,8 +2,10 @@ import React from 'react';
 import { TouchableOpacity, StyleSheet, View } from 'react-native';
 import { ThemedText } from './ThemedText';
 import { ThemedView } from './ThemedView';
+import { ClubBadge } from './ClubBadge';
 import { Colors } from '@/constants/Colors';
 import { useColorScheme } from '@/hooks/useColorScheme';
+import { useClubBadges } from '@/hooks/useClubBadges';
 import { Club } from '@/lib/supabase';
 
 interface ClubCardProps {
@@ -18,6 +20,9 @@ interface ClubCardProps {
 export function ClubCard({ club, onPress, onJoin, distance, isJoined, isJoining }: ClubCardProps) {
   const colorScheme = useColorScheme();
   const colors = Colors[colorScheme ?? 'light'];
+  const { getClubBadgeData } = useClubBadges();
+  
+  const clubBadgeData = isJoined ? getClubBadgeData(club.id) : null;
 
   const formatDistance = (distance: number): string => {
     // Distance is in kilometers, convert and format appropriately
@@ -79,10 +84,20 @@ export function ClubCard({ club, onPress, onJoin, distance, isJoined, isJoining 
         {/* First Row: Tennis emoji + Club name + Distance/Join */}
         <View style={styles.firstRow}>
           <View style={styles.nameContainer}>
-            <ThemedText style={styles.tennisEmoji}>🎾</ThemedText>
-            <ThemedText type="defaultSemiBold" style={styles.clubName} numberOfLines={1}>
-              {club.name}
-            </ThemedText>
+            <View style={styles.nameWithBadge}>
+              <ThemedText style={styles.tennisEmoji}>🎾</ThemedText>
+              <ThemedText type="defaultSemiBold" style={styles.clubName} numberOfLines={1}>
+                {club.name}
+              </ThemedText>
+              {clubBadgeData && (
+                <ClubBadge 
+                  clubBadgeData={clubBadgeData}
+                  size="small"
+                  style={styles.clubBadge}
+                  showUrgencyIndicator={true}
+                />
+              )}
+            </View>
           </View>
           <View style={styles.rightContainer}>
             {distance && (
@@ -164,6 +179,11 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     flex: 1,
   },
+  nameWithBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flex: 1,
+  },
   tennisEmoji: {
     fontSize: 16,
     marginRight: 8,
@@ -172,6 +192,9 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '600',
     flex: 1,
+  },
+  clubBadge: {
+    marginLeft: 6,
   },
   rightContainer: {
     flexDirection: 'row',

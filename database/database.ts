@@ -76,11 +76,15 @@ export async function createTables(db: Database): Promise<void> {
         date TEXT NOT NULL,
         notes TEXT,
         created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+        updated_at TEXT DEFAULT CURRENT_TIMESTAMP,
+        last_edited_by TEXT,
+        edit_count INTEGER DEFAULT 0,
         FOREIGN KEY (club_id) REFERENCES clubs (id),
         FOREIGN KEY (player1_id) REFERENCES users (id),
         FOREIGN KEY (player2_id) REFERENCES users (id),
         FOREIGN KEY (player3_id) REFERENCES users (id),
-        FOREIGN KEY (player4_id) REFERENCES users (id)
+        FOREIGN KEY (player4_id) REFERENCES users (id),
+        FOREIGN KEY (last_edited_by) REFERENCES users (id)
       );
     `);
 
@@ -195,13 +199,14 @@ export async function createTables(db: Database): Promise<void> {
 
 export async function migrateDatabase(db: Database): Promise<void> {
   try {
-    // Check if matches table has the new doubles columns
+    // Check if matches table has the new edit tracking columns
     const tableInfo = await db.getAllAsync('PRAGMA table_info(matches);');
     const hasDoublesColumns = tableInfo.some((col: any) => col.name === 'player3_id');
+    const hasEditColumns = tableInfo.some((col: any) => col.name === 'updated_at');
     
-    if (!hasDoublesColumns) {
-      console.log('🔄 Migrating database for doubles support...');
-      // Drop and recreate tables to add doubles columns
+    if (!hasDoublesColumns || !hasEditColumns) {
+      console.log('🔄 Migrating database for doubles support and match editing...');
+      // Drop and recreate tables to add new columns
       await dropTables(db);
       console.log('✅ Database migration completed');
     }

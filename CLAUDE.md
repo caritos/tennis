@@ -20,5 +20,6 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - Documented the issue in GitHub and moved on to another issue
 - Documented project setup and initial code structure
 - to memorize
+- add to memory
 
 [... rest of the existing content remains unchanged ...]

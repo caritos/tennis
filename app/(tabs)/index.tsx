@@ -10,7 +10,11 @@ import { ClubCard } from '@/components/ClubCard';
 import { CreateClubButton } from '@/components/CreateClubButton';
 import { NotificationBadge } from '@/components/NotificationBadge';
 import { OnboardingReEngagement } from '@/components/OnboardingReEngagement';
-import { useNotificationBadge } from '@/hooks/useNotificationBadge';
+import { BadgeTestPanel } from '@/components/BadgeTestPanel';
+import { ContextualPrompt } from '@/components/ContextualPrompt';
+import { ContextualPromptTester } from '@/components/ContextualPromptTester';
+import { useTotalBadgeCount } from '@/hooks/useClubBadges';
+import { useContextualPrompts } from '@/hooks/useContextualPrompts';
 import { Club } from '@/lib/supabase';
 import { useColorScheme } from '@/hooks/useColorScheme';
 import { Colors } from '@/constants/Colors';
@@ -33,7 +37,8 @@ export default function ClubScreen() {
   const [joiningClubId, setJoiningClubId] = useState<string | null>(null);
 
   const { user } = useAuth();
-  const { badgeCount } = useNotificationBadge();
+  const { badgeCount } = useTotalBadgeCount();
+  const { currentPrompt, dismissPrompt } = useContextualPrompts(myClubs, joinedClubIds);
   
   useEffect(() => {
     console.log('ClubScreen: User state changed:', user ? `User: ${user.id}` : 'No user');
@@ -211,6 +216,12 @@ export default function ClubScreen() {
         </View>
       </ThemedView>
 
+      {/* Contextual Prompt Section */}
+      <ContextualPrompt 
+        prompt={currentPrompt}
+        onDismiss={dismissPrompt}
+      />
+
       <ScrollView 
         style={styles.scrollContainer} 
         contentContainerStyle={styles.scrollContent} 
@@ -322,6 +333,14 @@ export default function ClubScreen() {
             )}
           </View>
         </ThemedView>
+
+        {/* Development Test Panels */}
+        {__DEV__ && (
+          <>
+            <ContextualPromptTester />
+            <BadgeTestPanel />
+          </>
+        )}
 
         {/* Create Club Button at Bottom */}
         <ThemedView style={styles.createClubSection}>

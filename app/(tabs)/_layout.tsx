@@ -1,14 +1,17 @@
 import { Tabs } from 'expo-router';
 import React from 'react';
-import { Platform, Text } from 'react-native';
+import { Platform, Text, View } from 'react-native';
 
 import { HapticTab } from '@/components/HapticTab';
 import TabBarBackground from '@/components/ui/TabBarBackground';
+import { NotificationBadge } from '@/components/NotificationBadge';
 import { Colors } from '@/constants/Colors';
 import { useColorScheme } from '@/hooks/useColorScheme';
+import { useTotalBadgeCount } from '@/hooks/useClubBadges';
 
 export default function TabLayout() {
   const colorScheme = useColorScheme();
+  const { badgeCount } = useTotalBadgeCount();
 
   return (
     <Tabs
@@ -30,7 +33,20 @@ export default function TabLayout() {
         options={{
           title: 'Clubs',
           tabBarIcon: ({ color, focused }) => (
-            <Text style={{ fontSize: 24, color }}>🎾</Text>
+            <View style={{ position: 'relative' }}>
+              <Text style={{ fontSize: 24, color }}>🎾</Text>
+              {badgeCount > 0 && (
+                <NotificationBadge 
+                  count={badgeCount} 
+                  size="small" 
+                  style={{ 
+                    position: 'absolute', 
+                    top: -4, 
+                    right: -4 
+                  }}
+                />
+              )}
+            </View>
           ),
         }}
       />

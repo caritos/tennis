@@ -24,6 +24,8 @@ interface MatchRecordingFormProps {
   onSave: (matchData: CreateMatchData) => void;
   onCancel: () => void;
   clubId: string;
+  initialData?: Partial<CreateMatchData>;
+  isEditing?: boolean;
 }
 
 // Legacy interface - can be removed after migration
@@ -33,29 +35,29 @@ interface Player {
   name: string;
 }
 
-export function MatchRecordingForm({ onSave, onCancel, clubId }: MatchRecordingFormProps) {
+export function MatchRecordingForm({ onSave, onCancel, clubId, initialData, isEditing = false }: MatchRecordingFormProps) {
   const colorScheme = useColorScheme();
   const colors = Colors[colorScheme ?? 'light'];
   const { user } = useAuth();
 
-  const [matchType, setMatchType] = useState<'singles' | 'doubles'>('singles');
-  const [matchTypeRadioId, setMatchTypeRadioId] = useState('singles');
+  const [matchType, setMatchType] = useState<'singles' | 'doubles'>(initialData?.match_type || 'singles');
+  const [matchTypeRadioId, setMatchTypeRadioId] = useState(initialData?.match_type || 'singles');
   const [selectedOpponent, setSelectedOpponent] = useState<Player | null>(null);
-  const [opponentSearchText, setOpponentSearchText] = useState('');
+  const [opponentSearchText, setOpponentSearchText] = useState(initialData?.opponent2_name || '');
   const [selectedPartner, setSelectedPartner] = useState<Player | null>(null);
-  const [partnerSearchText, setPartnerSearchText] = useState('');
+  const [partnerSearchText, setPartnerSearchText] = useState(initialData?.partner3_name || '');
   const [selectedOpponentPartner, setSelectedOpponentPartner] = useState<Player | null>(null);
-  const [opponentPartnerSearchText, setOpponentPartnerSearchText] = useState('');
+  const [opponentPartnerSearchText, setOpponentPartnerSearchText] = useState(initialData?.partner4_name || '');
   const [filteredPlayers, setFilteredPlayers] = useState<Player[]>([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [activeSearchField, setActiveSearchField] = useState<'opponent' | 'partner' | 'opponentPartner' | null>(null);
-  const [matchDate, setMatchDate] = useState(new Date().toISOString().split('T')[0]);
+  const [matchDate, setMatchDate] = useState(initialData?.date || new Date().toISOString().split('T')[0]);
   // Legacy state - will be removed
   const [tennisSets, setTennisSets] = useState<TennisSet[]>([]);
   const [validationErrors, setValidationErrors] = useState<string[]>([]);
   const [clubMembers, setClubMembers] = useState<Player[]>([]);
   const [loadingMembers, setLoadingMembers] = useState(true);
-  const [notes, setNotes] = useState('');
+  const [notes, setNotes] = useState(initialData?.notes || '');
 
   // Radio button configuration for match type
   const matchTypeRadioButtons = useMemo(() => [

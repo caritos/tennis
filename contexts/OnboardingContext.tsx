@@ -31,12 +31,6 @@ const ONBOARDING_STEPS: OnboardingStep[] = [
     required: true,
   },
   {
-    id: 'location_setup',
-    title: 'Enable Location',
-    completed: false,
-    required: false,
-  },
-  {
     id: 'club_discovery',
     title: 'Discover Clubs',
     completed: false,

@@ -17,12 +17,7 @@
         }
       },
       "bundleIdentifier": "com.caritos.tennis",
-      "appleTeamId": "3U8L77G9QV",
-      "config": {
-        "apnsKeyId": "C7K94PD368",
-        "apnsTeamId": "3U8L77G9QV"
-      }
-
+      "appleTeamId": "3U8L77G9QV"
     },
     "android": {
       "adaptiveIcon": {
@@ -71,6 +66,13 @@
     ],
     "experiments": {
       "typedRoutes": true
-    }
+    },
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "5e762118-6d7b-49ae-a824-62279dda7abd"
+      }
+    },
+    "owner": "sotirac"
   }
 }

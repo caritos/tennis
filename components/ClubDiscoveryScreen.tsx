@@ -47,6 +47,22 @@ export const ClubDiscoveryScreen: React.FC<ClubDiscoveryScreenProps> = ({
 
   const progress = getProgress();
 
+  // Auto-request location when component mounts
+  useEffect(() => {
+    const autoRequestLocation = async () => {
+      if (hasLocationPermission === null) {
+        // Haven't asked for permission yet, request it automatically
+        try {
+          await requestLocationPermission();
+        } catch (error) {
+          console.log('Location permission denied, will load clubs with fallback location');
+        }
+      }
+    };
+
+    autoRequestLocation();
+  }, [hasLocationPermission, requestLocationPermission]);
+
   useEffect(() => {
     if (hasLocationPermission && location) {
       loadNearbyClubs();

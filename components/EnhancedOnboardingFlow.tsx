@@ -283,7 +283,6 @@ export const EnhancedOnboardingFlow: React.FC<OnboardingFlowProps> = ({ onComple
 
   const onboardingSteps = [
     { id: 'welcome', component: WelcomeStep },
-    { id: 'location_setup', component: LocationStep },
     { id: 'club_discovery', component: ClubDiscoveryScreen },
     { id: 'first_match_guidance', component: FirstMatchStep },
   ];

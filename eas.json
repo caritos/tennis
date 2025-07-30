@@ -1,6 +1,7 @@
 {
   "cli": {
-    "version": ">= 7.8.0"
+    "version": ">= 7.8.0",
+    "appVersionSource": "local"
   },
   "build": {
     "development": {
@@ -22,10 +23,8 @@
       }
     },
     "production": {
-      "autoIncrement": true,
       "ios": {
-        "resourceClass": "m-medium",
-        "bundleIdentifier": "com.caritos.tennis"
+        "resourceClass": "m-medium"
       },
       "android": {
         "resourceClass": "medium",
@@ -36,8 +35,8 @@
   "submit": {
     "production": {
       "ios": {
-        "appleId": "your-apple-developer-email@example.com",
-        "ascAppId": "your-app-store-connect-app-id",
+        "appleId": "eladio@caritos.com",
+        "ascAppId": "6749282626",
         "bundleIdentifier": "com.caritos.tennis"
       },
       "android": {
