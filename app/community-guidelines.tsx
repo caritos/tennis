@@ -104,7 +104,7 @@ export default function CommunityGuidelinesScreen() {
           </ThemedText>
 
           <ThemedText type="subtitle" style={styles.sectionTitle}>
-            🚫 What We Don't Allow
+            🚫 What We Don&apos;t Allow
           </ThemedText>
           
           <ThemedText style={styles.subSectionTitle}>Harassment and Bullying</ThemedText>
@@ -172,7 +172,7 @@ export default function CommunityGuidelinesScreen() {
             • Respect others&apos; privacy preferences and boundaries
           </ThemedText>
           <ThemedText style={styles.bulletPoint}>
-            • Don't share screenshots or personal information outside the app
+            • Don&apos;t share screenshots or personal information outside the app
           </ThemedText>
 
           <ThemedText type="subtitle" style={styles.sectionTitle}>
@@ -204,7 +204,7 @@ export default function CommunityGuidelinesScreen() {
             • Provide specific details to help our team investigate effectively
           </ThemedText>
           <ThemedText style={styles.bulletPoint}>
-            • Don't make false reports or abuse the reporting system
+            • Don&apos;t make false reports or abuse the reporting system
           </ThemedText>
 
           <ThemedText type="subtitle" style={styles.sectionTitle}>
