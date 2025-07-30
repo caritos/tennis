@@ -1,0 +1,92 @@
+appId: com.caritos.tennis
+name: "Device Matrix - Core Functionality Test"
+---
+
+# Comprehensive device testing for App Store submission
+# Tests core functionality across different screen sizes
+# Based on GitHub issue #65
+
+# Test 1: App Launch and Initial Navigation
+- launchApp:
+    clearState: true
+- waitForAnimationToEnd
+
+# Verify welcome screen renders properly on this device
+- assertVisible: "Tennis Club"
+- assertVisible: "Connect with tennis players in your area"
+- assertVisible:
+    id: "get-started-button"
+- takeScreenshot: welcome-screen
+
+# Test 2: Navigation Flow
+- tapOn:
+    id: "get-started-button"
+- waitForAnimationToEnd
+- assertVisible: "Sign Up"
+- assertVisible: "Join the tennis community!"
+- takeScreenshot: signup-options
+
+# Test 3: Sign Up Form Rendering
+- tapOn:
+    id: "email-signup-button"
+- waitForAnimationToEnd
+- assertVisible: "Create Account"
+- assertVisible:
+    id: "full-name-input"
+- assertVisible:
+    id: "email-input"
+- assertVisible:
+    id: "password-input"
+- takeScreenshot: signup-form
+
+# Test 4: Form Interaction and Scrolling
+- tapOn:
+    id: "full-name-input"
+- inputText: "Device Test User"
+- tapOn:
+    id: "email-input"
+- inputText: "device.test.${TIMESTAMP}@example.com"
+- tapOn:
+    id: "password-input"
+- inputText: "DeviceTest123"
+- scroll
+- takeScreenshot: form-with-data
+
+# Test 5: Checkbox and Button Visibility
+- assertVisible:
+    id: "terms-checkbox"
+- tapOn:
+    id: "terms-checkbox"
+- assertVisible:
+    id: "create-account-button"
+- takeScreenshot: form-ready-to-submit
+
+# Test 6: Text Readability Check
+# Verify all text elements are readable and properly sized
+- assertVisible: "Create Account"
+- assertVisible: "By creating an account"
+- assertVisible: "Terms of Service"
+- assertVisible: "Privacy Policy"
+
+# Test 7: Interactive Elements Accessibility
+# Ensure all buttons and inputs are properly sized for touch
+- assertVisible:
+    id: "full-name-input"
+    enabled: true
+- assertVisible:
+    id: "email-input"
+    enabled: true
+- assertVisible:
+    id: "create-account-button"
+    enabled: true
+
+# Test 8: Navigation Back (test header/navigation elements)
+- tapOn:
+    text: "←"
+    optional: true
+- waitForAnimationToEnd:
+    timeout: 2000
+- takeScreenshot: navigation-test
+
+# Final screenshot for device verification
+- takeScreenshot: device-test-complete

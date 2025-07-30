@@ -26,7 +26,13 @@ export type ContextualPromptType =
   | 'achievement_unlock'      // User unlocked an achievement
   | 'club_activity'           // General club activity
   | 'maintenance_mode'        // System maintenance notification
-  | 'feature_announcement';   // New feature announcement
+  | 'feature_announcement'    // New feature announcement
+  | 'first_club_joined'       // Guide after joining first club
+  | 'challenge_someone'       // Encourage sending first challenge
+  | 'create_match_invitation' // Encourage creating looking-to-play post
+  | 'inactive_club'           // Prompt for quiet club activity
+  | 'discover_clubs'          // Enhanced club discovery prompt
+  | 'stats_preview';          // Show stats benefits for match recording
 
 export type PromptPriority = 'low' | 'medium' | 'high' | 'urgent';
 
@@ -221,6 +227,83 @@ export const CONTEXTUAL_PROMPT_RULES: ContextualPromptRule[] = [
     }),
     cooldownHours: 48,
     maxShowCount: 3
+  },
+
+  // New user guidance prompts
+  {
+    type: 'challenge_someone',
+    priority: 'medium',
+    condition: (state) => state.isClubMember && state.totalMatches === 0 && state.pendingChallenges === 0,
+    createPrompt: (state) => ({
+      title: 'Ready to challenge someone?',
+      subtitle: 'Send your first challenge to another club member',
+      icon: '⚔️',
+      actionButton: {
+        label: 'Find Players',
+        action: () => {}, // Will be set by component
+        variant: 'secondary'
+      },
+      dismissible: true
+    }),
+    cooldownHours: 24,
+    maxShowCount: 3
+  },
+
+  {
+    type: 'create_match_invitation',
+    priority: 'medium',
+    condition: (state) => state.isClubMember && state.lookingToPlayToday === 0 && state.totalMatches < 2,
+    createPrompt: (state) => ({
+      title: 'Looking to play today?',
+      subtitle: 'Post a "Looking to Play" invitation to find opponents',
+      icon: '📅',
+      actionButton: {
+        label: 'Create Invitation',
+        action: () => {}, // Will be set by component
+        variant: 'secondary'
+      },
+      dismissible: true
+    }),
+    cooldownHours: 48,
+    maxShowCount: 2
+  },
+
+  {
+    type: 'inactive_club',
+    priority: 'low',
+    condition: (state) => state.isClubMember && state.recentMatches === 0 && state.sessionCount > 5,
+    createPrompt: (state) => ({
+      title: 'Club seems quiet lately',
+      subtitle: 'Be the first to start some activity!',
+      icon: '🌱',
+      actionButton: {
+        label: 'Start Activity',
+        action: () => {}, // Will be set by component
+        variant: 'secondary'
+      },
+      dismissible: true
+    }),
+    cooldownHours: 168, // 1 week
+    maxShowCount: 2
+  },
+
+  {
+    type: 'stats_preview',
+    priority: 'low',
+    condition: (state) => state.isClubMember && state.totalMatches > 0 && state.totalMatches < 3,
+    createPrompt: (state) => ({
+      title: 'Check out your stats!',
+      subtitle: 'See your progress and track improvement',
+      icon: '📊',
+      actionButton: {
+        label: 'View Stats',
+        action: () => {}, // Will be set by component
+        variant: 'secondary'
+      },
+      dismissible: true
+    }),
+    cooldownHours: 72,
+    maxShowCount: 1
   }
 ];
 

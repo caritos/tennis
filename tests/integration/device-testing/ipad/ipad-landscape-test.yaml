@@ -1,0 +1,95 @@
+appId: com.caritos.tennis
+name: "iPad Landscape - Tablet Layout Test"
+---
+
+# iPad landscape testing - Critical for App Store approval
+# Apple may reject apps with iPad compatibility issues
+# Test both portrait and landscape orientations
+
+# Launch in current orientation
+- launchApp:
+    clearState: true
+- waitForAnimationToEnd
+
+# iPad specific layout verification
+- assertVisible: "Tennis Club"
+- assertVisible: "Connect with tennis players in your area"
+- assertVisible:
+    id: "get-started-button"
+
+# Capture initial iPad layout
+- takeScreenshot: ipad-initial-layout
+
+# Test navigation with tablet-optimized layout
+- tapOn:
+    id: "get-started-button"
+- waitForAnimationToEnd
+
+# Verify signup screen utilizes iPad space
+- assertVisible: "Sign Up"
+- assertVisible: "Join the tennis community!"
+- assertVisible:
+    id: "email-signup-button"
+- assertVisible:
+    id: "apple-signin-button"
+- takeScreenshot: ipad-signup-layout
+
+# Test form layout on iPad
+- tapOn:
+    id: "email-signup-button"
+- waitForAnimationToEnd
+
+# Critical: verify form layout doesn't break on iPad
+- assertVisible:
+    id: "full-name-input"
+- assertVisible:
+    id: "email-input"
+- assertVisible:
+    id: "password-input"
+- assertVisible:
+    id: "confirm-password-input"
+- takeScreenshot: ipad-form-layout
+
+# Test that form elements are appropriately sized
+- tapOn:
+    id: "full-name-input"
+- inputText: "iPad Test User"
+- tapOn:
+    id: "email-input"
+- inputText: "ipad.test.${TIMESTAMP}@example.com"
+- tapOn:
+    id: "password-input"
+- inputText: "iPadTest123"
+- tapOn:
+    id: "confirm-password-input"
+- inputText: "iPadTest123"
+
+# Verify iPad form interaction
+- takeScreenshot: ipad-form-filled
+
+# Test checkbox and button layout
+- assertVisible:
+    id: "terms-checkbox"
+- tapOn:
+    id: "terms-checkbox"
+- assertVisible:
+    id: "create-account-button"
+- takeScreenshot: ipad-form-complete
+
+# Test scrolling behavior on iPad (should be minimal)
+- scroll
+- waitForAnimationToEnd
+- takeScreenshot: ipad-after-scroll
+
+# Verify all elements remain accessible
+- assertVisible:
+    id: "create-account-button"
+- assertVisible:
+    id: "terms-checkbox"
+
+# Final iPad layout verification
+- takeScreenshot: ipad-final-state
+
+# Test orientation change (if supported)
+# Note: This may not work in all simulators
+- takeScreenshot: ipad-orientation-test

@@ -1,0 +1,90 @@
+appId: com.caritos.tennis
+name: "iPhone Pro Max (6.7') - Large Screen Test"
+---
+
+# iPhone Pro Max specific testing - largest iPhone screen
+# Resolution: 2778×1284 (6.7 inch)
+# Verify content scales properly and uses space efficiently
+
+# Launch and verify layout scaling
+- launchApp:
+    clearState: true
+- waitForAnimationToEnd
+
+# Pro Max specific checks
+- assertVisible: "Tennis Club"
+- assertVisible: "Connect with tennis players in your area"
+- assertVisible:
+    id: "get-started-button"
+
+# Verify large screen layout utilization
+- takeScreenshot: promax-welcome-fullscreen
+
+# Test if content is properly centered/scaled
+- tapOn:
+    id: "get-started-button"
+- waitForAnimationToEnd
+
+# Check signup screen layout on large display
+- assertVisible: "Sign Up"
+- assertVisible: "Join the tennis community!"
+- assertVisible:
+    id: "email-signup-button"
+- assertVisible:
+    id: "apple-signin-button"
+- takeScreenshot: promax-signup-options
+
+# Test form layout with ample screen space
+- tapOn:
+    id: "email-signup-button"
+- waitForAnimationToEnd
+
+# Verify form utilizes space efficiently
+- assertVisible:
+    id: "full-name-input"
+- assertVisible:
+    id: "email-input"
+- assertVisible:
+    id: "password-input"
+- assertVisible:
+    id: "confirm-password-input"
+- takeScreenshot: promax-form-layout
+
+# Test that all form elements are visible simultaneously
+- assertVisible:
+    id: "terms-checkbox"
+- assertVisible:
+    id: "create-account-button"
+- takeScreenshot: promax-full-form-visible
+
+# Fill form and verify no scrolling needed
+- tapOn:
+    id: "full-name-input"
+- inputText: "ProMax Test User"
+- tapOn:
+    id: "email-input"
+- inputText: "promax.test.${TIMESTAMP}@example.com"
+- tapOn:
+    id: "password-input"
+- inputText: "ProMaxTest123"
+- tapOn:
+    id: "confirm-password-input"
+- inputText: "ProMaxTest123"
+
+# Verify form completion without scrolling
+- takeScreenshot: promax-form-filled
+
+# Test terms acceptance
+- tapOn:
+    id: "terms-checkbox"
+- takeScreenshot: promax-terms-accepted
+
+# Verify submit button remains easily accessible
+- assertVisible:
+    id: "create-account-button"
+- takeScreenshot: promax-ready-submit
+
+# Test large screen navigation
+- scroll
+- waitForAnimationToEnd
+- takeScreenshot: promax-final-state

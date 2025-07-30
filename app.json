@@ -1,10 +1,10 @@
 {
   "expo": {
-    "name": "Play Serve",
+    "name": "Play Serve: Tennis Community",
     "slug": "play-serve",
     "version": "1.0.0",
     "orientation": "portrait",
-    "description": "Connect with tennis players in your local clubs. Find matches, track scores, and build your tennis community.",
+    "description": "Connect with tennis players in your local clubs. Find matches, track scores, climb rankings, and build your tennis community. Join clubs near you today!",
     "primaryColor": "#007AFF",
     "icon": "./assets/images/icon.png",
     "scheme": "playserve",

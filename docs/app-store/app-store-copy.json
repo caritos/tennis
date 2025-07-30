@@ -1,0 +1,136 @@
+{
+  "appTitle": {
+    "current": "Play Serve",
+    "optimized": "Play Serve: Tennis Community",
+    "length": 28,
+    "maxLength": 30
+  },
+  "subtitle": {
+    "primary": "Find Players & Track Matches",
+    "alternative": "Local Tennis Club Community",
+    "length": 29,
+    "maxLength": 30
+  },
+  "keywords": {
+    "primary": "tennis,club,courts,players,matches,scores,rankings,local,community,sports,finder,tracker",
+    "alternative": "tennis,club,court,player,match,score,rank,local,community,sport,game,tournament,league,social",
+    "length": 94,
+    "maxLength": 100
+  },
+  "shortDescription": "Connect with tennis players in your local clubs. Find matches, track scores, climb rankings, and build your tennis community. Join clubs near you today!",
+  "fullDescription": "🎾 Join the Ultimate Tennis Community\n\nPlay Serve connects passionate tennis players with local clubs and opponents. Whether you're a beginner or pro, find your perfect match and elevate your game.\n\n🏆 Key Features:\n• Discover Local Clubs - Find tennis clubs in your area with active communities\n• Match Players - Connect with players at your skill level for competitive games\n• Track Performance - Record match scores and watch your ranking improve\n• Challenge System - Send and receive challenges from club members\n• Live Rankings - See real-time club rankings and your progress\n• Match History - Detailed statistics and performance tracking\n\n🌟 Why Tennis Players Love Play Serve:\n✓ Easy club discovery and joining\n✓ Smart player matching by skill level\n✓ Professional scoring and statistics\n✓ Active community engagement\n✓ Secure and private interactions\n\n🎯 Perfect For:\n- Finding regular tennis partners\n- Joining competitive club leagues\n- Tracking your tennis improvement\n- Building lasting tennis friendships\n- Discovering new courts and venues\n\n📱 Ready to Serve?\nDownload Play Serve and connect with thousands of tennis enthusiasts in your area. Your next great match is just a tap away!\n\n*Available for iPhone and iPad*",
+  "promotionalText": {
+    "launch": "🏆 The tennis community app is here! Connect with local players, track matches, and join clubs near you. Download now and start playing!",
+    "update": "🎾 New: Enhanced club discovery and improved match tracking! Find tennis partners faster and climb the rankings with our latest features."
+  },
+  "localizations": {
+    "es": {
+      "title": "Play Serve: Comunidad Tenis",
+      "subtitle": "Encuentra Jugadores y Partidos",
+      "keywords": "tenis,club,cancha,jugadores,partidos,puntuación,ranking,local,comunidad,deportes"
+    },
+    "fr": {
+      "title": "Play Serve: Communauté Tennis",
+      "subtitle": "Trouvez Joueurs et Matchs",
+      "keywords": "tennis,club,court,joueurs,matchs,scores,classement,local,communauté,sports"
+    },
+    "de": {
+      "title": "Play Serve: Tennis Community",
+      "subtitle": "Spieler & Matches Finden",
+      "keywords": "tennis,club,platz,spieler,spiele,punkte,ranking,lokal,gemeinschaft,sport"
+    }
+  },
+  "competitiveAnalysis": {
+    "directCompetitors": [
+      {
+        "name": "TennisBot",
+        "focus": "Court booking",
+        "weakness": "Limited community features"
+      },
+      {
+        "name": "PlayYourCourt", 
+        "focus": "Professional coaching",
+        "weakness": "Complex UI, expensive"
+      },
+      {
+        "name": "Tennis Clash",
+        "focus": "Gaming/simulation",
+        "weakness": "Not real tennis connections"
+      }
+    ],
+    "ourAdvantages": [
+      "Community-first approach",
+      "Simple, intuitive UX",
+      "Local club focus",
+      "Free core features"
+    ]
+  },
+  "targetAudience": {
+    "primary": {
+      "demographics": "Ages 25-45, tennis enthusiasts",
+      "psychographics": "Social, competitive, health-conscious",
+      "painPoints": "Finding consistent playing partners, discovering local clubs, tracking improvement"
+    },
+    "secondary": {
+      "demographics": "Ages 18-25, college students",
+      "psychographics": "Active, social media savvy, budget-conscious",
+      "painPoints": "Meeting new people, finding affordable tennis options"
+    }
+  },
+  "conversionOptimization": {
+    "screenshots": [
+      {
+        "order": 1,
+        "title": "Discover Local Tennis Clubs",
+        "description": "Find active tennis communities near you"
+      },
+      {
+        "order": 2,
+        "title": "Connect with Players",
+        "description": "Match with players at your skill level"
+      },
+      {
+        "order": 3,
+        "title": "Record Match Scores",
+        "description": "Professional scoring and statistics"
+      },
+      {
+        "order": 4,
+        "title": "Climb the Rankings",
+        "description": "Track your progress and improvement"
+      },
+      {
+        "order": 5,
+        "title": "Active Community",
+        "description": "Challenges, events, and social features"
+      }
+    ],
+    "appPreview": {
+      "duration": "30 seconds",
+      "script": [
+        "0-5s: Hero shot - Find Tennis Partners Near You",
+        "5-15s: Club discovery and joining process",
+        "15-25s: Match recording and rankings demo", 
+        "25-30s: Call-to-action - Download Play Serve Today"
+      ]
+    }
+  },
+  "seasonalOptimization": {
+    "spring": {
+      "promotionalText": "🌱 Spring into tennis season! Connect with players and join the most active tennis communities near you.",
+      "keywords": "spring,season,outdoor,courts"
+    },
+    "summer": {
+      "promotionalText": "☀️ Summer tennis is here! Find courts, track matches, and make the most of perfect playing weather.",
+      "keywords": "summer,outdoor,vacation,tournaments"
+    },
+    "fall": {
+      "promotionalText": "🍂 Fall tennis continues! Join indoor clubs and keep your game strong all season long.",
+      "keywords": "fall,indoor,leagues,clubs"
+    },
+    "winter": {
+      "promotionalText": "❄️ Winter tennis awaits! Discover heated courts and year-round tennis communities.",
+      "keywords": "winter,indoor,heated,year-round"
+    }
+  }
+}

@@ -1,0 +1,95 @@
+appId: com.caritos.tennis
+name: "iPhone SE (4.7') - Small Screen Test"
+---
+
+# iPhone SE specific testing - smallest iPhone screen
+# Resolution: 1334×750 (4.7 inch)
+# Critical for App Store approval
+
+# Launch and verify basic layout
+- launchApp:
+    clearState: true
+- waitForAnimationToEnd
+
+# iPhone SE specific checks
+- assertVisible: "Tennis Club"
+- assertVisible: "Connect with tennis players in your area"
+- assertVisible:
+    id: "get-started-button"
+
+# Verify button is fully visible and touchable on small screen
+- takeScreenshot: iphone-se-welcome
+
+# Test navigation with small screen constraints
+- tapOn:
+    id: "get-started-button"
+- waitForAnimationToEnd
+
+# Verify signup options fit properly
+- assertVisible: "Sign Up"
+- assertVisible: "Join the tennis community!"
+- assertVisible:
+    id: "email-signup-button"
+- assertVisible:
+    id: "apple-signin-button"
+- takeScreenshot: iphone-se-signup-options
+
+# Test form layout on small screen
+- tapOn:
+    id: "email-signup-button"
+- waitForAnimationToEnd
+
+# Critical: verify form fields are accessible without overlap
+- assertVisible:
+    id: "full-name-input"
+- assertVisible:
+    id: "email-input"
+- assertVisible:
+    id: "password-input"
+- takeScreenshot: iphone-se-form-initial
+
+# Test scrolling behavior on small screen
+- tapOn:
+    id: "full-name-input"
+- inputText: "SE Test User"
+- tapOn:
+    id: "email-input"
+- inputText: "se.test.${TIMESTAMP}@example.com"
+
+# Scroll to access lower fields
+- scroll
+- waitForAnimationToEnd
+- takeScreenshot: iphone-se-form-scrolled
+
+# Verify all form elements remain accessible
+- assertVisible:
+    id: "password-input"
+- assertVisible:
+    id: "confirm-password-input"
+- tapOn:
+    id: "password-input"
+- inputText: "SETest123"
+- tapOn:
+    id: "confirm-password-input"
+- inputText: "SETest123"
+
+# Test terms checkbox visibility after keyboard
+- scroll
+- waitForAnimationToEnd
+- assertVisible:
+    id: "terms-checkbox"
+- tapOn:
+    id: "terms-checkbox"
+- takeScreenshot: iphone-se-terms-selected
+
+# Verify submit button is reachable
+- scroll
+- waitForAnimationToEnd
+- assertVisible:
+    id: "create-account-button"
+- takeScreenshot: iphone-se-ready-submit
+
+# Test keyboard dismissal and final layout
+- scroll
+- waitForAnimationToEnd
+- takeScreenshot: iphone-se-final-layout
