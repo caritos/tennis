@@ -42,4 +42,6 @@ app-example
 # E2E Testing
 tests/integration/screenshots/
 
-AuthKey_C7K94PD368.p8
+ios/certs/
+.keys/
+*.p8
