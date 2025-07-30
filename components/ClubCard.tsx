@@ -12,9 +12,10 @@ interface ClubCardProps {
   onJoin?: (club: Club) => void;
   distance?: number;
   isJoined?: boolean;
+  isJoining?: boolean;
 }
 
-export function ClubCard({ club, onPress, onJoin, distance, isJoined }: ClubCardProps) {
+export function ClubCard({ club, onPress, onJoin, distance, isJoined, isJoining }: ClubCardProps) {
   const colorScheme = useColorScheme();
   const colors = Colors[colorScheme ?? 'light'];
 
@@ -91,13 +92,22 @@ export function ClubCard({ club, onPress, onJoin, distance, isJoined }: ClubCard
             )}
             {!isJoined && onJoin && (
               <TouchableOpacity 
-                style={[styles.joinButton, { backgroundColor: colors.tint }]}
-                onPress={() => onJoin(club)}
+                style={[
+                  styles.joinButton, 
+                  { 
+                    backgroundColor: isJoining ? colors.tabIconDefault : colors.tint,
+                    opacity: isJoining ? 0.6 : 1,
+                  }
+                ]}
+                onPress={() => !isJoining && onJoin(club)}
+                disabled={isJoining}
                 accessibilityRole="button"
-                accessibilityLabel={`Join ${club.name}`}
+                accessibilityLabel={isJoining ? `Joining ${club.name}` : `Join ${club.name}`}
                 accessibilityHint="Tap to join this tennis club"
               >
-                <ThemedText style={styles.joinButtonText}>Join</ThemedText>
+                <ThemedText style={styles.joinButtonText}>
+                  {isJoining ? 'Joining...' : 'Join'}
+                </ThemedText>
               </TouchableOpacity>
             )}
           </View>

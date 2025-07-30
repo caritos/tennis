@@ -3,6 +3,8 @@ import { Session, User } from '@supabase/supabase-js';
 import { supabase } from '@/lib/supabase';
 import { initializeDatabase } from '@/database/database';
 import { syncService } from '@/services/sync';
+import { pushNotificationService } from '@/services/pushNotificationService';
+import { realtimeService } from '@/services/realtimeService';
 
 interface AuthContextType {
   session: Session | null;
@@ -101,6 +103,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           if (!syncSuccess) {
             console.warn('AuthContext: Initial user sync failed, but continuing with auth flow');
           }
+          
+          // Initialize push notifications for the user
+          await pushNotificationService.initialize(session.user.id);
+          
+          // Initialize realtime subscriptions for the user
+          await realtimeService.initialize(session.user.id);
         }
       } catch (error) {
         console.error('AuthContext: Initialization error:', error);
@@ -124,6 +132,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             console.warn('AuthContext: User sync failed after auth change');
           }
         });
+        
+        // Initialize push notifications when user signs in
+        pushNotificationService.initialize(session.user.id);
+        
+        // Initialize realtime subscriptions when user signs in
+        realtimeService.initialize(session.user.id);
       }
     });
 
@@ -132,6 +146,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const signOut = async () => {
     console.log('AuthContext: Signing out...');
+    
+    // Clean up realtime subscriptions
+    realtimeService.cleanup();
+    
     const { error } = await supabase.auth.signOut();
     if (error) {
       console.error('AuthContext: Sign out error:', error);

@@ -25,7 +25,7 @@ export default function DebugDatabaseScreen() {
         
       } catch (err) {
         console.error('DEBUG: Database error:', err);
-        setError(err.toString());
+        setError(err instanceof Error ? err.message : 'Unknown error');
       }
     };
     

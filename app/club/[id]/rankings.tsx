@@ -48,7 +48,7 @@ export default function ClubRankingsScreen() {
         return;
       }
       
-      setClubName(clubData.name);
+      setClubName((clubData as any).name);
       
       // Get member count
       const countResult = await db.getFirstAsync(
@@ -56,7 +56,7 @@ export default function ClubRankingsScreen() {
         [id]
       );
       
-      setMemberCount(countResult?.count || 0);
+      setMemberCount((countResult as any)?.count || 0);
       
       // Get full rankings
       const leaderboard = await getClubLeaderboard(id);

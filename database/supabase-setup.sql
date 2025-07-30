@@ -6,6 +6,7 @@
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 
 -- Drop existing tables if they exist (in reverse dependency order)
+DROP TABLE IF EXISTS notifications CASCADE;
 DROP TABLE IF EXISTS challenge_counters CASCADE;
 DROP TABLE IF EXISTS challenges CASCADE;
 DROP TABLE IF EXISTS invitation_responses CASCADE;
@@ -119,6 +120,21 @@ CREATE TABLE challenge_counters (
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
+-- Notifications table (for in-app notification system)
+CREATE TABLE notifications (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  type TEXT NOT NULL CHECK (type IN ('challenge', 'match_invitation', 'match_result', 'ranking_update', 'club_activity')),
+  title TEXT NOT NULL,
+  message TEXT,
+  is_read BOOLEAN DEFAULT FALSE,
+  action_type TEXT CHECK (action_type IN ('accept_challenge', 'decline_challenge', 'view_match', 'view_ranking', 'join_club')),
+  action_data JSONB, -- JSON data for action parameters
+  related_id UUID, -- ID of related entity (challenge_id, match_id, etc.)
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  expires_at TIMESTAMP WITH TIME ZONE
+);
+
 -- Create indexes for better performance
 CREATE INDEX idx_clubs_creator ON clubs(creator_id);
 CREATE INDEX idx_clubs_location ON clubs(lat, lng);
@@ -137,6 +153,10 @@ CREATE INDEX idx_challenges_challenger ON challenges(challenger_id);
 CREATE INDEX idx_challenges_challenged ON challenges(challenged_id);
 CREATE INDEX idx_challenges_status ON challenges(status);
 CREATE INDEX idx_challenge_counters_challenge ON challenge_counters(challenge_id);
+CREATE INDEX idx_notifications_user ON notifications(user_id);
+CREATE INDEX idx_notifications_type ON notifications(type);
+CREATE INDEX idx_notifications_read ON notifications(is_read);
+CREATE INDEX idx_notifications_created ON notifications(created_at);
 
 -- Add triggers for updated_at timestamp
 CREATE OR REPLACE FUNCTION update_updated_at_column()

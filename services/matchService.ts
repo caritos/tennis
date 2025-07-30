@@ -2,6 +2,7 @@ import { initializeDatabase } from '../database/database';
 import { supabase, Match } from '../lib/supabase';
 import { TennisScore, isValidTennisScore } from '../utils/tennisScore';
 import { syncService } from './sync';
+import { NotificationService } from './NotificationService';
 
 export interface CreateMatchData {
   club_id: string;
@@ -122,6 +123,72 @@ export class MatchService {
         `SELECT * FROM matches WHERE id = ?`,
         [matchId]
       );
+
+      // Create notifications for match participants and ranking updates
+      try {
+        const notificationService = new NotificationService(db);
+        
+        // Get recorder name for notifications
+        const recorder = await db.getFirstAsync(
+          'SELECT full_name FROM users WHERE id = ?',
+          [matchData.player1_id]
+        ) as { full_name: string } | null;
+
+        // Get club name for ranking notifications
+        const club = await db.getFirstAsync(
+          'SELECT name FROM clubs WHERE id = ?',
+          [matchData.club_id]
+        ) as { name: string } | null;
+
+        if (recorder && club) {
+          const scoreObj = new TennisScore(matchData.scores);
+          const isPlayer1Winner = scoreObj.winner === 'player1';
+          
+          // Format match result
+          const resultForPlayer1 = isPlayer1Winner ? 'won' : 'lost';
+          const resultForOpponent = isPlayer1Winner ? 'lost' : 'won';
+          
+          // Get current leaderboard to detect ranking changes
+          const currentLeaderboard = await this.getClubLeaderboard(matchData.club_id);
+          
+          // Create notifications for all registered participants
+          const participants = [
+            { id: matchData.player1_id, result: resultForPlayer1 },
+            { id: matchData.player2_id, result: resultForOpponent },
+            { id: matchData.player3_id, result: resultForPlayer1 }, // Partner with player1
+            { id: matchData.player4_id, result: resultForOpponent }, // Partner with player2
+          ].filter(p => p.id && p.id !== matchData.player1_id); // Exclude recorder and null values
+
+          for (const participant of participants) {
+            // Create match result notification
+            await notificationService.createMatchResultNotification(
+              participant.id!,
+              recorder.full_name,
+              matchId,
+              `${matchData.match_type} - You ${participant.result} ${matchData.scores}`
+            );
+
+            // Check for ranking changes and create ranking notifications
+            const playerRanking = currentLeaderboard.find(p => p.playerId === participant.id);
+            if (playerRanking) {
+              // Get the new leaderboard after this match
+              const newLeaderboard = await this.getClubLeaderboard(matchData.club_id);
+              const newPlayerRanking = newLeaderboard.find(p => p.playerId === participant.id);
+              
+              if (newPlayerRanking && playerRanking.ranking !== newPlayerRanking.ranking) {
+                await notificationService.createRankingUpdateNotification(
+                  participant.id!,
+                  playerRanking.ranking,
+                  newPlayerRanking.ranking,
+                  club.name
+                );
+              }
+            }
+          }
+        }
+      } catch (error) {
+        console.warn('Failed to create match notifications:', error);
+      }
 
       // Queue match for sync using the universal offline queue
       try {

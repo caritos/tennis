@@ -2,8 +2,7 @@ import React, { useState } from 'react';
 import { View, StyleSheet, Text, Animated } from 'react-native';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { MatchRecordingForm } from '../components/MatchRecordingForm';
-import { recordMatch } from '../services/matchService';
-import { CreateMatchData } from '../services/matchService';
+import { recordMatch , CreateMatchData } from '../services/matchService';
 import { logError, getDatabaseErrorMessage } from '../utils/errorHandling';
 import { useColorScheme } from '@/hooks/useColorScheme';
 import { Colors } from '@/constants/Colors';
@@ -13,7 +12,6 @@ export default function RecordMatchScreen() {
   const router = useRouter();
   const { clubId = 'demo-club-123' } = useLocalSearchParams<{ clubId?: string }>();
   const colorScheme = useColorScheme();
-  const colors = Colors[colorScheme ?? 'light'];
   
   const [notification, setNotification] = useState<{ type: 'success' | 'error', message: string } | null>(null);
   const [fadeAnim] = useState(new Animated.Value(0));

@@ -1,5 +1,6 @@
 import { initializeDatabase } from '@/database/database';
 import { syncService } from './sync';
+import { NotificationService } from './NotificationService';
 
 export interface MatchInvitation {
   id: string;
@@ -194,6 +195,26 @@ export class MatchInvitationService {
           response.created_at,
         ]
       );
+
+      // Create notification for invitation creator
+      const invitationDetails = await db.getFirstAsync(
+        `SELECT mi.creator_id, mi.match_type, mi.date, u.full_name as responder_name
+         FROM match_invitations mi
+         JOIN users u ON u.id = ?
+         WHERE mi.id = ?`,
+        [userId, invitationId]
+      ) as any;
+
+      if (invitationDetails) {
+        const notificationService = new NotificationService(db);
+        await notificationService.createMatchInvitationNotification(
+          invitationDetails.creator_id,
+          invitationDetails.responder_name,
+          invitationId,
+          invitationDetails.match_type,
+          invitationDetails.date
+        );
+      }
 
       // Queue for sync
       await syncService.queueInvitationResponse(invitationId, userId, message);

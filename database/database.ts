@@ -33,6 +33,13 @@ export async function createTables(db: Database): Promise<void> {
         phone TEXT,
         role TEXT DEFAULT 'player',
         contact_preference TEXT DEFAULT 'whatsapp' CHECK (contact_preference IN ('whatsapp', 'phone', 'text')),
+        skill_level TEXT CHECK (skill_level IN ('beginner', 'intermediate', 'advanced', 'pro')),
+        playing_style TEXT CHECK (playing_style IN ('aggressive', 'defensive', 'all_court', 'serve_volley')),
+        availability TEXT, -- JSON string for availability preferences
+        profile_visibility TEXT DEFAULT 'public' CHECK (profile_visibility IN ('public', 'clubs_only', 'private')),
+        match_history_visibility TEXT DEFAULT 'public' CHECK (match_history_visibility IN ('public', 'clubs_only', 'private')),
+        allow_challenges TEXT DEFAULT 'everyone' CHECK (allow_challenges IN ('everyone', 'club_members', 'none')),
+        notification_preferences TEXT, -- JSON string for notification settings
         created_at TEXT DEFAULT CURRENT_TIMESTAMP
       );
     `);
@@ -161,6 +168,24 @@ export async function createTables(db: Database): Promise<void> {
       );
     `);
 
+    // Notifications table
+    await db.execAsync(`
+      CREATE TABLE IF NOT EXISTS notifications (
+        id TEXT PRIMARY KEY,
+        user_id TEXT NOT NULL,
+        type TEXT NOT NULL CHECK (type IN ('challenge', 'match_invitation', 'match_result', 'ranking_update', 'club_activity')),
+        title TEXT NOT NULL,
+        message TEXT,
+        is_read BOOLEAN DEFAULT 0,
+        action_type TEXT CHECK (action_type IN ('accept_challenge', 'decline_challenge', 'view_match', 'view_ranking', 'join_club')),
+        action_data TEXT, -- JSON string for action parameters
+        related_id TEXT, -- ID of related entity (challenge_id, match_id, etc.)
+        created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+        expires_at TEXT,
+        FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE CASCADE
+      );
+    `);
+
     console.log('Database tables created successfully');
   } catch (error) {
     console.error('Failed to create tables:', error);
@@ -189,6 +214,7 @@ export async function migrateDatabase(db: Database): Promise<void> {
 export async function dropTables(db: Database): Promise<void> {
   try {
     // Drop tables in reverse dependency order
+    await db.execAsync('DROP TABLE IF EXISTS notifications;');
     await db.execAsync('DROP TABLE IF EXISTS challenge_counters;');
     await db.execAsync('DROP TABLE IF EXISTS challenges;');
     await db.execAsync('DROP TABLE IF EXISTS invitation_responses;');

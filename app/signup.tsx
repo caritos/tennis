@@ -27,8 +27,8 @@ export default function SignUpPage() {
   };
 
   const handleAppleSignUpSuccess = () => {
-    console.log('Apple sign up successful - navigating to main app');
-    router.replace('/(tabs)');
+    console.log('Apple sign up successful - will redirect based on onboarding status');
+    router.replace('/');
   };
 
   const handleAppleSignUpError = (error: string) => {

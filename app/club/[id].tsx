@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { View, ScrollView, StyleSheet, TouchableOpacity, ActivityIndicator, Modal } from 'react-native';
+import { View, ScrollView, StyleSheet, TouchableOpacity, ActivityIndicator } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useLocalSearchParams, router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
@@ -62,7 +62,7 @@ export default function ClubDetailScreen() {
       setClub(clubData as Club);
       
       // Check if current user is the creator
-      if (user?.id && clubData.creator_id === user.id) {
+      if (user?.id && (clubData as any).creator_id === user.id) {
         setIsCreator(true);
       }
       
@@ -72,7 +72,7 @@ export default function ClubDetailScreen() {
         [id]
       );
       
-      setMemberCount(countResult?.count || 0);
+      setMemberCount((countResult as any)?.count || 0);
       
       // Get club rankings using the match service
       try {
@@ -254,7 +254,7 @@ export default function ClubDetailScreen() {
             onViewAll={() => {
               router.push({
                 pathname: '/club/[id]/rankings',
-                params: { id }
+                params: { id: id as string }
               });
             }}
             onPlayerPress={(playerId) => {

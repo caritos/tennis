@@ -1,14 +1,16 @@
 import React, { useState, useEffect } from 'react';
-import { StyleSheet, View, TouchableOpacity, ScrollView, Button } from 'react-native';
+import { StyleSheet, View, TouchableOpacity, ScrollView } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { Link, router } from 'expo-router';
 
 import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
-import { ClubList } from '@/components/ClubList';
 import { ClubCard } from '@/components/ClubCard';
 import { CreateClubButton } from '@/components/CreateClubButton';
+import { NotificationBadge } from '@/components/NotificationBadge';
+import { OnboardingReEngagement } from '@/components/OnboardingReEngagement';
+import { useNotificationBadge } from '@/hooks/useNotificationBadge';
 import { Club } from '@/lib/supabase';
 import { useColorScheme } from '@/hooks/useColorScheme';
 import { Colors } from '@/constants/Colors';
@@ -25,13 +27,13 @@ export default function ClubScreen() {
   const [clubs, setClubs] = useState<Club[]>([]);
   const [myClubs, setMyClubs] = useState<Club[]>([]);
   const [loading, setLoading] = useState(false);
-  const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [distances, setDistances] = useState<Map<string, number>>(new Map());
   const [joinedClubIds, setJoinedClubIds] = useState<string[]>([]);
   const [joiningClubId, setJoiningClubId] = useState<string | null>(null);
 
   const { user } = useAuth();
+  const { badgeCount } = useNotificationBadge();
   
   useEffect(() => {
     console.log('ClubScreen: User state changed:', user ? `User: ${user.id}` : 'No user');
@@ -105,12 +107,10 @@ export default function ClubScreen() {
       setError('Failed to load clubs. Please check your connection.');
     } finally {
       setLoading(false);
-      setRefreshing(false);
     }
   };
 
   const handleRefresh = () => {
-    setRefreshing(true);
     loadClubs(true);
   };
 
@@ -190,12 +190,25 @@ export default function ClubScreen() {
     <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
       <ThemedView style={styles.header}>
         <ThemedText type="title" style={styles.headerTitle}>Clubs</ThemedText>
-        <Link href="/record-match" asChild>
-          <TouchableOpacity style={[styles.recordMatchButton, { backgroundColor: colors.tint }]}>
-            <Ionicons name="add" size={20} color="white" />
-            <ThemedText style={styles.recordMatchText}>Record Match</ThemedText>
+        <View style={styles.headerButtons}>
+          <TouchableOpacity
+            style={styles.notificationButton}
+            onPress={() => router.push('/notifications')}
+          >
+            <Ionicons name="notifications-outline" size={24} color={colors.text} />
+            <NotificationBadge 
+              count={badgeCount} 
+              size="small" 
+              style={styles.notificationBadgePosition}
+            />
           </TouchableOpacity>
-        </Link>
+          <Link href="/record-match" asChild>
+            <TouchableOpacity style={[styles.recordMatchButton, { backgroundColor: colors.tint }]}>
+              <Ionicons name="add" size={20} color="white" />
+              <ThemedText style={styles.recordMatchText}>Record Match</ThemedText>
+            </TouchableOpacity>
+          </Link>
+        </View>
       </ThemedView>
 
       <ScrollView 
@@ -319,6 +332,9 @@ export default function ClubScreen() {
           />
         </ThemedView>
       </ScrollView>
+      
+      {/* Onboarding Re-engagement */}
+      <OnboardingReEngagement />
     </SafeAreaView>
   );
 }
@@ -338,6 +354,20 @@ const styles = StyleSheet.create({
   headerTitle: {
     fontSize: 28,
     fontWeight: 'bold',
+  },
+  headerButtons: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
+  notificationButton: {
+    position: 'relative',
+    padding: 8,
+  },
+  notificationBadgePosition: {
+    position: 'absolute',
+    top: 2,
+    right: 2,
   },
   scrollContainer: {
     flex: 1,

@@ -3,6 +3,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
 import React, { useState, useEffect } from 'react';
 import { useFocusEffect } from '@react-navigation/native';
+import { Ionicons } from '@expo/vector-icons';
 
 import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
@@ -72,9 +73,20 @@ export default function ProfileScreen() {
 
         <ThemedView style={styles.section}>
           <View style={styles.userSection}>
-            <ThemedText type="subtitle" style={styles.userName}>
-              {user?.user_metadata?.full_name || user?.email || 'Tennis Player'}
-            </ThemedText>
+            <View style={styles.userInfoContainer}>
+              <ThemedText type="subtitle" style={styles.userName}>
+                {user?.user_metadata?.full_name || user?.email || 'Tennis Player'}
+              </ThemedText>
+              <TouchableOpacity
+                style={[styles.editButton, { borderColor: colors.tint }]}
+                onPress={() => router.push('/edit-profile')}
+              >
+                <Ionicons name="pencil" size={16} color={colors.tint} />
+                <ThemedText style={[styles.editButtonText, { color: colors.tint }]}>
+                  Edit
+                </ThemedText>
+              </TouchableOpacity>
+            </View>
             {user?.email && (
               <ThemedText style={styles.userEmail}>{user.email}</ThemedText>
             )}
@@ -188,6 +200,24 @@ const styles = StyleSheet.create({
   userSection: {
     alignItems: 'center',
     paddingVertical: 12,
+  },
+  userInfoContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
+  editButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 16,
+    borderWidth: 1,
+  },
+  editButtonText: {
+    fontSize: 14,
+    fontWeight: '500',
   },
   userName: {
     fontSize: 24,

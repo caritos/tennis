@@ -1,11 +1,11 @@
 {
   "expo": {
-    "name": "Tennis Club",
-    "slug": "tennis-club",
+    "name": "Play Serve",
+    "slug": "play-serve",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
-    "scheme": "tennisclub",
+    "scheme": "playserve",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
     "ios": {
@@ -16,7 +16,13 @@
           "NSAllowsArbitraryLoads": true
         }
       },
-      "bundleIdentifier": "com.caritos.tennis"
+      "bundleIdentifier": "com.caritos.tennis",
+      "appleTeamId": "3U8L77G9QV",
+      "config": {
+        "apnsKeyId": "C7K94PD368",
+        "apnsTeamId": "3U8L77G9QV"
+      }
+
     },
     "android": {
       "adaptiveIcon": {
@@ -49,11 +55,19 @@
       [
         "expo-location",
         {
-          "locationAlwaysAndWhenInUsePermission": "This app uses location to help you discover nearby tennis clubs and find players in your area."
+          "locationAlwaysAndWhenInUsePermission": "Play Serve uses location to help you discover nearby tennis clubs and find players in your area."
         }
       ],
       "expo-sqlite",
-      "expo-apple-authentication"
+      "expo-apple-authentication",
+      [
+        "expo-notifications",
+        {
+          "icon": "./assets/images/notification-icon.png",
+          "color": "#007AFF",
+          "defaultChannel": "play-serve-notifications"
+        }
+      ]
     ],
     "experiments": {
       "typedRoutes": true

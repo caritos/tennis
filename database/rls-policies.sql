@@ -11,6 +11,7 @@ ALTER TABLE match_invitations ENABLE ROW LEVEL SECURITY;
 ALTER TABLE invitation_responses ENABLE ROW LEVEL SECURITY;
 ALTER TABLE challenges ENABLE ROW LEVEL SECURITY;
 ALTER TABLE challenge_counters ENABLE ROW LEVEL SECURITY;
+ALTER TABLE notifications ENABLE ROW LEVEL SECURITY;
 
 -- ============================================================================
 -- USERS TABLE POLICIES
@@ -284,6 +285,27 @@ CREATE POLICY "Users can update own counters" ON challenge_counters
 -- Users can delete their own counter-offers
 CREATE POLICY "Users can delete own counters" ON challenge_counters
   FOR DELETE USING (auth.uid()::text = counter_by::text);
+
+-- ============================================================================
+-- NOTIFICATIONS TABLE POLICIES
+-- Users can only see and modify their own notifications
+-- ============================================================================
+
+-- Users can view their own notifications
+CREATE POLICY "Users can view own notifications" ON notifications
+  FOR SELECT USING (auth.uid()::text = user_id::text);
+
+-- System can create notifications for users (INSERT with service role)
+CREATE POLICY "System can create notifications" ON notifications
+  FOR INSERT WITH CHECK (auth.role() = 'service_role');
+
+-- Users can update their own notifications (mark as read, etc.)
+CREATE POLICY "Users can update own notifications" ON notifications
+  FOR UPDATE USING (auth.uid()::text = user_id::text);
+
+-- Users can delete their own notifications
+CREATE POLICY "Users can delete own notifications" ON notifications
+  FOR DELETE USING (auth.uid()::text = user_id::text);
 
 -- ============================================================================
 -- UTILITY POLICIES

@@ -1,5 +1,6 @@
 import { initializeDatabase, Database } from '@/database/database';
 import { syncService } from './sync';
+import { NotificationService } from './NotificationService';
 
 export interface Challenge {
   id: string;
@@ -85,6 +86,16 @@ class ChallengeService {
     const expiresAt = challengeData.expires_at || new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString();
     
     try {
+      // Get challenger name for notification
+      const challenger = await db.getFirstAsync(
+        'SELECT full_name FROM users WHERE id = ?',
+        [challengeData.challenger_id]
+      ) as { full_name: string } | null;
+
+      if (!challenger) {
+        throw new Error('Challenger not found');
+      }
+
       // Insert challenge into local database
       await db.runAsync(
         `INSERT INTO challenges (
@@ -102,6 +113,16 @@ class ChallengeService {
           challengeData.message || null,
           expiresAt,
         ]
+      );
+
+      // Create notification for the challenged user
+      const notificationService = new NotificationService(db);
+      await notificationService.createChallengeNotification(
+        challengeData.challenged_id,
+        challenger.full_name,
+        challengeId,
+        challengeData.match_type,
+        challengeData.message
       );
 
       // Queue for sync to Supabase
@@ -257,11 +278,35 @@ class ChallengeService {
     const db = await initializeDatabase();
     
     try {
+      // Get challenge details and challenger info for notification
+      const challenge = await db.getFirstAsync(
+        `SELECT c.challenger_id, c.match_type, u.full_name as challenged_name
+         FROM challenges c
+         JOIN users u ON c.challenged_id = u.id
+         WHERE c.id = ? AND c.challenged_id = ?`,
+        [challengeId, userId]
+      ) as { challenger_id: string; match_type: string; challenged_name: string } | null;
+
+      if (!challenge) {
+        throw new Error('Challenge not found or not authorized');
+      }
+
       // Update challenge status locally
       await db.runAsync(
         'UPDATE challenges SET status = ?, contacts_shared = 1, updated_at = CURRENT_TIMESTAMP WHERE id = ? AND challenged_id = ?',
         ['accepted', challengeId, userId]
       );
+
+      // Create notification for the challenger
+      const notificationService = new NotificationService(db);
+      await notificationService.createNotification({
+        user_id: challenge.challenger_id,
+        type: 'challenge',
+        title: 'Challenge accepted!',
+        message: `${challenge.challenged_name} accepted your ${challenge.match_type} challenge`,
+        action_type: 'view_match',
+        related_id: challengeId,
+      });
 
       // Queue for sync to Supabase
       await syncService.queueChallengeResponse(challengeId, 'accepted');
@@ -280,11 +325,34 @@ class ChallengeService {
     const db = await initializeDatabase();
     
     try {
+      // Get challenge details and challenger info for notification
+      const challenge = await db.getFirstAsync(
+        `SELECT c.challenger_id, c.match_type, u.full_name as challenged_name
+         FROM challenges c
+         JOIN users u ON c.challenged_id = u.id
+         WHERE c.id = ? AND c.challenged_id = ?`,
+        [challengeId, userId]
+      ) as { challenger_id: string; match_type: string; challenged_name: string } | null;
+
+      if (!challenge) {
+        throw new Error('Challenge not found or not authorized');
+      }
+
       // Update challenge status locally
       await db.runAsync(
         'UPDATE challenges SET status = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ? AND challenged_id = ?',
         ['declined', challengeId, userId]
       );
+
+      // Create notification for the challenger
+      const notificationService = new NotificationService(db);
+      await notificationService.createNotification({
+        user_id: challenge.challenger_id,
+        type: 'challenge',
+        title: 'Challenge declined',
+        message: `${challenge.challenged_name} declined your ${challenge.match_type} challenge`,
+        related_id: challengeId,
+      });
 
       // Queue for sync to Supabase
       await syncService.queueChallengeResponse(challengeId, 'declined');

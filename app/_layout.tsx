@@ -1,14 +1,15 @@
 import { DarkTheme, DefaultTheme, ThemeProvider } from '@react-navigation/native';
 import { useFonts } from 'expo-font';
-import { Stack, Redirect } from 'expo-router';
+import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import 'react-native-reanimated';
-import { LogBox } from 'react-native';
+import { LogBox , View, ActivityIndicator } from 'react-native';
 
 import { useColorScheme } from '@/hooks/useColorScheme';
 import { AuthProvider, useAuth } from '@/contexts/AuthContext';
 import { NotificationProvider } from '@/contexts/NotificationContext';
-import { View, ActivityIndicator } from 'react-native';
+import { OnboardingProvider, useOnboarding } from '@/contexts/OnboardingContext';
+import { useNotificationListener } from '@/hooks/useNotificationListener';
 
 // Hide the "Open debugger" warning in development
 if (__DEV__) {
@@ -18,8 +19,17 @@ if (__DEV__) {
 function RootLayoutNav() {
   const colorScheme = useColorScheme();
   const { user, isLoading } = useAuth();
+  const { isOnboardingComplete, isFirstTimeUser } = useOnboarding();
+  
+  // Initialize notification listeners
+  useNotificationListener();
 
-  console.log('RootLayoutNav: Auth state -', { user: user?.id || 'none', isLoading });
+  console.log('RootLayoutNav: Auth state -', { 
+    user: user?.id || 'none', 
+    isLoading, 
+    isOnboardingComplete,
+    isFirstTimeUser 
+  });
 
   if (isLoading) {
     return (
@@ -36,6 +46,7 @@ function RootLayoutNav() {
           <>
             <Stack.Screen name="index" options={{ headerShown: false }} />
             <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+            <Stack.Screen name="onboarding" options={{ headerShown: false }} />
             <Stack.Screen name="welcome" options={{ headerShown: false, presentation: 'modal' }} />
             <Stack.Screen name="signup" options={{ headerShown: false, presentation: 'modal' }} />
             <Stack.Screen name="signin" options={{ headerShown: false, presentation: 'modal' }} />
@@ -50,6 +61,7 @@ function RootLayoutNav() {
             <Stack.Screen name="signin" options={{ headerShown: false }} />
             <Stack.Screen name="email-signup" options={{ headerShown: false }} />
             <Stack.Screen name="email-signin" options={{ headerShown: false }} />
+            <Stack.Screen name="onboarding" options={{ headerShown: false, presentation: 'modal' }} />
             <Stack.Screen name="(tabs)" options={{ headerShown: false, presentation: 'modal' }} />
           </>
         )}
@@ -72,9 +84,11 @@ export default function RootLayout() {
 
   return (
     <AuthProvider>
-      <NotificationProvider>
-        <RootLayoutNav />
-      </NotificationProvider>
+      <OnboardingProvider>
+        <NotificationProvider>
+          <RootLayoutNav />
+        </NotificationProvider>
+      </OnboardingProvider>
     </AuthProvider>
   );
 }
