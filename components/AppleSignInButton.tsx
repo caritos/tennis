@@ -146,10 +146,15 @@ export default function AppleSignInButton({
       } else if (error?.message?.includes('Invalid login credentials')) {
         errorMessage = 'Apple Sign In failed: Invalid credentials. Please try signing in again.';
       } else if (error?.message?.includes('authorization attempt failed')) {
-        if (!Device.isDevice) {
-          errorMessage = 'Apple Sign In requires a real iOS device. Testing on a simulator is not supported.';
-        } else {
-          errorMessage = 'Apple Sign In authorization failed. Please ensure you are signed into iCloud and try again. If the problem persists, please contact support.';
+        try {
+          if (!Device.isDevice) {
+            errorMessage = 'Apple Sign In requires a real iOS device. Testing on a simulator is not supported.';
+          } else {
+            errorMessage = 'Apple Sign In authorization failed. Please ensure you are signed into iCloud and try again. If the problem persists, please contact support.';
+          }
+        } catch (deviceError) {
+          // Fallback if Device module is not available (e.g., in Expo Go)
+          errorMessage = 'Apple Sign In authorization failed. Please try again or use email sign up.';
         }
       } else if (error?.message) {
         errorMessage = getAuthErrorMessage(error);

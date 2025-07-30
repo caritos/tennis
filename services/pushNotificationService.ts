@@ -2,16 +2,26 @@ import * as Notifications from 'expo-notifications';
 import * as Device from 'expo-device';
 import { Platform } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import Constants from 'expo-constants';
 import { supabase } from '@/lib/supabase';
 
-// Configure how notifications are handled when app is in foreground
-Notifications.setNotificationHandler({
-  handleNotification: async () => ({
-    shouldShowAlert: true,
-    shouldPlaySound: true,
-    shouldSetBadge: true,
-  }),
-});
+// Check if we're in a development build or production (not Expo Go)
+const isNativeModuleAvailable = Constants.appOwnership === 'standalone' || Constants.appOwnership === 'expo';
+
+// Configure how notifications are handled when app is in foreground (only if native modules available)
+if (isNativeModuleAvailable) {
+  try {
+    Notifications.setNotificationHandler({
+      handleNotification: async () => ({
+        shouldShowAlert: true,
+        shouldPlaySound: true,
+        shouldSetBadge: true,
+      }),
+    });
+  } catch (error) {
+    console.warn('⚠️ Failed to setup notification handler:', error);
+  }
+}
 
 export interface NotificationData {
   type: 'challenge' | 'match_invitation' | 'match_result' | 'ranking_update' | 'club_activity';
@@ -35,6 +45,13 @@ class PushNotificationService {
   async initialize(userId?: string): Promise<void> {
     if (this.initialized) return;
 
+    // Skip initialization in Expo Go to avoid native module errors
+    if (!isNativeModuleAvailable) {
+      console.log('📱 Running in Expo Go - Push notification service disabled');
+      this.initialized = true; // Mark as initialized to prevent retries
+      return;
+    }
+
     try {
       // Register for push notifications
       const token = await this.registerForPushNotifications();
@@ -53,7 +70,13 @@ class PushNotificationService {
   }
 
   async registerForPushNotifications(): Promise<string | null> {
+    // Skip in Expo Go
+    if (!isNativeModuleAvailable) {
+      return null;
+    }
+
     try {
+      // Check if we're on a physical device  
       if (!Device.isDevice) {
         console.log('📱 Push notifications require a physical device');
         return null;
@@ -151,6 +174,12 @@ class PushNotificationService {
   }
 
   async sendLocalNotification(notification: NotificationData): Promise<void> {
+    // Skip in Expo Go
+    if (!isNativeModuleAvailable) {
+      console.log('📱 Local notification skipped in Expo Go:', notification.title);
+      return;
+    }
+
     try {
       const categoryId = this.getCategoryId(notification.type);
       
