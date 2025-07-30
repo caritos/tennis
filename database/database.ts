@@ -40,6 +40,7 @@ export async function createTables(db: Database): Promise<void> {
         match_history_visibility TEXT DEFAULT 'public' CHECK (match_history_visibility IN ('public', 'clubs_only', 'private')),
         allow_challenges TEXT DEFAULT 'everyone' CHECK (allow_challenges IN ('everyone', 'club_members', 'none')),
         notification_preferences TEXT, -- JSON string for notification settings
+        profile_photo_uri TEXT, -- Local file URI for profile photo
         created_at TEXT DEFAULT CURRENT_TIMESTAMP
       );
     `);
@@ -200,12 +201,17 @@ export async function createTables(db: Database): Promise<void> {
 export async function migrateDatabase(db: Database): Promise<void> {
   try {
     // Check if matches table has the new edit tracking columns
-    const tableInfo = await db.getAllAsync('PRAGMA table_info(matches);');
-    const hasDoublesColumns = tableInfo.some((col: any) => col.name === 'player3_id');
-    const hasEditColumns = tableInfo.some((col: any) => col.name === 'updated_at');
+    const matchesTableInfo = await db.getAllAsync('PRAGMA table_info(matches);');
+    const hasDoublesColumns = matchesTableInfo.some((col: any) => col.name === 'player3_id');
+    const hasEditColumns = matchesTableInfo.some((col: any) => col.name === 'updated_at');
     
-    if (!hasDoublesColumns || !hasEditColumns) {
-      console.log('🔄 Migrating database for doubles support and match editing...');
+    // Check if users table has the new profile fields
+    const usersTableInfo = await db.getAllAsync('PRAGMA table_info(users);');
+    const hasProfilePhotoField = usersTableInfo.some((col: any) => col.name === 'profile_photo_uri');
+    const hasSkillLevelField = usersTableInfo.some((col: any) => col.name === 'skill_level');
+    
+    if (!hasDoublesColumns || !hasEditColumns || !hasProfilePhotoField || !hasSkillLevelField) {
+      console.log('🔄 Migrating database for advanced profile features...');
       // Drop and recreate tables to add new columns
       await dropTables(db);
       console.log('✅ Database migration completed');

@@ -9,9 +9,13 @@ import {
   KeyboardAvoidingView,
   Platform,
   ActivityIndicator,
+  Image,
+  Alert,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
+import * as ImagePicker from 'expo-image-picker';
+import * as FileSystem from 'expo-file-system';
 import { ThemedView } from './ThemedView';
 import { ThemedText } from './ThemedText';
 import { useColorScheme } from '@/hooks/useColorScheme';
@@ -31,6 +35,7 @@ export interface ProfileData {
   match_history_visibility?: 'public' | 'clubs_only' | 'private';
   allow_challenges?: 'everyone' | 'club_members' | 'none';
   notification_preferences?: string; // JSON string for notification settings
+  profile_photo_uri?: string; // Local file URI for profile photo
 }
 
 interface EditProfileScreenProps {
@@ -69,7 +74,11 @@ export const EditProfileScreen: React.FC<EditProfileScreenProps> = ({
   const [allowChallenges, setAllowChallenges] = useState<'everyone' | 'club_members' | 'none'>(
     initialData?.allow_challenges || 'everyone'
   );
+  const [profilePhotoUri, setProfilePhotoUri] = useState<string | null>(
+    initialData?.profile_photo_uri || null
+  );
   const [isLoading, setIsLoading] = useState(false);
+  const [isUploadingPhoto, setIsUploadingPhoto] = useState(false);
   const [errors, setErrors] = useState<{ [key: string]: string }>({});
 
   const validateForm = (): boolean => {
@@ -96,6 +105,127 @@ export const EditProfileScreen: React.FC<EditProfileScreenProps> = ({
     return text;
   };
 
+  const requestMediaLibraryPermissions = async (): Promise<boolean> => {
+    const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (status !== 'granted') {
+      Alert.alert(
+        'Permission Required',
+        'Sorry, we need camera roll permissions to upload profile photos!',
+        [{ text: 'OK' }]
+      );
+      return false;
+    }
+    return true;
+  };
+
+  const requestCameraPermissions = async (): Promise<boolean> => {
+    const { status } = await ImagePicker.requestCameraPermissionsAsync();
+    if (status !== 'granted') {
+      Alert.alert(
+        'Permission Required',
+        'Sorry, we need camera permissions to take profile photos!',
+        [{ text: 'OK' }]
+      );
+      return false;
+    }
+    return true;
+  };
+
+  const saveImageToLocalDirectory = async (imageUri: string): Promise<string> => {
+    try {
+      const fileExtension = imageUri.split('.').pop() || 'jpg';
+      const fileName = `profile_${user?.id}_${Date.now()}.${fileExtension}`;
+      const localUri = `${FileSystem.documentDirectory}${fileName}`;
+      
+      await FileSystem.copyAsync({
+        from: imageUri,
+        to: localUri
+      });
+      
+      return localUri;
+    } catch (error) {
+      console.error('Failed to save image locally:', error);
+      throw new Error('Failed to save image');
+    }
+  };
+
+  const selectProfilePhoto = () => {
+    Alert.alert(
+      'Select Profile Photo',
+      'Choose how you want to add your profile photo',
+      [
+        { text: 'Camera', onPress: takePhoto },
+        { text: 'Photo Library', onPress: pickPhoto },
+        { text: 'Cancel', style: 'cancel' }
+      ]
+    );
+  };
+
+  const takePhoto = async () => {
+    const hasPermission = await requestCameraPermissions();
+    if (!hasPermission) return;
+
+    setIsUploadingPhoto(true);
+    try {
+      const result = await ImagePicker.launchCameraAsync({
+        mediaTypes: ImagePicker.MediaTypeOptions.Images,
+        allowsEditing: true,
+        aspect: [1, 1],
+        quality: 0.8,
+      });
+
+      if (!result.canceled && result.assets[0]) {
+        const localUri = await saveImageToLocalDirectory(result.assets[0].uri);
+        setProfilePhotoUri(localUri);
+      }
+    } catch (error) {
+      console.error('Camera error:', error);
+      showError('Camera Error', 'Failed to take photo. Please try again.');
+    } finally {
+      setIsUploadingPhoto(false);
+    }
+  };
+
+  const pickPhoto = async () => {
+    const hasPermission = await requestMediaLibraryPermissions();
+    if (!hasPermission) return;
+
+    setIsUploadingPhoto(true);
+    try {
+      const result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ImagePicker.MediaTypeOptions.Images,
+        allowsEditing: true,
+        aspect: [1, 1],
+        quality: 0.8,
+      });
+
+      if (!result.canceled && result.assets[0]) {
+        const localUri = await saveImageToLocalDirectory(result.assets[0].uri);
+        setProfilePhotoUri(localUri);
+      }
+    } catch (error) {
+      console.error('Image picker error:', error);
+      showError('Photo Error', 'Failed to select photo. Please try again.');
+    } finally {
+      setIsUploadingPhoto(false);
+    }
+  };
+
+  const removeProfilePhoto = () => {
+    Alert.alert(
+      'Remove Photo',
+      'Are you sure you want to remove your profile photo?',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        { 
+          text: 'Remove', 
+          style: 'destructive',
+          onPress: () => setProfilePhotoUri(null)
+        }
+      ]
+    );
+  };
+
   const handleSave = async () => {
     if (!validateForm()) return;
 
@@ -110,6 +240,7 @@ export const EditProfileScreen: React.FC<EditProfileScreenProps> = ({
         profile_visibility: profileVisibility,
         match_history_visibility: matchHistoryVisibility,
         allow_challenges: allowChallenges,
+        profile_photo_uri: profilePhotoUri || undefined,
       };
 
       await onSave(profileData);
@@ -331,7 +462,68 @@ export const EditProfileScreen: React.FC<EditProfileScreenProps> = ({
 
           {/* Profile Form */}
           <View style={styles.formSection}>
-            <Text style={[styles.sectionTitle, { color: colors.text }]}>Basic Information</Text>
+            <Text style={[styles.sectionTitle, { color: colors.text }]}>Profile Photo</Text>
+            
+            {/* Profile Photo Upload */}
+            <View style={styles.photoSection}>
+              <View style={styles.photoContainer}>
+                {profilePhotoUri ? (
+                  <Image 
+                    source={{ uri: profilePhotoUri }} 
+                    style={styles.profilePhoto}
+                    onError={() => {
+                      console.warn('Failed to load profile photo');
+                      setProfilePhotoUri(null);
+                    }}
+                  />
+                ) : (
+                  <View style={[styles.photoPlaceholder, { backgroundColor: colors.tabIconDefault + '20' }]}>
+                    <Ionicons 
+                      name="person-outline" 
+                      size={50} 
+                      color={colors.tabIconDefault} 
+                    />
+                  </View>
+                )}
+                
+                {/* Photo overlay with upload/remove buttons */}
+                <View style={styles.photoOverlay}>
+                  {isUploadingPhoto ? (
+                    <ActivityIndicator size="small" color="white" />
+                  ) : (
+                    <View style={styles.photoButtons}>
+                      <TouchableOpacity
+                        style={[styles.photoButton, { backgroundColor: colors.tint }]}
+                        onPress={selectProfilePhoto}
+                        disabled={isUploadingPhoto}
+                      >
+                        <Ionicons 
+                          name={profilePhotoUri ? "camera" : "add"} 
+                          size={16} 
+                          color="white" 
+                        />
+                      </TouchableOpacity>
+                      
+                      {profilePhotoUri && (
+                        <TouchableOpacity
+                          style={[styles.photoButton, { backgroundColor: '#FF3B30' }]}
+                          onPress={removeProfilePhoto}
+                          disabled={isUploadingPhoto}
+                        >
+                          <Ionicons name="trash" size={16} color="white" />
+                        </TouchableOpacity>
+                      )}
+                    </View>
+                  )}
+                </View>
+              </View>
+              
+              <Text style={[styles.photoHelper, { color: colors.tabIconDefault }]}>
+                {profilePhotoUri ? 'Tap camera to change photo' : 'Add a profile photo to help others recognize you'}
+              </Text>
+            </View>
+
+            <Text style={[styles.sectionTitle, { color: colors.text, marginTop: 32 }]}>Basic Information</Text>
 
             {/* Full Name */}
             <View style={styles.inputGroup}>
@@ -782,6 +974,67 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: '500',
   },
+  
+  // Photo upload styles
+  photoSection: {
+    alignItems: 'center',
+    marginBottom: 16,
+  },
+  photoContainer: {
+    position: 'relative',
+    width: 120,
+    height: 120,
+    marginBottom: 12,
+  },
+  profilePhoto: {
+    width: 120,
+    height: 120,
+    borderRadius: 60,
+    backgroundColor: '#f0f0f0',
+  },
+  photoPlaceholder: {
+    width: 120,
+    height: 120,
+    borderRadius: 60,
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 2,
+    borderColor: '#e0e0e0',
+    borderStyle: 'dashed',
+  },
+  photoOverlay: {
+    position: 'absolute',
+    bottom: 0,
+    right: 0,
+    borderRadius: 20,
+    overflow: 'hidden',
+  },
+  photoButtons: {
+    flexDirection: 'row',
+    gap: 8,
+  },
+  photoButton: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    justifyContent: 'center',
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
+    elevation: 5,
+  },
+  photoHelper: {
+    fontSize: 13,
+    textAlign: 'center',
+    maxWidth: 250,
+    lineHeight: 18,
+  },
+  
   buttonContainer: {
     flexDirection: 'row',
     paddingHorizontal: 20,

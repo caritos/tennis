@@ -13,8 +13,11 @@ import { OnboardingReEngagement } from '@/components/OnboardingReEngagement';
 import { BadgeTestPanel } from '@/components/BadgeTestPanel';
 import { ContextualPrompt } from '@/components/ContextualPrompt';
 import { ContextualPromptTester } from '@/components/ContextualPromptTester';
+import { QuickActionsCard } from '@/components/QuickActionsCard';
+import { QuickActionsTester } from '@/components/QuickActionsTester';
 import { useTotalBadgeCount } from '@/hooks/useClubBadges';
 import { useContextualPrompts } from '@/hooks/useContextualPrompts';
+import { useQuickActions } from '@/hooks/useQuickActions';
 import { Club } from '@/lib/supabase';
 import { useColorScheme } from '@/hooks/useColorScheme';
 import { Colors } from '@/constants/Colors';
@@ -39,6 +42,13 @@ export default function ClubScreen() {
   const { user } = useAuth();
   const { badgeCount } = useTotalBadgeCount();
   const { currentPrompt, dismissPrompt } = useContextualPrompts(myClubs, joinedClubIds);
+  const { 
+    quickActionsState, 
+    toggleCollapse, 
+    handleActionPress, 
+    refreshQuickActions,
+    dismissItem 
+  } = useQuickActions(myClubs);
   
   useEffect(() => {
     console.log('ClubScreen: User state changed:', user ? `User: ${user.id}` : 'No user');
@@ -256,6 +266,15 @@ export default function ClubScreen() {
           )}
         </ThemedView>
 
+        {/* Quick Actions Section */}
+        <QuickActionsCard
+          quickActionsState={quickActionsState}
+          onToggleCollapse={toggleCollapse}
+          onActionPress={handleActionPress}
+          onRefresh={refreshQuickActions}
+          onDismissItem={dismissItem}
+        />
+
         <ThemedView style={styles.discoverSection}>
           <View style={styles.discoverHeader}>
             <ThemedText type="subtitle" style={styles.sectionTitle}>
@@ -337,6 +356,7 @@ export default function ClubScreen() {
         {/* Development Test Panels */}
         {__DEV__ && (
           <>
+            <QuickActionsTester />
             <ContextualPromptTester />
             <BadgeTestPanel />
           </>
