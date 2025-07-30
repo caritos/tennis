@@ -27,12 +27,7 @@ interface AdvancedProfileScreenProps {
 interface UserProfile {
   full_name: string;
   phone: string;
-  contact_preference: 'whatsapp' | 'phone' | 'text';
-  skill_level?: 'beginner' | 'intermediate' | 'advanced' | 'pro';
-  playing_style?: 'aggressive' | 'defensive' | 'all_court' | 'serve_volley';
-  profile_visibility?: 'public' | 'clubs_only' | 'private';
-  match_history_visibility?: 'public' | 'clubs_only' | 'private';
-  allow_challenges?: 'everyone' | 'club_members' | 'none';
+  profile_photo_uri?: string;
   notification_preferences?: NotificationPreferences;
 }
 
@@ -67,12 +62,7 @@ export const AdvancedProfileScreen: React.FC<AdvancedProfileScreenProps> = ({ on
         const profile: UserProfile = {
           full_name: result.full_name as string,
           phone: result.phone as string || '',
-          contact_preference: (result.contact_preference as 'whatsapp' | 'phone' | 'text') || 'whatsapp',
-          skill_level: result.skill_level as 'beginner' | 'intermediate' | 'advanced' | 'pro' | undefined,
-          playing_style: result.playing_style as 'aggressive' | 'defensive' | 'all_court' | 'serve_volley' | undefined,
-          profile_visibility: (result.profile_visibility as 'public' | 'clubs_only' | 'private') || 'public',
-          match_history_visibility: (result.match_history_visibility as 'public' | 'clubs_only' | 'private') || 'public',
-          allow_challenges: (result.allow_challenges as 'everyone' | 'club_members' | 'none') || 'everyone',
+          profile_photo_uri: result.profile_photo_uri as string || undefined,
         };
 
         // Parse notification preferences if they exist
@@ -104,22 +94,12 @@ export const AdvancedProfileScreen: React.FC<AdvancedProfileScreenProps> = ({ on
         UPDATE users SET
           full_name = ?,
           phone = ?,
-          contact_preference = ?,
-          skill_level = ?,
-          playing_style = ?,
-          profile_visibility = ?,
-          match_history_visibility = ?,
-          allow_challenges = ?
+          profile_photo_uri = ?
         WHERE id = ?
       `, [
         profileData.full_name,
         profileData.phone,
-        profileData.contact_preference,
-        profileData.skill_level || null,
-        profileData.playing_style || null,
-        profileData.profile_visibility || 'public',
-        profileData.match_history_visibility || 'public',
-        profileData.allow_challenges || 'everyone',
+        profileData.profile_photo_uri || null,
         user.id
       ]);
 
@@ -128,12 +108,7 @@ export const AdvancedProfileScreen: React.FC<AdvancedProfileScreenProps> = ({ on
         ...prev, 
         full_name: profileData.full_name,
         phone: profileData.phone,
-        contact_preference: profileData.contact_preference,
-        skill_level: profileData.skill_level,
-        playing_style: profileData.playing_style,
-        profile_visibility: profileData.profile_visibility,
-        match_history_visibility: profileData.match_history_visibility,
-        allow_challenges: profileData.allow_challenges,
+        profile_photo_uri: profileData.profile_photo_uri,
       } : null);
       
       // Profile is already synced to Supabase through the users table
@@ -253,13 +228,6 @@ export const AdvancedProfileScreen: React.FC<AdvancedProfileScreenProps> = ({ on
           <Text style={[styles.profileEmail, { color: colors.tabIconDefault }]}>
             {user?.email || 'No email'}
           </Text>
-          {userProfile?.skill_level && (
-            <View style={[styles.skillBadge, { backgroundColor: colors.tint + '20' }]}>
-              <Text style={[styles.skillBadgeText, { color: colors.tint }]}>
-                {userProfile.skill_level.charAt(0).toUpperCase() + userProfile.skill_level.slice(1)}
-              </Text>
-            </View>
-          )}
         </View>
       </View>
 
@@ -346,13 +314,7 @@ export const AdvancedProfileScreen: React.FC<AdvancedProfileScreenProps> = ({ on
           initialData={userProfile ? {
             full_name: userProfile.full_name,
             phone: userProfile.phone,
-            contact_preference: userProfile.contact_preference,
-            skill_level: userProfile.skill_level,
-            playing_style: userProfile.playing_style,
-            profile_visibility: userProfile.profile_visibility,
-            match_history_visibility: userProfile.match_history_visibility,
-            allow_challenges: userProfile.allow_challenges,
-            notification_preferences: userProfile.notification_preferences ? JSON.stringify(userProfile.notification_preferences) : undefined,
+            profile_photo_uri: userProfile.profile_photo_uri,
           } : undefined}
         />
       )}

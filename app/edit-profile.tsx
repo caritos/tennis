@@ -23,7 +23,7 @@ export default function EditProfilePage() {
     try {
       const db = await initializeDatabase();
       const userData = await db.getFirstAsync(
-        'SELECT full_name, phone, contact_preference, skill_level, playing_style, profile_visibility, match_history_visibility, allow_challenges, notification_preferences, profile_photo_uri FROM users WHERE id = ?',
+        'SELECT full_name, phone, profile_photo_uri FROM users WHERE id = ?',
         [user.id]
       ) as any;
 
@@ -31,13 +31,6 @@ export default function EditProfilePage() {
         setInitialData({
           full_name: userData.full_name || user.user_metadata?.full_name || '',
           phone: userData.phone || user.user_metadata?.phone || '',
-          contact_preference: userData.contact_preference || 'whatsapp',
-          skill_level: userData.skill_level,
-          playing_style: userData.playing_style,
-          profile_visibility: userData.profile_visibility || 'public',
-          match_history_visibility: userData.match_history_visibility || 'public',
-          allow_challenges: userData.allow_challenges || 'everyone',
-          notification_preferences: userData.notification_preferences,
           profile_photo_uri: userData.profile_photo_uri,
         });
       } else {
@@ -45,10 +38,6 @@ export default function EditProfilePage() {
         setInitialData({
           full_name: user.user_metadata?.full_name || '',
           phone: user.user_metadata?.phone || '',
-          contact_preference: 'whatsapp',
-          profile_visibility: 'public',
-          match_history_visibility: 'public',
-          allow_challenges: 'everyone',
         });
       }
     } catch (error) {
@@ -57,7 +46,6 @@ export default function EditProfilePage() {
       setInitialData({
         full_name: user.user_metadata?.full_name || '',
         phone: user.user_metadata?.phone || '',
-        contact_preference: 'whatsapp',
       });
     } finally {
       setLoading(false);
@@ -83,25 +71,11 @@ export default function EditProfilePage() {
         `UPDATE users SET 
           full_name = ?, 
           phone = ?, 
-          contact_preference = ?,
-          skill_level = ?,
-          playing_style = ?,
-          profile_visibility = ?,
-          match_history_visibility = ?,
-          allow_challenges = ?,
-          notification_preferences = ?,
           profile_photo_uri = ?
         WHERE id = ?`,
         [
           data.full_name,
           data.phone || null,
-          data.contact_preference,
-          data.skill_level || null,
-          data.playing_style || null,
-          data.profile_visibility || 'public',
-          data.match_history_visibility || 'public',
-          data.allow_challenges || 'everyone',
-          data.notification_preferences || null,
           data.profile_photo_uri || null,
           user.id,
         ]
@@ -116,13 +90,6 @@ export default function EditProfilePage() {
           .update({
             full_name: data.full_name,
             phone: data.phone || null,
-            contact_preference: data.contact_preference,
-            skill_level: data.skill_level || null,
-            playing_style: data.playing_style || null,
-            profile_visibility: data.profile_visibility || 'public',
-            match_history_visibility: data.match_history_visibility || 'public',
-            allow_challenges: data.allow_challenges || 'everyone',
-            notification_preferences: data.notification_preferences || null,
             profile_photo_uri: data.profile_photo_uri || null,
           })
           .eq('id', user.id);

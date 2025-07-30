@@ -27,14 +27,6 @@ import { initializeDatabase } from '@/database/database';
 export interface ProfileData {
   full_name: string;
   phone: string;
-  contact_preference: 'whatsapp' | 'phone' | 'text';
-  skill_level?: 'beginner' | 'intermediate' | 'advanced' | 'pro';
-  playing_style?: 'aggressive' | 'defensive' | 'all_court' | 'serve_volley';
-  availability?: string; // JSON string for availability preferences
-  profile_visibility?: 'public' | 'clubs_only' | 'private';
-  match_history_visibility?: 'public' | 'clubs_only' | 'private';
-  allow_challenges?: 'everyone' | 'club_members' | 'none';
-  notification_preferences?: string; // JSON string for notification settings
   profile_photo_uri?: string; // Local file URI for profile photo
 }
 
@@ -56,24 +48,6 @@ export const EditProfileScreen: React.FC<EditProfileScreenProps> = ({
 
   const [fullName, setFullName] = useState(initialData?.full_name || '');
   const [phone, setPhone] = useState(initialData?.phone || '');
-  const [contactPreference, setContactPreference] = useState<'whatsapp' | 'phone' | 'text'>(
-    initialData?.contact_preference || 'whatsapp'
-  );
-  const [skillLevel, setSkillLevel] = useState<'beginner' | 'intermediate' | 'advanced' | 'pro' | ''>(
-    initialData?.skill_level || ''
-  );
-  const [playingStyle, setPlayingStyle] = useState<'aggressive' | 'defensive' | 'all_court' | 'serve_volley' | ''>(
-    initialData?.playing_style || ''
-  );
-  const [profileVisibility, setProfileVisibility] = useState<'public' | 'clubs_only' | 'private'>(
-    initialData?.profile_visibility || 'public'
-  );
-  const [matchHistoryVisibility, setMatchHistoryVisibility] = useState<'public' | 'clubs_only' | 'private'>(
-    initialData?.match_history_visibility || 'public'
-  );
-  const [allowChallenges, setAllowChallenges] = useState<'everyone' | 'club_members' | 'none'>(
-    initialData?.allow_challenges || 'everyone'
-  );
   const [profilePhotoUri, setProfilePhotoUri] = useState<string | null>(
     initialData?.profile_photo_uri || null
   );
@@ -234,12 +208,6 @@ export const EditProfileScreen: React.FC<EditProfileScreenProps> = ({
       const profileData: ProfileData = {
         full_name: fullName.trim(),
         phone: phone.trim(),
-        contact_preference: contactPreference,
-        skill_level: skillLevel || undefined,
-        playing_style: playingStyle || undefined,
-        profile_visibility: profileVisibility,
-        match_history_visibility: matchHistoryVisibility,
-        allow_challenges: allowChallenges,
         profile_photo_uri: profilePhotoUri || undefined,
       };
 
@@ -254,194 +222,6 @@ export const EditProfileScreen: React.FC<EditProfileScreenProps> = ({
     }
   };
 
-  const renderContactPreferenceOption = (
-    value: 'whatsapp' | 'phone' | 'text',
-    label: string,
-    icon: string
-  ) => {
-    const isSelected = contactPreference === value;
-    return (
-      <TouchableOpacity
-        style={[
-          styles.preferenceOption,
-          {
-            borderColor: isSelected ? colors.tint : colors.tabIconDefault,
-            backgroundColor: isSelected ? colors.tint + '10' : 'transparent',
-          },
-        ]}
-        onPress={() => setContactPreference(value)}
-      >
-        <Ionicons
-          name={icon as any}
-          size={24}
-          color={isSelected ? colors.tint : colors.tabIconDefault}
-        />
-        <Text
-          style={[
-            styles.preferenceLabel,
-            {
-              color: isSelected ? colors.tint : colors.text,
-              fontWeight: isSelected ? '600' : '400',
-            },
-          ]}
-        >
-          {label}
-        </Text>
-        {isSelected && (
-          <Ionicons
-            name="checkmark-circle"
-            size={20}
-            color={colors.tint}
-            style={styles.checkmark}
-          />
-        )}
-      </TouchableOpacity>
-    );
-  };
-
-  const renderSkillLevelOption = (
-    value: 'beginner' | 'intermediate' | 'advanced' | 'pro',
-    label: string,
-    description: string
-  ) => {
-    const isSelected = skillLevel === value;
-    return (
-      <TouchableOpacity
-        style={[
-          styles.skillOption,
-          {
-            borderColor: isSelected ? colors.tint : colors.tabIconDefault,
-            backgroundColor: isSelected ? colors.tint + '10' : 'transparent',
-          },
-        ]}
-        onPress={() => setSkillLevel(value)}
-      >
-        <View style={styles.skillContent}>
-          <Text
-            style={[
-              styles.skillLabel,
-              {
-                color: isSelected ? colors.tint : colors.text,
-                fontWeight: isSelected ? '600' : '500',
-              },
-            ]}
-          >
-            {label}
-          </Text>
-          <Text
-            style={[
-              styles.skillDescription,
-              { color: colors.tabIconDefault },
-            ]}
-          >
-            {description}
-          </Text>
-        </View>
-        {isSelected && (
-          <Ionicons
-            name="checkmark-circle"
-            size={20}
-            color={colors.tint}
-          />
-        )}
-      </TouchableOpacity>
-    );
-  };
-
-  const renderPlayingStyleOption = (
-    value: 'aggressive' | 'defensive' | 'all_court' | 'serve_volley',
-    label: string,
-    icon: string
-  ) => {
-    const isSelected = playingStyle === value;
-    return (
-      <TouchableOpacity
-        style={[
-          styles.styleOption,
-          {
-            borderColor: isSelected ? colors.tint : colors.tabIconDefault,
-            backgroundColor: isSelected ? colors.tint + '10' : 'transparent',
-          },
-        ]}
-        onPress={() => setPlayingStyle(value)}
-      >
-        <Ionicons
-          name={icon as any}
-          size={24}
-          color={isSelected ? colors.tint : colors.tabIconDefault}
-        />
-        <Text
-          style={[
-            styles.styleLabel,
-            {
-              color: isSelected ? colors.tint : colors.text,
-              fontWeight: isSelected ? '600' : '400',
-            },
-          ]}
-        >
-          {label}
-        </Text>
-        {isSelected && (
-          <Ionicons
-            name="checkmark-circle"
-            size={20}
-            color={colors.tint}
-          />
-        )}
-      </TouchableOpacity>
-    );
-  };
-
-  const renderPrivacyOption = (
-    value: 'public' | 'clubs_only' | 'private',
-    label: string,
-    description: string,
-    currentValue: string,
-    setter: (value: 'public' | 'clubs_only' | 'private') => void
-  ) => {
-    const isSelected = currentValue === value;
-    return (
-      <TouchableOpacity
-        style={[
-          styles.privacyOption,
-          {
-            borderColor: isSelected ? colors.tint : colors.tabIconDefault,
-            backgroundColor: isSelected ? colors.tint + '10' : 'transparent',
-          },
-        ]}
-        onPress={() => setter(value)}
-      >
-        <View style={styles.privacyContent}>
-          <Text
-            style={[
-              styles.privacyLabel,
-              {
-                color: isSelected ? colors.tint : colors.text,
-                fontWeight: isSelected ? '600' : '500',
-              },
-            ]}
-          >
-            {label}
-          </Text>
-          <Text
-            style={[
-              styles.privacyDescription,
-              { color: colors.tabIconDefault },
-            ]}
-          >
-            {description}
-          </Text>
-        </View>
-        {isSelected && (
-          <Ionicons
-            name="checkmark-circle"
-            size={20}
-            color={colors.tint}
-          />
-        )}
-      </TouchableOpacity>
-    );
-  };
 
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
@@ -602,164 +382,16 @@ export const EditProfileScreen: React.FC<EditProfileScreenProps> = ({
                 <Text style={styles.errorText}>{errors.phone}</Text>
               )}
               <Text style={[styles.helperText, { color: colors.tabIconDefault }]}>
-                Your phone number will only be shared after match confirmations
+                Your phone number will only be shared after match confirmations. Your profile is private and only visible to you.
               </Text>
             </View>
 
-            {/* Contact Preference */}
-            <Text style={[styles.sectionTitle, { color: colors.text, marginTop: 24 }]}>
-              Preferred Contact Method
-            </Text>
-            <Text style={[styles.sectionSubtitle, { color: colors.tabIconDefault }]}>
-              How should other players contact you after matches?
-            </Text>
-
-            <View style={styles.preferenceOptions}>
-              {renderContactPreferenceOption('whatsapp', 'WhatsApp', 'logo-whatsapp')}
-              {renderContactPreferenceOption('phone', 'Phone Call', 'call-outline')}
-              {renderContactPreferenceOption('text', 'Text Message', 'chatbubble-outline')}
-            </View>
-
-            {/* Tennis Information */}
-            <Text style={[styles.sectionTitle, { color: colors.text, marginTop: 32 }]}>
-              Tennis Information
-            </Text>
-            <Text style={[styles.sectionSubtitle, { color: colors.tabIconDefault }]}>
-              Help other players understand your tennis background
-            </Text>
-
-            {/* Skill Level */}
-            <Text style={[styles.inputLabel, { color: colors.text, marginTop: 16, marginBottom: 12 }]}>
-              Skill Level (Optional)
-            </Text>
-            <View style={styles.skillOptions}>
-              {renderSkillLevelOption('beginner', 'Beginner', 'Learning the basics, casual play')}
-              {renderSkillLevelOption('intermediate', 'Intermediate', 'Regular player, some experience')}
-              {renderSkillLevelOption('advanced', 'Advanced', 'Competitive player, strong skills')}
-              {renderSkillLevelOption('pro', 'Professional', 'Tournament level, teaching pro')}
-            </View>
-            {skillLevel && (
-              <TouchableOpacity
-                style={styles.clearButton}
-                onPress={() => setSkillLevel('')}
-              >
-                <Text style={[styles.clearButtonText, { color: colors.tabIconDefault }]}>
-                  Clear Selection
-                </Text>
-              </TouchableOpacity>
-            )}
-
-            {/* Playing Style */}
-            <Text style={[styles.inputLabel, { color: colors.text, marginTop: 20, marginBottom: 12 }]}>
-              Playing Style (Optional)
-            </Text>
-            <View style={styles.styleOptions}>
-              {renderPlayingStyleOption('aggressive', 'Aggressive', 'flame-outline')}
-              {renderPlayingStyleOption('defensive', 'Defensive', 'shield-outline')}
-              {renderPlayingStyleOption('all_court', 'All Court', 'tennisball-outline')}
-              {renderPlayingStyleOption('serve_volley', 'Serve & Volley', 'arrow-up-outline')}
-            </View>
-            {playingStyle && (
-              <TouchableOpacity
-                style={styles.clearButton}
-                onPress={() => setPlayingStyle('')}
-              >
-                <Text style={[styles.clearButtonText, { color: colors.tabIconDefault }]}>
-                  Clear Selection
-                </Text>
-              </TouchableOpacity>
-            )}
-
-            {/* Privacy Settings */}
-            <Text style={[styles.sectionTitle, { color: colors.text, marginTop: 32 }]}>
-              Privacy & Visibility
-            </Text>
-            <Text style={[styles.sectionSubtitle, { color: colors.tabIconDefault }]}>
-              Control who can see your information and contact you
-            </Text>
-
-            {/* Profile Visibility */}
-            <Text style={[styles.inputLabel, { color: colors.text, marginTop: 16, marginBottom: 12 }]}>
-              Profile Visibility
-            </Text>
-            <View style={styles.privacyOptions}>
-              {renderPrivacyOption(
-                'public',
-                'Public',
-                'Anyone can see your profile and stats',
-                profileVisibility,
-                setProfileVisibility
-              )}
-              {renderPrivacyOption(
-                'clubs_only',
-                'Club Members Only',
-                'Only members of your clubs can see your profile',
-                profileVisibility,
-                setProfileVisibility
-              )}
-              {renderPrivacyOption(
-                'private',
-                'Private',
-                'Only you can see your full profile',
-                profileVisibility,
-                setProfileVisibility
-              )}
-            </View>
-
-            {/* Match History Visibility */}
-            <Text style={[styles.inputLabel, { color: colors.text, marginTop: 20, marginBottom: 12 }]}>
-              Match History Visibility
-            </Text>
-            <View style={styles.privacyOptions}>
-              {renderPrivacyOption(
-                'public',
-                'Public',
-                'Anyone can see your match history',
-                matchHistoryVisibility,
-                setMatchHistoryVisibility
-              )}
-              {renderPrivacyOption(
-                'clubs_only',
-                'Club Members Only',
-                'Only club members can see your match history',
-                matchHistoryVisibility,
-                setMatchHistoryVisibility
-              )}
-              {renderPrivacyOption(
-                'private',
-                'Private',
-                'Match history is completely private',
-                matchHistoryVisibility,
-                setMatchHistoryVisibility
-              )}
-            </View>
-
-            {/* Challenge Settings */}
-            <Text style={[styles.inputLabel, { color: colors.text, marginTop: 20, marginBottom: 12 }]}>
-              Who Can Challenge You
-            </Text>
-            <View style={styles.privacyOptions}>
-              {renderPrivacyOption(
-                'everyone',
-                'Everyone',
-                'Any player can send you match challenges',
-                allowChallenges,
-                setAllowChallenges
-              )}
-              {renderPrivacyOption(
-                'club_members',
-                'Club Members Only',
-                'Only members of your clubs can challenge you',
-                allowChallenges,
-                setAllowChallenges
-              )}
-              {renderPrivacyOption(
-                'none',
-                'No One',
-                'Disable challenge requests completely',
-                allowChallenges,
-                setAllowChallenges
-              )}
+            {/* Privacy Notice */}
+            <View style={[styles.privacyNotice, { backgroundColor: colors.tint + '10', borderColor: colors.tint + '30' }]}>
+              <Ionicons name="shield-checkmark" size={20} color={colors.tint} />
+              <Text style={[styles.privacyNoticeText, { color: colors.text }]}>
+                Your profile is completely private. Only you can view your profile information.
+              </Text>
             </View>
           </View>
 
@@ -1033,6 +665,21 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     maxWidth: 250,
     lineHeight: 18,
+  },
+  
+  privacyNotice: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 16,
+    borderRadius: 12,
+    borderWidth: 1,
+    marginTop: 24,
+    gap: 12,
+  },
+  privacyNoticeText: {
+    fontSize: 14,
+    flex: 1,
+    lineHeight: 20,
   },
   
   buttonContainer: {
