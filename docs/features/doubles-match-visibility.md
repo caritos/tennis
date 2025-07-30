@@ -6,13 +6,13 @@ When users create doubles match invitations, other club members can now clearly 
 
 ## Features Implemented
 
-### 1. Visual Team Formation Display
+### 1. Visual Player Display
 
 For doubles matches, the interface now shows:
-- **Team 1 & Team 2** formation with clear visual separation
+- **All 4 player slots** in a clear grid layout
 - **Player names** with role indicators (Organizer, etc.)
 - **Empty slots** showing "Waiting for player..." for unfilled positions
-- **VS indicator** between teams for clear competition visualization
+- **Note indicating** that teams will be decided at the court
 
 ### 2. Match Progress Indicators
 
@@ -23,9 +23,10 @@ For doubles matches, the interface now shows:
 ### 3. Enhanced Information Display
 
 - **Organizer identification** - clearly shows who created the match
-- **Team assignment preview** - shows how players will be distributed
+- **Player visibility** - shows all confirmed players for the match
 - **Waiting list** - displays additional interested players beyond the required 4
 - **Match readiness status** - clear indication when match can begin
+- **Team formation note** - reminds players that teams will be decided at the court
 
 ## User Experience Benefits
 
@@ -36,9 +37,10 @@ For doubles matches, the interface now shows:
 
 ### For Potential Participants
 - **See who they'll be playing with** before joining
-- **Understand team formation** and their potential teammates
+- **Understand who is already committed** to the match
 - **Make informed decisions** about joining based on other participants
 - **Avoid duplicate responses** with clear status indicators
+- **Know that teams will be fairly decided** when they meet at the court
 
 ### For Club Members
 - **Transparent match formation** reduces confusion
@@ -76,14 +78,16 @@ interface DoublesMatchParticipantsProps {
 ```
 Doubles Match - 3/4 Players                    [✓ Ready to Play]
 
-┌─────────────┐    VS    ┌─────────────┐
-│   Team 1    │          │   Team 2    │
-│   -------   │          │   -------   │
-│  John Doe   │          │  Mike Smith │
-│ (Organizer) │          │             │
-│             │          │ Waiting for │
-│ Sarah Kim   │          │  player...  │
-└─────────────┘          └─────────────┘
+Players for Doubles Match
+┌─────────────┬─────────────┐
+│  John Doe   │ Sarah Kim   │
+│ (Organizer) │             │
+├─────────────┼─────────────┤
+│ Mike Smith  │ Waiting for │
+│             │  player...  │
+└─────────────┴─────────────┘
+
+Teams will be decided when you meet at the court
 
 Also interested: David Lee
 
@@ -102,11 +106,11 @@ Also interested: Sarah Kim, David Lee
 
 ## Match Formation Logic
 
-### Team Assignment Rules
-1. **Creator** always starts in Team 1
-2. **First responder** joins Team 1 (creating partnership)
-3. **Second responder** starts Team 2
-4. **Third responder** completes Team 2
+### Player Assignment Rules
+1. **Creator** is always shown as the organizer
+2. **Players join** in order of response
+3. **All 4 players** are displayed in a grid layout
+4. **No pre-assigned teams** - teams decided at the court
 5. **Additional responders** go to waiting list
 
 ### Auto-Matching Behavior

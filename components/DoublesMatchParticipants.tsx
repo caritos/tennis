@@ -26,25 +26,14 @@ export const DoublesMatchParticipants: React.FC<DoublesMatchParticipantsProps> =
   const currentPlayers = responses.length + 1; // +1 for creator
   const confirmedResponses = responses.filter(r => r.status === 'confirmed' || r.status === 'interested');
   
-  // For doubles, show team formation
+  // For doubles, show all players without team assignments
   if (matchType === 'doubles') {
-    const team1 = [creatorName];
-    const team2: string[] = [];
-    const waitingPlayers: string[] = [];
+    const allPlayers = [
+      { name: creatorName, isOrganizer: true },
+      ...confirmedResponses.map(r => ({ name: r.user_name || 'Unknown Player', isOrganizer: false }))
+    ];
     
-    // Distribute players into teams (simplified logic)
-    confirmedResponses.forEach((response, index) => {
-      const playerName = response.user_name || 'Unknown Player';
-      if (index === 0) {
-        team1.push(playerName);
-      } else if (index === 1) {
-        team2.push(playerName);
-      } else if (index === 2) {
-        team2.push(playerName);
-      } else {
-        waitingPlayers.push(playerName);
-      }
-    });
+    const additionalInterested = confirmedResponses.slice(3); // Beyond the 4 needed
 
     return (
       <View style={styles.doublesContainer}>
@@ -60,77 +49,51 @@ export const DoublesMatchParticipants: React.FC<DoublesMatchParticipantsProps> =
           )}
         </View>
 
-        {/* Teams Layout */}
-        <View style={styles.teamsContainer}>
-          {/* Team 1 */}
-          <View style={[styles.teamContainer, { borderColor: colors.tabIconDefault + '30' }]}>
-            <ThemedText style={[styles.teamLabel, { color: colors.tint }]}>
-              Team 1
-            </ThemedText>
-            <View style={styles.playersContainer}>
-              {team1.map((player, index) => (
-                <View key={`team1-${index}`} style={styles.playerSlot}>
-                  <ThemedText style={[styles.playerName, { color: colors.text }]}>
-                    {player}
+        {/* Players List */}
+        <View style={[styles.playersGrid, { borderColor: colors.tabIconDefault + '30' }]}>
+          <ThemedText style={[styles.gridTitle, { color: colors.text }]}>
+            Players for Doubles Match
+          </ThemedText>
+          
+          <View style={styles.playersContainer}>
+            {allPlayers.slice(0, 4).map((player, index) => (
+              <View key={index} style={[styles.playerSlot, { borderColor: colors.tabIconDefault + '20' }]}>
+                <ThemedText style={[styles.playerName, { color: colors.text }]}>
+                  {player.name}
+                </ThemedText>
+                {player.isOrganizer && (
+                  <ThemedText style={[styles.organizerBadge, { color: colors.tint }]}>
+                    Organizer
                   </ThemedText>
-                  {index === 0 && (
-                    <ThemedText style={[styles.organizerBadge, { color: colors.tabIconDefault }]}>
-                      (Organizer)
-                    </ThemedText>
-                  )}
-                </View>
-              ))}
-              {team1.length < 2 && (
-                <View style={[styles.emptySlot, { borderColor: colors.tabIconDefault + '50' }]}>
-                  <ThemedText style={[styles.emptySlotText, { color: colors.tabIconDefault }]}>
-                    Waiting for player...
-                  </ThemedText>
-                </View>
-              )}
-            </View>
+                )}
+              </View>
+            ))}
+            
+            {/* Empty slots for remaining players */}
+            {Array.from({ length: Math.max(0, 4 - allPlayers.length) }).map((_, index) => (
+              <View key={`empty-${index}`} style={[styles.emptySlot, { borderColor: colors.tabIconDefault + '50' }]}>
+                <ThemedText style={[styles.emptySlotText, { color: colors.tabIconDefault }]}>
+                  Waiting for player...
+                </ThemedText>
+              </View>
+            ))}
           </View>
 
-          {/* VS Divider */}
-          <View style={styles.vsContainer}>
-            <ThemedText style={[styles.vsText, { color: colors.tabIconDefault }]}>
-              VS
-            </ThemedText>
-          </View>
-
-          {/* Team 2 */}
-          <View style={[styles.teamContainer, { borderColor: colors.tabIconDefault + '30' }]}>
-            <ThemedText style={[styles.teamLabel, { color: colors.tint }]}>
-              Team 2
-            </ThemedText>
-            <View style={styles.playersContainer}>
-              {team2.map((player, index) => (
-                <View key={`team2-${index}`} style={styles.playerSlot}>
-                  <ThemedText style={[styles.playerName, { color: colors.text }]}>
-                    {player}
-                  </ThemedText>
-                </View>
-              ))}
-              {Array.from({ length: 2 - team2.length }).map((_, index) => (
-                <View key={`empty-${index}`} style={[styles.emptySlot, { borderColor: colors.tabIconDefault + '50' }]}>
-                  <ThemedText style={[styles.emptySlotText, { color: colors.tabIconDefault }]}>
-                    Waiting for player...
-                  </ThemedText>
-                </View>
-              ))}
-            </View>
-          </View>
+          <ThemedText style={[styles.teamsNote, { color: colors.tabIconDefault }]}>
+            Teams will be decided when you meet at the court
+          </ThemedText>
         </View>
 
-        {/* Waiting Players */}
-        {waitingPlayers.length > 0 && (
+        {/* Additional Interested Players */}
+        {additionalInterested.length > 0 && (
           <View style={styles.waitingSection}>
             <ThemedText style={[styles.waitingLabel, { color: colors.tabIconDefault }]}>
               Also interested:
             </ThemedText>
             <View style={styles.waitingPlayers}>
-              {waitingPlayers.map((player, index) => (
+              {additionalInterested.map((response, index) => (
                 <ThemedText key={index} style={[styles.waitingPlayerName, { color: colors.tabIconDefault }]}>
-                  {player}
+                  {response.user_name || 'Unknown Player'}
                 </ThemedText>
               ))}
             </View>
@@ -138,10 +101,13 @@ export const DoublesMatchParticipants: React.FC<DoublesMatchParticipantsProps> =
         )}
 
         {/* Match Formation Info */}
-        {!isMatched && currentPlayers >= 3 && (
+        {!isMatched && currentPlayers >= 2 && (
           <View style={[styles.infoBox, { backgroundColor: colors.tint + '10', borderColor: colors.tint + '30' }]}>
             <ThemedText style={[styles.infoText, { color: colors.tint }]}>
-              💡 Need {requiredPlayers - currentPlayers} more player{requiredPlayers - currentPlayers !== 1 ? 's' : ''} to start the match
+              {currentPlayers < 4 
+                ? `💡 Need ${requiredPlayers - currentPlayers} more player${requiredPlayers - currentPlayers !== 1 ? 's' : ''} for doubles match`
+                : '🎾 Ready for doubles! Teams will be decided at the court'
+              }
             </ThemedText>
           </View>
         )}
@@ -240,30 +206,34 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontWeight: '600',
   },
-  teamsContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    marginBottom: 12,
-  },
-  teamContainer: {
-    flex: 1,
+  playersGrid: {
     borderWidth: 1,
     borderRadius: 8,
     padding: 12,
-    marginHorizontal: 4,
-  },
-  teamLabel: {
-    fontSize: 12,
-    fontWeight: '600',
     marginBottom: 8,
+  },
+  gridTitle: {
+    fontSize: 13,
+    fontWeight: '600',
     textAlign: 'center',
+    marginBottom: 12,
   },
   playersContainer: {
-    gap: 6,
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+    justifyContent: 'space-between',
+    marginBottom: 8,
   },
   playerSlot: {
+    flex: 1,
+    minWidth: '45%',
+    borderWidth: 1,
+    borderRadius: 6,
+    padding: 8,
     alignItems: 'center',
+    minHeight: 50,
+    justifyContent: 'center',
   },
   playerName: {
     fontSize: 14,
@@ -275,17 +245,25 @@ const styles = StyleSheet.create({
     marginTop: 2,
   },
   emptySlot: {
+    flex: 1,
+    minWidth: '45%',
     borderWidth: 1,
     borderStyle: 'dashed',
     borderRadius: 6,
     padding: 8,
     alignItems: 'center',
-    minHeight: 40,
+    minHeight: 50,
     justifyContent: 'center',
   },
   emptySlotText: {
     fontSize: 12,
     textAlign: 'center',
+  },
+  teamsNote: {
+    fontSize: 11,
+    textAlign: 'center',
+    fontStyle: 'italic',
+    marginTop: 4,
   },
   vsContainer: {
     alignItems: 'center',

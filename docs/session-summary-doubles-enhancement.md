@@ -18,14 +18,15 @@ This session focused on implementing enhanced visibility for doubles match invit
 
 ### Enhanced Doubles Match Visualization
 
-Created a comprehensive team formation display that transforms the match invitation experience from a simple interest tracker to a professional team formation tool.
+Created a comprehensive player visibility display that transforms the match invitation experience from a simple interest tracker to a professional match organization tool.
 
 #### Key Components
 
 1. **DoublesMatchParticipants.tsx** - New React component providing:
-   - Visual team formation layout (Team 1 vs Team 2)
-   - Player role identification (Organizer, teammates, opponents)
+   - Visual player grid layout showing all 4 positions
+   - Player role identification (Organizer indicator)
    - Empty slot indicators for unfilled positions
+   - Clear note that teams will be decided at the court
    - Match progress tracking (e.g., "3/4 Players")
    - Ready-to-play status indicators
 
@@ -52,18 +53,19 @@ interface DoublesMatchParticipantsProps {
 }
 ```
 
-### Team Assignment Logic
-1. **Creator** always starts in Team 1 (marked as Organizer)
-2. **First responder** joins Team 1 (forming partnership)
-3. **Second responder** starts Team 2  
-4. **Third responder** completes Team 2
+### Player Assignment Logic
+1. **Creator** is marked as Organizer
+2. **Players join** in order of response confirmation
+3. **All 4 players** displayed in grid without team pre-assignment
+4. **Teams decided** when players meet at the court
 5. **Additional players** join waiting list
 
 ### Visual Design Features
-- Professional VS layout mimicking real tennis matches
-- Color-coded team containers with clear boundaries
+- Professional grid layout for player visibility
+- Clear player slots with border styling
 - Status badges for match readiness
 - Empty slot placeholders with helpful messaging
+- Team formation reminder note
 - Responsive design for all device sizes
 
 ## User Experience Improvements
@@ -75,19 +77,21 @@ interface DoublesMatchParticipantsProps {
 - Players joining "blind" without knowing teammates/opponents
 
 ### After Enhancement
-- **Clear team visualization** with Team 1 vs Team 2 layout
-- **Player role identification** showing organizer and assignments
+- **Clear player visualization** with organized grid layout
+- **Player role identification** showing organizer clearly
 - **Match formation preview** helping players make informed decisions
 - **Professional presentation** building user confidence
 - **Transparency** reducing confusion and support requests
+- **Fair team formation** with teams decided at the court
 
 ## Implementation Benefits
 
 ### For Players Considering Joining
-✅ **See potential teammates** before committing to match  
-✅ **Understand team dynamics** and player composition  
+✅ **See who will be playing** before committing to match  
+✅ **Understand player composition** and organizer role  
 ✅ **Make informed decisions** based on other participants  
-✅ **Reduced anxiety** about unknown match situations  
+✅ **Reduced anxiety** about unknown match situations
+✅ **Fair team formation** knowing teams will be decided fairly at the court  
 
 ### For Match Organizers  
 ✅ **Visual progress tracking** of match formation  
