@@ -155,10 +155,6 @@ export const EditProfileScreen: React.FC<EditProfileScreenProps> = ({
                 <Text style={[styles.readOnlyText, { color: colors.text }]}>
                   {user?.email || 'No email'}
                 </Text>
-                <View style={[styles.verifiedBadge, { backgroundColor: colors.tint + '20' }]}>
-                  <Ionicons name="checkmark-circle" size={16} color={colors.tint} />
-                  <Text style={[styles.verifiedText, { color: colors.tint }]}>Verified</Text>
-                </View>
               </View>
             </View>
 
@@ -317,18 +313,6 @@ const styles = StyleSheet.create({
   },
   readOnlyText: {
     fontSize: CompactStyles.input.fontSize,
-  },
-  verifiedBadge: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: 12,
-    paddingVertical: 4,
-    borderRadius: 12,
-    gap: 4,
-  },
-  verifiedText: {
-    fontSize: 12,
-    fontWeight: '600',
   },
   preferenceOptions: {
     gap: 12,
