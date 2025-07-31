@@ -288,12 +288,10 @@ export default function ClubDetailScreen() {
                     matchType={match.match_type}
                     winner={match.winner}
                     isCompleted={true}
+                    clubName={club.name}
+                    matchDate={match.date}
+                    notes={match.notes}
                   />
-                  <View style={styles.matchMeta}>
-                    <ThemedText style={[styles.matchDate, { color: colors.tabIconDefault }]}>
-                      {new Date(match.date).toLocaleDateString()}
-                    </ThemedText>
-                  </View>
                 </View>
               ))}
             </View>

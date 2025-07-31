@@ -128,17 +128,10 @@ export function MatchHistoryView({ playerId, clubId }: MatchHistoryViewProps) {
               matchType={match.match_type}
               winner={winner}
               isCompleted={true}
+              clubName={match.club_name || 'Tennis Club'}
+              matchDate={match.date}
+              notes={match.notes}
             />
-            <View style={styles.matchMeta}>
-              <ThemedText style={[styles.matchDate, { color: colors.tabIconDefault }]}>
-                {formatMatchDate(match.date)}
-              </ThemedText>
-              {match.notes && (
-                <ThemedText style={[styles.matchNotes, { color: colors.tabIconDefault }]}>
-                  {match.notes}
-                </ThemedText>
-              )}
-            </View>
           </View>
         );
       })}
@@ -177,10 +170,5 @@ const styles = StyleSheet.create({
   },
   matchDate: {
     fontSize: 14,
-  },
-  matchNotes: {
-    fontSize: 13,
-    marginTop: 4,
-    fontStyle: 'italic',
   },
 });

@@ -1,5 +1,5 @@
-import React from 'react';
-import { View, StyleSheet } from 'react-native';
+import React, { useState } from 'react';
+import { View, StyleSheet, TouchableOpacity, Modal, Alert } from 'react-native';
 import { ThemedText } from './ThemedText';
 import { ThemedView } from './ThemedView';
 import { useColorScheme } from '@/hooks/useColorScheme';
@@ -15,6 +15,9 @@ interface TennisScoreDisplayProps {
   isCompleted?: boolean;
   showDuration?: boolean;
   duration?: string;
+  clubName?: string;
+  matchDate?: string;
+  notes?: string;
 }
 
 interface ParsedSet {
@@ -34,10 +37,14 @@ export function TennisScoreDisplay({
   winner,
   isCompleted = false,
   showDuration = false,
-  duration
+  duration,
+  clubName,
+  matchDate,
+  notes
 }: TennisScoreDisplayProps) {
   const colorScheme = useColorScheme();
   const colors = Colors[colorScheme ?? 'light'];
+  const [showNotesModal, setShowNotesModal] = useState(false);
 
   const parseScores = (scoreString: string): ParsedSet[] => {
     return scoreString.split(',').map(setScore => {
@@ -64,35 +71,47 @@ export function TennisScoreDisplay({
   };
 
   const sets = parseScores(scores);
-  const maxSets = 5; // Show up to 5 sets
+  const actualSetsPlayed = sets.length; // Only show sets that were actually played
 
-  const getMatchTypeDisplay = () => {
-    return matchType === 'doubles' ? 'DOUBLES' : 'SINGLES';
+  const formatMatchDate = (dateString: string) => {
+    const date = new Date(dateString);
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    const year = String(date.getFullYear()).slice(-2);
+    return `${month}/${day}/${year}`;
   };
 
   return (
     <ThemedView style={[styles.container, { backgroundColor: colors.background }]}>
       {/* Header */}
       <View style={styles.header}>
-        <ThemedText style={[styles.matchType, { color: colors.tabIconDefault }]}>
-          {getMatchTypeDisplay()}
+        <ThemedText style={[styles.clubName, { color: colors.tabIconDefault }]}>
+          {clubName || 'Tennis Club'}
         </ThemedText>
-        {isCompleted && (
-          <ThemedText style={[styles.status, { color: colors.tabIconDefault }]}>
-            FINAL
+        <View style={styles.headerRight}>
+          <ThemedText style={[styles.matchDate, { color: colors.tabIconDefault }]}>
+            {matchDate ? formatMatchDate(matchDate) : ''}
           </ThemedText>
-        )}
+          {notes && notes.trim() && (
+            <TouchableOpacity
+              onPress={() => setShowNotesModal(true)}
+              style={styles.notesIcon}
+              activeOpacity={0.7}
+            >
+              <Ionicons name="document-text" size={16} color={colors.tabIconDefault} />
+            </TouchableOpacity>
+          )}
+        </View>
       </View>
 
       {/* Score Grid */}
       <View style={styles.scoreGrid}>
         {/* Column Headers */}
         <View style={styles.headerRow}>
-          <View style={styles.playerNameColumn} />
-          <ThemedText style={[styles.ptsLabel, { color: colors.tabIconDefault }]}>
-            PTS
-          </ThemedText>
-          {Array.from({ length: maxSets }, (_, i) => (
+          <View style={styles.playerInfo}>
+            {/* Empty space to match player row structure */}
+          </View>
+          {Array.from({ length: actualSetsPlayed }, (_, i) => (
             <View key={i} style={styles.setColumn}>
               <ThemedText style={[styles.setHeader, { color: colors.tabIconDefault }]}>
                 {i + 1}
@@ -112,11 +131,11 @@ export function TennisScoreDisplay({
             <ThemedText 
               style={[styles.playerName, { color: colors.text }]}
               numberOfLines={matchType === 'doubles' ? 2 : 1}
+              ellipsizeMode="tail"
             >
               {player1Name}
             </ThemedText>
           </View>
-          <View style={styles.spacer} />
           {sets.map((set, index) => (
             <View key={index} style={styles.setColumn}>
               <ThemedText style={[
@@ -133,10 +152,6 @@ export function TennisScoreDisplay({
               )}
             </View>
           ))}
-          {/* Fill empty columns */}
-          {Array.from({ length: maxSets - sets.length }, (_, i) => (
-            <View key={`empty-${i}`} style={styles.setColumn} />
-          ))}
         </View>
 
         {/* Player 2 Row */}
@@ -150,11 +165,11 @@ export function TennisScoreDisplay({
             <ThemedText 
               style={[styles.playerName, { color: colors.text }]}
               numberOfLines={matchType === 'doubles' ? 2 : 1}
+              ellipsizeMode="tail"
             >
               {player2Name}
             </ThemedText>
           </View>
-          <View style={styles.spacer} />
           {sets.map((set, index) => (
             <View key={index} style={styles.setColumn}>
               <ThemedText style={[
@@ -171,28 +186,44 @@ export function TennisScoreDisplay({
               )}
             </View>
           ))}
-          {/* Fill empty columns */}
-          {Array.from({ length: maxSets - sets.length }, (_, i) => (
-            <View key={`empty-${i}`} style={styles.setColumn} />
-          ))}
         </View>
       </View>
 
       {/* Footer */}
-      {(showDuration || isCompleted) && (
+      {showDuration && duration && (
         <View style={styles.footer}>
-          {showDuration && duration && (
-            <ThemedText style={[styles.duration, { color: colors.tabIconDefault }]}>
-              DURATION: {duration}
-            </ThemedText>
-          )}
-          {isCompleted && (
-            <ThemedText style={[styles.completed, { color: colors.tabIconDefault }]}>
-              COMPLETED
-            </ThemedText>
-          )}
+          <ThemedText style={[styles.duration, { color: colors.tabIconDefault }]}>
+            DURATION: {duration}
+          </ThemedText>
         </View>
       )}
+
+      {/* Notes Modal */}
+      <Modal
+        visible={showNotesModal}
+        transparent={true}
+        animationType="fade"
+        onRequestClose={() => setShowNotesModal(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={[styles.modalContent, { backgroundColor: colors.background }]}>
+            <View style={styles.modalHeader}>
+              <ThemedText style={styles.modalTitle}>Match Notes</ThemedText>
+              <TouchableOpacity
+                onPress={() => setShowNotesModal(false)}
+                style={styles.closeButton}
+              >
+                <Ionicons name="close" size={24} color={colors.text} />
+              </TouchableOpacity>
+            </View>
+            <View style={styles.modalBody}>
+              <ThemedText style={[styles.notesText, { color: colors.text }]}>
+                {notes}
+              </ThemedText>
+            </View>
+          </View>
+        </View>
+      </Modal>
     </ThemedView>
   );
 }
@@ -208,56 +239,60 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingHorizontal: 16,
-    paddingVertical: 8,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
     borderBottomWidth: 1,
     borderBottomColor: '#e0e0e0',
   },
-  matchType: {
+  clubName: {
     fontSize: 14,
     fontWeight: '600',
     letterSpacing: 0.5,
   },
-  status: {
+  headerRight: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  matchDate: {
     fontSize: 14,
     fontWeight: '600',
     letterSpacing: 0.5,
+  },
+  notesIcon: {
+    padding: 4,
+    borderRadius: 4,
   },
   scoreGrid: {
-    padding: 16,
+    padding: 12,
   },
   headerRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 8,
-  },
-  playerNameColumn: {
-    flex: 1,
-  },
-  ptsLabel: {
-    fontSize: 12,
-    fontWeight: '500',
-    marginRight: 8,
-    letterSpacing: 0.5,
+    marginBottom: 6,
   },
   setColumn: {
-    width: 40,
+    width: 45,
     alignItems: 'center',
-    marginHorizontal: 4,
+    justifyContent: 'center',
+    marginHorizontal: 2,
   },
   setHeader: {
     fontSize: 12,
     fontWeight: '500',
+    textAlign: 'center',
+    width: '100%',
   },
   playerRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginVertical: 4,
+    marginVertical: 2,
   },
   playerInfo: {
     flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
+    maxWidth: '70%', // Ensure names don't take up all space, leaving room for scores
   },
   playerIndicator: {
     width: 20,
@@ -269,14 +304,14 @@ const styles = StyleSheet.create({
   playerName: {
     fontSize: 16,
     fontWeight: '500',
-  },
-  spacer: {
-    width: 32, // Space for PTS column
+    flex: 1,
+    minWidth: 80, // Ensure minimum readable width
   },
   setScore: {
-    fontSize: 24,
+    fontSize: 22,
     fontWeight: 'bold',
     textAlign: 'center',
+    width: '100%',
   },
   winnerScore: {
     color: '#4CAF50',
@@ -285,6 +320,7 @@ const styles = StyleSheet.create({
     fontSize: 10,
     textAlign: 'center',
     marginTop: 2,
+    width: '100%',
   },
   footer: {
     flexDirection: 'row',
@@ -300,9 +336,47 @@ const styles = StyleSheet.create({
     fontWeight: '500',
     letterSpacing: 0.5,
   },
-  completed: {
-    fontSize: 12,
-    fontWeight: '500',
-    letterSpacing: 0.5,
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 20,
+  },
+  modalContent: {
+    borderRadius: 12,
+    maxWidth: '90%',
+    maxHeight: '70%',
+    minWidth: 280,
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
+    elevation: 5,
+  },
+  modalHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    padding: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: '#e0e0e0',
+  },
+  modalTitle: {
+    fontSize: 18,
+    fontWeight: '600',
+  },
+  closeButton: {
+    padding: 4,
+  },
+  modalBody: {
+    padding: 16,
+  },
+  notesText: {
+    fontSize: 16,
+    lineHeight: 22,
   },
 });

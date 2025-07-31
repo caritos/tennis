@@ -367,17 +367,19 @@ export class MatchService {
 
     try {
       let query = `
-        SELECT * FROM matches 
-        WHERE (player1_id = ? OR player2_id = ?)
+        SELECT m.*, c.name as club_name 
+        FROM matches m
+        LEFT JOIN clubs c ON m.club_id = c.id
+        WHERE (m.player1_id = ? OR m.player2_id = ?)
       `;
       const params = [playerId, playerId];
 
       if (clubId) {
-        query += ` AND club_id = ?`;
+        query += ` AND m.club_id = ?`;
         params.push(clubId);
       }
 
-      query += ` ORDER BY date DESC, created_at DESC`;
+      query += ` ORDER BY m.date DESC, m.created_at DESC`;
 
       console.log('📊 getMatchHistory: Query:', query);
       console.log('📊 getMatchHistory: Params:', params);
