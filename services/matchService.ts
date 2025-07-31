@@ -490,6 +490,26 @@ export class MatchService {
     }
   }
 
+  async cleanupOrphanedMatches(): Promise<void> {
+    try {
+      const db = await this.getDatabase();
+      
+      // Delete matches that reference non-existent users
+      const result = await db.runAsync(`
+        DELETE FROM matches 
+        WHERE 
+          (player1_id IS NOT NULL AND player1_id NOT IN (SELECT id FROM users)) OR
+          (player2_id IS NOT NULL AND player2_id NOT IN (SELECT id FROM users)) OR  
+          (player3_id IS NOT NULL AND player3_id NOT IN (SELECT id FROM users)) OR
+          (player4_id IS NOT NULL AND player4_id NOT IN (SELECT id FROM users))
+      `);
+      
+      console.log(`🧹 Cleaned up ${result.changes} orphaned matches`);
+    } catch (error) {
+      console.error('Failed to cleanup orphaned matches:', error);
+    }
+  }
+
   async getClubLeaderboard(clubId: string): Promise<Array<{
     playerId: string;
     playerName: string;
@@ -501,31 +521,41 @@ export class MatchService {
     try {
       const db = await this.getDatabase();
       
+      // Clean up any orphaned matches first
+      await this.cleanupOrphanedMatches();
+      
       // Get all players who have played matches in this club
-      // Need to check both player1_id and player2_id positions
+      // Use INNER JOIN to ensure we only get players that exist in users table
       const playersWithMatches = await db.getAllAsync(`
-        SELECT DISTINCT player_id FROM (
+        SELECT DISTINCT u.id as player_id, u.full_name
+        FROM users u
+        INNER JOIN (
           SELECT player1_id as player_id FROM matches 
           WHERE club_id = ? AND player1_id IS NOT NULL
           UNION
           SELECT player2_id as player_id FROM matches 
           WHERE club_id = ? AND player2_id IS NOT NULL
-        ) as all_players
-      `, [clubId, clubId]);
+          UNION
+          SELECT player3_id as player_id FROM matches 
+          WHERE club_id = ? AND player3_id IS NOT NULL
+          UNION
+          SELECT player4_id as player_id FROM matches 
+          WHERE club_id = ? AND player4_id IS NOT NULL
+        ) as match_players ON u.id = match_players.player_id
+        WHERE u.full_name IS NOT NULL AND u.full_name != ''
+      `, [clubId, clubId, clubId, clubId]);
+
+      console.log(`🔍 Found ${playersWithMatches.length} valid players with matches in club ${clubId}`);
 
       const leaderboard = [];
 
       for (const player of playersWithMatches) {
-        if (player.player_id) {
+        if (player.player_id && player.full_name) {
           const stats = await this.getMatchStats(player.player_id, clubId);
           
           // Only include players with at least 1 match
           if (stats.totalMatches > 0) {
-            // Get player name from database
-            const userInfo = await db.getFirstAsync(
-              'SELECT full_name FROM users WHERE id = ?',
-              [player.player_id]
-            );
+            console.log(`📊 Player ${player.full_name}: ${stats.totalMatches} matches, ${stats.wins} wins`);
             
             // Calculate points based on tennis ranking system
             // Base points for wins, bonus for win percentage, penalty for losses
@@ -544,7 +574,7 @@ export class MatchService {
             
             leaderboard.push({
               playerId: player.player_id,
-              playerName: userInfo?.full_name || 'Unknown Player',
+              playerName: player.full_name, // Now we get this directly from the query
               stats,
               ranking: 0, // Will be calculated after sorting
               points: Math.max(0, points), // Never negative
@@ -613,6 +643,7 @@ export const getMatchStats = (playerId: string, clubId?: string) =>
   matchService.getMatchStats(playerId, clubId);
 export const getClubLeaderboard = (clubId: string) => 
   matchService.getClubLeaderboard(clubId);
+export const cleanupOrphanedMatches = () => matchService.cleanupOrphanedMatches();
 
 // Export types for component usage
 export type RankedPlayer = Awaited<ReturnType<typeof getClubLeaderboard>>[number];
