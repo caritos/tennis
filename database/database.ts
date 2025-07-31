@@ -211,7 +211,7 @@ export async function migrateDatabase(db: Database): Promise<void> {
     }
 
     console.log('📋 Current database schema version:', currentVersion);
-    const targetVersion = 3; // Current target version
+    const targetVersion = 4; // Current target version
 
     if (currentVersion < targetVersion) {
       console.log(`🔄 Migrating database from version ${currentVersion} to ${targetVersion}...`);
@@ -234,6 +234,10 @@ export async function migrateDatabase(db: Database): Promise<void> {
           if (currentVersion < 3) {
             await migrateToVersion3(db);
             await validateMigrationStep(db, 3);
+          }
+          if (currentVersion < 4) {
+            await migrateToVersion4(db);
+            await validateMigrationStep(db, 4);
           }
 
           // Update schema version only after all migrations succeed
@@ -402,6 +406,33 @@ async function migrateToVersion3(db: Database): Promise<void> {
   console.log('✅ Migration to version 3 completed');
 }
 
+async function migrateToVersion4(db: Database): Promise<void> {
+  console.log('🔄 Migrating to version 4: Adding location column to match_invitations table');
+  
+  // Check if match_invitations table exists first
+  const tableExists = await db.getFirstAsync(
+    `SELECT name FROM sqlite_master WHERE type='table' AND name='match_invitations';`
+  );
+  
+  if (!tableExists) {
+    console.log('⚠️ match_invitations table does not exist yet, skipping migration v4');
+    return;
+  }
+  
+  // Check if location column already exists
+  const tableInfo = await db.getAllAsync('PRAGMA table_info(match_invitations);');
+  const hasLocationColumn = tableInfo.some((col: any) => col.name === 'location');
+  
+  if (!hasLocationColumn) {
+    await db.execAsync('ALTER TABLE match_invitations ADD COLUMN location TEXT;');
+    console.log('✅ Added location column to match_invitations table');
+  } else {
+    console.log('ℹ️ Location column already exists in match_invitations table');
+  }
+  
+  console.log('✅ Migration to version 4 completed');
+}
+
 // Backup and restore functions for data protection
 async function createMigrationBackup(db: Database, version: number): Promise<void> {
   try {
@@ -556,6 +587,16 @@ async function validateMigrationStep(db: Database, version: number): Promise<voi
           if (!hasColumn) {
             throw new Error(`Migration validation failed: Missing column ${colName} in users table`);
           }
+        }
+        break;
+        
+      case 4:
+        // Validate location column was added to match_invitations
+        const invitationsInfo = await db.getAllAsync('PRAGMA table_info(match_invitations);');
+        const hasLocationColumn = invitationsInfo.some((col: any) => col.name === 'location');
+        
+        if (!hasLocationColumn) {
+          throw new Error('Migration validation failed: Missing location column in match_invitations table');
         }
         break;
         
