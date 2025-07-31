@@ -11,7 +11,22 @@ export async function initializeDatabase(): Promise<Database> {
     
     // For development: Drop and recreate tables to ensure latest schema
     // Remove this in production when we need to preserve user data
-    await dropTables(db);
+    try {
+      // Drop tables in reverse dependency order
+      await db.execAsync('DROP TABLE IF EXISTS notifications;');
+      await db.execAsync('DROP TABLE IF EXISTS challenge_counters;');
+      await db.execAsync('DROP TABLE IF EXISTS challenges;');
+      await db.execAsync('DROP TABLE IF EXISTS invitation_responses;');
+      await db.execAsync('DROP TABLE IF EXISTS match_invitations;');
+      await db.execAsync('DROP TABLE IF EXISTS club_members;');
+      await db.execAsync('DROP TABLE IF EXISTS matches;');
+      await db.execAsync('DROP TABLE IF EXISTS clubs;');
+      await db.execAsync('DROP TABLE IF EXISTS users;');
+      console.log('Database tables dropped successfully');
+    } catch (dropError) {
+      console.error('Failed to drop tables:', dropError);
+      throw dropError;
+    }
     
     // Create tables with latest schema
     await createTables(db);
