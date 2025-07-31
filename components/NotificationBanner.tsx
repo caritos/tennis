@@ -15,6 +15,7 @@ export interface NotificationData {
   duration?: number; // in milliseconds, 0 means permanent
   actionLabel?: string;
   onAction?: () => void;
+  customIcon?: 'tennis-info' | keyof typeof Ionicons.glyphMap;
 }
 
 interface NotificationBannerProps {
@@ -60,6 +61,33 @@ const NotificationBanner: React.FC<NotificationBannerProps> = ({
   };
 
   const notificationColors = getNotificationColors(notification.type);
+
+  const renderIcon = () => {
+    if (notification.customIcon === 'tennis-info') {
+      return (
+        <View style={styles.tennisInfoIcon}>
+          <ThemedText style={styles.tennisEmoji}>🎾</ThemedText>
+          <View style={styles.infoOverlay}>
+            <Ionicons 
+              name="information" 
+              size={14} 
+              color="#FFFFFF" 
+            />
+          </View>
+        </View>
+      );
+    }
+    
+    const iconName = notification.customIcon || notificationColors.icon;
+    return (
+      <Ionicons 
+        name={iconName as keyof typeof Ionicons.glyphMap} 
+        size={24} 
+        color={notificationColors.text} 
+        style={styles.icon}
+      />
+    );
+  };
 
   useEffect(() => {
     // Slide in animation
@@ -107,12 +135,7 @@ const NotificationBanner: React.FC<NotificationBannerProps> = ({
       ]}
     >
       <View style={styles.content}>
-        <Ionicons 
-          name={notificationColors.icon} 
-          size={24} 
-          color={notificationColors.text} 
-          style={styles.icon}
-        />
+        {renderIcon()}
         
         <View style={styles.textContainer}>
           <ThemedText 
@@ -222,5 +245,29 @@ const styles = StyleSheet.create({
   },
   dismissButton: {
     padding: 4,
+  },
+  tennisInfoIcon: {
+    position: 'relative',
+    width: 24,
+    height: 24,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginTop: 2,
+  },
+  tennisEmoji: {
+    fontSize: 24,
+  },
+  infoOverlay: {
+    position: 'absolute',
+    bottom: -2,
+    right: -2,
+    width: 16,
+    height: 16,
+    borderRadius: 8,
+    backgroundColor: '#2196F3',
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: '#FFFFFF',
   },
 });

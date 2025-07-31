@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, ReactNode } from 'react';
 import { View, StyleSheet } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import NotificationBanner, { NotificationData, NotificationType } from '@/components/NotificationBanner';
 
 interface NotificationContextType {
@@ -11,6 +12,7 @@ interface NotificationContextType {
       duration?: number;
       actionLabel?: string;
       onAction?: () => void;
+      customIcon?: 'tennis-info' | keyof typeof Ionicons.glyphMap;
     }
   ) => void;
   showSuccess: (title: string, message?: string, duration?: number) => void;
@@ -38,6 +40,7 @@ export const NotificationProvider: React.FC<NotificationProviderProps> = ({ chil
       duration?: number;
       actionLabel?: string;
       onAction?: () => void;
+      customIcon?: 'tennis-info' | keyof typeof Ionicons.glyphMap;
     }
   ) => {
     const id = `notification_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
@@ -50,6 +53,7 @@ export const NotificationProvider: React.FC<NotificationProviderProps> = ({ chil
       duration: options?.duration ?? (type === 'error' ? 5000 : 3000), // Errors stay longer
       actionLabel: options?.actionLabel,
       onAction: options?.onAction,
+      customIcon: options?.customIcon,
     };
 
     setNotifications(prev => {

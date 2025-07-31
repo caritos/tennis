@@ -8,14 +8,9 @@ import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
 import { ClubCard } from '@/components/ClubCard';
 import { CreateClubButton } from '@/components/CreateClubButton';
-import { NotificationBadge } from '@/components/NotificationBadge';
 import { OnboardingReEngagement } from '@/components/OnboardingReEngagement';
-import { BadgeTestPanel } from '@/components/BadgeTestPanel';
 import { ContextualPrompt } from '@/components/ContextualPrompt';
-import { ContextualPromptTester } from '@/components/ContextualPromptTester';
 import { QuickActionsCard } from '@/components/QuickActionsCard';
-import { QuickActionsTester } from '@/components/QuickActionsTester';
-import { useTotalBadgeCount } from '@/hooks/useClubBadges';
 import { useContextualPrompts } from '@/hooks/useContextualPrompts';
 import { useQuickActions } from '@/hooks/useQuickActions';
 import { Club } from '@/lib/supabase';
@@ -23,13 +18,15 @@ import { useColorScheme } from '@/hooks/useColorScheme';
 import { Colors } from '@/constants/Colors';
 import { useLocation } from '@/hooks/useLocation';
 import { useAuth } from '@/contexts/AuthContext';
+import { useOnboarding } from '@/contexts/OnboardingContext';
+import { useNotification } from '@/contexts/NotificationContext';
 import clubService, { joinClub, getJoinedClubIds } from '@/services/clubService';
 import { seedSampleClubs } from '@/utils/seedData';
 
 export default function ClubScreen() {
   const colorScheme = useColorScheme();
   const colors = Colors[colorScheme ?? 'light'];
-  const { location, requestLocationPermission } = useLocation();
+  const { location, hasLocationPermission, requestLocationPermission } = useLocation(true); // Auto-request enabled
 
   const [clubs, setClubs] = useState<Club[]>([]);
   const [myClubs, setMyClubs] = useState<Club[]>([]);
@@ -38,9 +35,14 @@ export default function ClubScreen() {
   const [distances, setDistances] = useState<Map<string, number>>(new Map());
   const [joinedClubIds, setJoinedClubIds] = useState<string[]>([]);
   const [joiningClubId, setJoiningClubId] = useState<string | null>(null);
+  const [welcomeNotificationShown, setWelcomeNotificationShown] = useState(false);
 
   const { user } = useAuth();
-  const { badgeCount } = useTotalBadgeCount();
+  const { isFirstTimeUser, markStepCompleted, steps } = useOnboarding();
+  const { showNotification } = useNotification();
+  
+  // Check if user has seen the welcome message
+  const hasSeenWelcome = steps.find(step => step.id === 'welcome_seen')?.completed || false;
   const { currentPrompt, dismissPrompt } = useContextualPrompts(myClubs, joinedClubIds);
   const { 
     quickActionsState, 
@@ -201,31 +203,29 @@ export default function ClubScreen() {
     }
   }, [location]);
 
+  // Show welcome overlay notification for first-time users
+  useEffect(() => {
+    if (isFirstTimeUser && !hasSeenWelcome && user?.id && !welcomeNotificationShown) {
+      setWelcomeNotificationShown(true);
+      // Show overlay notification with action button
+      showNotification(
+        'info',
+        'Welcome to Tennis Club! 🎾',
+        'Find tennis partners, record matches, and climb rankings in local clubs near you.',
+        {
+          duration: 0, // Permanent until dismissed
+          actionLabel: 'Got it!',
+          onAction: () => {
+            markStepCompleted('welcome_seen');
+          },
+          customIcon: 'tennis-info'
+        }
+      );
+    }
+  }, [isFirstTimeUser, hasSeenWelcome, user?.id, welcomeNotificationShown]);
+
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
-      <ThemedView style={styles.header}>
-        <ThemedText type="title" style={styles.headerTitle}>Clubs</ThemedText>
-        <View style={styles.headerButtons}>
-          <TouchableOpacity
-            style={styles.notificationButton}
-            onPress={() => router.push('/notifications')}
-          >
-            <Ionicons name="notifications-outline" size={24} color={colors.text} />
-            <NotificationBadge 
-              count={badgeCount} 
-              size="small" 
-              style={styles.notificationBadgePosition}
-            />
-          </TouchableOpacity>
-          <Link href="/record-match" asChild>
-            <TouchableOpacity style={[styles.recordMatchButton, { backgroundColor: colors.tint }]}>
-              <Ionicons name="add" size={20} color="white" />
-              <ThemedText style={styles.recordMatchText}>Record Match</ThemedText>
-            </TouchableOpacity>
-          </Link>
-        </View>
-      </ThemedView>
-
       {/* Contextual Prompt Section */}
       <ContextualPrompt 
         prompt={currentPrompt}
@@ -353,21 +353,13 @@ export default function ClubScreen() {
           </View>
         </ThemedView>
 
-        {/* Development Test Panels */}
-        {__DEV__ && (
-          <>
-            <QuickActionsTester />
-            <ContextualPromptTester />
-            <BadgeTestPanel />
-          </>
-        )}
 
         {/* Create Club Button at Bottom */}
         <ThemedView style={styles.createClubSection}>
           <CreateClubButton 
             onPress={handleCreateClub}
             size="large"
-            variant="secondary"
+            variant="primary"
           />
         </ThemedView>
       </ScrollView>
@@ -382,41 +374,16 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
   },
-  header: {
-    paddingHorizontal: 20,
-    paddingTop: 20,
-    paddingBottom: 10,
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  },
-  headerTitle: {
-    fontSize: 28,
-    fontWeight: 'bold',
-  },
-  headerButtons: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-  },
-  notificationButton: {
-    position: 'relative',
-    padding: 8,
-  },
-  notificationBadgePosition: {
-    position: 'absolute',
-    top: 2,
-    right: 2,
-  },
   scrollContainer: {
     flex: 1,
   },
   scrollContent: {
-    paddingTop: 16,
+    paddingTop: 0,
   },
   section: {
     paddingHorizontal: 20,
-    marginBottom: 24,
+    marginBottom: 16,
+    marginTop: 8,
   },
   sectionHeader: {
     marginBottom: 12,
@@ -512,18 +479,5 @@ const styles = StyleSheet.create({
     paddingVertical: 16,
     borderTopWidth: 1,
     borderTopColor: '#e0e0e0',
-  },
-  recordMatchButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    borderRadius: 20,
-    gap: 6,
-  },
-  recordMatchText: {
-    color: 'white',
-    fontWeight: '600',
-    fontSize: 14,
   },
 });

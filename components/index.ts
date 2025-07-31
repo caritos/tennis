@@ -33,6 +33,7 @@ export { MatchInvitationForm } from './MatchInvitationForm';
 
 // Notification Components
 export { NotificationBanner } from './NotificationBanner';
+export { InlineNotificationBanner } from './InlineNotificationBanner';
 export { NotificationProvider, useNotification } from '../contexts/NotificationContext';
 
 // Utility Components
@@ -62,3 +63,4 @@ export type { InvitationCardData, InvitationType, InvitationStatus } from './Inv
 export type { ScoreBoxProps } from './ScoreBox';
 export type { ConfirmDialogProps, DialogType } from './ConfirmDialog';
 export type { NotificationData, NotificationType } from './NotificationBanner';
+export type { InlineNotificationVariant, InlineNotificationIcon } from './InlineNotificationBanner';

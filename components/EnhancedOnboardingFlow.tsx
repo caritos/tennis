@@ -14,7 +14,6 @@ import { router } from 'expo-router';
 
 import { ThemedView } from './ThemedView';
 import { ThemedText } from './ThemedText';
-import { ClubDiscoveryScreen } from './ClubDiscoveryScreen';
 import { useColorScheme } from '@/hooks/useColorScheme';
 import { Colors } from '@/constants/Colors';
 import { useOnboarding } from '@/contexts/OnboardingContext';
@@ -77,14 +76,15 @@ const WelcomeStep: React.FC<StepScreenProps> = ({ onNext }) => {
         style={[styles.primaryButton, { backgroundColor: colors.tint }]}
         onPress={onNext}
       >
-        <ThemedText style={styles.primaryButtonText}>Get Started</ThemedText>
-        <Ionicons name="arrow-forward" size={20} color="white" />
+        <ThemedText style={styles.primaryButtonText}>Let&apos;s Play Tennis!</ThemedText>
+        <Ionicons name="tennis-ball" size={20} color="white" />
       </TouchableOpacity>
     </View>
   );
 };
 
-// Location Permission Step
+// Location Permission Step - REMOVED (location is auto-requested now)
+/*
 const LocationStep: React.FC<StepScreenProps> = ({ onNext, onSkip }) => {
   const colorScheme = useColorScheme();
   const colors = Colors[colorScheme ?? 'light'];
@@ -180,8 +180,10 @@ const LocationStep: React.FC<StepScreenProps> = ({ onNext, onSkip }) => {
     </View>
   );
 };
+*/
 
-// First Match Guidance Step
+// First Match Guidance Step - MOVED to club detail page as contextual messaging
+/*
 const FirstMatchStep: React.FC<StepScreenProps> = ({ onNext }) => {
   const colorScheme = useColorScheme();
   const colors = Colors[colorScheme ?? 'light'];
@@ -272,6 +274,7 @@ const FirstMatchStep: React.FC<StepScreenProps> = ({ onNext }) => {
     </View>
   );
 };
+*/
 
 export const EnhancedOnboardingFlow: React.FC<OnboardingFlowProps> = ({ onComplete }) => {
   const { steps, currentStep, markStepCompleted, getProgress } = useOnboarding();
@@ -283,8 +286,6 @@ export const EnhancedOnboardingFlow: React.FC<OnboardingFlowProps> = ({ onComple
 
   const onboardingSteps = [
     { id: 'welcome', component: WelcomeStep },
-    { id: 'club_discovery', component: ClubDiscoveryScreen },
-    { id: 'first_match_guidance', component: FirstMatchStep },
   ];
 
   const handleNext = () => {
@@ -326,12 +327,7 @@ export const EnhancedOnboardingFlow: React.FC<OnboardingFlowProps> = ({ onComple
       </View>
 
       {/* Current Step */}
-      {currentStepIndex === 2 ? (
-        // Special handling for club discovery screen
-        <ClubDiscoveryScreen onComplete={handleNext} onSkip={handleSkip} />
-      ) : (
-        <CurrentStepComponent onNext={handleNext} onSkip={handleSkip} />
-      )}
+      <CurrentStepComponent onNext={handleNext} onSkip={handleSkip} />
     </SafeAreaView>
   );
 };

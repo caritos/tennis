@@ -80,9 +80,6 @@ export default function ProfileScreen() {
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
       <ScrollView showsVerticalScrollIndicator={false}>
-        <ThemedView style={styles.header}>
-          <ThemedText type="title" style={styles.headerTitle}>Profile</ThemedText>
-        </ThemedView>
 
         <ThemedView style={styles.section}>
           <View style={styles.userSection}>
