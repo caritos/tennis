@@ -1,10 +1,12 @@
 import React, { useState } from 'react';
-import { View, StyleSheet, TouchableOpacity, Modal, Alert } from 'react-native';
+import { View, StyleSheet, TouchableOpacity, Modal } from 'react-native';
 import { ThemedText } from './ThemedText';
 import { ThemedView } from './ThemedView';
 import { useColorScheme } from '@/hooks/useColorScheme';
 import { Colors } from '@/constants/Colors';
 import { Ionicons } from '@expo/vector-icons';
+import { useRouter } from 'expo-router';
+import { useAuth } from '@/contexts/AuthContext';
 
 interface TennisScoreDisplayProps {
   player1Name: string;
@@ -18,6 +20,11 @@ interface TennisScoreDisplayProps {
   clubName?: string;
   matchDate?: string;
   notes?: string;
+  matchId?: string; // Required for edit functionality
+  player1Id?: string;
+  player2Id?: string;
+  player3Id?: string;
+  player4Id?: string;
 }
 
 interface ParsedSet {
@@ -40,11 +47,18 @@ export function TennisScoreDisplay({
   duration,
   clubName,
   matchDate,
-  notes
+  notes,
+  matchId,
+  player1Id,
+  player2Id,
+  player3Id,
+  player4Id
 }: TennisScoreDisplayProps) {
   const colorScheme = useColorScheme();
   const colors = Colors[colorScheme ?? 'light'];
   const [showNotesModal, setShowNotesModal] = useState(false);
+  const router = useRouter();
+  const { user } = useAuth();
 
   const parseScores = (scoreString: string): ParsedSet[] => {
     return scoreString.split(',').map(setScore => {
@@ -73,6 +87,25 @@ export function TennisScoreDisplay({
   const sets = parseScores(scores);
   const actualSetsPlayed = sets.length; // Only show sets that were actually played
 
+  // Check if current user can edit this match
+  const canEdit = matchId && user?.id && (
+    user.id === player1Id ||
+    user.id === player2Id ||
+    user.id === player3Id ||
+    user.id === player4Id
+  );
+
+  const handleEditMatch = () => {
+    console.log('🎾 handleEditMatch called with matchId:', matchId);
+    if (matchId) {
+      // Navigate to the proper edit screen with matchId parameter
+      console.log('🎾 Navigating to edit screen with matchId:', matchId);
+      router.push(`/edit-match/${matchId}`);
+    } else {
+      console.error('🎾 No matchId available for editing');
+    }
+  };
+
   const formatMatchDate = (dateString: string) => {
     const date = new Date(dateString);
     const month = String(date.getMonth() + 1).padStart(2, '0');
@@ -99,6 +132,15 @@ export function TennisScoreDisplay({
               activeOpacity={0.7}
             >
               <Ionicons name="document-text" size={16} color={colors.tabIconDefault} />
+            </TouchableOpacity>
+          )}
+          {canEdit && (
+            <TouchableOpacity
+              onPress={handleEditMatch}
+              style={styles.editIcon}
+              activeOpacity={0.7}
+            >
+              <Ionicons name="pencil" size={16} color={colors.tint} />
             </TouchableOpacity>
           )}
         </View>
@@ -260,6 +302,10 @@ const styles = StyleSheet.create({
     letterSpacing: 0.5,
   },
   notesIcon: {
+    padding: 4,
+    borderRadius: 4,
+  },
+  editIcon: {
     padding: 4,
     borderRadius: 4,
   },

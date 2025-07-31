@@ -56,13 +56,18 @@ export function TennisScoreEntry({
 
   // Initialize from existing sets
   useEffect(() => {
+    console.log('🎾 TennisScoreEntry useEffect triggered with initialSets:', initialSets);
+    
     if (initialSets.length > 0) {
+      console.log('🎾 Mapping initialSets to inputs...');
       const inputs = initialSets.map(set => ({
-        playerScore: set.playerScore.toString(),
-        opponentScore: set.opponentScore.toString(),
-        tiebreakPlayerScore: set.tiebreak?.playerScore.toString() || '',
-        tiebreakOpponentScore: set.tiebreak?.opponentScore.toString() || '',
+        playerScore: set.playerScore?.toString() || '',
+        opponentScore: set.opponentScore?.toString() || '',
+        tiebreakPlayerScore: set.tiebreak?.playerScore?.toString() || '',
+        tiebreakOpponentScore: set.tiebreak?.opponentScore?.toString() || '',
       }));
+      
+      console.log('🎾 Generated inputs:', inputs);
       
       // Add empty set for next entry if match not complete
       if (initialSets.length < 5 && !isMatchComplete(initialSets)) {
@@ -71,8 +76,11 @@ export function TennisScoreEntry({
       
       setSetInputs(inputs);
       setValidSets(initialSets);
+      console.log('🎾 Set inputs and valid sets updated');
+    } else {
+      console.log('🎾 No initialSets to process');
     }
-  }, []);
+  }, [initialSets]);
 
   // Use shared utility function
 
@@ -100,11 +108,18 @@ export function TennisScoreEntry({
     updatedInputs[setIndex][field] = value;
     setSetInputs(updatedInputs);
 
-    // Clear validation errors
+    // Clear validation errors when typing
     setValidationErrors([]);
 
+    // Don't validate or update valid sets on every keystroke
+    // This will be done on blur or when both fields have values
+  };
+
+  const validateAndUpdateSet = (setIndex: number) => {
+    const currentInputs = [...setInputs];
+    const currentSet = currentInputs[setIndex];
+    
     // Check if this set needs tiebreak
-    const currentSet = updatedInputs[setIndex];
     if (needsTiebreak(currentSet.playerScore, currentSet.opponentScore)) {
       setCurrentTiebreakSet(setIndex);
       setTiebreakPlayerScore(currentSet.tiebreakPlayerScore || '');
@@ -112,7 +127,7 @@ export function TennisScoreEntry({
     }
 
     // Update valid sets
-    updateValidSets(updatedInputs);
+    updateValidSets(currentInputs);
   };
 
   const updateValidSets = (inputs: SetInput[]) => {
@@ -386,6 +401,7 @@ export function TennisScoreEntry({
                   style={styles.scoreInput}
                   value={setInput.playerScore}
                   onChangeText={(value) => updateSetScore(index, 'playerScore', value)}
+                  onBlur={() => validateAndUpdateSet(index)}
                   keyboardType="numeric"
                   maxLength={2}
                   placeholder="0"
@@ -396,6 +412,7 @@ export function TennisScoreEntry({
                   style={styles.scoreInput}
                   value={setInput.opponentScore}
                   onChangeText={(value) => updateSetScore(index, 'opponentScore', value)}
+                  onBlur={() => validateAndUpdateSet(index)}
                   keyboardType="numeric"
                   maxLength={2}
                   placeholder="0"

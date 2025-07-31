@@ -131,6 +131,11 @@ export function MatchHistoryView({ playerId, clubId }: MatchHistoryViewProps) {
               clubName={match.club_name || 'Tennis Club'}
               matchDate={match.date}
               notes={match.notes}
+              matchId={match.id}
+              player1Id={match.player1_id}
+              player2Id={match.player2_id}
+              player3Id={match.player3_id}
+              player4Id={match.player4_id}
             />
           </View>
         );

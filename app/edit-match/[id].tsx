@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { View, StyleSheet, Text, Animated, Alert } from 'react-native';
-import { useRouter, useLocalSearchParams } from 'expo-router';
+import { View, StyleSheet, Text, Animated, Alert, TouchableOpacity } from 'react-native';
+import { useRouter, useSegments, useLocalSearchParams } from 'expo-router';
 import { MatchRecordingForm } from '../../components/MatchRecordingForm';
 import { updateMatch, getMatchHistory, UpdateMatchData } from '../../services/matchService';
 import { logError, getDatabaseErrorMessage } from '../../utils/errorHandling';
@@ -11,15 +11,108 @@ import { useAuth } from '@/contexts/AuthContext';
 import { Match } from '@/lib/supabase';
 
 export default function EditMatchScreen() {
+  console.log('🔧 EditMatchScreen LATEST VERSION WITH PARAMS - v2024...');
+  
+  // === HOOKS SECTION - ALL HOOKS MUST BE AT TOP ===
   const router = useRouter();
-  const { id: matchId } = useLocalSearchParams<{ id: string }>();
+  const segments = useSegments();
+  const searchParams = useLocalSearchParams();
+  
+  console.log('🔧 useLocalSearchParams result:', JSON.stringify(searchParams));
+  console.log('🔧 searchParams type:', typeof searchParams);
+  console.log('🔧 searchParams keys:', Object.keys(searchParams || {}));
+  
   const { user } = useAuth();
   const colorScheme = useColorScheme();
-  
   const [notification, setNotification] = useState<{ type: 'success' | 'error', message: string } | null>(null);
   const [fadeAnim] = useState(new Animated.Value(0));
   const [existingMatch, setExistingMatch] = useState<Match | null>(null);
   const [loading, setLoading] = useState(true);
+  
+  console.log('🔧 useSegments result:', segments);
+  console.log('🔧 segments array:', JSON.stringify(segments));
+  console.log('🔧 user from useAuth:', user?.id);
+  
+  // Try multiple approaches to get matchId
+  let matchId = '';
+  
+  console.log('🔧 Starting matchId extraction...');
+  
+  // Method 1: From search params - handle both string and array cases
+  if (searchParams) {
+    const idParam = searchParams.id;
+    console.log('🔧 Raw id param:', idParam, 'type:', typeof idParam);
+    
+    if (Array.isArray(idParam)) {
+      matchId = idParam[0];
+      console.log('🔧 MatchId from searchParams array:', matchId);
+    } else if (typeof idParam === 'string' && idParam !== '[id]' && idParam.trim() !== '') {
+      matchId = idParam;
+      console.log('🔧 MatchId from searchParams string:', matchId);
+    }
+  }
+  
+  // Method 2: From segments (fallback)
+  if (!matchId && Array.isArray(segments) && segments.length > 0) {
+    console.log('🔧 Processing segments as fallback...');
+    console.log('🔧 All segments:', segments);
+    
+    // Look for edit-match followed by an ID
+    for (let i = 0; i < segments.length - 1; i++) {
+      if (segments[i] === 'edit-match') {
+        const potentialId = segments[i + 1];
+        if (potentialId && potentialId !== '[id]' && potentialId.trim() !== '') {
+          matchId = potentialId;
+          console.log('🔧 Found matchId from segments at index', i + 1, ':', matchId);
+          break;
+        }
+      }
+    }
+  }
+  
+  // Method 3: Extract from current URL as last resort
+  if (!matchId && typeof window !== 'undefined' && window.location) {
+    const urlMatch = window.location.pathname.match(/\/edit-match\/([^\/]+)/);
+    if (urlMatch && urlMatch[1] && urlMatch[1] !== '[id]') {
+      matchId = urlMatch[1];
+      console.log('🔧 Found matchId from URL:', matchId);
+    }
+  }
+  
+  console.log('🔧 Final extracted matchId:', matchId);
+  
+  // Early return AFTER all hooks
+  if (!matchId) {
+    console.error('🔧 EditMatchScreen: No matchId provided');
+    console.error('🔧 Available searchParams:', searchParams);
+    console.error('🔧 Available segments:', segments);
+    
+    return (
+      <View style={[styles.container, styles.centered]}>
+        <View style={[styles.header, { backgroundColor: Colors[colorScheme ?? 'light'].background }]}>
+          <TouchableOpacity
+            style={styles.backButton}
+            onPress={() => router.back()}
+            activeOpacity={0.7}
+          >
+            <Ionicons name="arrow-back" size={24} color={Colors[colorScheme ?? 'light'].text} />
+          </TouchableOpacity>
+          <Text style={[styles.headerTitle, { color: Colors[colorScheme ?? 'light'].text }]}>
+            Edit Match
+          </Text>
+          <View style={styles.headerSpacer} />
+        </View>
+        <View style={styles.errorContainer}>
+          <Text style={[styles.errorText, { color: Colors[colorScheme ?? 'light'].text }]}>
+            Error: No match ID provided
+          </Text>
+          <Text style={[styles.errorSubtext, { color: Colors[colorScheme ?? 'light'].tabIconDefault }]}>
+            Unable to load match for editing
+          </Text>
+        </View>
+      </View>
+    );
+  }
 
   const showNotification = (type: 'success' | 'error', message: string) => {
     setNotification({ type, message });
@@ -70,6 +163,9 @@ export default function EditMatchScreen() {
   }, [user?.id, matchId]);
 
   const handleSave = async (matchData: any) => {
+    console.log('🔧 Edit handleSave called with matchData:', matchData);
+    console.log('🔧 matchData.scores:', matchData.scores);
+    
     if (!user?.id || !matchId || !existingMatch) {
       showNotification('error', 'Unable to save changes');
       return;
@@ -81,11 +177,20 @@ export default function EditMatchScreen() {
         notes: matchData.notes,
         date: matchData.date,
       };
+      
+      console.log('🔧 updateData to send:', updateData);
 
       await updateMatch(matchId, updateData, user.id);
       
-      // Show success notification
+      console.log('🚗💡🚗💡 MATCH SAVED SUCCESSFULLY - ABOUT TO NAVIGATE');
+      
+      // Show success notification and navigate back
       showNotification('success', `Match updated! Score: ${matchData.scores}`);
+      
+      console.log('🚗💡🚗💡 SUCCESS NOTIFICATION SHOWN - NO AUTO NAVIGATION');
+      
+      // Let user manually navigate back using the back button
+      // This avoids the automatic redirect to clubs page
     } catch (error) {
       logError('EditMatch.handleSave', error);
       
@@ -125,6 +230,8 @@ export default function EditMatchScreen() {
   }
 
   // Convert match to form data format
+  console.log('🔧 existingMatch data:', existingMatch);
+  
   const initialFormData = {
     club_id: existingMatch.club_id,
     player1_id: existingMatch.player1_id,
@@ -139,9 +246,26 @@ export default function EditMatchScreen() {
     date: existingMatch.date,
     notes: existingMatch.notes,
   };
+  
+  console.log('🔧 initialFormData:', initialFormData);
 
   return (
     <View style={styles.container}>
+      {/* Header with back button */}
+      <View style={[styles.header, { backgroundColor: Colors[colorScheme ?? 'light'].background }]}>
+        <TouchableOpacity
+          style={styles.backButton}
+          onPress={handleCancel}
+          activeOpacity={0.7}
+        >
+          <Ionicons name="arrow-back" size={24} color={Colors[colorScheme ?? 'light'].text} />
+        </TouchableOpacity>
+        <Text style={[styles.headerTitle, { color: Colors[colorScheme ?? 'light'].text }]}>
+          Edit Match
+        </Text>
+        <View style={styles.headerSpacer} />
+      </View>
+      
       <MatchRecordingForm
         onSave={handleSave}
         onCancel={handleCancel}
@@ -176,6 +300,28 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#ffffff',
+  },
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    paddingTop: 60, // Account for status bar
+    borderBottomWidth: 1,
+    borderBottomColor: '#e0e0e0',
+  },
+  backButton: {
+    padding: 8,
+    borderRadius: 8,
+  },
+  headerTitle: {
+    fontSize: 18,
+    fontWeight: '600',
+    textAlign: 'center',
+  },
+  headerSpacer: {
+    width: 40, // Match the back button width for centering
   },
   centered: {
     justifyContent: 'center',
@@ -214,5 +360,19 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: '500',
     flex: 1,
+  },
+  errorContainer: {
+    padding: 20,
+    alignItems: 'center',
+  },
+  errorText: {
+    fontSize: 18,
+    fontWeight: '600',
+    textAlign: 'center',
+    marginBottom: 8,
+  },
+  errorSubtext: {
+    fontSize: 14,
+    textAlign: 'center',
   },
 });

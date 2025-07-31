@@ -26,6 +26,7 @@ interface MatchRecordingFormProps {
   clubId: string;
   initialData?: Partial<CreateMatchData>;
   isEditing?: boolean;
+  onCancel?: () => void;
 }
 
 // Legacy interface - can be removed after migration
@@ -35,11 +36,23 @@ interface Player {
   name: string;
 }
 
-export function MatchRecordingForm({ onSave, clubId, initialData, isEditing = false }: MatchRecordingFormProps) {
+export function MatchRecordingForm(componentProps: MatchRecordingFormProps) {
+  // ALL HOOKS MUST BE AT THE TOP - BEFORE ANY EARLY RETURNS OR CONDITIONAL LOGIC
   const colorScheme = useColorScheme();
   const colors = Colors[colorScheme ?? 'light'];
   const { user } = useAuth();
+  
+  // Get props with fallback for hook safety
+  const props = componentProps || {};
+  const {
+    onSave,
+    clubId,
+    initialData,
+    isEditing = false,
+    onCancel
+  } = props;
 
+  // All state hooks
   const [matchType, setMatchType] = useState<'singles' | 'doubles'>(initialData?.match_type || 'singles');
   const [matchTypeRadioId, setMatchTypeRadioId] = useState(initialData?.match_type || 'singles');
   const [selectedOpponent, setSelectedOpponent] = useState<Player | null>(null);
@@ -52,44 +65,58 @@ export function MatchRecordingForm({ onSave, clubId, initialData, isEditing = fa
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [activeSearchField, setActiveSearchField] = useState<'opponent' | 'partner' | 'opponentPartner' | null>(null);
   const [matchDate, setMatchDate] = useState(initialData?.date || new Date().toISOString().split('T')[0]);
-  // Legacy state - will be removed
   const [tennisSets, setTennisSets] = useState<TennisSet[]>([]);
   const [validationErrors, setValidationErrors] = useState<string[]>([]);
   const [clubMembers, setClubMembers] = useState<Player[]>([]);
   const [loadingMembers, setLoadingMembers] = useState(true);
   const [notes, setNotes] = useState(initialData?.notes || '');
 
-  // Radio button configuration for match type
-  const matchTypeRadioButtons = useMemo(() => [
-    {
-      id: 'singles',
-      label: 'Singles',
-      value: 'singles',
-      color: colors.tint,
-      labelStyle: { color: colors.text, fontSize: 16 },
-    },
-    {
-      id: 'doubles', 
-      label: 'Doubles',
-      value: 'doubles',
-      color: colors.tint,
-      labelStyle: { color: colors.text, fontSize: 16 },
-    }
-  ], [colors.tint, colors.text]);
+  // All useEffect hooks
+  useEffect(() => {
+    console.log('🎾 tennisSets state changed:', tennisSets);
+  }, [tennisSets]);
 
-  // Handle radio button selection
-  const handleMatchTypeChange = (selectedId: string) => {
-    setMatchTypeRadioId(selectedId);
-    setMatchType(selectedId as 'singles' | 'doubles');
+  // Initialize tennis sets with existing scores when editing
+  useEffect(() => {
+    console.log('🎾 useEffect triggered with:', { 
+      isEditing, 
+      hasScores: !!initialData?.scores, 
+      scores: initialData?.scores,
+      tennisSetsLength: tennisSets.length 
+    });
     
-    // Clear doubles fields when switching to singles
-    if (selectedId === 'singles') {
-      setSelectedPartner(null);
-      setPartnerSearchText('');
-      setSelectedOpponentPartner(null);
-      setOpponentPartnerSearchText('');
+    if (isEditing && initialData?.scores && tennisSets.length === 0) {
+      console.log('🎾 Parsing initial scores:', initialData.scores);
+      try {
+        // Parse the score string like "6-4,7-6(7-3),6-2" into TennisSet objects
+        const sets = initialData.scores.split(',').map((setScore, index) => {
+          const tiebreakMatch = setScore.match(/(\d+)-(\d+)\((\d+)-(\d+)\)/);
+          if (tiebreakMatch) {
+            return {
+              id: `set-${index}`,
+              playerScore: parseInt(tiebreakMatch[1]),
+              opponentScore: parseInt(tiebreakMatch[2]),
+              tiebreak: {
+                playerScore: parseInt(tiebreakMatch[3]),
+                opponentScore: parseInt(tiebreakMatch[4])
+              }
+            };
+          } else {
+            const parts = setScore.split('-');
+            return {
+              id: `set-${index}`,
+              playerScore: parseInt(parts[0]) || 0,
+              opponentScore: parseInt(parts[1]) || 0
+            };
+          }
+        });
+        console.log('🎾 Parsed sets:', sets);
+        setTennisSets(sets);
+      } catch (error) {
+        console.error('Failed to parse initial scores:', error);
+      }
     }
-  };
+  }, [isEditing, initialData?.scores, tennisSets.length]);
 
   // Load real club members from database
   useEffect(() => {
@@ -118,11 +145,174 @@ export function MatchRecordingForm({ onSave, clubId, initialData, isEditing = fa
     setShowSuggestions(true);
   }, [opponentSearchText, partnerSearchText, opponentPartnerSearchText, clubMembers, activeSearchField]);
 
+  // Initialize selected players when editing and club members are loaded
+  useEffect(() => {
+    console.log('🔧 PLAYER INIT USEEFFECT RUNNING!');
+    
+    if (!isEditing || !initialData) {
+      console.log('🔧 Skipping player initialization - not editing or no initial data');
+      return;
+    }
+
+    console.log('🔧 Initializing players for editing:', {
+      isEditing,
+      hasClubMembers: clubMembers.length > 0,
+      initialData: {
+        player2_id: initialData.player2_id,
+        opponent2_name: initialData.opponent2_name,
+        player3_id: initialData.player3_id,
+        partner3_name: initialData.partner3_name,
+        player4_id: initialData.player4_id,
+        partner4_name: initialData.partner4_name,
+      },
+      currentSelections: {
+        selectedOpponent: selectedOpponent?.name,
+        selectedPartner: selectedPartner?.name,
+        selectedOpponentPartner: selectedOpponentPartner?.name,
+      }
+    });
+
+    // Initialize opponent
+    console.log('🎾 Checking opponent initialization:', { 
+      hasPlayer2Id: !!initialData.player2_id, 
+      hasOpponent2Name: !!initialData.opponent2_name,
+      hasSelectedOpponent: !!selectedOpponent,
+      selectedOpponentName: selectedOpponent?.name
+    });
+    
+    if ((initialData.player2_id || initialData.opponent2_name) && !selectedOpponent) {
+      console.log('🎾 Initializing opponent...');
+      let opponent = null;
+      
+      if (initialData.player2_id && clubMembers.length > 0) {
+        opponent = clubMembers.find(p => p.id === initialData.player2_id);
+        console.log('🎾 Found opponent in club members:', opponent);
+      }
+      
+      if (!opponent && initialData.opponent2_name) {
+        opponent = {
+          id: initialData.player2_id || `external-opponent-${Date.now()}`,
+          name: initialData.opponent2_name
+        };
+        console.log('🎾 Created external opponent:', opponent);
+      }
+      
+      if (opponent) {
+        console.log('🎾 Setting opponent:', opponent);
+        setSelectedOpponent(opponent);
+      } else {
+        console.log('🎾 No opponent found for:', { player2_id: initialData.player2_id, opponent2_name: initialData.opponent2_name });
+      }
+    } else {
+      console.log('🎾 Skipping opponent initialization - already have selectedOpponent or no data');
+    }
+
+    // Initialize partner (doubles)
+    if ((initialData.player3_id || initialData.partner3_name) && !selectedPartner) {
+      let partner = null;
+      
+      if (initialData.player3_id && clubMembers.length > 0) {
+        partner = clubMembers.find(p => p.id === initialData.player3_id);
+      }
+      
+      if (!partner && initialData.partner3_name) {
+        partner = {
+          id: initialData.player3_id || `external-partner-${Date.now()}`,
+          name: initialData.partner3_name
+        };
+      }
+      
+      if (partner) {
+        console.log('🤝 Setting partner:', partner);
+        setSelectedPartner(partner);
+      } else {
+        console.log('🤝 No partner found for:', { player3_id: initialData.player3_id, partner3_name: initialData.partner3_name });
+      }
+    }
+
+    // Initialize opponent partner (doubles)
+    if ((initialData.player4_id || initialData.partner4_name) && !selectedOpponentPartner) {
+      let opponentPartner = null;
+      
+      if (initialData.player4_id && clubMembers.length > 0) {
+        opponentPartner = clubMembers.find(p => p.id === initialData.player4_id);
+      }
+      
+      if (!opponentPartner && initialData.partner4_name) {
+        opponentPartner = {
+          id: initialData.player4_id || `external-opponent-partner-${Date.now()}`,
+          name: initialData.partner4_name
+        };
+      }
+      
+      if (opponentPartner) {
+        console.log('🤝 Setting opponent partner:', opponentPartner);
+        setSelectedOpponentPartner(opponentPartner);
+      } else {
+        console.log('🤝 No opponent partner found for:', { player4_id: initialData.player4_id, partner4_name: initialData.partner4_name });
+      }
+    }
+  }, [isEditing, initialData, clubMembers.length]); // Simplified dependencies
+
+  // Radio button configuration for match type
+  const matchTypeRadioButtons = useMemo(() => [
+    {
+      id: 'singles',
+      label: 'Singles',
+      value: 'singles',
+      color: colors.tint,
+      labelStyle: { color: colors.text, fontSize: 16 },
+    },
+    {
+      id: 'doubles', 
+      label: 'Doubles',
+      value: 'doubles',
+      color: colors.tint,
+      labelStyle: { color: colors.text, fontSize: 16 },
+    }
+  ], [colors.tint, colors.text]);
+  
+  console.log('🔧 MatchRecordingForm props type:', typeof componentProps);
+  console.log('🔧 MatchRecordingForm raw props:', componentProps);
+  
+  // Early return AFTER all hooks
+  if (!componentProps) {
+    console.error('🔧 MatchRecordingForm received null/undefined props');
+    return null;
+  }
+  
+  console.log('🔧 MatchRecordingForm destructured:', { 
+    onSave: typeof onSave, 
+    clubId, 
+    initialData: initialData ? Object.keys(initialData) : null, 
+    isEditing, 
+    onCancel: typeof onCancel 
+  });
+
+  // Handle radio button selection
+  const handleMatchTypeChange = (selectedId: string) => {
+    setMatchTypeRadioId(selectedId);
+    setMatchType(selectedId as 'singles' | 'doubles');
+    
+    // Clear doubles fields when switching to singles
+    if (selectedId === 'singles') {
+      setSelectedPartner(null);
+      setPartnerSearchText('');
+      setSelectedOpponentPartner(null);
+      setOpponentPartnerSearchText('');
+    }
+  };
+
   const loadClubMembers = async () => {
-    if (!clubId) return;
+    if (!clubId) {
+      console.log('📋 No clubId provided');
+      return;
+    }
     
     try {
       const db = await initializeDatabase();
+      
+      console.log('📋 Loading club members for club:', clubId, 'excluding user:', user?.id);
       
       // Get all club members except current user
       const members = await db.getAllAsync(`
@@ -267,7 +457,15 @@ export function MatchRecordingForm({ onSave, clubId, initialData, isEditing = fa
   };
 
   const handleSave = () => {
-    if (!validateForm()) {
+    console.log('🎾 MatchRecordingForm handleSave called!');
+    console.log('🎾 handleSave called with tennisSets:', tennisSets);
+    console.log('🎾 formatScoreString result:', formatScoreString(tennisSets));
+    
+    const isValidForm = validateForm();
+    console.log('🎾 validateForm result:', isValidForm);
+    
+    if (!isValidForm) {
+      console.log('🎾 Form validation failed, not saving');
       return;
     }
 
@@ -278,6 +476,7 @@ export function MatchRecordingForm({ onSave, clubId, initialData, isEditing = fa
 
     // Use the new tennis sets format
     const scoreString = formatScoreString(tennisSets);
+    console.log('🎾 Final scoreString to save:', scoreString);
     
     const matchData: CreateMatchData = {
       club_id: clubId,
@@ -714,42 +913,89 @@ export function MatchRecordingForm({ onSave, clubId, initialData, isEditing = fa
             onDateChange={setMatchDate}
             label="Match Date"
             placeholder="Select match date"
-            maxDate={new Date().toISOString().split('T')[0]} // Can't select future dates
+            maxDate={(() => {
+              try {
+                return new Date().toISOString().split('T')[0];
+              } catch (error) {
+                console.warn('Failed to get current date, using fallback');
+                const now = new Date();
+                const year = now.getFullYear();
+                const month = String(now.getMonth() + 1).padStart(2, '0');
+                const day = String(now.getDate()).padStart(2, '0');
+                return `${year}-${month}-${day}`;
+              }
+            })()} // Can't select future dates
           />
         </View>
 
         {/* Tennis Score Entry */}
-        {(matchType === 'singles' && selectedOpponent) || 
-         (matchType === 'doubles' && selectedOpponent && selectedPartner && selectedOpponentPartner) ? (
-          <View style={styles.section}>
-            <TennisScoreEntry
-              player1Name={matchType === 'doubles' ? 
-                (selectedPartner ? `You & ${selectedPartner.name}` : "You & [Partner not selected]") : 
-                "You"}
-              player2Name={matchType === 'doubles' ? 
-                (selectedOpponentPartner ? 
-                  `${selectedOpponent.name} & ${selectedOpponentPartner.name}` : 
-                  `${selectedOpponent.name} & [Partner not selected]`) : 
-                selectedOpponent.name}
-              matchType={matchType}
-              onScoreChange={setTennisSets}
-              initialSets={tennisSets}
-              showPreview={true}
-              compact={false}
-            />
-          </View>
-        ) : (
-          <View style={styles.section}>
-            <View style={styles.placeholderContainer}>
-              <Text style={styles.placeholderTitle}>⏳ Select {matchType === 'doubles' ? 'all players' : 'an opponent'} to continue</Text>
-              <Text style={styles.placeholderText}>
-                {matchType === 'doubles' ? 
-                  'Select your partner and both opponents to start recording match scores' :
-                  'Search for a club member or add a new player to start recording match scores'}
-              </Text>
-            </View>
-          </View>
-        )}
+        {(() => {
+          // Calculate player names safely
+          const player1Name = matchType === 'doubles' ? 
+            (selectedPartner?.name ? `You & ${selectedPartner.name}` : "You & [Partner not selected]") : 
+            "You";
+          
+          const player2Name = matchType === 'doubles' ? 
+            (selectedOpponentPartner?.name ? 
+              `${selectedOpponent?.name || 'Opponent'} & ${selectedOpponentPartner.name}` : 
+              `${selectedOpponent?.name || 'Opponent'} & [Partner not selected]`) : 
+            (selectedOpponent?.name || 'Opponent');
+
+          console.log('🎾 TennisScoreEntry props:', { player1Name, player2Name, matchType });
+
+          // Only render if we have the required players and valid names
+          const canRender = (matchType === 'singles' && selectedOpponent && selectedOpponent.name) || 
+                           (matchType === 'doubles' && selectedOpponent && selectedPartner && selectedOpponentPartner &&
+                            selectedOpponent.name && selectedPartner.name && selectedOpponentPartner.name);
+
+          if (canRender && player1Name && player2Name) {
+            return (
+              <View style={styles.section}>
+                <TennisScoreEntry
+                  player1Name={player1Name}
+                  player2Name={player2Name}
+                  matchType={matchType}
+                  onScoreChange={setTennisSets}
+                  initialSets={tennisSets}
+                  showPreview={true}
+                  compact={false}
+                />
+                {/* Debug info */}
+                {isEditing && (
+                  <Text style={{ fontSize: 12, color: 'gray', marginTop: 10 }}>
+                    Debug - Initial scores: {initialData?.scores || 'none'}
+                  </Text>
+                )}
+                {isEditing && (
+                  <Text style={{ fontSize: 12, color: 'gray' }}>
+                    Debug - Tennis sets: {JSON.stringify(tennisSets)}
+                  </Text>
+                )}
+              </View>
+            );
+          } else {
+            console.log('🎾 Not rendering TennisScoreEntry yet:', { 
+              canRender, 
+              player1Name, 
+              player2Name,
+              selectedOpponent: selectedOpponent?.name,
+              selectedPartner: selectedPartner?.name,
+              selectedOpponentPartner: selectedOpponentPartner?.name
+            });
+            return (
+              <View style={styles.section}>
+                <View style={styles.placeholderContainer}>
+                  <Text style={styles.placeholderTitle}>⏳ Select {matchType === 'doubles' ? 'all players' : 'an opponent'} to continue</Text>
+                  <Text style={styles.placeholderText}>
+                    {matchType === 'doubles' ? 
+                      'Select your partner and both opponents to start recording match scores' :
+                      'Search for a club member or add a new player to start recording match scores'}
+                  </Text>
+                </View>
+              </View>
+            );
+          }
+        })()}
 
         {/* Notes */}
         <View style={styles.section}>
@@ -764,17 +1010,17 @@ export function MatchRecordingForm({ onSave, clubId, initialData, isEditing = fa
             testID="notes-input"
           />
         </View>
-      </ScrollView>
 
-      {/* Action Button */}
-      <View style={styles.buttonContainer}>
-        <Button
-          title="Save Match"
-          onPress={handleSave}
-          color={colors.tint}
-          testID="save-match-button"
-        />
-      </View>
+        {/* Action Button */}
+        <View style={styles.buttonContainer}>
+          <Button
+            title="Save Match"
+            onPress={handleSave}
+            color={colors.tint}
+            testID="save-match-button"
+          />
+        </View>
+      </ScrollView>
     </View>
   );
 }
