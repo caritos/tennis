@@ -1,4 +1,4 @@
-import { ScrollView, StyleSheet, View, TouchableOpacity, Image } from 'react-native';
+import { ScrollView, StyleSheet, View, TouchableOpacity } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
 import React, { useState, useEffect } from 'react';
@@ -15,7 +15,6 @@ import { Club } from '@/lib/supabase';
 import { MatchHistoryView } from '@/components/MatchHistoryView';
 import { PlayerStatsDisplay } from '@/components/PlayerStatsDisplay';
 import { usePlayerStats } from '@/hooks/usePlayerStats';
-import { initializeDatabase } from '@/database/database';
 
 export default function ProfileScreen() {
   const colorScheme = useColorScheme();
@@ -24,7 +23,6 @@ export default function ProfileScreen() {
   const { user, signOut } = useAuth();
   const [userClubs, setUserClubs] = useState<Club[]>([]);
   const [loading, setLoading] = useState(true);
-  const [profilePhotoUri, setProfilePhotoUri] = useState<string | null>(null);
 
   // Load player statistics
   const { stats, loading: statsLoading, error: statsError, refreshStats } = usePlayerStats(user?.id || null);
@@ -40,17 +38,6 @@ export default function ProfileScreen() {
       setLoading(true);
       const clubs = await clubService.getUserClubs(user.id);
       setUserClubs(clubs);
-
-      // Load profile photo from database
-      const db = await initializeDatabase();
-      const userData = await db.getFirstAsync(
-        'SELECT profile_photo_uri FROM users WHERE id = ?',
-        [user.id]
-      ) as any;
-      
-      if (userData?.profile_photo_uri) {
-        setProfilePhotoUri(userData.profile_photo_uri);
-      }
     } catch (error) {
       console.error('Failed to load user clubs:', error);
       setUserClubs([]);
@@ -83,27 +70,6 @@ export default function ProfileScreen() {
 
         <ThemedView style={styles.section}>
           <View style={styles.userSection}>
-            {/* Profile Photo */}
-            <View style={styles.profilePhotoContainer}>
-              {profilePhotoUri ? (
-                <Image 
-                  source={{ uri: profilePhotoUri }} 
-                  style={styles.profilePhoto}
-                  onError={() => {
-                    console.warn('Failed to load profile photo');
-                    setProfilePhotoUri(null);
-                  }}
-                />
-              ) : (
-                <View style={[styles.profilePhotoPlaceholder, { backgroundColor: colors.tabIconDefault + '20' }]}>
-                  <Ionicons 
-                    name="person-outline" 
-                    size={40} 
-                    color={colors.tabIconDefault} 
-                  />
-                </View>
-              )}
-            </View>
 
             <View style={styles.userInfoContainer}>
               <ThemedText type="subtitle" style={styles.userName}>
@@ -232,25 +198,6 @@ const styles = StyleSheet.create({
   userSection: {
     alignItems: 'center',
     paddingVertical: 12,
-  },
-  profilePhotoContainer: {
-    marginBottom: 16,
-  },
-  profilePhoto: {
-    width: 80,
-    height: 80,
-    borderRadius: 40,
-    backgroundColor: '#f0f0f0',
-  },
-  profilePhotoPlaceholder: {
-    width: 80,
-    height: 80,
-    borderRadius: 40,
-    justifyContent: 'center',
-    alignItems: 'center',
-    borderWidth: 2,
-    borderColor: '#e0e0e0',
-    borderStyle: 'dashed',
   },
   userInfoContainer: {
     flexDirection: 'row',
