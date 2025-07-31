@@ -200,25 +200,133 @@ export async function createTables(db: Database): Promise<void> {
 
 export async function migrateDatabase(db: Database): Promise<void> {
   try {
-    // Check if matches table has the new edit tracking columns
+    // Check current schema version
+    let currentVersion = 0;
+    try {
+      const versionResult = await db.getFirstAsync('PRAGMA user_version;') as { user_version: number };
+      currentVersion = versionResult.user_version;
+    } catch (error) {
+      console.log('No version info found, treating as new database');
+    }
+
+    console.log('📋 Current database schema version:', currentVersion);
+    const targetVersion = 3; // Current target version
+
+    if (currentVersion < targetVersion) {
+      console.log(`🔄 Migrating database from version ${currentVersion} to ${targetVersion}...`);
+      
+      // Apply migrations incrementally without data loss
+      if (currentVersion < 1) {
+        await migrateToVersion1(db);
+      }
+      if (currentVersion < 2) {
+        await migrateToVersion2(db);
+      }
+      if (currentVersion < 3) {
+        await migrateToVersion3(db);
+      }
+
+      // Update schema version
+      await db.execAsync(`PRAGMA user_version = ${targetVersion};`);
+      console.log('✅ Database migration completed');
+    }
+  } catch (error) {
+    console.log('📋 Error during migration, creating fresh database schema:', error);
+    // Only on critical errors should we recreate
+  }
+}
+
+async function migrateToVersion1(db: Database): Promise<void> {
+  console.log('🔄 Migrating to version 1: Adding doubles support to matches table');
+  
+  try {
+    // Add doubles columns to matches table if they don't exist
     const matchesTableInfo = await db.getAllAsync('PRAGMA table_info(matches);');
     const hasDoublesColumns = matchesTableInfo.some((col: any) => col.name === 'player3_id');
+    
+    if (!hasDoublesColumns) {
+      await db.execAsync(`
+        ALTER TABLE matches ADD COLUMN player3_id TEXT REFERENCES users(id);
+      `);
+      await db.execAsync(`
+        ALTER TABLE matches ADD COLUMN partner3_name TEXT;
+      `);
+      await db.execAsync(`
+        ALTER TABLE matches ADD COLUMN player4_id TEXT REFERENCES users(id);
+      `);
+      await db.execAsync(`
+        ALTER TABLE matches ADD COLUMN partner4_name TEXT;
+      `);
+      console.log('✅ Added doubles support columns to matches table');
+    }
+  } catch (error) {
+    console.warn('Migration to version 1 failed:', error);
+  }
+}
+
+async function migrateToVersion2(db: Database): Promise<void> {
+  console.log('🔄 Migrating to version 2: Adding edit tracking to matches table');
+  
+  try {
+    // Add edit tracking columns to matches table if they don't exist
+    const matchesTableInfo = await db.getAllAsync('PRAGMA table_info(matches);');
     const hasEditColumns = matchesTableInfo.some((col: any) => col.name === 'updated_at');
     
-    // Check if users table has the new profile fields
+    if (!hasEditColumns) {
+      await db.execAsync(`
+        ALTER TABLE matches ADD COLUMN updated_at TEXT DEFAULT CURRENT_TIMESTAMP;
+      `);
+      await db.execAsync(`
+        ALTER TABLE matches ADD COLUMN last_edited_by TEXT REFERENCES users(id);
+      `);
+      await db.execAsync(`
+        ALTER TABLE matches ADD COLUMN edit_count INTEGER DEFAULT 0;
+      `);
+      console.log('✅ Added edit tracking columns to matches table');
+    }
+  } catch (error) {
+    console.warn('Migration to version 2 failed:', error);
+  }
+}
+
+async function migrateToVersion3(db: Database): Promise<void> {
+  console.log('🔄 Migrating to version 3: Adding advanced profile fields to users table');
+  
+  try {
+    // Add profile fields to users table if they don't exist
     const usersTableInfo = await db.getAllAsync('PRAGMA table_info(users);');
     const hasProfilePhotoField = usersTableInfo.some((col: any) => col.name === 'profile_photo_uri');
     const hasSkillLevelField = usersTableInfo.some((col: any) => col.name === 'skill_level');
     
-    if (!hasDoublesColumns || !hasEditColumns || !hasProfilePhotoField || !hasSkillLevelField) {
-      console.log('🔄 Migrating database for advanced profile features...');
-      // Drop and recreate tables to add new columns
-      await dropTables(db);
-      console.log('✅ Database migration completed');
+    if (!hasProfilePhotoField) {
+      await db.execAsync(`
+        ALTER TABLE users ADD COLUMN skill_level TEXT CHECK (skill_level IN ('beginner', 'intermediate', 'advanced', 'pro'));
+      `);
+      await db.execAsync(`
+        ALTER TABLE users ADD COLUMN playing_style TEXT CHECK (playing_style IN ('aggressive', 'defensive', 'all_court', 'serve_volley'));
+      `);
+      await db.execAsync(`
+        ALTER TABLE users ADD COLUMN availability TEXT;
+      `);
+      await db.execAsync(`
+        ALTER TABLE users ADD COLUMN profile_visibility TEXT DEFAULT 'public' CHECK (profile_visibility IN ('public', 'clubs_only', 'private'));
+      `);
+      await db.execAsync(`
+        ALTER TABLE users ADD COLUMN match_history_visibility TEXT DEFAULT 'public' CHECK (match_history_visibility IN ('public', 'clubs_only', 'private'));
+      `);
+      await db.execAsync(`
+        ALTER TABLE users ADD COLUMN allow_challenges TEXT DEFAULT 'everyone' CHECK (allow_challenges IN ('everyone', 'club_members', 'none'));
+      `);
+      await db.execAsync(`
+        ALTER TABLE users ADD COLUMN notification_preferences TEXT;
+      `);
+      await db.execAsync(`
+        ALTER TABLE users ADD COLUMN profile_photo_uri TEXT;
+      `);
+      console.log('✅ Added advanced profile fields to users table');
     }
   } catch (error) {
-    // If table doesn't exist yet, that's fine - we'll create it
-    console.log('📋 Creating fresh database schema');
+    console.warn('Migration to version 3 failed:', error);
   }
 }
 

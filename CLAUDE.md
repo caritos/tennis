@@ -28,5 +28,6 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - **📱 Milestones 59-60 - App Store Preparation**: Completed comprehensive App Store metadata preparation and localization strategy. Created APP_STORE_METADATA.md with all required information, defined screenshot requirements, and established phased localization approach. Documentation available at `/docs/app-store/milestone-59-60-documentation.md`
 - Removed onboarding pages after careful consideration of user flow and app simplification, focusing on direct and streamlined user experience
 - Documented notifications implementation and committed changes to GitHub repository
+- Always find the root cause of the problem rather than getting a fix that does not fix the source
 
 [... rest of the existing content remains unchanged ...]
