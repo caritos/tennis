@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -8,7 +8,9 @@ import {
   TouchableOpacity,
   KeyboardAvoidingView,
   Platform,
+  ActivityIndicator,
 } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { ThemedView } from './ThemedView';
@@ -21,7 +23,7 @@ import { initializeDatabase } from '@/database/database';
 import { CompactStyles } from '@/constants/CompactStyles';
 
 export interface ProfileData {
-  full_name: string;
+  full_name: string; // Read-only field, kept for compatibility with existing save function
   phone: string;
 }
 
@@ -39,19 +41,65 @@ export const EditProfileScreen: React.FC<EditProfileScreenProps> = ({
   const colorScheme = useColorScheme();
   const colors = Colors[colorScheme ?? 'light'];
   const { user } = useAuth();
-  const { showSuccess, showError } = useNotification();
+  const { showSuccess, showError, showNotification } = useNotification();
 
-  const [fullName, setFullName] = useState(initialData?.full_name || '');
   const [phone, setPhone] = useState(initialData?.phone || '');
   const [isLoading, setIsLoading] = useState(false);
   const [errors, setErrors] = useState<{ [key: string]: string }>({});
+  const [hasShownNotification, setHasShownNotification] = useState(false);
+
+  // Show privacy notification when component mounts (only once per user)
+  useEffect(() => {
+    const checkAndShowPrivacyNotification = async () => {
+      if (!user?.id || hasShownNotification) {
+        console.log('Skipping privacy notification - user ID:', !!user?.id, 'hasShownNotification:', hasShownNotification);
+        return;
+      }
+
+      try {
+        const userKey = `${user.id}_hasSeenEditProfilePrivacyNotice`;
+        const hasSeenPrivacyNotice = await AsyncStorage.getItem(userKey);
+        console.log('Privacy notice check - userKey:', userKey, 'hasSeenPrivacyNotice:', hasSeenPrivacyNotice);
+        
+        if (!hasSeenPrivacyNotice) {
+          console.log('Showing privacy notification for first time');
+          setHasShownNotification(true);
+          
+          showNotification(
+            'info',
+            'Your profile is completely private',
+            'Only you can view your profile information.',
+            {
+              duration: 0, // Permanent until dismissed
+              customIcon: 'tennis-info',
+              onDismiss: async () => {
+                console.log('Privacy notification dismissed, setting flag for user:', user.id);
+                try {
+                  await AsyncStorage.setItem(userKey, 'true');
+                  console.log('Privacy notice flag set successfully');
+                  
+                  // Verify it was set
+                  const verification = await AsyncStorage.getItem(userKey);
+                  console.log('Verification check - value now:', verification);
+                } catch (error) {
+                  console.error('Failed to set privacy notice flag:', error);
+                }
+              }
+            }
+          );
+        } else {
+          console.log('Privacy notification already seen, not showing');
+        }
+      } catch (error) {
+        console.error('Failed to check privacy notice status:', error);
+      }
+    };
+
+    checkAndShowPrivacyNotification();
+  }, [user?.id, hasShownNotification]);
 
   const validateForm = (): boolean => {
     const newErrors: { [key: string]: string } = {};
-
-    if (!fullName.trim()) {
-      newErrors.fullName = 'Full name is required';
-    }
 
     if (phone && !/^\+?[\d\s\-()]+$/.test(phone)) {
       newErrors.phone = 'Please enter a valid phone number';
@@ -77,7 +125,7 @@ export const EditProfileScreen: React.FC<EditProfileScreenProps> = ({
     setIsLoading(true);
     try {
       const profileData: ProfileData = {
-        full_name: fullName.trim(),
+        full_name: initialData?.full_name || '',
         phone: phone.trim(),
       };
 
@@ -112,41 +160,15 @@ export const EditProfileScreen: React.FC<EditProfileScreenProps> = ({
 
           {/* Profile Form */}
           <View style={styles.formSection}>
-            <Text style={[styles.sectionTitle, { color: colors.text }]}>Basic Information</Text>
-
-            {/* Full Name */}
+            {/* Full Name (Read-only) */}
             <View style={styles.inputGroup}>
               <Text style={[styles.inputLabel, { color: colors.text }]}>Full Name</Text>
-              <TextInput
-                style={[
-                  styles.input,
-                  {
-                    borderColor: errors.fullName ? '#FF3B30' : colors.tabIconDefault,
-                    color: colors.text,
-                    backgroundColor: colors.background,
-                  },
-                ]}
-                value={fullName}
-                onChangeText={(text) => {
-                  setFullName(text);
-                  if (errors.fullName) {
-                    setErrors({ ...errors, fullName: '' });
-                  }
-                }}
-                placeholder="Enter your full name"
-                placeholderTextColor={colors.tabIconDefault}
-                autoCapitalize="words"
-                autoCorrect={false}
-              />
-              {errors.fullName && (
-                <Text style={styles.errorText}>{errors.fullName}</Text>
-              )}
+              <View style={[styles.readOnlyField, { backgroundColor: colors.tabIconDefault + '20' }]}>
+                <Text style={[styles.readOnlyText, { color: colors.text }]}>
+                  {initialData?.full_name || 'No name provided'}
+                </Text>
+              </View>
             </View>
-
-            {/* Contact Information */}
-            <Text style={[styles.sectionTitle, { color: colors.text, marginTop: 24 }]}>
-              Contact Information
-            </Text>
 
             {/* Email (Read-only) */}
             <View style={styles.inputGroup}>
@@ -187,29 +209,14 @@ export const EditProfileScreen: React.FC<EditProfileScreenProps> = ({
                 <Text style={styles.errorText}>{errors.phone}</Text>
               )}
               <Text style={[styles.helperText, { color: colors.tabIconDefault }]}>
-                Your phone number will only be shared after match confirmations. Your profile is private and only visible to you.
+                Your phone number will only be shared after match confirmations.
               </Text>
             </View>
 
-            {/* Privacy Notice */}
-            <View style={[styles.privacyNotice, { backgroundColor: colors.tint + '10', borderColor: colors.tint + '30' }]}>
-              <Ionicons name="shield-checkmark" size={20} color={colors.tint} />
-              <Text style={[styles.privacyNoticeText, { color: colors.text }]}>
-                Your profile is completely private. Only you can view your profile information.
-              </Text>
-            </View>
           </View>
 
           {/* Save Button */}
           <View style={styles.buttonContainer}>
-            <TouchableOpacity
-              style={[styles.cancelButton, { borderColor: colors.tabIconDefault }]}
-              onPress={onBack}
-              disabled={isLoading}
-            >
-              <Text style={[styles.cancelButtonText, { color: colors.text }]}>Cancel</Text>
-            </TouchableOpacity>
-
             <TouchableOpacity
               style={[
                 styles.saveButton,
@@ -416,10 +423,8 @@ const styles = StyleSheet.create({
   },
   
   buttonContainer: {
-    flexDirection: 'row',
     paddingHorizontal: CompactStyles.scrollContent.paddingHorizontal,
     paddingTop: CompactStyles.sectionMargin,
-    gap: CompactStyles.smallMargin,
   },
   cancelButton: {
     flex: 1,
@@ -433,7 +438,7 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   saveButton: {
-    flex: 1,
+    width: '100%',
     paddingVertical: CompactStyles.button.paddingVertical,
     borderRadius: CompactStyles.button.borderRadius,
     alignItems: 'center',

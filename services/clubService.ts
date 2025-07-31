@@ -28,7 +28,7 @@ export class ClubService {
   }
 
   // Helper method to ensure user exists in local database
-  private async ensureUserExists(userId: string): Promise<void> {
+  private async ensureUserExists(userId: string, userEmail?: string, userFullName?: string): Promise<void> {
     const db = await this.getDatabase();
     
     const userExists = await db.getFirstAsync(
@@ -37,13 +37,19 @@ export class ClubService {
     );
     
     if (!userExists) {
-      console.error('ClubService: User not found in local database:', userId);
+      console.log('ClubService: User not found in local database, creating user:', userId);
       
-      // Debug: List all users in database
-      const allUsers = await db.getAllAsync('SELECT id, email FROM users');
-      console.log('ClubService: All users in database:', allUsers);
-      
-      throw new Error('Your account information is not available. Please sign out and sign back in to refresh your account.');
+      // Create the user in local database with basic information
+      try {
+        await db.runAsync(
+          `INSERT INTO users (id, email, full_name, created_at, updated_at) VALUES (?, ?, ?, datetime('now'), datetime('now'))`,
+          [userId, userEmail || '', userFullName || '']
+        );
+        console.log('ClubService: Successfully created user in local database:', userId);
+      } catch (error) {
+        console.error('ClubService: Failed to create user in local database:', error);
+        throw new Error('Failed to initialize user account. Please try again.');
+      }
     }
   }
 
@@ -152,7 +158,7 @@ export class ClubService {
     }
   }
 
-  async joinClub(clubId: string, userId: string): Promise<void> {
+  async joinClub(clubId: string, userId: string, userEmail?: string, userFullName?: string): Promise<void> {
     // Input validation
     if (!clubId || typeof clubId !== 'string' || clubId.trim() === '') {
       console.error('joinClub: Invalid club ID:', clubId);
@@ -168,7 +174,7 @@ export class ClubService {
 
     try {
       // Ensure user exists in local database
-      await this.ensureUserExists(userId);
+      await this.ensureUserExists(userId, userEmail, userFullName);
 
       // Check if club exists
       const clubExists = await db.getFirstAsync(
@@ -481,7 +487,7 @@ export class ClubService {
 const clubService = new ClubService();
 
 export const createClub = (clubData: CreateClubData) => clubService.createClub(clubData);
-export const joinClub = (clubId: string, userId: string) => clubService.joinClub(clubId, userId);
+export const joinClub = (clubId: string, userId: string, userEmail?: string, userFullName?: string) => clubService.joinClub(clubId, userId, userEmail, userFullName);
 export const leaveClub = (clubId: string, userId: string) => clubService.leaveClub(clubId, userId);
 export const getJoinedClubIds = (userId: string) => clubService.getJoinedClubIds(userId);
 export const getUserClubs = (userId: string) => clubService.getUserClubs(userId);

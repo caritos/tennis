@@ -19,6 +19,7 @@ import { Colors } from '@/constants/Colors';
 import { useAuth } from '@/contexts/AuthContext';
 import { useNotification } from '@/contexts/NotificationContext';
 import { initializeDatabase } from '@/database/database';
+import { CompactStyles } from '@/constants/CompactStyles';
 
 interface AdvancedProfileScreenProps {
   onBack: () => void;
@@ -491,23 +492,23 @@ const styles = StyleSheet.create({
   },
   menuSeparator: {
     height: StyleSheet.hairlineWidth,
-    marginLeft: 68,
+    marginLeft: 52,
   },
   signOutSection: {
-    paddingHorizontal: 20,
-    paddingTop: 16,
+    paddingHorizontal: CompactStyles.scrollContent.paddingHorizontal,
+    paddingTop: CompactStyles.itemMargin,
   },
   signOutButton: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    paddingVertical: 14,
-    borderRadius: 10,
+    paddingVertical: CompactStyles.button.paddingVertical,
+    borderRadius: CompactStyles.button.borderRadius,
     borderWidth: 1,
-    gap: 8,
+    gap: CompactStyles.smallMargin,
   },
   signOutText: {
-    fontSize: 16,
+    fontSize: CompactStyles.buttonText.fontSize,
     fontWeight: '600',
     color: '#FF3B30',
   },

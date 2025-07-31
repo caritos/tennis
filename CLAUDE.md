@@ -26,5 +26,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - **🔧 Issue #44 - Advanced Profile Management Features**: Successfully implemented comprehensive profile management system with photo upload, tennis information fields (skill level, playing style), privacy controls, and enhanced form validation. Features include camera/gallery photo selection, local file storage, database schema updates, and clean TypeScript interfaces. All advanced profile settings are now functional with proper error handling and user feedback.
 - Profile management system now includes photo upload functionality and comprehensive tennis information collection
 - **📱 Milestones 59-60 - App Store Preparation**: Completed comprehensive App Store metadata preparation and localization strategy. Created APP_STORE_METADATA.md with all required information, defined screenshot requirements, and established phased localization approach. Documentation available at `/docs/app-store/milestone-59-60-documentation.md`
+- Removed onboarding pages after careful consideration of user flow and app simplification, focusing on direct and streamlined user experience
+- Documented notifications implementation and committed changes to GitHub repository
 
 [... rest of the existing content remains unchanged ...]

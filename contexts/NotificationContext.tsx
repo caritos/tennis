@@ -12,6 +12,7 @@ interface NotificationContextType {
       duration?: number;
       actionLabel?: string;
       onAction?: () => void;
+      onDismiss?: () => void;
       customIcon?: 'tennis-info' | keyof typeof Ionicons.glyphMap;
     }
   ) => void;
@@ -40,6 +41,7 @@ export const NotificationProvider: React.FC<NotificationProviderProps> = ({ chil
       duration?: number;
       actionLabel?: string;
       onAction?: () => void;
+      onDismiss?: () => void;
       customIcon?: 'tennis-info' | keyof typeof Ionicons.glyphMap;
     }
   ) => {
@@ -53,6 +55,7 @@ export const NotificationProvider: React.FC<NotificationProviderProps> = ({ chil
       duration: options?.duration ?? (type === 'error' ? 5000 : 3000), // Errors stay longer
       actionLabel: options?.actionLabel,
       onAction: options?.onAction,
+      onDismiss: options?.onDismiss,
       customIcon: options?.customIcon,
     };
 

@@ -230,13 +230,6 @@ export function EmailSignUpForm({
         automaticallyAdjustKeyboardInsets={true}
       >
           <View style={styles.content}>
-              {/* App Title */}
-              <View style={styles.titleSection}>
-                <ThemedText type="title" style={styles.appTitle}>
-                  🎾 Tennis Club
-                </ThemedText>
-              </View>
-
               {/* Form Fields */}
                 {/* Full Name */}
                 <View style={styles.inputGroup}>
@@ -534,7 +527,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     paddingHorizontal: 16,
-    paddingVertical: 12,
+    paddingVertical: 8,
     borderBottomWidth: 1,
     borderBottomColor: '#e0e0e0',
   },
@@ -554,47 +547,47 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   scrollContent: {
-    paddingHorizontal: 32,
-    paddingTop: 24,
-    paddingBottom: 50,
+    paddingHorizontal: 24,
+    paddingTop: 12,
+    paddingBottom: 24,
   },
   content: {
     width: '100%',
   },
   titleSection: {
     alignItems: 'center',
-    marginBottom: 32,
+    marginBottom: 16,
   },
   appTitle: {
-    fontSize: 24,
+    fontSize: 20,
     fontWeight: 'bold',
   },
   inputGroup: {
-    marginBottom: 20,
+    marginBottom: 12,
   },
   label: {
-    fontSize: 16,
+    fontSize: 14,
     fontWeight: '500',
-    marginBottom: 8,
+    marginBottom: 4,
   },
   input: {
     borderWidth: 1,
     borderRadius: 8,
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    fontSize: 16,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    fontSize: 15,
   },
   helpText: {
-    fontSize: 14,
-    marginTop: 4,
+    fontSize: 12,
+    marginTop: 2,
   },
   errorText: {
     color: '#FF6B6B',
-    fontSize: 14,
-    marginTop: 4,
+    fontSize: 12,
+    marginTop: 2,
   },
   termsSection: {
-    marginBottom: 24,
+    marginBottom: 16,
   },
   checkbox: {
     flexDirection: 'row',
@@ -603,7 +596,7 @@ const styles = StyleSheet.create({
   checkboxBox: {
     width: 20,
     height: 20,
-    marginRight: 12,
+    marginRight: 8,
   },
   termsTextContainer: {
     flex: 1,
@@ -611,46 +604,46 @@ const styles = StyleSheet.create({
     flexWrap: 'wrap',
   },
   termsText: {
-    fontSize: 14,
+    fontSize: 13,
   },
   termsLink: {
-    fontSize: 14,
+    fontSize: 13,
     textDecorationLine: 'underline',
   },
   generalError: {
-    marginBottom: 16,
+    marginBottom: 12,
     textAlign: 'center',
   },
   submitButtonContainer: {
-    marginTop: 24,
-    marginBottom: 16,
+    marginTop: 16,
+    marginBottom: 8,
   },
   submitButton: {
-    paddingVertical: 16,
-    paddingHorizontal: 32,
-    borderRadius: 12,
+    paddingVertical: 12,
+    paddingHorizontal: 24,
+    borderRadius: 10,
     alignItems: 'center',
     justifyContent: 'center',
-    minHeight: 56,
+    minHeight: 44,
   },
   submitButtonDisabled: {
     opacity: 0.8,
   },
   submitButtonText: {
     color: '#ffffff',
-    fontSize: 18,
+    fontSize: 16,
     fontWeight: '600',
   },
   signInSection: {
     flexDirection: 'row',
     justifyContent: 'center',
-    marginTop: 16,
+    marginTop: 8,
   },
   signInPrompt: {
-    fontSize: 16,
+    fontSize: 14,
   },
   signInLink: {
-    fontSize: 16,
+    fontSize: 14,
     fontWeight: '600',
     textDecorationLine: 'underline',
   },

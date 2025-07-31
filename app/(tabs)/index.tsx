@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { StyleSheet, View, TouchableOpacity, ScrollView } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
-import { Link, router } from 'expo-router';
+import { router } from 'expo-router';
 
 import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
@@ -26,7 +26,7 @@ import { seedSampleClubs } from '@/utils/seedData';
 export default function ClubScreen() {
   const colorScheme = useColorScheme();
   const colors = Colors[colorScheme ?? 'light'];
-  const { location, hasLocationPermission, requestLocationPermission } = useLocation(true); // Auto-request enabled
+  const { location, requestLocationPermission } = useLocation(true); // Auto-request enabled
 
   const [clubs, setClubs] = useState<Club[]>([]);
   const [myClubs, setMyClubs] = useState<Club[]>([]);
@@ -148,7 +148,7 @@ export default function ClubScreen() {
     setError(null);
 
     try {
-      await joinClub(club.id, user.id);
+      await joinClub(club.id, user.id, user.email, user.user_metadata?.full_name);
       
       // Update local state immediately for optimistic UI
       setJoinedClubIds(prev => [...prev, club.id]);

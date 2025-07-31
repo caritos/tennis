@@ -34,7 +34,7 @@ export const ClubDiscoveryScreen: React.FC<ClubDiscoveryScreenProps> = ({
 }) => {
   const colorScheme = useColorScheme();
   const colors = Colors[colorScheme ?? 'light'];
-  const { location, requestLocationPermission, hasLocationPermission } = useLocation();
+  const { location, hasLocationPermission } = useLocation(true); // Auto-request enabled
   const { user } = useAuth();
   const { markStepCompleted, getProgress } = useOnboarding();
   const { showSuccess, showError } = useNotification();
@@ -47,27 +47,11 @@ export const ClubDiscoveryScreen: React.FC<ClubDiscoveryScreenProps> = ({
 
   const progress = getProgress();
 
-  // Auto-request location when component mounts
-  useEffect(() => {
-    const autoRequestLocation = async () => {
-      if (hasLocationPermission === null) {
-        // Haven't asked for permission yet, request it automatically
-        try {
-          await requestLocationPermission();
-        } catch (error) {
-          console.log('Location permission denied, will load clubs with fallback location');
-        }
-      }
-    };
-
-    autoRequestLocation();
-  }, [hasLocationPermission, requestLocationPermission]);
+  // Location is auto-requested by useLocation hook
 
   useEffect(() => {
-    if (hasLocationPermission && location) {
-      loadNearbyClubs();
-    } else if (hasLocationPermission === false) {
-      // Load clubs without location (fallback to default location)
+    // Load clubs when location state changes or permission is determined
+    if (hasLocationPermission !== null) {
       loadNearbyClubs();
     }
   }, [location, hasLocationPermission]);
@@ -117,15 +101,7 @@ export const ClubDiscoveryScreen: React.FC<ClubDiscoveryScreenProps> = ({
     }
   };
 
-  const handleLocationRequest = async () => {
-    try {
-      await requestLocationPermission();
-      // Location state will update and trigger useEffect
-    } catch (error) {
-      console.error('Failed to request location permission:', error);
-      showError('Location Permission', 'Unable to access location. You can still discover clubs manually.');
-    }
-  };
+  // Location request is now handled automatically by useLocation hook
 
   const handleJoinClub = async (club: Club) => {
     if (!user || joiningClubId === club.id) return;
@@ -202,23 +178,7 @@ export const ClubDiscoveryScreen: React.FC<ClubDiscoveryScreenProps> = ({
         </View>
 
         {/* Location section */}
-        {!hasLocationPermission && (
-          <View style={[styles.locationSection, { backgroundColor: colors.tint + '10' }]}>
-            <Ionicons name="location-outline" size={24} color={colors.tint} />
-            <View style={styles.locationContent}>
-              <ThemedText style={styles.locationTitle}>Enable Location for Better Results</ThemedText>
-              <ThemedText style={[styles.locationSubtitle, { color: colors.tabIconDefault }]}>
-                We&apos;ll show you clubs with accurate distances
-              </ThemedText>
-            </View>
-            <TouchableOpacity
-              style={[styles.locationButton, { backgroundColor: colors.tint }]}
-              onPress={handleLocationRequest}
-            >
-              <Text style={styles.locationButtonText}>Enable</Text>
-            </TouchableOpacity>
-          </View>
-        )}
+        {/* Location is handled automatically - no manual enable needed */}
 
         {/* Loading state */}
         {loading && (

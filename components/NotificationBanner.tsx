@@ -15,7 +15,8 @@ export interface NotificationData {
   duration?: number; // in milliseconds, 0 means permanent
   actionLabel?: string;
   onAction?: () => void;
-  customIcon?: 'tennis-info' | keyof typeof Ionicons.glyphMap;
+  onDismiss?: () => void;
+  customIcon?: 'tennis-info' | 'shield-checkmark' | keyof typeof Ionicons.glyphMap;
 }
 
 interface NotificationBannerProps {
@@ -78,6 +79,16 @@ const NotificationBanner: React.FC<NotificationBannerProps> = ({
       );
     }
     
+    if (notification.customIcon === 'shield-checkmark') {
+      return (
+        <Ionicons 
+          name="shield-checkmark" 
+          size={24} 
+          color={notificationColors.iconColor} 
+        />
+      );
+    }
+    
     const iconName = notification.customIcon || notificationColors.icon;
     return (
       <Ionicons 
@@ -113,6 +124,9 @@ const NotificationBanner: React.FC<NotificationBannerProps> = ({
       duration: 200,
       useNativeDriver: true,
     }).start(() => {
+      // Call the notification's onDismiss callback if provided
+      notification.onDismiss?.();
+      // Call the parent component's onDismiss to remove from state
       onDismiss(notification.id);
     });
   };
@@ -248,11 +262,11 @@ const styles = StyleSheet.create({
   },
   tennisInfoIcon: {
     position: 'relative',
-    width: 24,
-    height: 24,
+    width: 28,
+    height: 28,
     alignItems: 'center',
     justifyContent: 'center',
-    marginTop: 2,
+    marginTop: 0,
   },
   tennisEmoji: {
     fontSize: 24,

@@ -25,26 +25,20 @@ const OnboardingContext = createContext<OnboardingContextType | undefined>(undef
 
 const ONBOARDING_STEPS: OnboardingStep[] = [
   {
+    id: 'welcome_seen',
+    title: 'Welcome Message Seen',
+    completed: false,
+    required: false,
+  },
+  {
     id: 'profile_setup',
     title: 'Complete Profile',
     completed: false,
-    required: true,
-  },
-  {
-    id: 'club_discovery',
-    title: 'Discover Clubs',
-    completed: false,
-    required: false,
+    required: false, // Changed: Profile data collected during signup
   },
   {
     id: 'club_joining',
     title: 'Join a Club',
-    completed: false,
-    required: false,
-  },
-  {
-    id: 'first_match_guidance',
-    title: 'First Match Guide',
     completed: false,
     required: false,
   },

@@ -68,11 +68,9 @@ export default function EditProfilePage() {
       const db = await initializeDatabase();
       await db.runAsync(
         `UPDATE users SET 
-          full_name = ?, 
           phone = ?
         WHERE id = ?`,
         [
-          data.full_name,
           data.phone || null,
           user.id,
         ]
@@ -85,7 +83,6 @@ export default function EditProfilePage() {
         const { error } = await supabase
           .from('users')
           .update({
-            full_name: data.full_name,
             phone: data.phone || null,
           })
           .eq('id', user.id);
@@ -104,7 +101,6 @@ export default function EditProfilePage() {
       // Update auth metadata
       const { error: authError } = await supabase.auth.updateUser({
         data: {
-          full_name: data.full_name,
           phone: data.phone,
         },
       });

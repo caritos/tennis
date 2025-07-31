@@ -12,6 +12,7 @@ import RadioGroup from 'react-native-radio-buttons-group';
 import { Colors } from '@/constants/Colors';
 import { useColorScheme } from '@/hooks/useColorScheme';
 import { useAuth } from '@/contexts/AuthContext';
+import { CompactStyles } from '@/constants/CompactStyles';
 import { CreateMatchData } from '../services/matchService';
 import { isValidTennisScore, validateSetScore } from '../utils/tennisScore';
 import { TennisScoreEntry } from './TennisScoreEntry';
@@ -303,23 +304,23 @@ export function MatchRecordingForm({ onSave, onCancel, clubId, initialData, isEd
       backgroundColor: colors.background,
     },
     scrollContent: {
-      padding: 16,
+      padding: CompactStyles.scrollContent.paddingHorizontal,
     },
     title: {
-      fontSize: 24,
+      fontSize: CompactStyles.title.fontSize,
       fontWeight: 'bold',
       color: colors.text,
-      marginBottom: 24,
+      marginBottom: CompactStyles.sectionMargin,
       textAlign: 'center',
     },
     section: {
-      marginBottom: 24,
+      marginBottom: CompactStyles.sectionMargin,
     },
     sectionTitle: {
-      fontSize: 18,
+      fontSize: 16,
       fontWeight: '600',
       color: colors.text,
-      marginBottom: 12,
+      marginBottom: CompactStyles.smallMargin,
     },
     radioGroupContainer: {
       alignItems: 'flex-start',
@@ -327,9 +328,10 @@ export function MatchRecordingForm({ onSave, onCancel, clubId, initialData, isEd
     searchInput: {
       borderWidth: 1,
       borderColor: colors.tabIconDefault,
-      borderRadius: 8,
-      padding: 12,
-      fontSize: 16,
+      borderRadius: CompactStyles.input.borderRadius,
+      paddingVertical: CompactStyles.input.paddingVertical,
+      paddingHorizontal: CompactStyles.input.paddingHorizontal,
+      fontSize: CompactStyles.input.fontSize,
       color: colors.text,
       backgroundColor: colors.background,
     },
@@ -340,63 +342,64 @@ export function MatchRecordingForm({ onSave, onCancel, clubId, initialData, isEd
     dateInput: {
       borderWidth: 1,
       borderColor: colors.tabIconDefault,
-      borderRadius: 8,
-      padding: 12,
-      fontSize: 16,
+      borderRadius: CompactStyles.input.borderRadius,
+      paddingVertical: CompactStyles.input.paddingVertical,
+      paddingHorizontal: CompactStyles.input.paddingHorizontal,
+      fontSize: CompactStyles.input.fontSize,
       color: colors.text,
       backgroundColor: colors.background,
     },
     addSetButton: {
-      marginBottom: 16,
+      marginBottom: CompactStyles.itemMargin,
     },
     setContainer: {
       backgroundColor: colors.background,
-      borderRadius: 8,
-      padding: 16,
-      marginBottom: 12,
+      borderRadius: CompactStyles.input.borderRadius,
+      padding: CompactStyles.itemMargin,
+      marginBottom: CompactStyles.smallMargin,
       borderWidth: 1,
       borderColor: colors.tabIconDefault,
     },
     setTitle: {
-      fontSize: 16,
+      fontSize: CompactStyles.input.fontSize,
       fontWeight: '600',
       color: colors.text,
-      marginBottom: 12,
+      marginBottom: CompactStyles.smallMargin,
     },
     scoreInputRow: {
       flexDirection: 'row',
       alignItems: 'center',
-      gap: 16,
+      gap: CompactStyles.itemMargin,
     },
     scoreInput: {
       borderWidth: 1,
       borderColor: colors.tabIconDefault,
       borderRadius: 6,
-      padding: 8,
+      padding: CompactStyles.smallMargin,
       width: 60,
       textAlign: 'center',
-      fontSize: 16,
+      fontSize: CompactStyles.input.fontSize,
       color: colors.text,
       backgroundColor: colors.background,
     },
     scoreLabel: {
-      fontSize: 16,
+      fontSize: CompactStyles.input.fontSize,
       color: colors.text,
       flex: 1,
     },
     errorContainer: {
       backgroundColor: '#ffebee',
-      padding: 12,
-      borderRadius: 8,
-      marginBottom: 16,
+      padding: CompactStyles.smallMargin,
+      borderRadius: CompactStyles.input.borderRadius,
+      marginBottom: CompactStyles.itemMargin,
     },
     errorText: {
       color: '#c62828',
-      fontSize: 14,
+      fontSize: CompactStyles.errorText.fontSize,
     },
     buttonContainer: {
       flexDirection: 'row',
-      gap: 12,
+      gap: CompactStyles.smallMargin,
       marginTop: 24,
     },
     buttonWrapper: {

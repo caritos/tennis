@@ -11,6 +11,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useColorScheme } from '@/hooks/useColorScheme';
 import { Colors } from '@/constants/Colors';
+import { CompactStyles } from '@/constants/CompactStyles';
 import { useLocation } from '@/hooks/useLocation';
 import { useAuth } from '@/contexts/AuthContext';
 import { ClubService } from '@/services/clubService';
@@ -39,7 +40,7 @@ interface FormErrors {
 export function CreateClubForm({ onSuccess, onCancel }: CreateClubFormProps) {
   const colorScheme = useColorScheme();
   const colors = Colors[colorScheme ?? 'light'];
-  const { location, loading: locationLoading } = useLocation();
+  const { location, hasLocationPermission, loading: locationLoading } = useLocation(true); // Auto-request enabled
   const { user } = useAuth();
   const clubService = new ClubService();
 
@@ -280,8 +281,8 @@ export function CreateClubForm({ onSuccess, onCancel }: CreateClubFormProps) {
       flexDirection: 'row',
       alignItems: 'center',
       justifyContent: 'space-between',
-      paddingHorizontal: 20,
-      paddingVertical: 16,
+      paddingHorizontal: CompactStyles.header.paddingHorizontal,
+      paddingVertical: CompactStyles.header.paddingVertical,
       borderBottomWidth: 1,
       borderBottomColor: colors.tabIconDefault + '20',
     },
@@ -300,24 +301,24 @@ export function CreateClubForm({ onSuccess, onCancel }: CreateClubFormProps) {
       flex: 1,
     },
     form: {
-      padding: 20,
+      padding: CompactStyles.scrollContent.paddingHorizontal,
     },
     fieldContainer: {
-      marginBottom: 20,
+      marginBottom: CompactStyles.inputGroup.marginBottom,
     },
     label: {
-      fontSize: 16,
+      fontSize: CompactStyles.label.fontSize,
       fontWeight: '500',
       color: colors.text,
-      marginBottom: 8,
+      marginBottom: CompactStyles.label.marginBottom,
     },
     input: {
       borderWidth: 1,
       borderColor: colors.tabIconDefault + '40',
-      borderRadius: 8,
-      paddingHorizontal: 16,
-      paddingVertical: 12,
-      fontSize: 16,
+      borderRadius: CompactStyles.input.borderRadius,
+      paddingHorizontal: CompactStyles.input.paddingHorizontal,
+      paddingVertical: CompactStyles.input.paddingVertical,
+      fontSize: CompactStyles.input.fontSize,
       color: colors.text,
       backgroundColor: colors.background,
     },
@@ -325,20 +326,20 @@ export function CreateClubForm({ onSuccess, onCancel }: CreateClubFormProps) {
       borderColor: '#ff4444',
     },
     textArea: {
-      height: 80,
+      height: 60,
       textAlignVertical: 'top',
     },
     errorText: {
       color: '#ff4444',
-      fontSize: 14,
-      marginTop: 4,
+      fontSize: CompactStyles.errorText.fontSize,
+      marginTop: CompactStyles.errorText.marginTop,
     },
     locationButton: {
       backgroundColor: colors.tint,
-      paddingHorizontal: 16,
-      paddingVertical: 10,
+      paddingHorizontal: CompactStyles.button.paddingHorizontal - 8,
+      paddingVertical: CompactStyles.smallMargin,
       borderRadius: 6,
-      marginTop: 8,
+      marginTop: CompactStyles.smallMargin,
       alignSelf: 'flex-end',
     },
     locationButtonDisabled: {
@@ -346,23 +347,23 @@ export function CreateClubForm({ onSuccess, onCancel }: CreateClubFormProps) {
     },
     locationButtonText: {
       color: '#ffffff',
-      fontSize: 14,
+      fontSize: CompactStyles.link.fontSize,
       fontWeight: '500',
     },
     buttonContainer: {
       flexDirection: 'row',
       justifyContent: 'space-between',
-      paddingHorizontal: 20,
-      paddingVertical: 20,
+      paddingHorizontal: CompactStyles.scrollContent.paddingHorizontal,
+      paddingVertical: CompactStyles.sectionMargin,
       borderTopWidth: 1,
       borderTopColor: colors.tabIconDefault + '20',
     },
     button: {
       flex: 1,
-      paddingVertical: 16,
-      borderRadius: 8,
+      paddingVertical: CompactStyles.button.paddingVertical,
+      borderRadius: CompactStyles.button.borderRadius,
       alignItems: 'center',
-      marginHorizontal: 8,
+      marginHorizontal: CompactStyles.smallMargin,
     },
     cancelButton: {
       backgroundColor: colors.tabIconDefault + '20',
@@ -374,7 +375,7 @@ export function CreateClubForm({ onSuccess, onCancel }: CreateClubFormProps) {
       backgroundColor: colors.tabIconDefault,
     },
     buttonText: {
-      fontSize: 16,
+      fontSize: CompactStyles.buttonText.fontSize,
       fontWeight: '600',
     },
     cancelButtonText: {

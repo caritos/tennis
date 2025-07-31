@@ -33,15 +33,10 @@ export const OnboardingReEngagement: React.FC = () => {
   const hasIncompleteSteps = progress.completed < progress.total;
 
   useEffect(() => {
-    // Show re-engagement if user has incomplete steps and hasn't dismissed
-    if (user && hasIncompleteSteps && !dismissed && !isOnboardingComplete) {
-      // Delay showing to avoid immediate popup
-      const timer = setTimeout(() => {
-        setVisible(true);
-      }, 3000); // Show after 3 seconds
-
-      return () => clearTimeout(timer);
-    }
+    // DISABLED: No longer showing forceful setup modal
+    // Users can use the app fully without additional setup
+    // All essential data is collected during signup
+    setVisible(false);
   }, [user, hasIncompleteSteps, dismissed, isOnboardingComplete]);
 
   const getIncompleteSteps = () => {
