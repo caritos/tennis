@@ -1,5 +1,5 @@
 import * as SQLite from 'expo-sqlite';
-import { initializeDatabase, createTables, dropTables } from '../database/database';
+import { initializeDatabase, createTables } from '../database/database';
 
 // Mock expo-sqlite
 jest.mock('expo-sqlite', () => ({
@@ -73,19 +73,7 @@ describe('Database Initialization', () => {
     });
   });
 
-  describe('dropTables', () => {
-    it('should drop all tables in correct order', async () => {
-      mockDb.execAsync.mockResolvedValue(undefined);
-
-      await dropTables(mockDb);
-
-      // Should drop in reverse dependency order
-      expect(mockDb.execAsync).toHaveBeenCalledWith('DROP TABLE IF EXISTS club_members;');
-      expect(mockDb.execAsync).toHaveBeenCalledWith('DROP TABLE IF EXISTS matches;');
-      expect(mockDb.execAsync).toHaveBeenCalledWith('DROP TABLE IF EXISTS clubs;');
-      expect(mockDb.execAsync).toHaveBeenCalledWith('DROP TABLE IF EXISTS users;');
-    });
-  });
+  // dropTables functionality is now inlined in initializeDatabase for development
 
   describe('Database Schema', () => {
     it('should create users table with correct columns', async () => {

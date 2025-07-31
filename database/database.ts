@@ -780,25 +780,7 @@ async function cleanupBackups(db: Database): Promise<void> {
   }
 }
 
-export async function dropTables(db: Database): Promise<void> {
-  try {
-    // Drop tables in reverse dependency order
-    await db.execAsync('DROP TABLE IF EXISTS notifications;');
-    await db.execAsync('DROP TABLE IF EXISTS challenge_counters;');
-    await db.execAsync('DROP TABLE IF EXISTS challenges;');
-    await db.execAsync('DROP TABLE IF EXISTS invitation_responses;');
-    await db.execAsync('DROP TABLE IF EXISTS match_invitations;');
-    await db.execAsync('DROP TABLE IF EXISTS club_members;');
-    await db.execAsync('DROP TABLE IF EXISTS matches;');
-    await db.execAsync('DROP TABLE IF EXISTS clubs;');
-    await db.execAsync('DROP TABLE IF EXISTS users;');
-    
-    console.log('Database tables dropped successfully');
-  } catch (error) {
-    console.error('Failed to drop tables:', error);
-    throw error;
-  }
-}
+// dropTables function removed - functionality is now inlined in initializeDatabase for development
 
 // Development utility to test migration system
 export async function testMigrationSystem(db: Database): Promise<void> {
