@@ -189,6 +189,14 @@ export default function ClubDetailScreen() {
     loadClubDetails();
   };
 
+  const handleViewAllMatches = () => {
+    // Navigate to club matches page
+    router.push({
+      pathname: '/club/[id]/matches',
+      params: { id: id as string }
+    });
+  };
+
   if (isLoading) {
     return (
       <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
@@ -279,7 +287,7 @@ export default function ClubDetailScreen() {
           <View style={styles.sectionHeader}>
             <ThemedText style={styles.sectionLabel}>Recent Matches</ThemedText>
             {recentMatches.length > 0 && (
-              <TouchableOpacity>
+              <TouchableOpacity onPress={handleViewAllMatches}>
                 <ThemedText style={[styles.viewAllLink, { color: colors.tint }]}>
                   View All →
                 </ThemedText>
