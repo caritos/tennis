@@ -8,14 +8,9 @@ import {
   TouchableOpacity,
   KeyboardAvoidingView,
   Platform,
-  ActivityIndicator,
-  Image,
-  Alert,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
-import * as ImagePicker from 'expo-image-picker';
-import * as FileSystem from 'expo-file-system';
 import { ThemedView } from './ThemedView';
 import { ThemedText } from './ThemedText';
 import { useColorScheme } from '@/hooks/useColorScheme';
@@ -23,11 +18,11 @@ import { Colors } from '@/constants/Colors';
 import { useAuth } from '@/contexts/AuthContext';
 import { useNotification } from '@/contexts/NotificationContext';
 import { initializeDatabase } from '@/database/database';
+import { CompactStyles } from '@/constants/CompactStyles';
 
 export interface ProfileData {
   full_name: string;
   phone: string;
-  profile_photo_uri?: string; // Local file URI for profile photo
 }
 
 interface EditProfileScreenProps {
@@ -48,11 +43,7 @@ export const EditProfileScreen: React.FC<EditProfileScreenProps> = ({
 
   const [fullName, setFullName] = useState(initialData?.full_name || '');
   const [phone, setPhone] = useState(initialData?.phone || '');
-  const [profilePhotoUri, setProfilePhotoUri] = useState<string | null>(
-    initialData?.profile_photo_uri || null
-  );
   const [isLoading, setIsLoading] = useState(false);
-  const [isUploadingPhoto, setIsUploadingPhoto] = useState(false);
   const [errors, setErrors] = useState<{ [key: string]: string }>({});
 
   const validateForm = (): boolean => {
@@ -79,126 +70,6 @@ export const EditProfileScreen: React.FC<EditProfileScreenProps> = ({
     return text;
   };
 
-  const requestMediaLibraryPermissions = async (): Promise<boolean> => {
-    const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
-    if (status !== 'granted') {
-      Alert.alert(
-        'Permission Required',
-        'Sorry, we need camera roll permissions to upload profile photos!',
-        [{ text: 'OK' }]
-      );
-      return false;
-    }
-    return true;
-  };
-
-  const requestCameraPermissions = async (): Promise<boolean> => {
-    const { status } = await ImagePicker.requestCameraPermissionsAsync();
-    if (status !== 'granted') {
-      Alert.alert(
-        'Permission Required',
-        'Sorry, we need camera permissions to take profile photos!',
-        [{ text: 'OK' }]
-      );
-      return false;
-    }
-    return true;
-  };
-
-  const saveImageToLocalDirectory = async (imageUri: string): Promise<string> => {
-    try {
-      const fileExtension = imageUri.split('.').pop() || 'jpg';
-      const fileName = `profile_${user?.id}_${Date.now()}.${fileExtension}`;
-      const localUri = `${FileSystem.documentDirectory}${fileName}`;
-      
-      await FileSystem.copyAsync({
-        from: imageUri,
-        to: localUri
-      });
-      
-      return localUri;
-    } catch (error) {
-      console.error('Failed to save image locally:', error);
-      throw new Error('Failed to save image');
-    }
-  };
-
-  const selectProfilePhoto = () => {
-    Alert.alert(
-      'Select Profile Photo',
-      'Choose how you want to add your profile photo',
-      [
-        { text: 'Camera', onPress: takePhoto },
-        { text: 'Photo Library', onPress: pickPhoto },
-        { text: 'Cancel', style: 'cancel' }
-      ]
-    );
-  };
-
-  const takePhoto = async () => {
-    const hasPermission = await requestCameraPermissions();
-    if (!hasPermission) return;
-
-    setIsUploadingPhoto(true);
-    try {
-      const result = await ImagePicker.launchCameraAsync({
-        mediaTypes: ImagePicker.MediaTypeOptions.Images,
-        allowsEditing: true,
-        aspect: [1, 1],
-        quality: 0.8,
-      });
-
-      if (!result.canceled && result.assets[0]) {
-        const localUri = await saveImageToLocalDirectory(result.assets[0].uri);
-        setProfilePhotoUri(localUri);
-      }
-    } catch (error) {
-      console.error('Camera error:', error);
-      showError('Camera Error', 'Failed to take photo. Please try again.');
-    } finally {
-      setIsUploadingPhoto(false);
-    }
-  };
-
-  const pickPhoto = async () => {
-    const hasPermission = await requestMediaLibraryPermissions();
-    if (!hasPermission) return;
-
-    setIsUploadingPhoto(true);
-    try {
-      const result = await ImagePicker.launchImageLibraryAsync({
-        mediaTypes: ImagePicker.MediaTypeOptions.Images,
-        allowsEditing: true,
-        aspect: [1, 1],
-        quality: 0.8,
-      });
-
-      if (!result.canceled && result.assets[0]) {
-        const localUri = await saveImageToLocalDirectory(result.assets[0].uri);
-        setProfilePhotoUri(localUri);
-      }
-    } catch (error) {
-      console.error('Image picker error:', error);
-      showError('Photo Error', 'Failed to select photo. Please try again.');
-    } finally {
-      setIsUploadingPhoto(false);
-    }
-  };
-
-  const removeProfilePhoto = () => {
-    Alert.alert(
-      'Remove Photo',
-      'Are you sure you want to remove your profile photo?',
-      [
-        { text: 'Cancel', style: 'cancel' },
-        { 
-          text: 'Remove', 
-          style: 'destructive',
-          onPress: () => setProfilePhotoUri(null)
-        }
-      ]
-    );
-  };
 
   const handleSave = async () => {
     if (!validateForm()) return;
@@ -208,7 +79,6 @@ export const EditProfileScreen: React.FC<EditProfileScreenProps> = ({
       const profileData: ProfileData = {
         full_name: fullName.trim(),
         phone: phone.trim(),
-        profile_photo_uri: profilePhotoUri || undefined,
       };
 
       await onSave(profileData);
@@ -242,68 +112,7 @@ export const EditProfileScreen: React.FC<EditProfileScreenProps> = ({
 
           {/* Profile Form */}
           <View style={styles.formSection}>
-            <Text style={[styles.sectionTitle, { color: colors.text }]}>Profile Photo</Text>
-            
-            {/* Profile Photo Upload */}
-            <View style={styles.photoSection}>
-              <View style={styles.photoContainer}>
-                {profilePhotoUri ? (
-                  <Image 
-                    source={{ uri: profilePhotoUri }} 
-                    style={styles.profilePhoto}
-                    onError={() => {
-                      console.warn('Failed to load profile photo');
-                      setProfilePhotoUri(null);
-                    }}
-                  />
-                ) : (
-                  <View style={[styles.photoPlaceholder, { backgroundColor: colors.tabIconDefault + '20' }]}>
-                    <Ionicons 
-                      name="person-outline" 
-                      size={50} 
-                      color={colors.tabIconDefault} 
-                    />
-                  </View>
-                )}
-                
-                {/* Photo overlay with upload/remove buttons */}
-                <View style={styles.photoOverlay}>
-                  {isUploadingPhoto ? (
-                    <ActivityIndicator size="small" color="white" />
-                  ) : (
-                    <View style={styles.photoButtons}>
-                      <TouchableOpacity
-                        style={[styles.photoButton, { backgroundColor: colors.tint }]}
-                        onPress={selectProfilePhoto}
-                        disabled={isUploadingPhoto}
-                      >
-                        <Ionicons 
-                          name={profilePhotoUri ? "camera" : "add"} 
-                          size={16} 
-                          color="white" 
-                        />
-                      </TouchableOpacity>
-                      
-                      {profilePhotoUri && (
-                        <TouchableOpacity
-                          style={[styles.photoButton, { backgroundColor: '#FF3B30' }]}
-                          onPress={removeProfilePhoto}
-                          disabled={isUploadingPhoto}
-                        >
-                          <Ionicons name="trash" size={16} color="white" />
-                        </TouchableOpacity>
-                      )}
-                    </View>
-                  )}
-                </View>
-              </View>
-              
-              <Text style={[styles.photoHelper, { color: colors.tabIconDefault }]}>
-                {profilePhotoUri ? 'Tap camera to change photo' : 'Add a profile photo to help others recognize you'}
-              </Text>
-            </View>
-
-            <Text style={[styles.sectionTitle, { color: colors.text, marginTop: 32 }]}>Basic Information</Text>
+            <Text style={[styles.sectionTitle, { color: colors.text }]}>Basic Information</Text>
 
             {/* Full Name */}
             <View style={styles.inputGroup}>
@@ -437,77 +246,77 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   scrollContent: {
-    paddingBottom: 40,
+    paddingBottom: CompactStyles.scrollContent.paddingBottom,
   },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingHorizontal: 20,
-    paddingVertical: 16,
+    paddingHorizontal: CompactStyles.header.paddingHorizontal,
+    paddingVertical: CompactStyles.header.paddingVertical,
   },
   backButton: {
     flexDirection: 'row',
     alignItems: 'center',
   },
   backText: {
-    fontSize: 16,
+    fontSize: CompactStyles.link.fontSize,
     marginLeft: 4,
   },
   headerTitle: {
-    fontSize: 20,
+    fontSize: 18,
     fontWeight: '600',
   },
   headerSpacer: {
     width: 60, // Same width as back button for centering
   },
   formSection: {
-    paddingHorizontal: 20,
-    marginTop: 20,
+    paddingHorizontal: CompactStyles.scrollContent.paddingHorizontal,
+    marginTop: CompactStyles.itemMargin,
   },
   sectionTitle: {
-    fontSize: 18,
+    fontSize: 16,
     fontWeight: '600',
-    marginBottom: 16,
+    marginBottom: CompactStyles.itemMargin,
   },
   sectionSubtitle: {
-    fontSize: 14,
-    marginBottom: 16,
+    fontSize: CompactStyles.subtitle.fontSize,
+    marginBottom: CompactStyles.itemMargin,
   },
   inputGroup: {
-    marginBottom: 20,
+    marginBottom: CompactStyles.inputGroup.marginBottom,
   },
   inputLabel: {
-    fontSize: 16,
+    fontSize: CompactStyles.label.fontSize,
     fontWeight: '500',
-    marginBottom: 8,
+    marginBottom: CompactStyles.label.marginBottom,
   },
   input: {
     borderWidth: 1,
-    borderRadius: 10,
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    fontSize: 16,
+    borderRadius: CompactStyles.input.borderRadius,
+    paddingHorizontal: CompactStyles.input.paddingHorizontal,
+    paddingVertical: CompactStyles.input.paddingVertical,
+    fontSize: CompactStyles.input.fontSize,
   },
   errorText: {
     color: '#FF3B30',
-    fontSize: 14,
-    marginTop: 4,
+    fontSize: CompactStyles.errorText.fontSize,
+    marginTop: CompactStyles.errorText.marginTop,
   },
   helperText: {
-    fontSize: 13,
-    marginTop: 6,
+    fontSize: CompactStyles.helpText.fontSize,
+    marginTop: CompactStyles.helpText.marginTop,
   },
   readOnlyField: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    borderRadius: 10,
+    paddingHorizontal: CompactStyles.input.paddingHorizontal,
+    paddingVertical: CompactStyles.input.paddingVertical,
+    borderRadius: CompactStyles.input.borderRadius,
   },
   readOnlyText: {
-    fontSize: 16,
+    fontSize: CompactStyles.input.fontSize,
   },
   verifiedBadge: {
     flexDirection: 'row',
@@ -527,13 +336,13 @@ const styles = StyleSheet.create({
   preferenceOption: {
     flexDirection: 'row',
     alignItems: 'center',
-    padding: 16,
-    borderRadius: 12,
+    padding: CompactStyles.input.paddingVertical + 4,
+    borderRadius: CompactStyles.input.borderRadius,
     borderWidth: 1,
-    gap: 12,
+    gap: CompactStyles.smallMargin,
   },
   preferenceLabel: {
-    fontSize: 16,
+    fontSize: CompactStyles.input.fontSize,
     flex: 1,
   },
   checkmark: {
@@ -545,20 +354,20 @@ const styles = StyleSheet.create({
   skillOption: {
     flexDirection: 'row',
     alignItems: 'center',
-    padding: 14,
-    borderRadius: 10,
+    padding: CompactStyles.input.paddingVertical + 2,
+    borderRadius: CompactStyles.input.borderRadius,
     borderWidth: 1,
-    gap: 12,
+    gap: CompactStyles.smallMargin,
   },
   skillContent: {
     flex: 1,
   },
   skillLabel: {
-    fontSize: 16,
+    fontSize: CompactStyles.input.fontSize,
     marginBottom: 2,
   },
   skillDescription: {
-    fontSize: 13,
+    fontSize: CompactStyles.helpText.fontSize,
   },
   styleOptions: {
     gap: 8,
@@ -566,13 +375,13 @@ const styles = StyleSheet.create({
   styleOption: {
     flexDirection: 'row',
     alignItems: 'center',
-    padding: 14,
-    borderRadius: 10,
+    padding: CompactStyles.input.paddingVertical + 2,
+    borderRadius: CompactStyles.input.borderRadius,
     borderWidth: 1,
-    gap: 12,
+    gap: CompactStyles.smallMargin,
   },
   styleLabel: {
-    fontSize: 16,
+    fontSize: CompactStyles.input.fontSize,
     flex: 1,
   },
   privacyOptions: {
@@ -581,20 +390,20 @@ const styles = StyleSheet.create({
   privacyOption: {
     flexDirection: 'row',
     alignItems: 'center',
-    padding: 14,
-    borderRadius: 10,
+    padding: CompactStyles.input.paddingVertical + 2,
+    borderRadius: CompactStyles.input.borderRadius,
     borderWidth: 1,
-    gap: 12,
+    gap: CompactStyles.smallMargin,
   },
   privacyContent: {
     flex: 1,
   },
   privacyLabel: {
-    fontSize: 16,
+    fontSize: CompactStyles.input.fontSize,
     marginBottom: 2,
   },
   privacyDescription: {
-    fontSize: 13,
+    fontSize: CompactStyles.helpText.fontSize,
   },
   clearButton: {
     alignSelf: 'flex-start',
@@ -603,68 +412,8 @@ const styles = StyleSheet.create({
     paddingHorizontal: 8,
   },
   clearButtonText: {
-    fontSize: 14,
+    fontSize: CompactStyles.link.fontSize,
     fontWeight: '500',
-  },
-  
-  // Photo upload styles
-  photoSection: {
-    alignItems: 'center',
-    marginBottom: 16,
-  },
-  photoContainer: {
-    position: 'relative',
-    width: 120,
-    height: 120,
-    marginBottom: 12,
-  },
-  profilePhoto: {
-    width: 120,
-    height: 120,
-    borderRadius: 60,
-    backgroundColor: '#f0f0f0',
-  },
-  photoPlaceholder: {
-    width: 120,
-    height: 120,
-    borderRadius: 60,
-    justifyContent: 'center',
-    alignItems: 'center',
-    borderWidth: 2,
-    borderColor: '#e0e0e0',
-    borderStyle: 'dashed',
-  },
-  photoOverlay: {
-    position: 'absolute',
-    bottom: 0,
-    right: 0,
-    borderRadius: 20,
-    overflow: 'hidden',
-  },
-  photoButtons: {
-    flexDirection: 'row',
-    gap: 8,
-  },
-  photoButton: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
-    justifyContent: 'center',
-    alignItems: 'center',
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.25,
-    shadowRadius: 3.84,
-    elevation: 5,
-  },
-  photoHelper: {
-    fontSize: 13,
-    textAlign: 'center',
-    maxWidth: 250,
-    lineHeight: 18,
   },
   
   privacyNotice: {
@@ -684,30 +433,30 @@ const styles = StyleSheet.create({
   
   buttonContainer: {
     flexDirection: 'row',
-    paddingHorizontal: 20,
-    paddingTop: 32,
-    gap: 12,
+    paddingHorizontal: CompactStyles.scrollContent.paddingHorizontal,
+    paddingTop: CompactStyles.sectionMargin,
+    gap: CompactStyles.smallMargin,
   },
   cancelButton: {
     flex: 1,
-    paddingVertical: 14,
-    borderRadius: 10,
+    paddingVertical: CompactStyles.button.paddingVertical,
+    borderRadius: CompactStyles.button.borderRadius,
     borderWidth: 1,
     alignItems: 'center',
   },
   cancelButtonText: {
-    fontSize: 16,
+    fontSize: CompactStyles.buttonText.fontSize,
     fontWeight: '600',
   },
   saveButton: {
     flex: 1,
-    paddingVertical: 14,
-    borderRadius: 10,
+    paddingVertical: CompactStyles.button.paddingVertical,
+    borderRadius: CompactStyles.button.borderRadius,
     alignItems: 'center',
   },
   saveButtonText: {
     color: 'white',
-    fontSize: 16,
+    fontSize: CompactStyles.buttonText.fontSize,
     fontWeight: '600',
   },
 });

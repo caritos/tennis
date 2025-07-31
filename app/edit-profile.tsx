@@ -23,7 +23,7 @@ export default function EditProfilePage() {
     try {
       const db = await initializeDatabase();
       const userData = await db.getFirstAsync(
-        'SELECT full_name, phone, profile_photo_uri FROM users WHERE id = ?',
+        'SELECT full_name, phone FROM users WHERE id = ?',
         [user.id]
       ) as any;
 
@@ -31,7 +31,6 @@ export default function EditProfilePage() {
         setInitialData({
           full_name: userData.full_name || user.user_metadata?.full_name || '',
           phone: userData.phone || user.user_metadata?.phone || '',
-          profile_photo_uri: userData.profile_photo_uri,
         });
       } else {
         // Fallback to auth metadata
@@ -70,13 +69,11 @@ export default function EditProfilePage() {
       await db.runAsync(
         `UPDATE users SET 
           full_name = ?, 
-          phone = ?, 
-          profile_photo_uri = ?
+          phone = ?
         WHERE id = ?`,
         [
           data.full_name,
           data.phone || null,
-          data.profile_photo_uri || null,
           user.id,
         ]
       );
@@ -90,7 +87,6 @@ export default function EditProfilePage() {
           .update({
             full_name: data.full_name,
             phone: data.phone || null,
-            profile_photo_uri: data.profile_photo_uri || null,
           })
           .eq('id', user.id);
 
