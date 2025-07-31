@@ -162,13 +162,15 @@ const LookingToPlaySection: React.FC<LookingToPlaySectionProps> = ({ clubId }) =
       <View key={invitation.id} style={[styles.invitationCard, { borderColor: colors.tabIconDefault }]}>
         <View style={styles.invitationHeader}>
           <View style={styles.invitationMeta}>
-            <ThemedText style={styles.matchType}>
-              {invitation.match_type.charAt(0).toUpperCase() + invitation.match_type.slice(1)}
-            </ThemedText>
             <ThemedText style={styles.matchDate}>
               {formatDate(invitation.date)}
               {invitation.time && ` at ${invitation.time}`}
             </ThemedText>
+            {invitation.location && (
+              <ThemedText style={[styles.matchLocation, { color: colors.tabIconDefault }]}>
+                📍 {invitation.location}
+              </ThemedText>
+            )}
           </View>
           
           <View style={styles.progressContainer}>
@@ -239,7 +241,7 @@ const LookingToPlaySection: React.FC<LookingToPlaySectionProps> = ({ clubId }) =
   return (
     <ThemedView style={styles.section}>
       <View style={styles.sectionHeader}>
-        <ThemedText style={styles.sectionLabel}>Looking to Play</ThemedText>
+        <ThemedText style={styles.sectionLabel}>Open Invites</ThemedText>
       </View>
 
       <ScrollView
@@ -272,7 +274,7 @@ const LookingToPlaySection: React.FC<LookingToPlaySectionProps> = ({ clubId }) =
       >
         <Ionicons name="add" size={20} color={colors.tint} />
         <ThemedText style={[styles.lookingToPlayButtonText, { color: colors.tint }]}>
-          Looking to Play
+          Invite players to join you
         </ThemedText>
       </TouchableOpacity>
 
@@ -318,19 +320,19 @@ const styles = StyleSheet.create({
     maxHeight: 400, // Limit height so it doesn't take over the screen
   },
   invitationsContainer: {
-    gap: 16,
+    gap: 12,
   },
   invitationCard: {
     borderWidth: 1,
     borderRadius: 12,
-    padding: 16,
+    padding: 12,
     backgroundColor: 'transparent',
   },
   invitationHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'flex-start',
-    marginBottom: 12,
+    marginBottom: 8,
   },
   invitationMeta: {
     flex: 1,
@@ -343,6 +345,11 @@ const styles = StyleSheet.create({
     fontSize: 14,
     opacity: 0.8,
     marginTop: 2,
+  },
+  matchLocation: {
+    fontSize: 12,
+    marginTop: 2,
+    fontWeight: '500',
   },
   progressContainer: {
     alignItems: 'flex-end',
@@ -363,21 +370,21 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   invitationContent: {
-    marginBottom: 12,
+    marginBottom: 8,
   },
   creatorName: {
     fontSize: 15,
     fontWeight: '500',
-    marginBottom: 6,
+    marginBottom: 4,
   },
   invitationNotes: {
     fontSize: 14,
     fontStyle: 'italic',
     lineHeight: 18,
-    marginBottom: 8,
+    marginBottom: 6,
   },
   responsesContainer: {
-    marginTop: 8,
+    marginTop: 6,
   },
   responsesLabel: {
     fontSize: 12,
@@ -396,6 +403,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
+    marginTop: 16,
   },
   timeAgo: {
     fontSize: 12,

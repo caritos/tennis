@@ -30,21 +30,36 @@ const MatchInvitationForm: React.FC<MatchInvitationFormProps> = ({
   const [matchType, setMatchType] = useState<'singles' | 'doubles'>('singles');
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
   const [time, setTime] = useState('');
+  const [location, setLocation] = useState('Location TBD');
   const [notes, setNotes] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleSubmit = async () => {
     if (isSubmitting) return;
 
+    // Validate required fields
+    if (!selectedDate) {
+      showError('Date Required', 'Please select a date for your match invitation.');
+      return;
+    }
+
     try {
       setIsSubmitting(true);
+
+      // Ensure selectedDate is a valid Date object
+      const validDate = selectedDate instanceof Date ? selectedDate : new Date(selectedDate);
+      if (isNaN(validDate.getTime())) {
+        showError('Invalid Date', 'Please select a valid date for your match invitation.');
+        return;
+      }
 
       const invitationData: CreateInvitationData = {
         club_id: clubId,
         creator_id: creatorId,
         match_type: matchType,
-        date: selectedDate.toISOString().split('T')[0], // YYYY-MM-DD format
+        date: validDate.toISOString().split('T')[0], // YYYY-MM-DD format
         time: time || undefined,
+        location: location.trim() || undefined,
         notes: notes.trim() || undefined,
       };
 
@@ -163,7 +178,12 @@ const MatchInvitationForm: React.FC<MatchInvitationFormProps> = ({
                 <ThemedText style={styles.inputLabel}>Date</ThemedText>
                 <CalendarDatePicker
                   selectedDate={selectedDate}
-                  onDateChange={setSelectedDate}
+                  onDateChange={(date) => {
+                    // Ensure we never set selectedDate to undefined
+                    if (date) {
+                      setSelectedDate(date);
+                    }
+                  }}
                   displayFormat={formatDate}
                 />
               </View>
@@ -186,6 +206,25 @@ const MatchInvitationForm: React.FC<MatchInvitationFormProps> = ({
                 />
               </View>
             </View>
+          </View>
+
+          {/* Location */}
+          <View style={styles.section}>
+            <ThemedText style={styles.sectionLabel}>Location</ThemedText>
+            <TextInput
+              style={[
+                styles.textInput,
+                {
+                  borderColor: colors.tabIconDefault,
+                  color: colors.text,
+                  backgroundColor: colors.background,
+                },
+              ]}
+              value={location}
+              onChangeText={setLocation}
+              placeholder="Location TBD"
+              placeholderTextColor={colors.tabIconDefault}
+            />
           </View>
 
           {/* Notes */}

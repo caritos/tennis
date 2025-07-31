@@ -38,23 +38,16 @@ export const DoublesMatchParticipants: React.FC<DoublesMatchParticipantsProps> =
     return (
       <View style={styles.doublesContainer}>
         {/* Match Status */}
-        <View style={styles.statusHeader}>
-          <ThemedText style={[styles.statusTitle, { color: colors.text }]}>
-            Doubles Match - {currentPlayers}/{requiredPlayers} Players
-          </ThemedText>
-          {isMatched && (
+        {isMatched && (
+          <View style={styles.statusHeader}>
             <View style={[styles.matchedBadge, { backgroundColor: colors.tint }]}>
               <ThemedText style={styles.matchedText}>✓ Ready to Play</ThemedText>
             </View>
-          )}
-        </View>
+          </View>
+        )}
 
         {/* Players List */}
-        <View style={[styles.playersGrid, { borderColor: colors.tabIconDefault + '30' }]}>
-          <ThemedText style={[styles.gridTitle, { color: colors.text }]}>
-            Players for Doubles Match
-          </ThemedText>
-          
+        <View>
           <View style={styles.playersContainer}>
             {allPlayers.slice(0, 4).map((player, index) => (
               <View key={index} style={[styles.playerSlot, { borderColor: colors.tabIconDefault + '20' }]}>
@@ -79,9 +72,6 @@ export const DoublesMatchParticipants: React.FC<DoublesMatchParticipantsProps> =
             ))}
           </View>
 
-          <ThemedText style={[styles.teamsNote, { color: colors.tabIconDefault }]}>
-            Teams will be decided when you meet at the court
-          </ThemedText>
         </View>
 
         {/* Additional Interested Players */}
@@ -106,7 +96,7 @@ export const DoublesMatchParticipants: React.FC<DoublesMatchParticipantsProps> =
             <ThemedText style={[styles.infoText, { color: colors.tint }]}>
               {currentPlayers < 4 
                 ? `💡 Need ${requiredPlayers - currentPlayers} more player${requiredPlayers - currentPlayers !== 1 ? 's' : ''} for doubles match`
-                : '🎾 Ready for doubles! Teams will be decided at the court'
+                : '🎾 Ready for doubles!'
               }
             </ThemedText>
           </View>
@@ -118,16 +108,13 @@ export const DoublesMatchParticipants: React.FC<DoublesMatchParticipantsProps> =
   // For singles, show simpler layout
   return (
     <View style={styles.singlesContainer}>
-      <View style={styles.statusHeader}>
-        <ThemedText style={[styles.statusTitle, { color: colors.text }]}>
-          Singles Match - {currentPlayers}/{requiredPlayers} Players
-        </ThemedText>
-        {isMatched && (
+      {isMatched && (
+        <View style={styles.statusHeader}>
           <View style={[styles.matchedBadge, { backgroundColor: colors.tint }]}>
             <ThemedText style={styles.matchedText}>✓ Ready to Play</ThemedText>
           </View>
-        )}
-      </View>
+        </View>
+      )}
 
       <View style={styles.singlesPlayers}>
         <View style={styles.playerSlot}>
@@ -181,16 +168,18 @@ export const DoublesMatchParticipants: React.FC<DoublesMatchParticipantsProps> =
 
 const styles = StyleSheet.create({
   doublesContainer: {
-    marginTop: 12,
+    marginTop: 8,
+    marginBottom: 12,
   },
   singlesContainer: {
-    marginTop: 12,
+    marginTop: 8,
+    marginBottom: 12,
   },
   statusHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 12,
+    marginBottom: 8,
   },
   statusTitle: {
     fontSize: 14,
@@ -209,14 +198,14 @@ const styles = StyleSheet.create({
   playersGrid: {
     borderWidth: 1,
     borderRadius: 8,
-    padding: 12,
-    marginBottom: 8,
+    padding: 10,
+    marginBottom: 6,
   },
   gridTitle: {
     fontSize: 13,
     fontWeight: '600',
     textAlign: 'center',
-    marginBottom: 12,
+    marginBottom: 8,
   },
   playersContainer: {
     flexDirection: 'row',
@@ -230,9 +219,9 @@ const styles = StyleSheet.create({
     minWidth: '45%',
     borderWidth: 1,
     borderRadius: 6,
-    padding: 8,
+    padding: 4,
     alignItems: 'center',
-    minHeight: 50,
+    minHeight: 28,
     justifyContent: 'center',
   },
   playerName: {
@@ -250,9 +239,9 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderStyle: 'dashed',
     borderRadius: 6,
-    padding: 8,
+    padding: 4,
     alignItems: 'center',
-    minHeight: 50,
+    minHeight: 28,
     justifyContent: 'center',
   },
   emptySlotText: {
@@ -278,7 +267,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    marginBottom: 12,
+    marginBottom: 16,
   },
   waitingSection: {
     marginTop: 8,

@@ -110,6 +110,7 @@ export async function createTables(db: Database): Promise<void> {
         match_type TEXT NOT NULL CHECK (match_type IN ('singles', 'doubles')),
         date TEXT NOT NULL,
         time TEXT,
+        location TEXT,
         notes TEXT,
         status TEXT DEFAULT 'active' CHECK (status IN ('active', 'matched', 'cancelled')),
         created_at TEXT DEFAULT CURRENT_TIMESTAMP,

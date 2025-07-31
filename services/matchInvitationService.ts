@@ -9,6 +9,7 @@ export interface MatchInvitation {
   match_type: 'singles' | 'doubles';
   date: string;
   time?: string;
+  location?: string;
   notes?: string;
   status: 'active' | 'matched' | 'cancelled';
   created_at: string;
@@ -32,6 +33,7 @@ export interface CreateInvitationData {
   match_type: 'singles' | 'doubles';
   date: string;
   time?: string;
+  location?: string;
   notes?: string;
   expires_at?: string;
 }
@@ -69,8 +71,8 @@ export class MatchInvitationService {
       // Store locally first
       await db.runAsync(
         `INSERT INTO match_invitations (
-          id, club_id, creator_id, match_type, date, time, notes, status, created_at, expires_at
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+          id, club_id, creator_id, match_type, date, time, location, notes, status, created_at, expires_at
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
         [
           invitation.id,
           invitation.club_id,
@@ -78,6 +80,7 @@ export class MatchInvitationService {
           invitation.match_type,
           invitation.date,
           invitation.time || null,
+          invitation.location || null,
           invitation.notes || null,
           invitation.status,
           invitation.created_at,
