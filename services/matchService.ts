@@ -379,7 +379,11 @@ export class MatchService {
 
       query += ` ORDER BY date DESC, created_at DESC`;
 
+      console.log('📊 getMatchHistory: Query:', query);
+      console.log('📊 getMatchHistory: Params:', params);
+      
       const matches = await db.getAllAsync(query, params);
+      console.log('📊 getMatchHistory: Found matches:', matches.length, matches);
       return matches;
     } catch (error) {
       console.error('Failed to get match history:', error);

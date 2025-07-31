@@ -84,6 +84,7 @@ export default function ClubDetailScreen() {
       }
       
       // Get recent matches for this club
+      console.log('ClubDetails: Loading recent matches for club:', id);
       const matches = await db.getAllAsync(
         `SELECT m.*, 
                 p1.full_name as player1_name, 
@@ -100,6 +101,7 @@ export default function ClubDetailScreen() {
          LIMIT 5`,
         [id]
       );
+      console.log('ClubDetails: Found matches:', matches.length, matches);
       
       // Process matches to determine winners and format for display
       const processedMatches = matches?.map((match: any) => {

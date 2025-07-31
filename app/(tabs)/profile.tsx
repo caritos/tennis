@@ -282,7 +282,7 @@ const styles = StyleSheet.create({
     opacity: 0.6,
   },
   matchHistoryContainer: {
-    maxHeight: 400,
+    // Remove maxHeight constraint to prevent overflow
   },
   settingsContainer: {
     paddingVertical: 8,

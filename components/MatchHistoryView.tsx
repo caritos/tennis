@@ -16,6 +16,7 @@ import { ThemedText } from './ThemedText';
 import { ThemedView } from './ThemedView';
 import { Ionicons } from '@expo/vector-icons';
 import { logError } from '@/utils/errorHandling';
+import { TennisScore } from '@/utils/tennisScore';
 
 interface MatchHistoryViewProps {
   playerId: string;
@@ -64,125 +65,9 @@ export function MatchHistoryView({ playerId, clubId }: MatchHistoryViewProps) {
     });
   };
 
-  const getMatchTypeIcon = (matchType: string) => {
-    return matchType === 'doubles' ? 'people' : 'person';
-  };
-
-  const styles = StyleSheet.create({
-    container: {
-      flex: 1,
-    },
-    centerContainer: {
-      flex: 1,
-      justifyContent: 'center',
-      alignItems: 'center',
-      padding: 32,
-    },
-    emptyText: {
-      fontSize: 16,
-      color: colors.tabIconDefault,
-      textAlign: 'center',
-      marginTop: 12,
-    },
-    errorText: {
-      fontSize: 16,
-      color: '#F44336',
-      textAlign: 'center',
-      marginTop: 12,
-    },
-    matchCard: {
-      backgroundColor: colors.background,
-      borderRadius: 12,
-      padding: 16,
-      marginBottom: 12,
-      shadowColor: '#000',
-      shadowOffset: {
-        width: 0,
-        height: 2,
-      },
-      shadowOpacity: 0.1,
-      shadowRadius: 3.84,
-      elevation: 3,
-    },
-    matchHeader: {
-      flexDirection: 'row',
-      justifyContent: 'space-between',
-      alignItems: 'center',
-      marginBottom: 12,
-    },
-    matchDate: {
-      fontSize: 14,
-      color: colors.tabIconDefault,
-    },
-    matchTypeContainer: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      gap: 4,
-    },
-    matchTypeText: {
-      fontSize: 14,
-      color: colors.tabIconDefault,
-      textTransform: 'capitalize',
-    },
-    matchPlayers: {
-      marginBottom: 12,
-    },
-    playerRow: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      marginBottom: 4,
-    },
-    playerText: {
-      fontSize: 14,
-      color: colors.text,
-    },
-    opponentText: {
-      fontSize: 14,
-      color: colors.tabIconDefault,
-    },
-    vsText: {
-      fontSize: 14,
-      color: colors.tabIconDefault,
-      marginHorizontal: 8,
-    },
-    scoreContainer: {
-      marginTop: 8,
-    },
-    winBadge: {
-      backgroundColor: '#4CAF50',
-      paddingHorizontal: 8,
-      paddingVertical: 2,
-      borderRadius: 12,
-      marginLeft: 8,
-    },
-    lossBadge: {
-      backgroundColor: '#F44336',
-      paddingHorizontal: 8,
-      paddingVertical: 2,
-      borderRadius: 12,
-      marginLeft: 8,
-    },
-    resultText: {
-      color: 'white',
-      fontSize: 12,
-      fontWeight: '600',
-    },
-    notesContainer: {
-      marginTop: 8,
-      padding: 8,
-      backgroundColor: colors.tabIconSelected + '10',
-      borderRadius: 8,
-    },
-    notesText: {
-      fontSize: 12,
-      color: colors.tabIconDefault,
-      fontStyle: 'italic',
-    },
-  });
-
   if (loading) {
     return (
-      <View style={[styles.container, styles.centerContainer]}>
+      <View style={styles.centerContainer}>
         <ActivityIndicator size="large" color={colors.tint} />
       </View>
     );
@@ -190,86 +75,112 @@ export function MatchHistoryView({ playerId, clubId }: MatchHistoryViewProps) {
 
   if (error) {
     return (
-      <View style={[styles.container, styles.centerContainer]}>
+      <View style={styles.centerContainer}>
         <Ionicons name="alert-circle" size={48} color="#F44336" />
-        <Text style={styles.errorText}>{error}</Text>
+        <Text style={[styles.errorText, { color: '#F44336' }]}>{error}</Text>
       </View>
     );
   }
 
   if (matches.length === 0) {
     return (
-      <View style={[styles.container, styles.centerContainer]}>
+      <View style={styles.centerContainer}>
         <Ionicons name="tennisball" size={48} color={colors.tabIconDefault} />
-        <Text style={styles.emptyText}>No matches recorded yet</Text>
+        <Text style={[styles.emptyText, { color: colors.tabIconDefault }]}>
+          No matches recorded yet
+        </Text>
       </View>
     );
   }
 
   return (
-    <ScrollView
-      style={styles.container}
-      showsVerticalScrollIndicator={false}
-      refreshControl={
-        <RefreshControl
-          refreshing={refreshing}
-          onRefresh={onRefresh}
-          tintColor={colors.tint}
-        />
-      }
-    >
+    <View style={styles.container}>
       {matches.map((match) => {
-        const isPlayer1 = match.player1_id === playerId;
-        const didWin = isPlayer1 ? match.scores.includes('W') : match.scores.includes('L');
-        
+        // Determine player names for doubles
+        const player1Name = match.match_type === 'doubles' && match.partner3_name ? 
+          `You & ${match.partner3_name}` : "You";
+        const player2Name = match.match_type === 'doubles' && match.partner4_name ? 
+          `${match.opponent2_name || 'Opponent'} & ${match.partner4_name}` : 
+          match.opponent2_name || 'Opponent';
+
+        // Proper winner determination using TennisScore utility
+        let winner: 1 | 2 | undefined;
+        try {
+          const scoreObj = new TennisScore(match.scores);
+          if (scoreObj.winner === 'player1') {
+            winner = 1;
+          } else if (scoreObj.winner === 'player2') {
+            winner = 2;
+          }
+        } catch (error) {
+          console.warn('Failed to parse tennis score:', match.scores);
+        }
+
         return (
-          <ThemedView key={match.id} style={styles.matchCard}>
-            <View style={styles.matchHeader}>
-              <Text style={styles.matchDate}>{formatMatchDate(match.date)}</Text>
-              <View style={styles.matchTypeContainer}>
-                <Ionicons
-                  name={getMatchTypeIcon(match.match_type)}
-                  size={16}
-                  color={colors.tabIconDefault}
-                />
-                <Text style={styles.matchTypeText}>{match.match_type}</Text>
-              </View>
-            </View>
-
-            <View style={styles.matchPlayers}>
-              <View style={styles.playerRow}>
-                <ThemedText style={styles.playerText}>You</ThemedText>
-                {match.match_type === 'doubles' && match.partner3_name && (
-                  <ThemedText style={styles.playerText}> & {match.partner3_name}</ThemedText>
-                )}
-                <Text style={styles.vsText}>vs</Text>
-                <ThemedText style={styles.opponentText}>
-                  {match.opponent2_name || 'Opponent'}
+          <View key={match.id} style={[styles.matchItem, { 
+            borderColor: colors.tabIconDefault + '30',
+            backgroundColor: colorScheme === 'dark' ? colors.background : '#FFFFFF' 
+          }]}>
+            <TennisScoreDisplay
+              player1Name={player1Name}
+              player2Name={player2Name}
+              scores={match.scores}
+              matchType={match.match_type}
+              winner={winner}
+              isCompleted={true}
+            />
+            <View style={styles.matchMeta}>
+              <ThemedText style={[styles.matchDate, { color: colors.tabIconDefault }]}>
+                {formatMatchDate(match.date)}
+              </ThemedText>
+              {match.notes && (
+                <ThemedText style={[styles.matchNotes, { color: colors.tabIconDefault }]}>
+                  {match.notes}
                 </ThemedText>
-                {match.match_type === 'doubles' && match.partner4_name && (
-                  <ThemedText style={styles.opponentText}> & {match.partner4_name}</ThemedText>
-                )}
-              </View>
+              )}
             </View>
-
-            <View style={styles.scoreContainer}>
-              <TennisScoreDisplay
-                scores={match.scores}
-                player1Name="You"
-                player2Name={match.opponent2_name || 'Opponent'}
-                matchType={match.match_type}
-                isCompleted={true}
-              />
-            </View>
-
-            {match.notes && (
-              <View style={styles.notesContainer}>
-                <Text style={styles.notesText}>{match.notes}</Text>
-              </View>
-            )}
-          </ThemedView>
+          </View>
         );
       })}
-    </ScrollView>
+    </View>
   );
 }
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+  },
+  centerContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 32,
+  },
+  emptyText: {
+    fontSize: 16,
+    textAlign: 'center',
+    marginTop: 12,
+  },
+  errorText: {
+    fontSize: 16,
+    textAlign: 'center',
+    marginTop: 12,
+  },
+  matchItem: {
+    borderRadius: 12,
+    padding: 16,
+    marginBottom: 12,
+    borderWidth: 1,
+  },
+  matchMeta: {
+    marginTop: 8,
+  },
+  matchDate: {
+    fontSize: 14,
+  },
+  matchNotes: {
+    fontSize: 13,
+    marginTop: 4,
+    fontStyle: 'italic',
+  },
+});

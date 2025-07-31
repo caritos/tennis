@@ -23,7 +23,6 @@ import { initializeDatabase } from '../database/database';
 
 interface MatchRecordingFormProps {
   onSave: (matchData: CreateMatchData) => void;
-  onCancel: () => void;
   clubId: string;
   initialData?: Partial<CreateMatchData>;
   isEditing?: boolean;
@@ -36,7 +35,7 @@ interface Player {
   name: string;
 }
 
-export function MatchRecordingForm({ onSave, onCancel, clubId, initialData, isEditing = false }: MatchRecordingFormProps) {
+export function MatchRecordingForm({ onSave, clubId, initialData, isEditing = false }: MatchRecordingFormProps) {
   const colorScheme = useColorScheme();
   const colors = Colors[colorScheme ?? 'light'];
   const { user } = useAuth();
@@ -398,12 +397,7 @@ export function MatchRecordingForm({ onSave, onCancel, clubId, initialData, isEd
       fontSize: CompactStyles.errorText.fontSize,
     },
     buttonContainer: {
-      flexDirection: 'row',
-      gap: CompactStyles.smallMargin,
       marginTop: 24,
-    },
-    buttonWrapper: {
-      flex: 1,
     },
     suggestionsContainer: {
       backgroundColor: colors.background,
@@ -509,8 +503,6 @@ export function MatchRecordingForm({ onSave, onCancel, clubId, initialData, isEd
   return (
     <View style={styles.container}>
       <ScrollView style={styles.scrollContent}>
-        <Text style={styles.title}>Record Match</Text>
-
         {/* Validation Errors */}
         {validationErrors.length > 0 && (
           <View style={styles.errorContainer}>
@@ -774,24 +766,14 @@ export function MatchRecordingForm({ onSave, onCancel, clubId, initialData, isEd
         </View>
       </ScrollView>
 
-      {/* Action Buttons */}
+      {/* Action Button */}
       <View style={styles.buttonContainer}>
-        <View style={styles.buttonWrapper}>
-          <Button
-            title="Cancel"
-            onPress={onCancel}
-            color={colors.tabIconDefault}
-            testID="cancel-button"
-          />
-        </View>
-        <View style={styles.buttonWrapper}>
-          <Button
-            title="Save Match"
-            onPress={handleSave}
-            color={colors.tint}
-            testID="save-match-button"
-          />
-        </View>
+        <Button
+          title="Save Match"
+          onPress={handleSave}
+          color={colors.tint}
+          testID="save-match-button"
+        />
       </View>
     </View>
   );

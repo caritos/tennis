@@ -42,7 +42,7 @@ export class ClubService {
       // Create the user in local database with basic information
       try {
         await db.runAsync(
-          `INSERT INTO users (id, email, full_name, created_at, updated_at) VALUES (?, ?, ?, datetime('now'), datetime('now'))`,
+          `INSERT INTO users (id, email, full_name, created_at) VALUES (?, ?, ?, datetime('now'))`,
           [userId, userEmail || '', userFullName || '']
         );
         console.log('ClubService: Successfully created user in local database:', userId);
