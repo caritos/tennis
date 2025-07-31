@@ -1,11 +1,10 @@
 import React, { useState } from 'react';
 import { router } from 'expo-router';
 import { SignUpScreen } from '@/components/SignUpScreen';
-import { useNotification } from '@/contexts/NotificationContext';
 
 export default function SignUpPage() {
   const [isLoading, setIsLoading] = useState(false);
-  const { showError } = useNotification();
+  const [error, setError] = useState<string | null>(null);
 
   const handleBack = () => {
     console.log('Back pressed - navigating to welcome');
@@ -30,9 +29,9 @@ export default function SignUpPage() {
     router.replace('/');
   };
 
-  const handleAppleSignUpError = (error: string) => {
-    console.error('Apple sign up error:', error);
-    showError('Sign Up Error', error);
+  const handleAppleSignUpError = (errorMessage: string) => {
+    console.error('Apple sign up error:', errorMessage);
+    setError(errorMessage);
     setIsLoading(false);
   };
 
@@ -62,6 +61,8 @@ export default function SignUpPage() {
       onTermsPress={handleTermsPress}
       onPrivacyPress={handlePrivacyPress}
       isLoading={isLoading}
+      errorMessage={error}
+      onDismissError={() => setError(null)}
     />
   );
 }

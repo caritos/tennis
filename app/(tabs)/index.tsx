@@ -11,6 +11,7 @@ import { CreateClubButton } from '@/components/CreateClubButton';
 import { OnboardingReEngagement } from '@/components/OnboardingReEngagement';
 import { ContextualPrompt } from '@/components/ContextualPrompt';
 import { QuickActionsCard } from '@/components/QuickActionsCard';
+import { InlineNotificationBanner } from '@/components/InlineNotificationBanner';
 import { useContextualPrompts } from '@/hooks/useContextualPrompts';
 import { useQuickActions } from '@/hooks/useQuickActions';
 import { Club } from '@/lib/supabase';
@@ -19,7 +20,6 @@ import { Colors } from '@/constants/Colors';
 import { useLocation } from '@/hooks/useLocation';
 import { useAuth } from '@/contexts/AuthContext';
 import { useOnboarding } from '@/contexts/OnboardingContext';
-import { useNotification } from '@/contexts/NotificationContext';
 import clubService, { joinClub, getJoinedClubIds } from '@/services/clubService';
 import { seedSampleClubs } from '@/utils/seedData';
 
@@ -35,11 +35,10 @@ export default function ClubScreen() {
   const [distances, setDistances] = useState<Map<string, number>>(new Map());
   const [joinedClubIds, setJoinedClubIds] = useState<string[]>([]);
   const [joiningClubId, setJoiningClubId] = useState<string | null>(null);
-  const [welcomeNotificationShown, setWelcomeNotificationShown] = useState(false);
+  const [showWelcomeMessage, setShowWelcomeMessage] = useState(false);
 
   const { user } = useAuth();
   const { isFirstTimeUser, markStepCompleted, steps } = useOnboarding();
-  const { showNotification } = useNotification();
   
   // Check if user has seen the welcome message
   const hasSeenWelcome = steps.find(step => step.id === 'welcome_seen')?.completed || false;
@@ -203,40 +202,43 @@ export default function ClubScreen() {
     }
   }, [location]);
 
-  // Show welcome overlay notification for first-time users
+  // Show welcome message for first-time users
   useEffect(() => {
-    if (isFirstTimeUser && !hasSeenWelcome && user?.id && !welcomeNotificationShown) {
-      setWelcomeNotificationShown(true);
-      // Show overlay notification with action button
-      showNotification(
-        'info',
-        'Welcome to Tennis Club! 🎾',
-        'Find tennis partners, record matches, and climb rankings in local clubs near you.',
-        {
-          duration: 0, // Permanent until dismissed
-          actionLabel: 'Got it!',
-          onAction: () => {
-            markStepCompleted('welcome_seen');
-          },
-          customIcon: 'tennis-info'
-        }
-      );
+    if (isFirstTimeUser && !hasSeenWelcome && user?.id) {
+      setShowWelcomeMessage(true);
     }
-  }, [isFirstTimeUser, hasSeenWelcome, user?.id, welcomeNotificationShown]);
+  }, [isFirstTimeUser, hasSeenWelcome, user?.id]);
+
+  const handleWelcomeDismiss = () => {
+    setShowWelcomeMessage(false);
+    markStepCompleted('welcome_seen');
+  };
 
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
-      {/* Contextual Prompt Section */}
-      <ContextualPrompt 
-        prompt={currentPrompt}
-        onDismiss={dismissPrompt}
-      />
-
       <ScrollView 
         style={styles.scrollContainer} 
         contentContainerStyle={styles.scrollContent} 
         showsVerticalScrollIndicator={false}
         maintainVisibleContentPosition={{ minIndexForVisible: 0 }}>
+        {/* Welcome Message for First Time Users */}
+        {showWelcomeMessage && (
+          <InlineNotificationBanner
+            title="Welcome to Tennis Club! 🎾"
+            description="Find tennis partners, record matches, and climb rankings in local clubs near you."
+            icon="🎾"
+            variant="welcome"
+            dismissible={true}
+            onDismiss={handleWelcomeDismiss}
+          />
+        )}
+
+        {/* Contextual Prompt Section - Now inside ScrollView */}
+        <ContextualPrompt 
+          prompt={currentPrompt}
+          onDismiss={dismissPrompt}
+        />
+
         <ThemedView style={styles.section}>
           <View style={styles.sectionHeader}>
             <ThemedText type="subtitle" style={styles.sectionTitle}>

@@ -82,38 +82,6 @@ export default function EditMatchScreen() {
   console.log('🔧 Final extracted matchId:', matchId);
   
   // Early return AFTER all hooks
-  if (!matchId) {
-    console.error('🔧 EditMatchScreen: No matchId provided');
-    console.error('🔧 Available searchParams:', searchParams);
-    console.error('🔧 Available segments:', segments);
-    
-    return (
-      <View style={[styles.container, styles.centered]}>
-        <View style={[styles.header, { backgroundColor: Colors[colorScheme ?? 'light'].background }]}>
-          <TouchableOpacity
-            style={styles.backButton}
-            onPress={() => router.back()}
-            activeOpacity={0.7}
-          >
-            <Ionicons name="arrow-back" size={24} color={Colors[colorScheme ?? 'light'].text} />
-          </TouchableOpacity>
-          <Text style={[styles.headerTitle, { color: Colors[colorScheme ?? 'light'].text }]}>
-            Edit Match
-          </Text>
-          <View style={styles.headerSpacer} />
-        </View>
-        <View style={styles.errorContainer}>
-          <Text style={[styles.errorText, { color: Colors[colorScheme ?? 'light'].text }]}>
-            Error: No match ID provided
-          </Text>
-          <Text style={[styles.errorSubtext, { color: Colors[colorScheme ?? 'light'].tabIconDefault }]}>
-            Unable to load match for editing
-          </Text>
-        </View>
-      </View>
-    );
-  }
-
   const showNotification = (type: 'success' | 'error', message: string) => {
     setNotification({ type, message });
     Animated.sequence([
@@ -161,6 +129,39 @@ export default function EditMatchScreen() {
 
     loadMatch();
   }, [user?.id, matchId]);
+
+  // Early return AFTER all hooks to avoid violating Rules of Hooks
+  if (!matchId) {
+    console.error('🔧 EditMatchScreen: No matchId provided');
+    console.error('🔧 Available searchParams:', searchParams);
+    console.error('🔧 Available segments:', segments);
+    
+    return (
+      <View style={[styles.container, styles.centered]}>
+        <View style={[styles.header, { backgroundColor: Colors[colorScheme ?? 'light'].background }]}>
+          <TouchableOpacity
+            style={styles.backButton}
+            onPress={() => router.back()}
+            activeOpacity={0.7}
+          >
+            <Ionicons name="arrow-back" size={24} color={Colors[colorScheme ?? 'light'].text} />
+          </TouchableOpacity>
+          <Text style={[styles.headerTitle, { color: Colors[colorScheme ?? 'light'].text }]}>
+            Edit Match
+          </Text>
+          <View style={styles.headerSpacer} />
+        </View>
+        <View style={styles.errorContainer}>
+          <Text style={[styles.errorText, { color: Colors[colorScheme ?? 'light'].text }]}>
+            Error: No match ID provided
+          </Text>
+          <Text style={[styles.errorSubtext, { color: Colors[colorScheme ?? 'light'].tabIconDefault }]}>
+            Unable to load match for editing
+          </Text>
+        </View>
+      </View>
+    );
+  }
 
   const handleSave = async (matchData: any) => {
     console.log('🔧 Edit handleSave called with matchData:', matchData);

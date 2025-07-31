@@ -11,10 +11,18 @@ export async function seedSampleClubs(): Promise<void> {
     const existingClubs = await db.getAllAsync('SELECT COUNT(*) as count FROM clubs') as any[];
     console.log('Existing clubs count:', existingClubs?.[0]?.count || 0);
     
-    // Always clear and reseed for debugging
-    console.log('Clearing existing data...');
-    // Temporarily disable foreign key constraints
+    // Only seed if we don't have clubs already
+    if (existingClubs?.[0]?.count > 0) {
+      console.log('Clubs already exist, skipping seeding');
+      return;
+    }
+    
+    console.log('Seeding new data...');
+    // Temporarily disable foreign key constraints for this connection
     await db.runAsync('PRAGMA foreign_keys = OFF');
+    console.log('Disabled foreign key constraints for seeding');
+
+    // Clear any existing data first (if needed)
     await db.runAsync('DELETE FROM club_members');
     await db.runAsync('DELETE FROM clubs');
     await db.runAsync('DELETE FROM users');
@@ -69,17 +77,23 @@ export async function seedSampleClubs(): Promise<void> {
     // Insert sample users first
     console.log('Inserting sample users...');
     for (const user of sampleUsers) {
-      await db.runAsync(
-        `INSERT OR REPLACE INTO users (id, full_name, email, phone, role, created_at) 
-         VALUES (?, ?, ?, ?, ?, datetime('now'))`,
-        [
-          user.id,
-          user.full_name,
-          user.email,
-          user.phone,
-          user.role,
-        ]
-      );
+      try {
+        await db.runAsync(
+          `INSERT OR REPLACE INTO users (id, full_name, email, phone, role, created_at) 
+           VALUES (?, ?, ?, ?, ?, datetime('now'))`,
+          [
+            user.id,
+            user.full_name,
+            user.email,
+            user.phone,
+            user.role,
+          ]
+        );
+        console.log(`✓ Inserted user: ${user.full_name}`);
+      } catch (userError) {
+        console.error(`✗ Failed to insert user ${user.full_name}:`, userError);
+        throw userError;
+      }
     }
 
     console.log(`Seeded ${sampleUsers.length} sample users`);
@@ -181,31 +195,40 @@ export async function seedSampleClubs(): Promise<void> {
 
     console.log('Inserting sample clubs...');
     for (const club of sampleClubs) {
-      console.log(`Inserting club: ${club.name}`);
-      await db.runAsync(
-        `INSERT OR REPLACE INTO clubs (id, name, description, location, lat, lng, creator_id, created_at) 
-         VALUES (?, ?, ?, ?, ?, ?, ?, datetime('now'))`,
-        [
-          club.id,
-          club.name,
-          club.description,
-          club.location,
-          club.lat,
-          club.lng,
-          club.creator_id,
-        ]
-      );
+      try {
+        console.log(`Inserting club: ${club.name} (creator: ${club.creator_id})`);
+        await db.runAsync(
+          `INSERT OR REPLACE INTO clubs (id, name, description, location, lat, lng, creator_id, created_at) 
+           VALUES (?, ?, ?, ?, ?, ?, ?, datetime('now'))`,
+          [
+            club.id,
+            club.name,
+            club.description,
+            club.location,
+            club.lat,
+            club.lng,
+            club.creator_id,
+          ]
+        );
+        console.log(`✓ Successfully inserted club: ${club.name}`);
+      } catch (clubError) {
+        console.error(`✗ Failed to insert club ${club.name}:`, clubError);
+        // Check if user exists
+        const userExists = await db.getAllAsync('SELECT id FROM users WHERE id = ?', [club.creator_id]);
+        console.log(`User ${club.creator_id} exists:`, userExists.length > 0);
+        throw clubError;
+      }
     }
 
     console.log(`Seeded ${sampleClubs.length} sample clubs`);
     
+    // Verify the clubs were inserted before re-enabling constraints
+    const finalClubCount = await db.getAllAsync('SELECT COUNT(*) as count FROM clubs') as any[];
+    console.log('Final clubs count in database:', finalClubCount?.[0]?.count || 0);
+    
     // Re-enable foreign key constraints
     await db.runAsync('PRAGMA foreign_keys = ON');
     console.log('Re-enabled foreign key constraints');
-    
-    // Verify the clubs were inserted
-    const finalClubCount = await db.getAllAsync('SELECT COUNT(*) as count FROM clubs') as any[];
-    console.log('Final clubs count in database:', finalClubCount?.[0]?.count || 0);
   } catch (error) {
     console.error('Failed to seed clubs:', error);
   }

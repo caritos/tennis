@@ -7,7 +7,6 @@ import { ThemedView } from './ThemedView';
 import { useColorScheme } from '@/hooks/useColorScheme';
 import { Colors } from '@/constants/Colors';
 import AppleSignInButton from './AppleSignInButton';
-import { useNotification } from '@/contexts/NotificationContext';
 
 interface SignUpScreenProps {
   onBack: () => void;
@@ -18,6 +17,8 @@ interface SignUpScreenProps {
   onTermsPress?: () => void;
   onPrivacyPress?: () => void;
   isLoading?: boolean;
+  errorMessage?: string | null;
+  onDismissError?: () => void;
 }
 
 export function SignUpScreen({ 
@@ -28,11 +29,13 @@ export function SignUpScreen({
   onSignInPress,
   onTermsPress,
   onPrivacyPress,
-  isLoading = false
+  isLoading = false,
+  errorMessage,
+  onDismissError
 }: SignUpScreenProps) {
   const colorScheme = useColorScheme();
   const colors = Colors[colorScheme ?? 'light'];
-  const { showInfo } = useNotification();
+  const [error, setError] = useState<string | null>(null);
   const [pressedButton, setPressedButton] = useState<string | null>(null);
 
   const handleButtonPress = (action: () => void, buttonId: string) => {
@@ -109,6 +112,23 @@ export function SignUpScreen({
           <View style={styles.headerSpacer} />
         </View>
 
+        {/* Error Message */}
+        {(error || errorMessage) && (
+          <View style={[styles.errorContainer, { backgroundColor: '#FFEBEE', borderColor: '#F44336' }]}>
+            <Ionicons name="alert-circle" size={20} color="#F44336" />
+            <ThemedText style={[styles.errorText, { color: '#F44336' }]}>{error || errorMessage}</ThemedText>
+            <TouchableOpacity 
+              onPress={() => {
+                setError(null);
+                onDismissError?.();
+              }} 
+              style={styles.errorDismiss}
+            >
+              <Ionicons name="close" size={16} color="#F44336" />
+            </TouchableOpacity>
+          </View>
+        )}
+
         <ThemedView style={styles.content}>
           {/* App Title and Message */}
           <View style={styles.titleSection}>
@@ -155,7 +175,7 @@ export function SignUpScreen({
                   { backgroundColor: colors.background, borderColor: colors.tabIconDefault }
                 ]}
                 onPress={() => {
-                  showInfo('Not Available', 'Apple Sign In is only available on iOS devices');
+                  setError('Apple Sign In is only available on iOS devices');
                 }}
                 accessibilityRole="button"
                 accessibilityLabel="Continue with Apple"
@@ -238,6 +258,23 @@ const styles = StyleSheet.create({
   },
   safeArea: {
     flex: 1,
+  },
+  errorContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 12,
+    marginHorizontal: 20,
+    marginBottom: 16,
+    borderRadius: 8,
+    borderWidth: 1,
+  },
+  errorText: {
+    flex: 1,
+    marginLeft: 8,
+    fontSize: 14,
+  },
+  errorDismiss: {
+    padding: 4,
   },
   header: {
     flexDirection: 'row',

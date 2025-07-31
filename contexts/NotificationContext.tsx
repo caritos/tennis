@@ -104,7 +104,7 @@ export const NotificationProvider: React.FC<NotificationProviderProps> = ({ chil
     <NotificationContext.Provider value={contextValue}>
       {children}
       
-      {/* Render notifications */}
+      {/* Render notifications - Only for auth screens and critical system notifications */}
       <View style={styles.notificationContainer} pointerEvents="box-none">
         {notifications.map((notification, index) => (
           <View 

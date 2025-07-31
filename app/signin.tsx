@@ -8,13 +8,12 @@ import { Ionicons } from '@expo/vector-icons';
 import { useColorScheme } from '@/hooks/useColorScheme';
 import { Colors } from '@/constants/Colors';
 import AppleSignInButton from '@/components/AppleSignInButton';
-import { useNotification } from '@/contexts/NotificationContext';
 
 export default function SignInPage() {
   const [isLoading, setIsLoading] = useState(false);
   const colorScheme = useColorScheme();
   const colors = Colors[colorScheme ?? 'light'];
-  const { showError, showInfo } = useNotification();
+  const [error, setError] = useState<string | null>(null);
 
   const handleBack = () => {
     console.log('Back pressed - navigating back');
@@ -31,9 +30,9 @@ export default function SignInPage() {
     router.replace('/(tabs)');
   };
 
-  const handleAppleSignInError = (error: string) => {
-    console.error('Apple sign in error:', error);
-    showError('Sign In Error', error);
+  const handleAppleSignInError = (errorMessage: string) => {
+    console.error('Apple sign in error:', errorMessage);
+    setError(errorMessage);
     setIsLoading(false);
   };
 
@@ -72,6 +71,17 @@ export default function SignInPage() {
         </View>
 
         <ThemedView style={styles.content}>
+          {/* Error Message */}
+          {error && (
+            <View style={[styles.errorContainer, { backgroundColor: '#FFEBEE', borderColor: '#F44336' }]}>
+              <Ionicons name="alert-circle" size={20} color="#F44336" />
+              <ThemedText style={[styles.errorText, { color: '#F44336' }]}>{error}</ThemedText>
+              <TouchableOpacity onPress={() => setError(null)} style={styles.errorDismiss}>
+                <Ionicons name="close" size={16} color="#F44336" />
+              </TouchableOpacity>
+            </View>
+          )}
+
           {/* App Title and Message */}
           <View style={styles.titleSection}>
             <ThemedText type="title" style={styles.appTitle}>
@@ -113,7 +123,7 @@ export default function SignInPage() {
                   { backgroundColor: colors.background, borderColor: colors.tabIconDefault }
                 ]}
                 onPress={() => {
-                  showInfo('Not Available', 'Apple Sign In is only available on iOS devices');
+                  setError('Apple Sign In is only available on iOS devices');
                 }}
                 disabled={isLoading}
               >
@@ -159,6 +169,23 @@ const styles = StyleSheet.create({
   },
   safeArea: {
     flex: 1,
+  },
+  errorContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 12,
+    marginHorizontal: 20,
+    marginBottom: 16,
+    borderRadius: 8,
+    borderWidth: 1,
+  },
+  errorText: {
+    flex: 1,
+    marginLeft: 8,
+    fontSize: 14,
+  },
+  errorDismiss: {
+    padding: 4,
   },
   header: {
     flexDirection: 'row',
