@@ -1,7 +1,7 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import { View, ScrollView, StyleSheet, TouchableOpacity, ActivityIndicator } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useLocalSearchParams, router } from 'expo-router';
+import { useLocalSearchParams, router, useFocusEffect } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
@@ -36,6 +36,14 @@ export default function ClubDetailScreen() {
   useEffect(() => {
     loadClubDetails();
   }, [id]);
+
+  // Refresh data when screen comes into focus (e.g., returning from edit)
+  useFocusEffect(
+    useCallback(() => {
+      console.log('Club details screen focused, refreshing data...');
+      loadClubDetails();
+    }, [id])
+  );
 
   const loadClubDetails = async () => {
     if (!id || typeof id !== 'string') {
@@ -102,6 +110,7 @@ export default function ClubDetailScreen() {
         [id]
       );
       console.log('ClubDetails: Found matches:', matches.length, matches);
+      console.log('ClubDetails: Processing matches...', matches.map(m => ({ id: m.id, scores: m.scores, player1_name: m.player1_name, player2_name: m.player2_name })));
       
       // Process matches to determine winners and format for display
       const processedMatches = matches?.map((match: any) => {
@@ -147,6 +156,7 @@ export default function ClubDetailScreen() {
         };
       }) || [];
       
+      console.log('ClubDetails: Setting processed matches:', processedMatches.length, processedMatches);
       setRecentMatches(processedMatches);
       
     } catch (err) {
@@ -277,23 +287,32 @@ export default function ClubDetailScreen() {
             )}
           </View>
           
+          
           {recentMatches.length > 0 ? (
             <View style={styles.matchesList}>
-              {recentMatches.map((match, index) => (
-                <View key={match.id} style={styles.matchItem}>
-                  <TennisScoreDisplay
-                    player1Name={match.player1_name}
-                    player2Name={match.player2_name}
-                    scores={match.scores}
-                    matchType={match.match_type}
-                    winner={match.winner}
-                    isCompleted={true}
-                    clubName={club.name}
-                    matchDate={match.date}
-                    notes={match.notes}
-                  />
-                </View>
-              ))}
+              {recentMatches.map((match, index) => {
+                console.log('ClubDetails: Rendering match:', match.id, match.player1_name, 'vs', match.player2_name, match.scores);
+                return (
+                  <View key={match.id} style={styles.matchItem}>
+                    <TennisScoreDisplay
+                      player1Name={match.player1_name}
+                      player2Name={match.player2_name}
+                      scores={match.scores}
+                      matchType={match.match_type}
+                      winner={match.winner}
+                      isCompleted={true}
+                      clubName={club.name}
+                      matchDate={match.date}
+                      notes={match.notes}
+                      matchId={match.id}
+                      player1Id={match.player1_id}
+                      player2Id={match.player2_id}
+                      player3Id={match.player3_id}
+                      player4Id={match.player4_id}
+                    />
+                  </View>
+                );
+              })}
             </View>
           ) : (
             <View style={[styles.placeholder, { borderColor: colors.tabIconDefault }]}>

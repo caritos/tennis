@@ -955,7 +955,10 @@ export function MatchRecordingForm(componentProps: MatchRecordingFormProps) {
                   player1Name={player1Name}
                   player2Name={player2Name}
                   matchType={matchType}
-                  onScoreChange={setTennisSets}
+                  onScoreChange={(sets) => {
+                    console.log('🎾 MatchRecordingForm: onScoreChange received:', sets);
+                    setTennisSets(sets);
+                  }}
                   initialSets={tennisSets}
                   showPreview={true}
                   compact={false}

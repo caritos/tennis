@@ -104,6 +104,7 @@ export function TennisScoreEntry({
   };
 
   const updateSetScore = (setIndex: number, field: 'playerScore' | 'opponentScore', value: string) => {
+    console.log(`🎾 updateSetScore: Set ${setIndex + 1}, ${field} = "${value}"`);
     const updatedInputs = [...setInputs];
     updatedInputs[setIndex][field] = value;
     setSetInputs(updatedInputs);
@@ -111,8 +112,19 @@ export function TennisScoreEntry({
     // Clear validation errors when typing
     setValidationErrors([]);
 
-    // Don't validate or update valid sets on every keystroke
-    // This will be done on blur or when both fields have values
+    // Auto-validate when both scores are entered and are 1-2 digits
+    const currentSet = updatedInputs[setIndex];
+    const playerScore = field === 'playerScore' ? value : currentSet.playerScore;
+    const opponentScore = field === 'opponentScore' ? value : currentSet.opponentScore;
+    
+    console.log(`🎾 Current set ${setIndex + 1} scores: ${playerScore} - ${opponentScore}`);
+    
+    // Validate immediately if both scores look like valid tennis scores (1-2 digits)
+    if (playerScore.length >= 1 && opponentScore.length >= 1 && 
+        /^\d{1,2}$/.test(playerScore) && /^\d{1,2}$/.test(opponentScore)) {
+      console.log('🎾 Auto-validating set scores:', playerScore, '-', opponentScore);
+      setTimeout(() => validateAndUpdateSet(setIndex), 100); // Small delay to ensure state is updated
+    }
   };
 
   const validateAndUpdateSet = (setIndex: number) => {
@@ -131,6 +143,7 @@ export function TennisScoreEntry({
   };
 
   const updateValidSets = (inputs: SetInput[]) => {
+    console.log('🎾 updateValidSets called with inputs:', inputs);
     const newValidSets: TennisSet[] = [];
     const errors: string[] = [];
 
@@ -138,7 +151,8 @@ export function TennisScoreEntry({
       const playerScore = parseInt(input.playerScore);
       const opponentScore = parseInt(input.opponentScore);
 
-      if (!isNaN(playerScore) && !isNaN(opponentScore)) {
+      // Allow editing by only validating if both scores are present and numeric
+      if (!isNaN(playerScore) && !isNaN(opponentScore) && input.playerScore !== '' && input.opponentScore !== '') {
         if (validateSetScore(playerScore, opponentScore)) {
           const set: TennisSet = { playerScore, opponentScore };
           
@@ -154,18 +168,24 @@ export function TennisScoreEntry({
               errors.push(`Set ${index + 1}: Invalid tiebreak score`);
               return; // Skip this set
             } else {
-              // Tiebreak needed but not entered yet
+              // Tiebreak needed but not entered yet - don't add this set to valid sets yet
+              console.log(`🎾 Set ${index + 1} needs tiebreak, waiting for tiebreak entry`);
               return; // Skip this set until tiebreak is complete
             }
           }
           
           newValidSets.push(set);
+          console.log(`🎾 Added valid set ${index + 1}:`, set);
         } else {
           errors.push(`Set ${index + 1}: Invalid tennis score (${playerScore}-${opponentScore})`);
+          console.log(`🎾 Invalid set ${index + 1}:`, playerScore, opponentScore);
         }
       }
     });
 
+    console.log('🎾 Final valid sets:', newValidSets);
+    console.log('🎾 Calling onScoreChange with:', newValidSets);
+    console.log('🎾 onScoreChange function exists:', typeof onScoreChange === 'function');
     setValidSets(newValidSets);
     setValidationErrors(errors);
     onScoreChange(newValidSets);
@@ -270,6 +290,11 @@ export function TennisScoreEntry({
       fontWeight: '600',
       color: colors.text,
       backgroundColor: colors.background,
+    },
+    completedScoreInput: {
+      borderColor: '#4CAF50',
+      borderWidth: 2,
+      backgroundColor: '#f1f8e9',
     },
     vsText: {
       fontSize: 16,
@@ -398,7 +423,7 @@ export function TennisScoreEntry({
               <View style={styles.scoreRow}>
                 <Text style={styles.playerLabel}>{player1Name}</Text>
                 <TextInput
-                  style={styles.scoreInput}
+                  style={[styles.scoreInput, isCompleted ? styles.completedScoreInput : {}]}
                   value={setInput.playerScore}
                   onChangeText={(value) => updateSetScore(index, 'playerScore', value)}
                   onBlur={() => validateAndUpdateSet(index)}
@@ -409,7 +434,7 @@ export function TennisScoreEntry({
                 />
                 <Text style={styles.vsText}>-</Text>
                 <TextInput
-                  style={styles.scoreInput}
+                  style={[styles.scoreInput, isCompleted ? styles.completedScoreInput : {}]}
                   value={setInput.opponentScore}
                   onChangeText={(value) => updateSetScore(index, 'opponentScore', value)}
                   onBlur={() => validateAndUpdateSet(index)}
