@@ -225,8 +225,36 @@ export async function seedDatabase(db: Database): Promise<void> {
 
     // Check if we already have data to avoid conflicts
     const existingUsers = await db.getAllAsync('SELECT COUNT(*) as count FROM users');
+    const existingClubs = await db.getAllAsync('SELECT COUNT(*) as count FROM clubs');
+    
     if (existingUsers && existingUsers[0] && (existingUsers[0] as any).count > 0) {
-      console.log('ℹ️ Database already has users, skipping seed data to avoid conflicts');
+      console.log('ℹ️ Database already has users, skipping user seed data to avoid conflicts');
+      
+      // But if there are no clubs, we should still create some clubs for the app to work
+      if (!existingClubs || !existingClubs[0] || (existingClubs[0] as any).count === 0) {
+        console.log('🏢 Creating sample clubs for existing users...');
+        
+        // Get the first user to be the club creator
+        const firstUser = await db.getFirstAsync('SELECT id FROM users LIMIT 1');
+        const creatorId = firstUser ? (firstUser as any).id : 'user_1';
+        
+        // Create clubs with the existing user as creator
+        await db.execAsync(`
+          INSERT INTO clubs (id, name, description, location, lat, lng, creator_id, created_at) VALUES
+          ('club_1', 'Sunset Tennis Club', 'Premier tennis facility with 8 courts, pro shop, and coaching services. Perfect for players of all skill levels.', '123 Tennis Lane, San Francisco, CA', 37.7749, -122.4194, '${creatorId}', '2024-01-15T09:30:00.000Z'),
+          ('club_2', 'Marina Bay Tennis Center', 'Modern tennis complex overlooking the bay. Features 6 courts, lounge area, and equipment rental.', '456 Bay View Drive, San Francisco, CA', 37.8044, -122.4078, '${creatorId}', '2024-01-18T11:00:00.000Z'),
+          ('club_3', 'Golden Gate Park Courts', 'Public tennis courts in the heart of Golden Gate Park. Great community atmosphere and affordable rates.', '789 Park Boulevard, San Francisco, CA', 37.7694, -122.4862, '${creatorId}', '2024-01-20T14:20:00.000Z'),
+          ('club_4', 'Elite Tennis Academy', 'High-performance training facility with professional coaches and tournament preparation programs.', '321 Champions Court, Palo Alto, CA', 37.4419, -122.1430, '${creatorId}', '2024-01-22T16:30:00.000Z');
+        `);
+        
+        // Add the creator as a member of the first club
+        await db.execAsync(`
+          INSERT INTO club_members (club_id, user_id, joined_at) VALUES
+          ('club_1', '${creatorId}', '2024-01-15T09:30:00.000Z');
+        `);
+        
+        console.log('✅ Created 4 sample clubs');
+      }
       return;
     }
 
