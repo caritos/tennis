@@ -9,12 +9,14 @@ export async function initializeDatabase(): Promise<Database> {
     // Enable foreign key constraints
     await db.execAsync('PRAGMA foreign_keys = ON;');
     
-    // Check if we need to migrate for doubles support
-    await migrateDatabase(db);
+    // For development: Drop and recreate tables to ensure latest schema
+    // Remove this in production when we need to preserve user data
+    await dropTables(db);
     
-    // Create tables
+    // Create tables with latest schema
     await createTables(db);
     
+    console.log('✅ Database initialized with latest schema');
     return db;
   } catch (error) {
     console.error('Failed to initialize database:', error);
@@ -199,73 +201,18 @@ export async function createTables(db: Database): Promise<void> {
   }
 }
 
+// Migration system disabled for development - we drop and recreate tables
+// This will be needed for production when we need to preserve user data
+/*
 export async function migrateDatabase(db: Database): Promise<void> {
-  try {
-    // Check current schema version
-    let currentVersion = 0;
-    try {
-      const versionResult = await db.getFirstAsync('PRAGMA user_version;') as { user_version: number };
-      currentVersion = versionResult.user_version;
-    } catch (error) {
-      console.log('No version info found, treating as new database');
-    }
-
-    console.log('📋 Current database schema version:', currentVersion);
-    const targetVersion = 4; // Current target version
-
-    if (currentVersion < targetVersion) {
-      console.log(`🔄 Migrating database from version ${currentVersion} to ${targetVersion}...`);
-      
-      // Create backup before migration
-      await createMigrationBackup(db, currentVersion);
-      
-      // Wrap entire migration in transaction for atomicity
-      await db.withTransactionAsync(async () => {
-        try {
-          // Apply migrations incrementally without data loss
-          if (currentVersion < 1) {
-            await migrateToVersion1(db);
-            await validateMigrationStep(db, 1);
-          }
-          if (currentVersion < 2) {
-            await migrateToVersion2(db);
-            await validateMigrationStep(db, 2);
-          }
-          if (currentVersion < 3) {
-            await migrateToVersion3(db);
-            await validateMigrationStep(db, 3);
-          }
-          if (currentVersion < 4) {
-            await migrateToVersion4(db);
-            await validateMigrationStep(db, 4);
-          }
-
-          // Update schema version only after all migrations succeed
-          await db.execAsync(`PRAGMA user_version = ${targetVersion};`);
-          console.log('✅ Database migration completed successfully');
-          
-          // Clean up old backups after successful migration
-          await cleanupBackups(db);
-        } catch (migrationError) {
-          console.error('❌ Migration failed, transaction will be rolled back:', migrationError);
-          throw migrationError; // This will trigger transaction rollback
-        }
-      });
-    }
-  } catch (error) {
-    console.error('💥 Critical migration error:', error);
-    console.log('🔄 Attempting to restore from backup...');
-    
-    try {
-      await restoreFromBackup(db);
-      console.log('✅ Database restored from backup');
-    } catch (restoreError) {
-      console.error('💥 Failed to restore from backup:', restoreError);
-      console.log('🆘 Manual intervention required - contact support');
-      throw new Error(`Migration failed and backup restore failed: ${error.message}`);
-    }
-  }
+  // Migration logic commented out for development
+  // Will be enabled when app is released and we need to preserve user data
 }
+*/
+
+/*
+// All migration functions commented out for development
+// Will be enabled when app is released
 
 async function migrateToVersion1(db: Database): Promise<void> {
   console.log('🔄 Migrating to version 1: Adding doubles support to matches table');
@@ -753,3 +700,4 @@ export async function testMigrationSystem(db: Database): Promise<void> {
     throw error;
   }
 }
+*/
