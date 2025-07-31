@@ -64,9 +64,27 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
       
       // Always use INSERT OR REPLACE to handle any conflicts gracefully
+      // Include default values for new profile fields to avoid constraint issues
       await db.runAsync(
-        `INSERT OR REPLACE INTO users (id, full_name, email, phone, role, created_at) VALUES (?, ?, ?, ?, ?, datetime('now'))`,
-        [userData.id, userData.full_name, userData.email, userData.phone, userData.role]
+        `INSERT OR REPLACE INTO users (
+          id, full_name, email, phone, role, 
+          contact_preference, skill_level, playing_style,
+          profile_visibility, match_history_visibility, allow_challenges,
+          created_at
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, datetime('now'))`,
+        [
+          userData.id, 
+          userData.full_name, 
+          userData.email, 
+          userData.phone, 
+          userData.role,
+          'whatsapp', // default contact_preference
+          null, // skill_level (nullable)
+          null, // playing_style (nullable)
+          'public', // default profile_visibility
+          'public', // default match_history_visibility
+          'everyone', // default allow_challenges
+        ]
       );
       console.log('AuthContext: User synced/updated in local database successfully:', user.id);
       
