@@ -95,6 +95,7 @@ export class MatchInvitationService {
         invitation.match_type,
         invitation.date,
         invitation.time,
+        invitation.location,
         invitation.notes,
         invitation.expires_at
       );

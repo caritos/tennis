@@ -213,6 +213,7 @@ export class SyncService {
     matchType: 'singles' | 'doubles',
     date: string,
     time?: string,
+    location?: string,
     notes?: string,
     expiresAt?: string
   ): Promise<string> {
@@ -226,6 +227,7 @@ export class SyncService {
         match_type: matchType,
         date,
         time,
+        location,
         notes,
         expires_at: expiresAt,
       }
