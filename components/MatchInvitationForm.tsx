@@ -213,7 +213,7 @@ const MatchInvitationForm: React.FC<MatchInvitationFormProps> = ({
             <ThemedText style={styles.sectionLabel}>Location</ThemedText>
             <TextInput
               style={[
-                styles.textInput,
+                styles.locationInput,
                 {
                   borderColor: colors.tabIconDefault,
                   color: colors.text,
@@ -368,6 +368,12 @@ const styles = StyleSheet.create({
     opacity: 0.8,
   },
   timeInput: {
+    borderWidth: 1,
+    borderRadius: 8,
+    padding: 12,
+    fontSize: 16,
+  },
+  locationInput: {
     borderWidth: 1,
     borderRadius: 8,
     padding: 12,
