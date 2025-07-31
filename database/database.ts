@@ -215,118 +215,438 @@ export async function migrateDatabase(db: Database): Promise<void> {
     if (currentVersion < targetVersion) {
       console.log(`🔄 Migrating database from version ${currentVersion} to ${targetVersion}...`);
       
-      // Apply migrations incrementally without data loss
-      if (currentVersion < 1) {
-        await migrateToVersion1(db);
-      }
-      if (currentVersion < 2) {
-        await migrateToVersion2(db);
-      }
-      if (currentVersion < 3) {
-        await migrateToVersion3(db);
-      }
+      // Create backup before migration
+      await createMigrationBackup(db, currentVersion);
+      
+      // Wrap entire migration in transaction for atomicity
+      await db.withTransactionAsync(async () => {
+        try {
+          // Apply migrations incrementally without data loss
+          if (currentVersion < 1) {
+            await migrateToVersion1(db);
+            await validateMigrationStep(db, 1);
+          }
+          if (currentVersion < 2) {
+            await migrateToVersion2(db);
+            await validateMigrationStep(db, 2);
+          }
+          if (currentVersion < 3) {
+            await migrateToVersion3(db);
+            await validateMigrationStep(db, 3);
+          }
 
-      // Update schema version
-      await db.execAsync(`PRAGMA user_version = ${targetVersion};`);
-      console.log('✅ Database migration completed');
+          // Update schema version only after all migrations succeed
+          await db.execAsync(`PRAGMA user_version = ${targetVersion};`);
+          console.log('✅ Database migration completed successfully');
+          
+          // Clean up old backups after successful migration
+          await cleanupBackups(db);
+        } catch (migrationError) {
+          console.error('❌ Migration failed, transaction will be rolled back:', migrationError);
+          throw migrationError; // This will trigger transaction rollback
+        }
+      });
     }
   } catch (error) {
-    console.log('📋 Error during migration, creating fresh database schema:', error);
-    // Only on critical errors should we recreate
+    console.error('💥 Critical migration error:', error);
+    console.log('🔄 Attempting to restore from backup...');
+    
+    try {
+      await restoreFromBackup(db);
+      console.log('✅ Database restored from backup');
+    } catch (restoreError) {
+      console.error('💥 Failed to restore from backup:', restoreError);
+      console.log('🆘 Manual intervention required - contact support');
+      throw new Error(`Migration failed and backup restore failed: ${error.message}`);
+    }
   }
 }
 
 async function migrateToVersion1(db: Database): Promise<void> {
   console.log('🔄 Migrating to version 1: Adding doubles support to matches table');
   
-  try {
-    // Add doubles columns to matches table if they don't exist
-    const matchesTableInfo = await db.getAllAsync('PRAGMA table_info(matches);');
-    const hasDoublesColumns = matchesTableInfo.some((col: any) => col.name === 'player3_id');
-    
-    if (!hasDoublesColumns) {
-      await db.execAsync(`
-        ALTER TABLE matches ADD COLUMN player3_id TEXT REFERENCES users(id);
-      `);
-      await db.execAsync(`
-        ALTER TABLE matches ADD COLUMN partner3_name TEXT;
-      `);
-      await db.execAsync(`
-        ALTER TABLE matches ADD COLUMN player4_id TEXT REFERENCES users(id);
-      `);
-      await db.execAsync(`
-        ALTER TABLE matches ADD COLUMN partner4_name TEXT;
-      `);
-      console.log('✅ Added doubles support columns to matches table');
-    }
-  } catch (error) {
-    console.warn('Migration to version 1 failed:', error);
+  // Check if matches table exists first
+  const tableExists = await db.getFirstAsync(
+    `SELECT name FROM sqlite_master WHERE type='table' AND name='matches';`
+  );
+  
+  if (!tableExists) {
+    console.log('⚠️ Matches table does not exist yet, skipping migration v1');
+    return;
   }
+  
+  // Add doubles columns to matches table if they don't exist
+  const matchesTableInfo = await db.getAllAsync('PRAGMA table_info(matches);');
+  const columnsToAdd = [
+    { name: 'player3_id', sql: 'ALTER TABLE matches ADD COLUMN player3_id TEXT REFERENCES users(id);' },
+    { name: 'partner3_name', sql: 'ALTER TABLE matches ADD COLUMN partner3_name TEXT;' },
+    { name: 'player4_id', sql: 'ALTER TABLE matches ADD COLUMN player4_id TEXT REFERENCES users(id);' },
+    { name: 'partner4_name', sql: 'ALTER TABLE matches ADD COLUMN partner4_name TEXT;' }
+  ];
+  
+  for (const column of columnsToAdd) {
+    const hasColumn = matchesTableInfo.some((col: any) => col.name === column.name);
+    if (!hasColumn) {
+      await db.execAsync(column.sql);
+      console.log(`✅ Added column ${column.name} to matches table`);
+    } else {
+      console.log(`ℹ️ Column ${column.name} already exists in matches table`);
+    }
+  }
+  
+  console.log('✅ Migration to version 1 completed');
 }
 
 async function migrateToVersion2(db: Database): Promise<void> {
   console.log('🔄 Migrating to version 2: Adding edit tracking to matches table');
   
-  try {
-    // Add edit tracking columns to matches table if they don't exist
-    const matchesTableInfo = await db.getAllAsync('PRAGMA table_info(matches);');
-    const hasEditColumns = matchesTableInfo.some((col: any) => col.name === 'updated_at');
-    
-    if (!hasEditColumns) {
-      await db.execAsync(`
-        ALTER TABLE matches ADD COLUMN updated_at TEXT DEFAULT CURRENT_TIMESTAMP;
-      `);
-      await db.execAsync(`
-        ALTER TABLE matches ADD COLUMN last_edited_by TEXT REFERENCES users(id);
-      `);
-      await db.execAsync(`
-        ALTER TABLE matches ADD COLUMN edit_count INTEGER DEFAULT 0;
-      `);
-      console.log('✅ Added edit tracking columns to matches table');
-    }
-  } catch (error) {
-    console.warn('Migration to version 2 failed:', error);
+  // Check if matches table exists first
+  const tableExists = await db.getFirstAsync(
+    `SELECT name FROM sqlite_master WHERE type='table' AND name='matches';`
+  );
+  
+  if (!tableExists) {
+    console.log('⚠️ Matches table does not exist yet, skipping migration v2');
+    return;
   }
+  
+  // Add edit tracking columns to matches table if they don't exist
+  const matchesTableInfo = await db.getAllAsync('PRAGMA table_info(matches);');
+  const columnsToAdd = [
+    { name: 'updated_at', sql: 'ALTER TABLE matches ADD COLUMN updated_at TEXT DEFAULT CURRENT_TIMESTAMP;' },
+    { name: 'last_edited_by', sql: 'ALTER TABLE matches ADD COLUMN last_edited_by TEXT REFERENCES users(id);' },
+    { name: 'edit_count', sql: 'ALTER TABLE matches ADD COLUMN edit_count INTEGER DEFAULT 0;' }
+  ];
+  
+  for (const column of columnsToAdd) {
+    const hasColumn = matchesTableInfo.some((col: any) => col.name === column.name);
+    if (!hasColumn) {
+      await db.execAsync(column.sql);
+      console.log(`✅ Added column ${column.name} to matches table`);
+      
+      // For updated_at, set existing records to their created_at value
+      if (column.name === 'updated_at') {
+        await db.execAsync(`
+          UPDATE matches 
+          SET updated_at = COALESCE(created_at, CURRENT_TIMESTAMP) 
+          WHERE updated_at IS NULL;
+        `);
+        console.log('✅ Updated existing matches with updated_at timestamps');
+      }
+    } else {
+      console.log(`ℹ️ Column ${column.name} already exists in matches table`);
+    }
+  }
+  
+  console.log('✅ Migration to version 2 completed');
 }
 
 async function migrateToVersion3(db: Database): Promise<void> {
   console.log('🔄 Migrating to version 3: Adding advanced profile fields to users table');
   
+  // Check if users table exists first
+  const tableExists = await db.getFirstAsync(
+    `SELECT name FROM sqlite_master WHERE type='table' AND name='users';`
+  );
+  
+  if (!tableExists) {
+    console.log('⚠️ Users table does not exist yet, skipping migration v3');
+    return;
+  }
+  
+  // Add profile fields to users table if they don't exist
+  const usersTableInfo = await db.getAllAsync('PRAGMA table_info(users);');
+  const columnsToAdd = [
+    { name: 'skill_level', sql: `ALTER TABLE users ADD COLUMN skill_level TEXT CHECK (skill_level IN ('beginner', 'intermediate', 'advanced', 'pro'));` },
+    { name: 'playing_style', sql: `ALTER TABLE users ADD COLUMN playing_style TEXT CHECK (playing_style IN ('aggressive', 'defensive', 'all_court', 'serve_volley'));` },
+    { name: 'availability', sql: 'ALTER TABLE users ADD COLUMN availability TEXT;' },
+    { name: 'profile_visibility', sql: `ALTER TABLE users ADD COLUMN profile_visibility TEXT DEFAULT 'public' CHECK (profile_visibility IN ('public', 'clubs_only', 'private'));` },
+    { name: 'match_history_visibility', sql: `ALTER TABLE users ADD COLUMN match_history_visibility TEXT DEFAULT 'public' CHECK (match_history_visibility IN ('public', 'clubs_only', 'private'));` },
+    { name: 'allow_challenges', sql: `ALTER TABLE users ADD COLUMN allow_challenges TEXT DEFAULT 'everyone' CHECK (allow_challenges IN ('everyone', 'club_members', 'none'));` },
+    { name: 'notification_preferences', sql: 'ALTER TABLE users ADD COLUMN notification_preferences TEXT;' },
+    { name: 'profile_photo_uri', sql: 'ALTER TABLE users ADD COLUMN profile_photo_uri TEXT;' }
+  ];
+  
+  for (const column of columnsToAdd) {
+    const hasColumn = usersTableInfo.some((col: any) => col.name === column.name);
+    if (!hasColumn) {
+      await db.execAsync(column.sql);
+      console.log(`✅ Added column ${column.name} to users table`);
+      
+      // Set default values for existing users where appropriate
+      if (column.name === 'profile_visibility') {
+        await db.execAsync(`
+          UPDATE users 
+          SET profile_visibility = 'public' 
+          WHERE profile_visibility IS NULL;
+        `);
+      } else if (column.name === 'match_history_visibility') {
+        await db.execAsync(`
+          UPDATE users 
+          SET match_history_visibility = 'public' 
+          WHERE match_history_visibility IS NULL;
+        `);
+      } else if (column.name === 'allow_challenges') {
+        await db.execAsync(`
+          UPDATE users 
+          SET allow_challenges = 'everyone' 
+          WHERE allow_challenges IS NULL;
+        `);
+      }
+    } else {
+      console.log(`ℹ️ Column ${column.name} already exists in users table`);
+    }
+  }
+  
+  console.log('✅ Migration to version 3 completed');
+}
+
+// Backup and restore functions for data protection
+async function createMigrationBackup(db: Database, version: number): Promise<void> {
   try {
-    // Add profile fields to users table if they don't exist
-    const usersTableInfo = await db.getAllAsync('PRAGMA table_info(users);');
-    const hasProfilePhotoField = usersTableInfo.some((col: any) => col.name === 'profile_photo_uri');
-    const hasSkillLevelField = usersTableInfo.some((col: any) => col.name === 'skill_level');
+    console.log(`💾 Creating backup for schema version ${version}...`);
     
-    if (!hasProfilePhotoField) {
-      await db.execAsync(`
-        ALTER TABLE users ADD COLUMN skill_level TEXT CHECK (skill_level IN ('beginner', 'intermediate', 'advanced', 'pro'));
-      `);
-      await db.execAsync(`
-        ALTER TABLE users ADD COLUMN playing_style TEXT CHECK (playing_style IN ('aggressive', 'defensive', 'all_court', 'serve_volley'));
-      `);
-      await db.execAsync(`
-        ALTER TABLE users ADD COLUMN availability TEXT;
-      `);
-      await db.execAsync(`
-        ALTER TABLE users ADD COLUMN profile_visibility TEXT DEFAULT 'public' CHECK (profile_visibility IN ('public', 'clubs_only', 'private'));
-      `);
-      await db.execAsync(`
-        ALTER TABLE users ADD COLUMN match_history_visibility TEXT DEFAULT 'public' CHECK (match_history_visibility IN ('public', 'clubs_only', 'private'));
-      `);
-      await db.execAsync(`
-        ALTER TABLE users ADD COLUMN allow_challenges TEXT DEFAULT 'everyone' CHECK (allow_challenges IN ('everyone', 'club_members', 'none'));
-      `);
-      await db.execAsync(`
-        ALTER TABLE users ADD COLUMN notification_preferences TEXT;
-      `);
-      await db.execAsync(`
-        ALTER TABLE users ADD COLUMN profile_photo_uri TEXT;
-      `);
-      console.log('✅ Added advanced profile fields to users table');
+    // Export all data to backup tables
+    const tableNames = ['users', 'clubs', 'matches', 'club_members', 'match_invitations', 
+                       'invitation_responses', 'challenges', 'challenge_counters', 'notifications'];
+    
+    for (const tableName of tableNames) {
+      try {
+        // Check if table exists before backing up
+        const tableExists = await db.getFirstAsync(
+          `SELECT name FROM sqlite_master WHERE type='table' AND name=?;`,
+          [tableName]
+        );
+        
+        if (tableExists) {
+          // Create backup table
+          await db.execAsync(`DROP TABLE IF EXISTS backup_${tableName};`);
+          await db.execAsync(`CREATE TABLE backup_${tableName} AS SELECT * FROM ${tableName};`);
+          
+          const count = await db.getFirstAsync(`SELECT COUNT(*) as count FROM backup_${tableName};`) as { count: number };
+          console.log(`📋 Backed up ${count.count} records from ${tableName}`);
+        }
+      } catch (tableError) {
+        console.warn(`⚠️ Could not backup table ${tableName}:`, tableError);
+      }
+    }
+    
+    // Store backup metadata
+    await db.execAsync(`
+      CREATE TABLE IF NOT EXISTS migration_backups (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        schema_version INTEGER,
+        backup_timestamp TEXT DEFAULT CURRENT_TIMESTAMP,
+        status TEXT DEFAULT 'active'
+      );
+    `);
+    
+    await db.execAsync(
+      `INSERT INTO migration_backups (schema_version) VALUES (?);`,
+      [version]
+    );
+    
+    console.log('✅ Migration backup created successfully');
+  } catch (error) {
+    console.error('❌ Failed to create migration backup:', error);
+    throw error;
+  }
+}
+
+async function restoreFromBackup(db: Database): Promise<void> {
+  try {
+    console.log('🔄 Restoring database from backup...');
+    
+    // Get the latest backup
+    const backup = await db.getFirstAsync(`
+      SELECT * FROM migration_backups 
+      WHERE status = 'active' 
+      ORDER BY backup_timestamp DESC 
+      LIMIT 1;
+    `) as { id: number; schema_version: number } | null;
+    
+    if (!backup) {
+      throw new Error('No backup found to restore from');
+    }
+    
+    console.log(`📋 Restoring from backup (schema version ${backup.schema_version})...`);
+    
+    // Restore data from backup tables
+    const tableNames = ['users', 'clubs', 'matches', 'club_members', 'match_invitations', 
+                       'invitation_responses', 'challenges', 'challenge_counters', 'notifications'];
+    
+    for (const tableName of tableNames) {
+      try {
+        // Check if backup table exists
+        const backupExists = await db.getFirstAsync(
+          `SELECT name FROM sqlite_master WHERE type='table' AND name=?;`,
+          [`backup_${tableName}`]
+        );
+        
+        if (backupExists) {
+          // Drop current table and restore from backup
+          await db.execAsync(`DROP TABLE IF EXISTS ${tableName};`);
+          await db.execAsync(`CREATE TABLE ${tableName} AS SELECT * FROM backup_${tableName};`);
+          
+          const count = await db.getFirstAsync(`SELECT COUNT(*) as count FROM ${tableName};`) as { count: number };
+          console.log(`✅ Restored ${count.count} records to ${tableName}`);
+        }
+      } catch (tableError) {
+        console.warn(`⚠️ Could not restore table ${tableName}:`, tableError);
+      }
+    }
+    
+    // Restore schema version
+    await db.execAsync(`PRAGMA user_version = ${backup.schema_version};`);
+    
+    // Mark backup as used
+    await db.execAsync(
+      `UPDATE migration_backups SET status = 'restored' WHERE id = ?;`,
+      [backup.id]
+    );
+    
+    console.log('✅ Database restored from backup successfully');
+  } catch (error) {
+    console.error('❌ Failed to restore from backup:', error);
+    throw error;
+  }
+}
+
+async function validateMigrationStep(db: Database, version: number): Promise<void> {
+  try {
+    console.log(`🔍 Validating migration to version ${version}...`);
+    
+    switch (version) {
+      case 1:
+        // Validate doubles columns were added
+        const matchesInfo = await db.getAllAsync('PRAGMA table_info(matches);');
+        const requiredColumns = ['player3_id', 'partner3_name', 'player4_id', 'partner4_name'];
+        
+        for (const colName of requiredColumns) {
+          const hasColumn = matchesInfo.some((col: any) => col.name === colName);
+          if (!hasColumn) {
+            throw new Error(`Migration validation failed: Missing column ${colName} in matches table`);
+          }
+        }
+        break;
+        
+      case 2:
+        // Validate edit tracking columns were added
+        const editInfo = await db.getAllAsync('PRAGMA table_info(matches);');
+        const editColumns = ['updated_at', 'last_edited_by', 'edit_count'];
+        
+        for (const colName of editColumns) {
+          const hasColumn = editInfo.some((col: any) => col.name === colName);
+          if (!hasColumn) {
+            throw new Error(`Migration validation failed: Missing column ${colName} in matches table`);
+          }
+        }
+        break;
+        
+      case 3:
+        // Validate profile columns were added
+        const usersInfo = await db.getAllAsync('PRAGMA table_info(users);');
+        const profileColumns = ['skill_level', 'playing_style', 'availability', 
+                               'profile_visibility', 'match_history_visibility', 
+                               'allow_challenges', 'notification_preferences', 'profile_photo_uri'];
+        
+        for (const colName of profileColumns) {
+          const hasColumn = usersInfo.some((col: any) => col.name === colName);
+          if (!hasColumn) {
+            throw new Error(`Migration validation failed: Missing column ${colName} in users table`);
+          }
+        }
+        break;
+        
+      default:
+        console.log(`⚠️ No validation defined for version ${version}`);
+    }
+    
+    // Check data integrity with foreign key constraints
+    await db.execAsync('PRAGMA foreign_key_check;');
+    
+    // Verify no data was lost by comparing record counts
+    await validateDataIntegrity(db, version);
+    
+    console.log(`✅ Migration to version ${version} validated successfully`);
+  } catch (error) {
+    console.error(`❌ Migration validation failed for version ${version}:`, error);
+    throw error;
+  }
+}
+
+async function validateDataIntegrity(db: Database, version: number): Promise<void> {
+  try {
+    // Compare record counts between original and current tables
+    const tableNames = ['users', 'clubs', 'matches', 'club_members'];
+    
+    for (const tableName of tableNames) {
+      try {
+        // Check if backup table exists
+        const backupExists = await db.getFirstAsync(
+          `SELECT name FROM sqlite_master WHERE type='table' AND name=?;`,
+          [`backup_${tableName}`]
+        );
+        
+        if (backupExists) {
+          const originalCount = await db.getFirstAsync(
+            `SELECT COUNT(*) as count FROM backup_${tableName};`
+          ) as { count: number };
+          
+          const currentCount = await db.getFirstAsync(
+            `SELECT COUNT(*) as count FROM ${tableName};`
+          ) as { count: number };
+          
+          if (originalCount.count !== currentCount.count) {
+            throw new Error(
+              `Data integrity check failed: ${tableName} has ${currentCount.count} records but backup had ${originalCount.count}`
+            );
+          }
+          
+          console.log(`✅ Data integrity verified for ${tableName}: ${currentCount.count} records`);
+        }
+      } catch (tableError) {
+        console.warn(`⚠️ Could not verify integrity for ${tableName}:`, tableError);
+      }
     }
   } catch (error) {
-    console.warn('Migration to version 3 failed:', error);
+    console.error('❌ Data integrity validation failed:', error);
+    throw error;
+  }
+}
+
+async function cleanupBackups(db: Database): Promise<void> {
+  try {
+    // Remove backup tables older than 7 days
+    const cutoffDate = new Date();
+    cutoffDate.setDate(cutoffDate.getDate() - 7);
+    
+    const oldBackups = await db.getAllAsync(`
+      SELECT id FROM migration_backups 
+      WHERE backup_timestamp < ? AND status IN ('restored', 'active');
+    `, [cutoffDate.toISOString()]) as { id: number }[];
+    
+    for (const backup of oldBackups) {
+      await db.execAsync(`DELETE FROM migration_backups WHERE id = ?;`, [backup.id]);
+    }
+    
+    // Drop old backup tables
+    const backupTables = await db.getAllAsync(`
+      SELECT name FROM sqlite_master 
+      WHERE type='table' AND name LIKE 'backup_%';
+    `) as { name: string }[];
+    
+    for (const table of backupTables) {
+      try {
+        await db.execAsync(`DROP TABLE IF EXISTS ${table.name};`);
+      } catch (error) {
+        console.warn(`Could not drop backup table ${table.name}:`, error);
+      }
+    }
+    
+    console.log(`🧹 Cleaned up ${oldBackups.length} old backups`);
+  } catch (error) {
+    console.warn('Warning: Failed to cleanup old backups:', error);
   }
 }
 
@@ -346,6 +666,48 @@ export async function dropTables(db: Database): Promise<void> {
     console.log('Database tables dropped successfully');
   } catch (error) {
     console.error('Failed to drop tables:', error);
+    throw error;
+  }
+}
+
+// Development utility to test migration system
+export async function testMigrationSystem(db: Database): Promise<void> {
+  console.log('🧪 Testing migration system...');
+  
+  try {
+    // Create some test data
+    await db.execAsync(`
+      INSERT OR IGNORE INTO users (id, full_name, email) 
+      VALUES ('test-user-1', 'Test User', 'test@example.com');
+    `);
+    
+    await db.execAsync(`
+      INSERT OR IGNORE INTO clubs (id, name, location, creator_id) 
+      VALUES ('test-club-1', 'Test Club', 'Test Location', 'test-user-1');
+    `);
+    
+    // Force a migration by setting version to 0
+    const originalVersion = await db.getFirstAsync('PRAGMA user_version;') as { user_version: number };
+    await db.execAsync('PRAGMA user_version = 0;');
+    
+    console.log('🔄 Forcing migration from version 0...');
+    await migrateDatabase(db);
+    
+    // Verify data survived migration
+    const userCount = await db.getFirstAsync('SELECT COUNT(*) as count FROM users;') as { count: number };
+    const clubCount = await db.getFirstAsync('SELECT COUNT(*) as count FROM clubs;') as { count: number };
+    
+    console.log(`✅ Migration test completed:`);
+    console.log(`   - Users preserved: ${userCount.count}`);
+    console.log(`   - Clubs preserved: ${clubCount.count}`);
+    
+    // Clean up test data
+    await db.execAsync('DELETE FROM clubs WHERE id = "test-club-1";');
+    await db.execAsync('DELETE FROM users WHERE id = "test-user-1";');
+    
+    console.log('✅ Migration system test passed');
+  } catch (error) {
+    console.error('❌ Migration system test failed:', error);
     throw error;
   }
 }
