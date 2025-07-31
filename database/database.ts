@@ -223,6 +223,13 @@ export async function seedDatabase(db: Database): Promise<void> {
   try {
     console.log('🌱 Seeding database with development data...');
 
+    // Check if we already have data to avoid conflicts
+    const existingUsers = await db.getAllAsync('SELECT COUNT(*) as count FROM users');
+    if (existingUsers && existingUsers[0] && (existingUsers[0] as any).count > 0) {
+      console.log('ℹ️ Database already has users, skipping seed data to avoid conflicts');
+      return;
+    }
+
     // Users (Tennis Players)
     await db.execAsync(`
       INSERT INTO users (id, full_name, email, phone, role, contact_preference, skill_level, playing_style, profile_visibility, match_history_visibility, allow_challenges, created_at) VALUES
