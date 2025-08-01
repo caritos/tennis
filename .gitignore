@@ -45,3 +45,5 @@ tests/integration/screenshots/
 ios/certs/
 .keys/
 *.p8
+
+logs/expo*.log

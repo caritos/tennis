@@ -29,5 +29,6 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - Removed onboarding pages after careful consideration of user flow and app simplification, focusing on direct and streamlined user experience
 - Documented notifications implementation and committed changes to GitHub repository
 - Always find the root cause of the problem rather than getting a fix that does not fix the source
+- You can view the expo logs at 'logs/expo.log' (use a subagent to tail at least 200 lines and return the relevant lines)
 
 [... rest of the existing content remains unchanged ...]
