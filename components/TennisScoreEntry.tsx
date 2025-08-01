@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   View,
   Text,
@@ -53,10 +53,10 @@ export function TennisScoreEntry({
   const [tiebreakPlayerScore, setTiebreakPlayerScore] = useState('');
   const [tiebreakOpponentScore, setTiebreakOpponentScore] = useState('');
   const [validationErrors, setValidationErrors] = useState<string[]>([]);
-
-  // Initialize from existing sets
+  
+  // Only initialize once on mount - don't react to initialSets changes during normal use
   useEffect(() => {
-    console.log('🎾 TennisScoreEntry useEffect triggered with initialSets:', initialSets);
+    console.log('🎾 TennisScoreEntry initializing with initialSets:', initialSets);
     
     if (initialSets.length > 0) {
       console.log('🎾 Mapping initialSets to inputs...');
@@ -78,9 +78,9 @@ export function TennisScoreEntry({
       setValidSets(initialSets);
       console.log('🎾 Set inputs and valid sets updated');
     } else {
-      console.log('🎾 No initialSets to process');
+      console.log('🎾 No initialSets to process - starting fresh');
     }
-  }, [initialSets]);
+  }, []); // Empty dependency array - only run on mount
 
   // Use shared utility function
 

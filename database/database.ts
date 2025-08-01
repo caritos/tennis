@@ -167,6 +167,7 @@ export async function createTables(db: Database): Promise<void> {
         notes TEXT,
         status TEXT DEFAULT 'active' CHECK (status IN ('active', 'matched', 'cancelled')),
         created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+        updated_at TEXT DEFAULT CURRENT_TIMESTAMP,
         expires_at TEXT,
         FOREIGN KEY (club_id) REFERENCES clubs (id),
         FOREIGN KEY (creator_id) REFERENCES users (id)
@@ -182,6 +183,7 @@ export async function createTables(db: Database): Promise<void> {
         message TEXT,
         status TEXT DEFAULT 'interested' CHECK (status IN ('interested', 'confirmed', 'declined')),
         created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+        updated_at TEXT DEFAULT CURRENT_TIMESTAMP,
         FOREIGN KEY (invitation_id) REFERENCES match_invitations (id) ON DELETE CASCADE,
         FOREIGN KEY (user_id) REFERENCES users (id),
         UNIQUE(invitation_id, user_id)

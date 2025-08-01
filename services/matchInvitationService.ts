@@ -115,6 +115,9 @@ export class MatchInvitationService {
     const db = await initializeDatabase();
     
     try {
+      // Clean up expired invitations before fetching
+      await this.cleanupExpiredInvitations(clubId);
+      
       const invitations = await db.getAllAsync(
         `SELECT mi.*, u.full_name as creator_name
          FROM match_invitations mi
@@ -367,6 +370,59 @@ export class MatchInvitationService {
     } catch (error) {
       console.error('❌ Failed to get user responses:', error);
       return [];
+    }
+  }
+
+  /**
+   * Clean up expired invitations
+   */
+  private async cleanupExpiredInvitations(clubId?: string): Promise<void> {
+    const db = await initializeDatabase();
+    
+    try {
+      const now = new Date();
+      const currentDateTime = now.toISOString();
+      
+      // Build the WHERE clause - either for a specific club or all clubs
+      let whereClause = '';
+      let params: any[] = [];
+      
+      if (clubId) {
+        whereClause = 'WHERE club_id = ? AND';
+        params.push(clubId);
+      } else {
+        whereClause = 'WHERE';
+      }
+      
+      // Find invitations that have passed their date/time
+      const expiredInvitations = await db.getAllAsync(
+        `SELECT id, date, time, expires_at
+         FROM match_invitations 
+         ${whereClause} status = 'active' AND (
+           -- Check if expires_at is set and passed
+           (expires_at IS NOT NULL AND expires_at < ?) OR
+           -- Check if date/time combination has passed (fallback if no expires_at)
+           (expires_at IS NULL AND date < ? AND (time IS NULL OR datetime(date || ' ' || time) < datetime('now')))
+         )`,
+        [...params, currentDateTime, now.toISOString().split('T')[0]]
+      );
+      
+      if (expiredInvitations.length > 0) {
+        console.log(`🗑️ Found ${expiredInvitations.length} expired invitations, removing...`);
+        
+        // Delete expired invitations (this will cascade to responses)
+        const expiredIds = expiredInvitations.map((inv: any) => inv.id);
+        const placeholders = expiredIds.map(() => '?').join(',');
+        
+        await db.runAsync(
+          `DELETE FROM match_invitations WHERE id IN (${placeholders})`,
+          expiredIds
+        );
+        
+        console.log(`✅ Removed ${expiredInvitations.length} expired invitations`);
+      }
+    } catch (error) {
+      console.error('❌ Failed to cleanup expired invitations:', error);
     }
   }
 }
