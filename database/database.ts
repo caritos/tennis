@@ -2,7 +2,37 @@ import * as SQLite from 'expo-sqlite';
 
 export interface Database extends SQLite.SQLiteDatabase {}
 
+// Singleton to prevent concurrent database initialization
+let databaseInstance: Database | null = null;
+let initializationPromise: Promise<Database> | null = null;
+
 export async function initializeDatabase(): Promise<Database> {
+  // If we already have a database instance, return it
+  if (databaseInstance) {
+    return databaseInstance;
+  }
+  
+  // If initialization is already in progress, wait for it
+  if (initializationPromise) {
+    console.log('⏳ Database initialization already in progress, waiting...');
+    return initializationPromise;
+  }
+  
+  // Start initialization and store the promise
+  initializationPromise = initializeDatabaseInternal();
+  
+  try {
+    databaseInstance = await initializationPromise;
+    return databaseInstance;
+  } catch (error) {
+    // Reset on error so we can try again
+    initializationPromise = null;
+    databaseInstance = null;
+    throw error;
+  }
+}
+
+async function initializeDatabaseInternal(): Promise<Database> {
   try {
     const db = await SQLite.openDatabaseAsync('tennis.db');
     
@@ -39,6 +69,9 @@ export async function initializeDatabase(): Promise<Database> {
   } catch (error) {
     console.error('Failed to initialize database:', error);
     throw error;
+  } finally {
+    // Clear the initialization promise when done (success or failure)
+    initializationPromise = null;
   }
 }
 
