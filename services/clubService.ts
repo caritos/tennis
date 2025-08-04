@@ -248,6 +248,22 @@ export class ClubService {
     const db = await this.getDatabase();
 
     try {
+      console.log('getUserClubs: Looking up clubs for user:', userId);
+      
+      // Check club memberships
+      const memberships = await db.getAllAsync(
+        `SELECT club_id FROM club_members WHERE user_id = ?`,
+        [userId]
+      );
+      console.log('getUserClubs: Found memberships:', memberships);
+      
+      // Check matches
+      const matches = await db.getAllAsync(
+        `SELECT DISTINCT club_id FROM matches WHERE player1_id = ? OR player2_id = ? OR player3_id = ? OR player4_id = ?`,
+        [userId, userId, userId, userId]
+      );
+      console.log('getUserClubs: Found matches in clubs:', matches);
+      
       const clubs = await db.getAllAsync(
         `SELECT c.*, 
                 COALESCE(member_counts.memberCount, 0) as memberCount

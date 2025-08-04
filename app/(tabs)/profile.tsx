@@ -29,14 +29,19 @@ export default function ProfileScreen() {
 
   const loadUserClubs = async () => {
     if (!user?.id) {
+      console.log('ProfileScreen: No user ID available');
       setUserClubs([]);
       setLoading(false);
       return;
     }
 
+    console.log('ProfileScreen: Loading clubs for user:', user.id);
+    console.log('ProfileScreen: User object:', JSON.stringify(user, null, 2));
+
     try {
       setLoading(true);
       const clubs = await clubService.getUserClubs(user.id);
+      console.log('ProfileScreen: Received clubs:', clubs);
       setUserClubs(clubs);
     } catch (error) {
       console.error('Failed to load user clubs:', error);

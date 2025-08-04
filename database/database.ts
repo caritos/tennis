@@ -39,30 +39,38 @@ async function initializeDatabaseInternal(): Promise<Database> {
     // Enable foreign key constraints
     await db.execAsync('PRAGMA foreign_keys = ON;');
     
-    // For development: Drop and recreate tables to ensure latest schema
-    // Remove this in production when we need to preserve user data
-    try {
-      // Drop tables in reverse dependency order
-      await db.execAsync('DROP TABLE IF EXISTS notifications;');
-      await db.execAsync('DROP TABLE IF EXISTS challenge_counters;');
-      await db.execAsync('DROP TABLE IF EXISTS challenges;');
-      await db.execAsync('DROP TABLE IF EXISTS invitation_responses;');
-      await db.execAsync('DROP TABLE IF EXISTS match_invitations;');
-      await db.execAsync('DROP TABLE IF EXISTS club_members;');
-      await db.execAsync('DROP TABLE IF EXISTS matches;');
-      await db.execAsync('DROP TABLE IF EXISTS clubs;');
-      await db.execAsync('DROP TABLE IF EXISTS users;');
-      console.log('Database tables dropped successfully');
-    } catch (dropError) {
-      console.error('Failed to drop tables:', dropError);
-      throw dropError;
+    // For development: Only drop tables if explicitly requested via environment variable
+    // This preserves user data during normal development
+    if (process.env.EXPO_PUBLIC_RESET_DATABASE === 'true') {
+      try {
+        console.log('⚠️ RESETTING DATABASE - All data will be lost!');
+        // Drop tables in reverse dependency order
+        await db.execAsync('DROP TABLE IF EXISTS notifications;');
+        await db.execAsync('DROP TABLE IF EXISTS challenge_counters;');
+        await db.execAsync('DROP TABLE IF EXISTS challenges;');
+        await db.execAsync('DROP TABLE IF EXISTS invitation_responses;');
+        await db.execAsync('DROP TABLE IF EXISTS match_invitations;');
+        await db.execAsync('DROP TABLE IF EXISTS club_members;');
+        await db.execAsync('DROP TABLE IF EXISTS matches;');
+        await db.execAsync('DROP TABLE IF EXISTS clubs;');
+        await db.execAsync('DROP TABLE IF EXISTS users;');
+        console.log('Database tables dropped successfully');
+      } catch (dropError) {
+        console.error('Failed to drop tables:', dropError);
+        throw dropError;
+      }
     }
     
     // Create tables with latest schema
     await createTables(db);
     
-    // Add seed data in development
-    await seedDatabase(db);
+    // Only seed if database is empty or reset was requested
+    const userCount = await db.getFirstAsync('SELECT COUNT(*) as count FROM users');
+    if (!userCount || userCount.count === 0 || process.env.EXPO_PUBLIC_RESET_DATABASE === 'true') {
+      await seedDatabase(db);
+    } else {
+      console.log(`ℹ️ Database already contains ${userCount.count} users, skipping seed data`);
+    }
     
     console.log('✅ Database initialized with latest schema and seed data');
     return db;
