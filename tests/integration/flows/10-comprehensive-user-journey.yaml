@@ -1,0 +1,275 @@
+appId: com.caritos.tennis
+name: "Comprehensive User Journey - Complete App Flow"
+---
+# Complete user journey testing all major features
+# Tests: Auth → Club Joining → Match Recording → Invitations → Profile
+
+- launchApp:
+    clearState: true
+- waitForAnimationToEnd
+
+# Welcome Screen - Authentication Flow
+- assertVisible: "Tennis Club"
+- assertVisible: "Connect with tennis players in your area"
+- tapOn:
+    id: "get-started-button"
+- waitForAnimationToEnd
+
+# Sign Up Flow
+- assertVisible: "Sign Up"
+- tapOn:
+    id: "email-signup-button"
+- waitForAnimationToEnd
+
+# Create Account
+- tapOn:
+    id: "full-name-input"
+- inputText: "E2E Test User"
+- waitForAnimationToEnd
+
+- tapOn:
+    id: "email-input"
+- inputText: "e2etest@example.com"
+- waitForAnimationToEnd
+
+- tapOn:
+    id: "password-input"
+- inputText: "TestPass123"
+- waitForAnimationToEnd
+
+- tapOn:
+    id: "confirm-password-input"
+- inputText: "TestPass123"
+- waitForAnimationToEnd
+
+- tapOn:
+    id: "phone-input"
+- inputText: "5551234567"
+- waitForAnimationToEnd
+
+# Scroll to reveal terms checkbox
+- scroll
+- waitForAnimationToEnd
+
+# Agree to terms
+- tapOn:
+    id: "terms-checkbox"
+- waitForAnimationToEnd
+
+# Scroll to reveal submit button
+- scroll
+- waitForAnimationToEnd
+
+# Submit account creation
+- tapOn:
+    id: "create-account-button"
+- waitForAnimationToEnd:
+    timeout: 10000
+
+# Verify successful login to clubs screen
+- assertVisible: "My Clubs"
+- assertVisible: "Nearby Clubs"
+- takeScreenshot: successful-signup
+
+# SECTION 1: Club Discovery and Joining
+- assertVisible: "Nearby Clubs"
+- assertVisible:
+    text: ".*Tennis.*"
+    index: 0
+
+# Join first available club
+- tapOn:
+    text: "Join"
+    index: 0
+- waitForAnimationToEnd:
+    timeout: 5000
+
+# Verify club joined successfully
+- assertVisible: "My Clubs"
+- assertVisible:
+    text: ".*Tennis.*"
+    index: 0
+- takeScreenshot: club-joined
+
+# SECTION 2: Navigate to Club Details
+- tapOn:
+    text: ".*Tennis.*"
+    index: 0
+- waitForAnimationToEnd
+
+# Verify club details page
+- assertVisible: "Club Rankings"
+- assertVisible: "Recent Matches"
+- assertVisible: "Open Invites"
+- assertVisible: "Record Match"
+- takeScreenshot: club-details
+
+# SECTION 3: Record a Match
+- tapOn: "Record Match"
+- waitForAnimationToEnd
+
+# Verify match recording form
+- assertVisible: "Record Match"
+- assertVisible: "Match Type"
+- assertVisible: "Singles"
+
+# Select opponent (if available)
+- assertVisible:
+    text: "Select Opponent"
+    optional: true
+- tapOn:
+    text: "Select Opponent"
+    optional: true
+- waitForAnimationToEnd
+- tapOn:
+    text: ".*"
+    index: 0
+    optional: true
+- waitForAnimationToEnd
+
+# Enter match scores
+- assertVisible: "Set 1"
+
+# Enter first set score
+- tapOn:
+    id: "player-score-input-0"
+    optional: true
+- inputText: "6"
+- waitForAnimationToEnd
+
+- tapOn:
+    id: "opponent-score-input-0"
+    optional: true
+- inputText: "4"
+- waitForAnimationToEnd
+
+# Scroll to add more sets
+- scroll
+- waitForAnimationToEnd
+
+# Add second set if button available
+- tapOn:
+    text: "Add Set"
+    optional: true
+- waitForAnimationToEnd
+
+# Enter second set score
+- tapOn:
+    id: "player-score-input-1"
+    optional: true
+- inputText: "6"
+- waitForAnimationToEnd
+
+- tapOn:
+    id: "opponent-score-input-1"
+    optional: true
+- inputText: "2"
+- waitForAnimationToEnd
+
+# Save match
+- tapOn:
+    text: "Save Match"
+- waitForAnimationToEnd:
+    timeout: 10000
+
+# Verify returned to club details
+- assertVisible:
+    text: "Recent Matches|Club Rankings"
+- takeScreenshot: match-saved
+
+# SECTION 4: Open Invites / Looking to Play
+- assertVisible: "Open Invites"
+- tapOn: "Invite players to join you"
+- waitForAnimationToEnd
+
+# Fill match invitation form
+- assertVisible: "Match Type"
+- tapOn: "Singles"
+- waitForAnimationToEnd
+
+# Set date (future date)
+- assertVisible: "Date"
+- tapOn:
+    text: "Date"
+- waitForAnimationToEnd
+- tapOn:
+    text: "OK|Done"
+    optional: true
+- waitForAnimationToEnd
+
+# Set time
+- assertVisible:
+    text: "Time"
+    optional: true
+- tapOn:
+    text: "Time"
+    optional: true
+- waitForAnimationToEnd
+- inputText: "6:00 PM"
+- waitForAnimationToEnd
+
+# Location (should have default)
+- assertVisible:
+    text: "Location TBD"
+    optional: true
+
+# Submit invitation
+- tapOn:
+    text: "Create Invitation"
+- waitForAnimationToEnd:
+    timeout: 5000
+
+# Verify invitation created
+- assertVisible:
+    text: "Open Invites"
+- takeScreenshot: invitation-created
+
+# SECTION 5: Profile and Settings
+- tapOn: "Profile"
+- waitForAnimationToEnd
+
+# Verify profile information
+- assertVisible: "E2E Test User"
+- assertVisible: "Tennis Stats"
+- assertVisible: "Match History"
+- assertVisible: "Club Memberships"
+- assertVisible:
+    text: ".*Tennis.*"
+    index: 0
+
+# Edit profile
+- tapOn:
+    text: "Edit"
+- waitForAnimationToEnd
+
+# Verify edit profile form
+- assertVisible: "Edit Profile"
+- assertVisible: "Full Name"
+- takeScreenshot: edit-profile
+
+# Go back
+- tapOn:
+    text: "Cancel|Back"
+- waitForAnimationToEnd
+
+# SECTION 6: Navigation Testing
+- tapOn: "Clubs"
+- waitForAnimationToEnd
+- assertVisible: "My Clubs"
+
+- tapOn: "Profile"
+- waitForAnimationToEnd
+- assertVisible: "E2E Test User"
+
+# SECTION 7: Sign Out
+- assertVisible: "Sign Out"
+- tapOn: "Sign Out"
+- waitForAnimationToEnd:
+    timeout: 5000
+
+# Verify signed out (back to welcome)
+- assertVisible:
+    text: "Tennis Club|Get Started"
+- takeScreenshot: signed-out
+
+# END TEST

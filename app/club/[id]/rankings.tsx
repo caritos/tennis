@@ -10,17 +10,22 @@ import { Colors } from '@/constants/Colors';
 import { ClubRankings, RankedPlayer } from '@/components/ClubRankings';
 import { getClubLeaderboard } from '@/services/matchService';
 import { initializeDatabase } from '@/database/database';
+import { useAuth } from '@/contexts/AuthContext';
+import ChallengeFlowModal from '@/components/ChallengeFlowModal';
 
 export default function ClubRankingsScreen() {
   const { id } = useLocalSearchParams();
   const colorScheme = useColorScheme();
   const colors = Colors[colorScheme ?? 'light'];
+  const { user } = useAuth();
   
   const [clubName, setClubName] = useState('');
   const [rankings, setRankings] = useState<RankedPlayer[]>([]);
   const [memberCount, setMemberCount] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [showChallengeModal, setShowChallengeModal] = useState(false);
+  const [challengeTarget, setChallengeTarget] = useState<{ id: string; name: string } | null>(null);
 
   useEffect(() => {
     loadRankings();
@@ -72,6 +77,16 @@ export default function ClubRankingsScreen() {
 
   const handleBack = () => {
     router.back();
+  };
+
+  const handleChallengePlayer = (playerId: string, playerName: string) => {
+    setChallengeTarget({ id: playerId, name: playerName });
+    setShowChallengeModal(true);
+  };
+
+  const handleChallengeSuccess = () => {
+    // Refresh rankings to show any updates
+    loadRankings();
   };
 
 
@@ -133,11 +148,26 @@ export default function ClubRankingsScreen() {
           <ClubRankings
             rankings={rankings}
             memberCount={memberCount}
+            currentUserId={user?.id}
             onPlayerPress={undefined}
+            onChallengePress={handleChallengePlayer}
             showAll={true}
           />
         </ThemedView>
       </ScrollView>
+
+      {/* Challenge Modal */}
+      <ChallengeFlowModal
+        clubId={id as string}
+        targetPlayerId={challengeTarget?.id}
+        targetPlayerName={challengeTarget?.name}
+        isVisible={showChallengeModal}
+        onClose={() => {
+          setShowChallengeModal(false);
+          setChallengeTarget(null);
+        }}
+        onSuccess={handleChallengeSuccess}
+      />
     </SafeAreaView>
   );
 }

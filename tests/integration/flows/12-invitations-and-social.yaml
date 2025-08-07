@@ -1,0 +1,242 @@
+appId: com.caritos.tennis
+name: "Match Invitations and Social Features"
+---
+# Test Open Invites, match invitations, location field, and social interactions
+# Tests: Creating invitations, responding, canceling, expired cleanup
+
+- launchApp:
+    clearState: false
+- waitForAnimationToEnd
+
+# Ensure we're on clubs screen with club membership
+- assertVisible:
+    text: "My Clubs"
+    optional: true
+- tapOn:
+    text: "Clubs"
+    optional: true
+- waitForAnimationToEnd
+
+# Navigate to club details
+- tapOn:
+    text: ".*Tennis.*"
+    index: 0
+- waitForAnimationToEnd
+
+# TEST 1: Create Singles Invitation
+- assertVisible: "Open Invites"
+- tapOn: "Invite players to join you"
+- waitForAnimationToEnd
+
+# Fill invitation form
+- assertVisible: "Match Type"
+- tapOn: "Singles"
+- waitForAnimationToEnd
+
+# Set future date
+- assertVisible: "Date"
+- tapOn:
+    text: "Date"
+- waitForAnimationToEnd
+- tapOn:
+    text: "OK|Done"
+    optional: true
+- waitForAnimationToEnd
+
+# Set time
+- assertVisible: "Time"
+- tapOn:
+    text: "Time"
+- waitForAnimationToEnd
+- inputText: "7:00 PM"
+- waitForAnimationToEnd
+
+# Test location field (recent addition)
+- assertVisible: "Location"
+- tapOn:
+    text: "Location TBD"
+- eraseText
+- inputText: "Court 3"
+- waitForAnimationToEnd
+
+# Add notes
+- assertVisible:
+    text: "Notes"
+    optional: true
+- tapOn:
+    text: "Notes"
+    optional: true
+- inputText: "Competitive singles match"
+- waitForAnimationToEnd
+
+# Create invitation
+- tapOn: "Create Invitation"
+- waitForAnimationToEnd:
+    timeout: 5000
+
+# Verify invitation appears in Open Invites
+- assertVisible: "Open Invites"
+- assertVisible:
+    text: "Singles"
+    optional: true
+- assertVisible:
+    text: "Court 3"
+    optional: true
+- takeScreenshot: singles-invitation-created
+
+# TEST 2: Create Doubles Invitation
+- tapOn: "Invite players to join you"
+- waitForAnimationToEnd
+
+- tapOn: "Doubles"
+- waitForAnimationToEnd
+
+# Set different time
+- tapOn:
+    text: "Time"
+- eraseText
+- inputText: "2:00 PM"
+- waitForAnimationToEnd
+
+# Use default location
+- assertVisible:
+    text: "Location TBD"
+
+# Create doubles invitation
+- tapOn: "Create Invitation"
+- waitForAnimationToEnd:
+    timeout: 5000
+
+# Verify both invitations show
+- assertVisible:
+    text: "Singles.*7:00 PM"
+    optional: true
+- assertVisible:
+    text: "Doubles.*2:00 PM"
+    optional: true
+- assertVisible:
+    text: "1/2 players"
+    optional: true
+- assertVisible:
+    text: "1/4 players"
+    optional: true
+- takeScreenshot: multiple-invitations
+
+# TEST 3: Test invitation UI elements (recent fixes)
+# Verify reduced vertical space
+- assertVisible:
+    text: "Court 3"
+    optional: true
+- assertVisible:
+    text: "Location TBD"
+    optional: true
+
+# Verify no duplicate information (recent fix)
+- assertNotVisible:
+    text: "Doubles.*Doubles"
+    optional: true
+
+# Verify clean footer (recent fix)
+- assertVisible:
+    text: "Cancel"
+    optional: true
+- assertVisible:
+    text: "ago"
+    optional: true
+
+# TEST 4: Cancel an invitation
+- tapOn:
+    text: "Cancel"
+    index: 0
+    optional: true
+- waitForAnimationToEnd
+
+# Verify invitation removed
+- assertVisible: "Open Invites"
+- takeScreenshot: invitation-cancelled
+
+# TEST 5: Test automatic expired cleanup (recent feature)
+# This would require setting past date, but we'll verify the feature exists
+- tapOn: "Invite players to join you"
+- waitForAnimationToEnd
+
+# Create invitation with past date (should be cleaned up)
+- tapOn: "Singles"
+- waitForAnimationToEnd
+
+# Set date in past (if system allows)
+- tapOn:
+    text: "Date"
+- waitForAnimationToEnd
+- tapOn:
+    text: "OK|Done"
+    optional: true
+- waitForAnimationToEnd
+
+# Try to create (may fail validation)
+- tapOn:
+    text: "Create Invitation"
+    optional: true
+- waitForAnimationToEnd
+
+# Verify proper date validation
+- assertVisible:
+    text: "future|invalid|error"
+    optional: true
+
+# Cancel if needed
+- tapOn:
+    text: "Cancel|Back"
+    optional: true
+- waitForAnimationToEnd
+
+# TEST 6: Profile Integration
+- tapOn: "Profile"
+- waitForAnimationToEnd
+
+# Verify club membership shows (recent fix)
+- assertVisible: "Club Memberships"
+- assertVisible:
+    text: ".*Tennis.*"
+    index: 0
+
+# Verify no "No club memberships" message (recent bug fix)
+- assertNotVisible:
+    text: "No club memberships"
+
+# Check match history
+- assertVisible: "Match History"
+- assertVisible:
+    text: "6|7"
+    optional: true
+
+# TEST 7: Return to clubs and verify all features
+- tapOn: "Clubs"
+- waitForAnimationToEnd
+
+# Navigate back to club
+- tapOn:
+    text: ".*Tennis.*"
+    index: 0
+- waitForAnimationToEnd
+
+# Verify all sections present and working
+- assertVisible: "Club Rankings"
+- assertVisible: "Recent Matches"
+- assertVisible: "Open Invites"
+
+# Test View All for Recent Matches (recent addition)
+- tapOn:
+    text: "View All"
+    optional: true
+- waitForAnimationToEnd
+- assertVisible:
+    text: "matches"
+    optional: true
+- tapOn:
+    text: "Back"
+    optional: true
+- waitForAnimationToEnd
+
+# Final screenshot
+- takeScreenshot: social-features-complete

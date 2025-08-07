@@ -61,6 +61,12 @@ export function TennisScoreDisplay({
   const { user } = useAuth();
 
   const parseScores = (scoreString: string): ParsedSet[] => {
+    // Handle invalid scores gracefully
+    if (!scoreString || typeof scoreString !== 'string') {
+      console.warn('Invalid score string:', scoreString);
+      return [];
+    }
+    
     return scoreString.split(',').map(setScore => {
       // Handle tiebreak notation like "7-6(7-3)"
       const tiebreakMatch = setScore.match(/(\d+)-(\d+)\((\d+)-(\d+)\)/);
@@ -107,20 +113,55 @@ export function TennisScoreDisplay({
   };
 
   const formatMatchDate = (dateString: string) => {
-    const date = new Date(dateString);
-    const month = String(date.getMonth() + 1).padStart(2, '0');
-    const day = String(date.getDate()).padStart(2, '0');
-    const year = String(date.getFullYear()).slice(-2);
-    return `${month}/${day}/${year}`;
+    try {
+      const date = new Date(dateString);
+      const month = String(date.getMonth() + 1).padStart(2, '0');
+      const day = String(date.getDate()).padStart(2, '0');
+      const year = String(date.getFullYear()).slice(-2);
+      return `${month}/${day}/${year}`;
+    } catch (error) {
+      console.warn('Invalid date string:', dateString);
+      return dateString;
+    }
+  };
+
+  // Truncate long names for better display
+  const truncateName = (name: string, maxLength: number = 25) => {
+    if (!name) return 'Unknown Player';
+    if (name.length <= maxLength) return name;
+    
+    // For doubles names with '&', try to truncate each part
+    if (name.includes(' & ')) {
+      const parts = name.split(' & ');
+      const truncatedParts = parts.map(part => 
+        part.length > 12 ? part.substring(0, 12) + '...' : part
+      );
+      return truncatedParts.join(' & ');
+    }
+    
+    return name.substring(0, maxLength) + '...';
   };
 
   return (
     <ThemedView style={[styles.container, { backgroundColor: colors.background }]}>
       {/* Header */}
       <View style={styles.header}>
-        <ThemedText style={[styles.clubName, { color: colors.tabIconDefault }]}>
-          {clubName || 'Tennis Club'}
-        </ThemedText>
+        <View style={styles.headerLeft}>
+          <ThemedText style={[styles.clubName, { color: colors.tabIconDefault }]}>
+            {clubName || 'Tennis Club'}
+          </ThemedText>
+          <View style={[
+            styles.matchTypeBadge, 
+            { backgroundColor: matchType === 'singles' ? '#E3F2FD' : '#FFF3E0' }
+          ]}>
+            <ThemedText style={[
+              styles.matchTypeText,
+              { color: matchType === 'singles' ? '#1976D2' : '#F57C00' }
+            ]}>
+              {matchType === 'singles' ? '1v1' : '2v2'}
+            </ThemedText>
+          </View>
+        </View>
         <View style={styles.headerRight}>
           <ThemedText style={[styles.matchDate, { color: colors.tabIconDefault }]}>
             {matchDate ? formatMatchDate(matchDate) : ''}
@@ -130,6 +171,8 @@ export function TennisScoreDisplay({
               onPress={() => setShowNotesModal(true)}
               style={styles.notesIcon}
               activeOpacity={0.7}
+              accessibilityLabel="View match notes"
+              accessibilityRole="button"
             >
               <Ionicons name="document-text" size={16} color={colors.tabIconDefault} />
             </TouchableOpacity>
@@ -139,6 +182,8 @@ export function TennisScoreDisplay({
               onPress={handleEditMatch}
               style={styles.editIcon}
               activeOpacity={0.7}
+              accessibilityLabel="Edit match"
+              accessibilityRole="button"
             >
               <Ionicons name="pencil" size={16} color={colors.tint} />
             </TouchableOpacity>
@@ -175,7 +220,7 @@ export function TennisScoreDisplay({
               numberOfLines={matchType === 'doubles' ? 2 : 1}
               ellipsizeMode="tail"
             >
-              {player1Name}
+              {truncateName(player1Name)}
             </ThemedText>
           </View>
           {sets.map((set, index) => (
@@ -209,7 +254,7 @@ export function TennisScoreDisplay({
               numberOfLines={matchType === 'doubles' ? 2 : 1}
               ellipsizeMode="tail"
             >
-              {player2Name}
+              {truncateName(player2Name)}
             </ThemedText>
           </View>
           {sets.map((set, index) => (
@@ -272,23 +317,50 @@ export function TennisScoreDisplay({
 
 const styles = StyleSheet.create({
   container: {
-    borderRadius: 12,
+    borderRadius: 16,
     borderWidth: 1,
     borderColor: '#e0e0e0',
     overflow: 'hidden',
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.08,
+    shadowRadius: 8,
+    elevation: 3,
+    marginVertical: 4,
   },
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingHorizontal: 12,
-    paddingVertical: 6,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
     borderBottomWidth: 1,
-    borderBottomColor: '#e0e0e0',
+    borderBottomColor: '#f0f0f0',
+    backgroundColor: '#fafafa',
+  },
+  headerLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flex: 1,
   },
   clubName: {
     fontSize: 14,
-    fontWeight: '600',
+    fontWeight: '700',
+    letterSpacing: 0.3,
+    textTransform: 'uppercase',
+    marginRight: 12,
+  },
+  matchTypeBadge: {
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 12,
+  },
+  matchTypeText: {
+    fontSize: 11,
+    fontWeight: '700',
     letterSpacing: 0.5,
   },
   headerRight: {
@@ -297,9 +369,9 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   matchDate: {
-    fontSize: 14,
-    fontWeight: '600',
-    letterSpacing: 0.5,
+    fontSize: 13,
+    fontWeight: '500',
+    letterSpacing: 0.2,
   },
   notesIcon: {
     padding: 4,
@@ -310,7 +382,8 @@ const styles = StyleSheet.create({
     borderRadius: 4,
   },
   scoreGrid: {
-    padding: 12,
+    padding: 16,
+    backgroundColor: '#ffffff',
   },
   headerRow: {
     flexDirection: 'row',
@@ -318,27 +391,32 @@ const styles = StyleSheet.create({
     marginBottom: 6,
   },
   setColumn: {
-    width: 45,
+    width: 50,
     alignItems: 'center',
     justifyContent: 'center',
-    marginHorizontal: 2,
+    marginHorizontal: 3,
+    paddingVertical: 4,
   },
   setHeader: {
     fontSize: 12,
-    fontWeight: '500',
+    fontWeight: '700',
+    textTransform: 'uppercase',
     textAlign: 'center',
     width: '100%',
+    letterSpacing: 0.5,
   },
   playerRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginVertical: 2,
+    marginVertical: 6,
+    paddingVertical: 4,
   },
   playerInfo: {
     flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
-    maxWidth: '70%', // Ensure names don't take up all space, leaving room for scores
+    maxWidth: '65%',
+    marginRight: 8,
   },
   playerIndicator: {
     width: 20,
@@ -349,18 +427,23 @@ const styles = StyleSheet.create({
   },
   playerName: {
     fontSize: 16,
-    fontWeight: '500',
+    fontWeight: '600',
     flex: 1,
-    minWidth: 80, // Ensure minimum readable width
+    minWidth: 100,
+    lineHeight: 20,
   },
   setScore: {
-    fontSize: 22,
-    fontWeight: 'bold',
+    fontSize: 24,
+    fontWeight: '800',
     textAlign: 'center',
     width: '100%',
+    letterSpacing: -0.5,
   },
   winnerScore: {
-    color: '#4CAF50',
+    color: '#2E7D32',
+    textShadowColor: '#4CAF50',
+    textShadowOffset: { width: 0, height: 1 },
+    textShadowRadius: 2,
   },
   tiebreakScore: {
     fontSize: 10,

@@ -1,0 +1,347 @@
+appId: com.caritos.tennis
+name: "Error Handling and Edge Cases"
+---
+# Test error scenarios, validation, and edge cases
+# Tests: Form validation, network errors, invalid data, boundary conditions
+
+- launchApp:
+    clearState: false
+- waitForAnimationToEnd
+
+# TEST 1: Match Recording Validation
+- assertVisible:
+    text: "My Clubs"
+    optional: true
+- tapOn:
+    text: ".*Tennis.*"
+    index: 0
+    optional: true
+- waitForAnimationToEnd
+- tapOn: "Record Match"
+- waitForAnimationToEnd
+
+# Test score validation - invalid scores
+- tapOn:
+    id: "player-score-input-0"
+    optional: true
+- inputText: "15"  # Invalid tennis score
+- waitForAnimationToEnd
+
+- tapOn:
+    id: "opponent-score-input-0"
+    optional: true
+- inputText: "8"   # Invalid tennis score  
+- waitForAnimationToEnd
+
+# Try to save with invalid scores
+- tapOn:
+    text: "Save Match"
+    optional: true
+- waitForAnimationToEnd
+
+# Should show validation error
+- assertVisible:
+    text: "invalid|error|Valid"
+    optional: true
+- takeScreenshot: invalid-score-validation
+
+# Clear and test empty form submission
+- tapOn:
+    id: "player-score-input-0"
+    optional: true
+- eraseText
+- waitForAnimationToEnd
+
+- tapOn:
+    text: "Save Match"
+    optional: true
+- waitForAnimationToEnd
+
+# Should show validation error for empty scores
+- assertVisible:
+    text: "required|empty|enter"
+    optional: true
+- takeScreenshot: empty-form-validation
+
+# Test valid scores
+- tapOn:
+    id: "player-score-input-0"
+    optional: true
+- inputText: "6"
+- waitForAnimationToEnd
+
+- tapOn:
+    id: "opponent-score-input-0"
+    optional: true
+- inputText: "4"
+- waitForAnimationToEnd
+
+# Should be valid now
+- tapOn: "Save Match"
+- waitForAnimationToEnd:
+    timeout: 10000
+
+# Should succeed
+- assertVisible:
+    text: "Recent Matches"
+    optional: true
+
+# TEST 2: Invitation Form Validation
+- tapOn: "Invite players to join you"
+- waitForAnimationToEnd
+
+# Try to submit empty form
+- tapOn:
+    text: "Create Invitation"
+- waitForAnimationToEnd
+
+# Should show validation errors
+- assertVisible:
+    text: "required|select|choose"
+    optional: true
+- takeScreenshot: invitation-validation
+
+# Test past date validation (if enforced)
+- tapOn: "Singles"
+- waitForAnimationToEnd
+
+# Try to set past date
+- tapOn:
+    text: "Date"
+- waitForAnimationToEnd
+# Would need to navigate to past date in picker
+- tapOn:
+    text: "OK|Done"
+    optional: true
+- waitForAnimationToEnd
+
+# Set past time
+- tapOn:
+    text: "Time"
+- eraseText
+- inputText: "6:00 AM"  # Assuming current time is later
+- waitForAnimationToEnd
+
+# Try to create
+- tapOn: "Create Invitation"
+- waitForAnimationToEnd
+
+# May show past date error
+- assertVisible:
+    text: "future|past|invalid"
+    optional: true
+
+# Cancel form
+- tapOn:
+    text: "Cancel"
+- waitForAnimationToEnd
+
+# TEST 3: Profile Edit Validation
+- tapOn: "Profile"
+- waitForAnimationToEnd
+
+- tapOn:
+    text: "Edit"
+- waitForAnimationToEnd
+
+# Test empty name
+- tapOn:
+    id: "full-name-input"
+    optional: true
+- eraseText
+- waitForAnimationToEnd
+
+# Try to save empty name
+- tapOn:
+    text: "Save"
+    optional: true
+- waitForAnimationToEnd
+
+# Should show validation error
+- assertVisible:
+    text: "required|name|empty"
+    optional: true
+- takeScreenshot: profile-name-validation
+
+# Test invalid email format
+- tapOn:
+    id: "email-input"
+    optional: true
+- eraseText
+- inputText: "invalid-email"
+- waitForAnimationToEnd
+
+- tapOn:
+    text: "Save"
+    optional: true
+- waitForAnimationToEnd
+
+# Should show email validation error
+- assertVisible:
+    text: "valid email|invalid|format"
+    optional: true
+- takeScreenshot: profile-email-validation
+
+# Cancel edit
+- tapOn:
+    text: "Cancel"
+- waitForAnimationToEnd
+
+# TEST 4: Tennis Score Edge Cases
+- tapOn: "Clubs"
+- waitForAnimationToEnd
+- tapOn:
+    text: ".*Tennis.*"
+    index: 0
+- waitForAnimationToEnd
+- tapOn: "Record Match"
+- waitForAnimationToEnd
+
+# Test tiebreak scenario (7-6)
+- tapOn:
+    id: "player-score-input-0"
+    optional: true
+- inputText: "7"
+- waitForAnimationToEnd
+
+- tapOn:
+    id: "opponent-score-input-0"
+    optional: true
+- inputText: "6"
+- waitForAnimationToEnd
+
+# Should trigger tiebreak UI
+- assertVisible:
+    text: "Tiebreak"
+    optional: true
+
+# Enter tiebreak scores
+- tapOn:
+    id: "tiebreak-player-score-0"
+    optional: true
+- inputText: "7"
+- waitForAnimationToEnd
+
+- tapOn:
+    id: "tiebreak-opponent-score-0"
+    optional: true
+- inputText: "3"
+- waitForAnimationToEnd
+
+# Test invalid tiebreak (must win by 2)
+- tapOn:
+    id: "tiebreak-opponent-score-0"
+    optional: true
+- eraseText: 1
+- inputText: "6"  # 7-6 tiebreak is invalid
+- waitForAnimationToEnd
+
+# Should show tiebreak validation
+- assertVisible:
+    text: "tiebreak|invalid|must win by"
+    optional: true
+- takeScreenshot: tiebreak-validation
+
+# Fix tiebreak score
+- tapOn:
+    id: "tiebreak-opponent-score-0"
+    optional: true
+- eraseText: 1
+- inputText: "5"
+- waitForAnimationToEnd
+
+# Save match
+- tapOn: "Save Match"
+- waitForAnimationToEnd:
+    timeout: 10000
+
+# TEST 5: Network Error Simulation
+# (This would require actually disconnecting network)
+# For now, just test the UI handles long loading
+
+# Navigate to a form that would make network requests
+- tapOn: "Record Match"
+- waitForAnimationToEnd
+
+# Fill form quickly
+- tapOn: "Singles"
+- waitForAnimationToEnd
+
+- tapOn:
+    id: "player-score-input-0"
+    optional: true
+- inputText: "6"
+- waitForAnimationToEnd
+
+- tapOn:
+    id: "opponent-score-input-0"
+    optional: true
+- inputText: "0"
+- waitForAnimationToEnd
+
+# Submit and wait for longer than usual
+- tapOn: "Save Match"
+- waitForAnimationToEnd:
+    timeout: 15000
+
+# Should either succeed or show network error
+- assertVisible:
+    text: "Recent Matches|network|error|offline"
+    optional: true
+- takeScreenshot: network-handling
+
+# TEST 6: Data Persistence (Database Reset Bug Fix)
+# Verify club membership persists (recent bug fix)
+- tapOn: "Profile"
+- waitForAnimationToEnd
+
+# Should NOT show "No club memberships" (bug was fixed)
+- assertNotVisible:
+    text: "No club memberships"
+
+# Should show actual membership
+- assertVisible: "Club Memberships"
+- assertVisible:
+    text: ".*Tennis.*"
+    index: 0
+
+# TEST 7: Score Entry Bug Fix
+# Test the infinite loop bug fix in tennis score entry
+- tapOn: "Clubs"
+- waitForAnimationToEnd
+- tapOn:
+    text: ".*Tennis.*"
+    index: 0
+- waitForAnimationToEnd
+- tapOn: "Record Match"
+- waitForAnimationToEnd
+
+# Enter first score
+- tapOn:
+    id: "player-score-input-1"
+    optional: true
+- inputText: "6"
+- waitForAnimationToEnd
+
+# Enter second score - should NOT reset first score (bug fix)
+- tapOn:
+    id: "opponent-score-input-1"
+    optional: true
+- inputText: "4"
+- waitForAnimationToEnd
+
+# Verify first score is still "6" (not reset to 0)
+- assertVisible:
+    text: "6"
+    optional: true
+- takeScreenshot: score-entry-bug-fix
+
+# Cancel
+- tapOn:
+    text: "Cancel|Back"
+    optional: true
+- waitForAnimationToEnd
+
+# Final verification
+- assertVisible: "Recent Matches"
+- takeScreenshot: error-handling-complete

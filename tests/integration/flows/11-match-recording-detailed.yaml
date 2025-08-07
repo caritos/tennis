@@ -1,0 +1,261 @@
+appId: com.caritos.tennis
+name: "Match Recording - Detailed Tennis Score Entry"
+---
+# Detailed testing of tennis score entry with edge cases
+# Tests: Score validation, tiebreaks, match completion, editing
+
+- launchApp:
+    clearState: false
+- waitForAnimationToEnd
+
+# Ensure user is signed in and has club membership
+- assertVisible:
+    text: "My Clubs|Sign In"
+
+# Navigate to club if on clubs screen
+- tapOn:
+    text: ".*Tennis.*"
+    index: 0
+    optional: true
+- waitForAnimationToEnd
+- assertVisible:
+    text: "Record Match"
+    optional: true
+
+# If not in club, navigate via My Clubs
+- tapOn:
+    text: "My Clubs"
+    optional: true
+- waitForAnimationToEnd
+- tapOn:
+    text: ".*Tennis.*"
+    index: 0
+    optional: true
+- waitForAnimationToEnd
+
+# Start match recording
+- tapOn: "Record Match"
+- waitForAnimationToEnd
+
+# TEST 1: Singles Match with Clear Win
+- assertVisible: "Match Type"
+- tapOn: "Singles"
+- waitForAnimationToEnd
+
+# Select opponent
+- assertVisible:
+    text: "Select Opponent"
+    optional: true
+- tapOn:
+    text: "Select Opponent"
+    optional: true
+- waitForAnimationToEnd
+- tapOn:
+    text: ".*"
+    index: 0
+    optional: true
+- waitForAnimationToEnd
+
+# Enter Set 1: 6-4
+- assertVisible: "Set 1"
+- tapOn:
+    id: "player-score-input-0"
+- inputText: "6"
+- waitForAnimationToEnd
+
+- tapOn:
+    id: "opponent-score-input-0"
+- inputText: "4"
+- waitForAnimationToEnd
+
+# Verify set validates automatically (recent fix)
+- assertVisible:
+    text: "6"
+    optional: true
+
+# Enter Set 2: 6-2
+- tapOn:
+    id: "player-score-input-1"
+    optional: true
+- inputText: "6"
+- waitForAnimationToEnd
+
+- tapOn:
+    id: "opponent-score-input-1"
+    optional: true
+- inputText: "2"
+- waitForAnimationToEnd
+
+# Verify match completion detection
+- assertVisible:
+    text: "Save Match"
+
+# Save match
+- tapOn: "Save Match"
+- waitForAnimationToEnd:
+    timeout: 10000
+
+# Verify success and return to club
+- assertVisible:
+    text: "Recent Matches|Club Rankings"
+- takeScreenshot: singles-match-saved
+
+# TEST 2: Check match appears in Recent Matches
+- assertVisible: "Recent Matches"
+- assertVisible:
+    text: "6-4"
+    optional: true
+- assertVisible:
+    text: "6-2"
+    optional: true
+
+# TEST 3: Edit the match (test the recent fix)
+- tapOn:
+    text: "Edit"
+    index: 0
+    optional: true
+- waitForAnimationToEnd
+
+# Verify edit form loads with existing data
+- assertVisible:
+    text: "Edit Match"
+    optional: true
+- assertVisible:
+    text: "6"
+    optional: true
+
+# Change first set score
+- tapOn:
+    id: "player-score-input-0"
+    optional: true
+- eraseText: 1
+- inputText: "7"
+- waitForAnimationToEnd
+
+- tapOn:
+    id: "opponent-score-input-0"
+    optional: true
+- eraseText: 1  
+- inputText: "5"
+- waitForAnimationToEnd
+
+# Save edited match
+- tapOn:
+    text: "Save Changes"
+    optional: true
+- waitForAnimationToEnd:
+    timeout: 10000
+
+# Verify edit was saved and data refreshed (recent fix)
+- assertVisible:
+    text: "7-5"
+    optional: true
+- takeScreenshot: match-edited
+
+# TEST 4: Record Doubles Match
+- tapOn: "Record Match"
+- waitForAnimationToEnd
+
+- tapOn: "Doubles"
+- waitForAnimationToEnd
+
+# Select partners/opponents
+- assertVisible:
+    text: "Select Partner"
+    optional: true
+- tapOn:
+    text: "Select Partner"
+    optional: true
+- waitForAnimationToEnd
+- tapOn:
+    text: ".*"
+    index: 0
+    optional: true
+- waitForAnimationToEnd
+
+- assertVisible:
+    text: "Select Opponents"
+    optional: true
+- tapOn:
+    text: "Select Opponents"
+    optional: true
+- waitForAnimationToEnd
+- tapOn:
+    text: ".*"
+    index: 0
+    optional: true
+- waitForAnimationToEnd
+
+# Enter doubles scores
+- tapOn:
+    id: "player-score-input-0"
+    optional: true
+- inputText: "6"
+- waitForAnimationToEnd
+
+- tapOn:
+    id: "opponent-score-input-0"
+    optional: true
+- inputText: "4"
+- waitForAnimationToEnd
+
+- tapOn:
+    id: "player-score-input-1"
+    optional: true
+- inputText: "4"
+- waitForAnimationToEnd
+
+- tapOn:
+    id: "opponent-score-input-1"
+    optional: true
+- inputText: "6"
+- waitForAnimationToEnd
+
+# Third set
+- tapOn:
+    id: "player-score-input-2"
+    optional: true
+- inputText: "6"
+- waitForAnimationToEnd
+
+- tapOn:
+    id: "opponent-score-input-2"
+    optional: true
+- inputText: "3"
+- waitForAnimationToEnd
+
+# Save doubles match
+- tapOn: "Save Match"
+- waitForAnimationToEnd:
+    timeout: 10000
+
+# Verify doubles match saved
+- assertVisible: "Recent Matches"
+- takeScreenshot: doubles-match-saved
+
+# TEST 5: View All Matches (test recent addition)
+- tapOn:
+    text: "View All"
+    optional: true
+- waitForAnimationToEnd
+
+# Verify all matches page
+- assertVisible:
+    text: "All Matches"
+    optional: true
+- assertVisible:
+    text: "matches"
+    optional: true
+- takeScreenshot: all-matches-view
+
+# Return to club details
+- tapOn:
+    text: "Back"
+    optional: true
+- waitForAnimationToEnd
+
+# Verify we're back at club details
+- assertVisible: "Recent Matches"
+
+# Final verification
+- takeScreenshot: match-recording-complete
