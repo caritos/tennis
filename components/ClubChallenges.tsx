@@ -167,7 +167,7 @@ const ClubChallenges: React.FC<ClubChallengesProps> = ({
               </TouchableOpacity>
               
               <TouchableOpacity
-                style={[styles.declineButton, { borderColor: colors.border }]}
+                style={[styles.declineButton, { borderColor: colors.tabIconDefault }]}
                 onPress={() => handleDeclineChallenge(challenge.id, challenge.challenger_name)}
                 disabled={isProcessing}
               >
