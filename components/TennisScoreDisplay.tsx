@@ -86,6 +86,12 @@ export function TennisScoreDisplay({
 
   const sets = parseScores(scores);
   const actualSetsPlayed = sets.length; // Only show sets that were actually played
+  
+  // Dynamic styling based on number of sets
+  const isCompactLayout = actualSetsPlayed >= 5;
+  const setColumnWidth = isCompactLayout ? 30 : 40;
+  const scoreSize = isCompactLayout ? 16 : 18;
+  const nameSize = isCompactLayout ? 13 : 14;
 
   // Check if current user can edit this match
   const canEdit = matchId && user?.id && (
@@ -154,7 +160,7 @@ export function TennisScoreDisplay({
             {/* Empty space to match player row structure */}
           </View>
           {Array.from({ length: actualSetsPlayed }, (_, i) => (
-            <View key={i} style={styles.setColumn}>
+            <View key={i} style={[styles.setColumn, { minWidth: setColumnWidth }]}>
               <ThemedText style={[styles.setHeader, { color: colors.tabIconDefault }]}>
                 {i + 1}
               </ThemedText>
@@ -171,7 +177,7 @@ export function TennisScoreDisplay({
               )}
             </View>
             <ThemedText 
-              style={[styles.playerName, { color: colors.text }]}
+              style={[styles.playerName, { color: colors.text, fontSize: nameSize }]}
               numberOfLines={matchType === 'doubles' ? 2 : 1}
               ellipsizeMode="tail"
             >
@@ -179,10 +185,10 @@ export function TennisScoreDisplay({
             </ThemedText>
           </View>
           {sets.map((set, index) => (
-            <View key={index} style={styles.setColumn}>
+            <View key={index} style={[styles.setColumn, { minWidth: setColumnWidth }]}>
               <ThemedText style={[
                 styles.setScore,
-                { color: colors.text },
+                { color: colors.text, fontSize: scoreSize },
                 winner === 1 && styles.winnerScore
               ]}>
                 {set.player1Score}
@@ -205,7 +211,7 @@ export function TennisScoreDisplay({
               )}
             </View>
             <ThemedText 
-              style={[styles.playerName, { color: colors.text }]}
+              style={[styles.playerName, { color: colors.text, fontSize: nameSize }]}
               numberOfLines={matchType === 'doubles' ? 2 : 1}
               ellipsizeMode="tail"
             >
@@ -213,10 +219,10 @@ export function TennisScoreDisplay({
             </ThemedText>
           </View>
           {sets.map((set, index) => (
-            <View key={index} style={styles.setColumn}>
+            <View key={index} style={[styles.setColumn, { minWidth: setColumnWidth }]}>
               <ThemedText style={[
                 styles.setScore,
-                { color: colors.text },
+                { color: colors.text, fontSize: scoreSize },
                 winner === 2 && styles.winnerScore
               ]}>
                 {set.player2Score}
@@ -318,10 +324,12 @@ const styles = StyleSheet.create({
     marginBottom: 6,
   },
   setColumn: {
-    width: 45,
+    minWidth: 35, // Reduce from 45 to 35
+    flex: 1, // Allow flex sizing
+    maxWidth: 45, // Cap maximum width
     alignItems: 'center',
     justifyContent: 'center',
-    marginHorizontal: 2,
+    marginHorizontal: 1, // Reduce from 2 to 1
   },
   setHeader: {
     fontSize: 12,
@@ -335,10 +343,10 @@ const styles = StyleSheet.create({
     marginVertical: 2,
   },
   playerInfo: {
-    flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
-    maxWidth: '70%', // Ensure names don't take up all space, leaving room for scores
+    minWidth: 100, // Ensure minimum space for names
+    flex: 1,
   },
   playerIndicator: {
     width: 20,
@@ -348,13 +356,13 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   playerName: {
-    fontSize: 16,
+    fontSize: 14, // Slightly smaller for better fit
     fontWeight: '500',
     flex: 1,
-    minWidth: 80, // Ensure minimum readable width
+    minWidth: 90, // Ensure minimum readable width
   },
   setScore: {
-    fontSize: 22,
+    fontSize: 18, // Slightly smaller for better fit with 6 sets
     fontWeight: 'bold',
     textAlign: 'center',
     width: '100%',

@@ -43,33 +43,35 @@ function RootLayoutNav() {
 
   return (
     <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
-      <Stack screenOptions={{ headerShown: false }}>
-        {user ? (
-          <>
-            <Stack.Screen name="index" options={{ headerShown: false }} />
-            <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-            <Stack.Screen name="onboarding" options={{ headerShown: false }} />
-            <Stack.Screen name="welcome" options={{ headerShown: false, presentation: 'modal' }} />
-            <Stack.Screen name="signup" options={{ headerShown: false, presentation: 'modal' }} />
-            <Stack.Screen name="signin" options={{ headerShown: false, presentation: 'modal' }} />
-            <Stack.Screen name="email-signup" options={{ headerShown: false, presentation: 'modal' }} />
-            <Stack.Screen name="email-signin" options={{ headerShown: false, presentation: 'modal' }} />
-          </>
-        ) : (
-          <>
-            <Stack.Screen name="index" options={{ headerShown: false }} />
-            <Stack.Screen name="welcome" options={{ headerShown: false }} />
-            <Stack.Screen name="signup" options={{ headerShown: false }} />
-            <Stack.Screen name="signin" options={{ headerShown: false }} />
-            <Stack.Screen name="email-signup" options={{ headerShown: false }} />
-            <Stack.Screen name="email-signin" options={{ headerShown: false }} />
-            <Stack.Screen name="onboarding" options={{ headerShown: false, presentation: 'modal' }} />
-            <Stack.Screen name="(tabs)" options={{ headerShown: false, presentation: 'modal' }} />
-          </>
-        )}
-        <Stack.Screen name="+not-found" options={{ title: 'Oops!' }} />
-      </Stack>
-      <StatusBar style="auto" />
+      <View style={{ flex: 1 }}>
+        <StatusBar style="auto" />
+        <Stack screenOptions={{ headerShown: false }}>
+          {user ? (
+            <>
+              <Stack.Screen name="index" options={{ headerShown: false }} />
+              <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+              <Stack.Screen name="onboarding" options={{ headerShown: false }} />
+              <Stack.Screen name="welcome" options={{ headerShown: false, presentation: 'modal' }} />
+              <Stack.Screen name="signup" options={{ headerShown: false, presentation: 'modal' }} />
+              <Stack.Screen name="signin" options={{ headerShown: false, presentation: 'modal' }} />
+              <Stack.Screen name="email-signup" options={{ headerShown: false, presentation: 'modal' }} />
+              <Stack.Screen name="email-signin" options={{ headerShown: false, presentation: 'modal' }} />
+            </>
+          ) : (
+            <>
+              <Stack.Screen name="index" options={{ headerShown: false }} />
+              <Stack.Screen name="welcome" options={{ headerShown: false }} />
+              <Stack.Screen name="signup" options={{ headerShown: false }} />
+              <Stack.Screen name="signin" options={{ headerShown: false }} />
+              <Stack.Screen name="email-signup" options={{ headerShown: false }} />
+              <Stack.Screen name="email-signin" options={{ headerShown: false }} />
+              <Stack.Screen name="onboarding" options={{ headerShown: false, presentation: 'modal' }} />
+              <Stack.Screen name="(tabs)" options={{ headerShown: false, presentation: 'modal' }} />
+            </>
+          )}
+          <Stack.Screen name="+not-found" options={{ title: 'Oops!' }} />
+        </Stack>
+      </View>
     </ThemeProvider>
   );
 }
