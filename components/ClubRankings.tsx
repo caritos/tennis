@@ -20,6 +20,7 @@ interface ClubRankingsProps {
   onChallengePress?: (playerId: string, playerName: string) => void;
   showAll?: boolean;
   currentUserId?: string; // To hide challenge button for current user
+  pendingChallenges?: Set<string>; // Players with pending challenges
 }
 
 export function ClubRankings({ 
@@ -29,7 +30,8 @@ export function ClubRankings({
   onPlayerPress,
   onChallengePress,
   showAll = false,
-  currentUserId
+  currentUserId,
+  pendingChallenges = new Set()
 }: ClubRankingsProps) {
   const colorScheme = useColorScheme();
   const colors = Colors[colorScheme ?? 'light'];
@@ -93,11 +95,19 @@ export function ClubRankings({
         {/* Challenge Button */}
         {!isCurrentUser && onChallengePress && (
           <TouchableOpacity
-            style={[styles.challengeButton, { borderColor: colors.tint }]}
+            style={[
+              styles.challengeButton, 
+              { borderColor: pendingChallenges.has(player.playerId) ? colors.tabIconDefault : colors.tint },
+              pendingChallenges.has(player.playerId) && styles.challengeButtonDisabled
+            ]}
             onPress={() => onChallengePress(player.playerId, player.playerName)}
+            disabled={pendingChallenges.has(player.playerId)}
           >
-            <ThemedText style={[styles.challengeButtonText, { color: colors.tint }]}>
-              Challenge
+            <ThemedText style={[
+              styles.challengeButtonText, 
+              { color: pendingChallenges.has(player.playerId) ? colors.tabIconDefault : colors.tint }
+            ]}>
+              {pendingChallenges.has(player.playerId) ? 'Pending' : 'Challenge'}
             </ThemedText>
           </TouchableOpacity>
         )}
@@ -111,7 +121,7 @@ export function ClubRankings({
         <ThemedText style={styles.sectionLabel}>
           Club Rankings ({memberCount} members)
         </ThemedText>
-        {!showAll && rankings.length > 5 && onViewAll && (
+        {!showAll && onViewAll && (
           <TouchableOpacity onPress={onViewAll}>
             <ThemedText style={[styles.viewAllLink, { color: colors.tint }]}>
               View All →
@@ -268,5 +278,8 @@ const styles = StyleSheet.create({
   challengeButtonText: {
     fontSize: 12,
     fontWeight: '600',
+  },
+  challengeButtonDisabled: {
+    opacity: 0.6,
   },
 });

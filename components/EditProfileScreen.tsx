@@ -25,6 +25,7 @@ import { CompactStyles } from '@/constants/CompactStyles';
 export interface ProfileData {
   full_name: string; // Read-only field, kept for compatibility with existing save function
   phone: string;
+  profile_photo_uri?: string;
 }
 
 interface EditProfileScreenProps {

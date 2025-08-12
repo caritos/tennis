@@ -41,7 +41,7 @@ const WelcomeStep: React.FC<StepScreenProps> = ({ onNext }) => {
     <View style={[styles.stepContainer, { backgroundColor: colors.background }]}>
       <View style={styles.welcomeContent}>
         <View style={[styles.welcomeIcon, { backgroundColor: colors.tint + '20' }]}>
-          <Ionicons name="tennis-ball" size={64} color={colors.tint} />
+          <Ionicons name="tennisball" size={64} color={colors.tint} />
         </View>
         
         <ThemedText type="title" style={styles.welcomeTitle}>
@@ -77,7 +77,7 @@ const WelcomeStep: React.FC<StepScreenProps> = ({ onNext }) => {
         onPress={onNext}
       >
         <ThemedText style={styles.primaryButtonText}>Let&apos;s Play Tennis!</ThemedText>
-        <Ionicons name="tennis-ball" size={20} color="white" />
+        <Ionicons name="tennisball" size={20} color="white" />
       </TouchableOpacity>
     </View>
   );

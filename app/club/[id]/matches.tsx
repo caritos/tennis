@@ -199,7 +199,7 @@ export default function ClubMatchesScreen() {
             </View>
           ) : (
             <View style={[styles.placeholder, { borderColor: colors.tabIconDefault }]}>
-              <Ionicons name="tennis-ball" size={48} color={colors.tabIconDefault} />
+              <Ionicons name="tennisball" size={48} color={colors.tabIconDefault} />
               <ThemedText style={[styles.placeholderText, { color: colors.tabIconDefault }]}>
                 No matches recorded yet
               </ThemedText>

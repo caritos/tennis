@@ -2,7 +2,7 @@
   "expo": {
     "name": "Play Serve: Tennis Community",
     "slug": "play-serve",
-    "version": "1.0.0",
+    "version": "1.0.1",
     "orientation": "portrait",
     "description": "Connect with tennis players in your local clubs. Find matches, track scores, climb rankings, and build your tennis community. Join clubs near you today!",
     "primaryColor": "#007AFF",
@@ -12,7 +12,7 @@
     "newArchEnabled": true,
     "ios": {
       "supportsTablet": true,
-      "usesAppleSignIn": true,
+      "usesAppleSignIn": false,
       "infoPlist": {
         "NSAppTransportSecurity": {
           "NSAllowsArbitraryLoads": true
@@ -20,11 +20,15 @@
         "NSLocationWhenInUseUsageDescription": "Play Serve uses your location to find tennis clubs and players near you.",
         "NSPhotoLibraryUsageDescription": "Play Serve needs access to your photo library to upload profile photos.",
         "NSCameraUsageDescription": "Play Serve needs access to your camera to take profile photos.",
-        "ITSAppUsesNonExemptEncryption": false
+        "ITSAppUsesNonExemptEncryption": false,
+        "UIBackgroundModes": ["remote-notification"]
+      },
+      "entitlements": {
+        "aps-environment": "production"
       },
       "bundleIdentifier": "com.caritos.tennis",
       "appleTeamId": "3U8L77G9QV",
-      "buildNumber": "1"
+      "buildNumber": "2"
     },
     "android": {
       "adaptiveIcon": {
@@ -61,7 +65,6 @@
         }
       ],
       "expo-sqlite",
-      "expo-apple-authentication",
       [
         "expo-notifications",
         {

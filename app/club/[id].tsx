@@ -14,8 +14,9 @@ import { TennisScoreDisplay } from '@/components/TennisScoreDisplay';
 import { ClubRankings, RankedPlayer } from '@/components/ClubRankings';
 import LookingToPlaySection from '@/components/LookingToPlaySection';
 import ChallengeFlowModal from '@/components/ChallengeFlowModal';
-import ChallengeNotifications from '@/components/ChallengeNotifications';
+import ClubChallenges from '@/components/ClubChallenges';
 import { getClubLeaderboard } from '@/services/matchService';
+import { challengeService } from '@/services/challengeService';
 
 export default function ClubDetailScreen() {
   const { id } = useLocalSearchParams();
@@ -32,6 +33,7 @@ export default function ClubDetailScreen() {
   const [isCreator, setIsCreator] = useState(false);
   const [showChallengeModal, setShowChallengeModal] = useState(false);
   const [challengeTarget, setChallengeTarget] = useState<{ id: string; name: string } | null>(null);
+  const [pendingChallenges, setPendingChallenges] = useState<Set<string>>(new Set());
 
   useEffect(() => {
     loadClubDetails();
@@ -54,6 +56,11 @@ export default function ClubDetailScreen() {
 
     try {
       const db = await initializeDatabase();
+      
+      // Load pending challenges for the current user
+      if (user?.id) {
+        await loadPendingChallenges();
+      }
       
       // Get club details
       const clubData = await db.getFirstAsync(
@@ -110,7 +117,7 @@ export default function ClubDetailScreen() {
         [id]
       );
       console.log('ClubDetails: Found matches:', matches.length, matches);
-      console.log('ClubDetails: Processing matches...', matches.map(m => ({ id: m.id, scores: m.scores, player1_name: m.player1_name, player2_name: m.player2_name })));
+      console.log('ClubDetails: Processing matches...', matches.map((m: any) => ({ id: m.id, scores: m.scores, player1_name: m.player1_name, player2_name: m.player2_name })));
       
       // Process matches to determine winners and format for display
       const processedMatches = matches?.map((match: any) => {
@@ -167,6 +174,26 @@ export default function ClubDetailScreen() {
     }
   };
 
+  const loadPendingChallenges = async () => {
+    if (!user?.id || !id) return;
+    
+    try {
+      // Get all pending challenges sent by the current user in this club
+      const sentChallenges = await challengeService.getUserSentChallenges(user.id);
+      const pending = new Set<string>();
+      
+      sentChallenges.forEach(challenge => {
+        if (challenge.status === 'pending' && challenge.club_id === id) {
+          pending.add(challenge.challenged_id);
+        }
+      });
+      
+      setPendingChallenges(pending);
+    } catch (error) {
+      console.error('Failed to load pending challenges:', error);
+    }
+  };
+
   const handleBack = () => {
     router.back();
   };
@@ -185,8 +212,9 @@ export default function ClubDetailScreen() {
   };
 
   const handleChallengeSuccess = () => {
-    // Refresh rankings or update UI as needed
+    // Refresh rankings and pending challenges
     loadClubDetails();
+    loadPendingChallenges();
   };
 
   const handleViewAllMatches = () => {
@@ -254,11 +282,15 @@ export default function ClubDetailScreen() {
           </TouchableOpacity>
         </ThemedView>
 
-        {/* Challenges Section */}
+        {/* Active Challenges Section */}
         {user && (
-          <ChallengeNotifications 
-            userId={user.id} 
-            onRefresh={loadClubDetails}
+          <ClubChallenges 
+            userId={user.id}
+            clubId={id as string}
+            onRefresh={() => {
+              loadClubDetails();
+              loadPendingChallenges();
+            }}
           />
         )}
 
@@ -271,6 +303,7 @@ export default function ClubDetailScreen() {
             rankings={rankings}
             memberCount={memberCount}
             currentUserId={user?.id}
+            pendingChallenges={pendingChallenges}
             onViewAll={() => {
               router.push({
                 pathname: '/club/[id]/rankings',

@@ -7,7 +7,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useColorScheme } from '@/hooks/useColorScheme';
 import { Colors } from '@/constants/Colors';
-import AppleSignInButton from '@/components/AppleSignInButton';
+// import AppleSignInButton from '@/components/AppleSignInButton'; // Disabled for v1.0
 
 export default function SignInPage() {
   const [isLoading, setIsLoading] = useState(false);
@@ -108,13 +108,14 @@ export default function SignInPage() {
               </ThemedText>
             </TouchableOpacity>
 
-            {Platform.OS === 'ios' ? (
+            {/* Apple Sign In - Disabled for v1.0, will enable in future update */}
+            {false ? (
               <View style={styles.appleSignInContainer}>
-                <AppleSignInButton
+                {/* <AppleSignInButton
                   onSuccess={handleAppleSignInSuccess}
                   onError={handleAppleSignInError}
                   disabled={isLoading}
-                />
+                /> */}
               </View>
             ) : (
               <TouchableOpacity
