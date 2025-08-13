@@ -255,15 +255,9 @@ const LookingToPlaySection: React.FC<LookingToPlaySectionProps> = ({ clubId }) =
         }
         showsVerticalScrollIndicator={false}
       >
-        {invitations.length > 0 ? (
+        {invitations.length > 0 && (
           <View style={styles.invitationsContainer}>
             {invitations.map(renderInvitation)}
-          </View>
-        ) : (
-          <View style={[styles.placeholder, { borderColor: colors.tabIconDefault }]}>
-            <ThemedText style={[styles.placeholderText, { color: colors.tabIconDefault }]}>
-              No one is looking to play right now
-            </ThemedText>
           </View>
         )}
       </ScrollView>
