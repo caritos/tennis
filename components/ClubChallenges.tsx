@@ -3,10 +3,8 @@ import {
   View,
   StyleSheet,
   TouchableOpacity,
-  ScrollView,
   ActivityIndicator,
 } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
 import { ThemedText } from './ThemedText';
 import { ThemedView } from './ThemedView';
 import { useColorScheme } from '@/hooks/useColorScheme';
@@ -141,7 +139,7 @@ const ClubChallenges: React.FC<ClubChallengesProps> = ({
             </ThemedText>
             {challenge.message && (
               <ThemedText style={[styles.message, { color: colors.tabIconDefault }]}>
-                "{challenge.message}"
+                &ldquo;{challenge.message}&rdquo;
               </ThemedText>
             )}
           </View>
