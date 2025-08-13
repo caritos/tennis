@@ -107,26 +107,43 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         await syncService.initialize();
         console.log('AuthContext: Sync service initialized');
         
-        // Get initial session
+        // Get initial session with error handling for network failures
         console.log('AuthContext: Checking for existing session...');
-        const { data: { session } } = await supabase.auth.getSession();
-        console.log('AuthContext: Initial session:', session ? `Found user: ${session.user?.id}` : 'None');
-        // For development: accept any signed-in user regardless of email confirmation
-        setSession(session);
-        
-        // Sync user to local database if session exists
-        if (session?.user) {
-          console.log('AuthContext: Syncing user to local database:', session.user.id);
-          const syncSuccess = await syncUserToLocalDatabase(session.user);
-          if (!syncSuccess) {
-            console.warn('AuthContext: Initial user sync failed, but continuing with auth flow');
+        try {
+          const { data: { session }, error } = await supabase.auth.getSession();
+          
+          if (error) {
+            // Handle network errors gracefully
+            if (error.message?.includes('Network request failed')) {
+              console.log('AuthContext: Network unavailable, proceeding without session');
+              setSession(null);
+            } else {
+              console.error('AuthContext: Error getting session:', error);
+            }
+          } else {
+            console.log('AuthContext: Initial session:', session ? `Found user: ${session.user?.id}` : 'None');
+            // For development: accept any signed-in user regardless of email confirmation
+            setSession(session);
+            
+            // Sync user to local database if session exists
+            if (session?.user) {
+              console.log('AuthContext: Syncing user to local database:', session.user.id);
+              const syncSuccess = await syncUserToLocalDatabase(session.user);
+              if (!syncSuccess) {
+                console.warn('AuthContext: Initial user sync failed, but continuing with auth flow');
+              }
+              
+              // Initialize push notifications for the user
+              await pushNotificationService.initialize(session.user.id);
+              
+              // Initialize realtime subscriptions for the user
+              await realtimeService.initialize(session.user.id);
+            }
           }
-          
-          // Initialize push notifications for the user
-          await pushNotificationService.initialize(session.user.id);
-          
-          // Initialize realtime subscriptions for the user
-          await realtimeService.initialize(session.user.id);
+        } catch (authError) {
+          // Catch any unhandled auth errors
+          console.log('AuthContext: Auth check failed, proceeding without session:', authError.message);
+          setSession(null);
         }
       } catch (error) {
         console.error('AuthContext: Initialization error:', error);

@@ -161,15 +161,7 @@ export function SignUpScreen({
             </TouchableOpacity>
 
             {/* Apple Sign In - Disabled for v1.0, will enable in future update */}
-            {false ? (
-              <View style={styles.appleSignUpContainer}>
-                {/* <AppleSignInButton
-                  onSuccess={onAppleSignUpSuccess}
-                  onError={onAppleSignUpError}
-                  disabled={isLoading}
-                /> */}
-              </View>
-            ) : (
+            {/* {false && (
               <TouchableOpacity
                 style={[
                   styles.signUpButton,
@@ -189,7 +181,7 @@ export function SignUpScreen({
                   🍎 Continue with Apple
                 </ThemedText>
               </TouchableOpacity>
-            )}
+            )} */}
 
           </View>
 

@@ -117,18 +117,15 @@ export function ClubRankings({
 
   return (
     <ThemedView style={styles.container}>
-      <View style={styles.header}>
-        <ThemedText style={styles.sectionLabel}>
-          Club Rankings ({memberCount} members)
-        </ThemedText>
-        {!showAll && onViewAll && (
+      {!showAll && onViewAll && rankings.length > 0 && (
+        <View style={styles.header}>
           <TouchableOpacity onPress={onViewAll}>
             <ThemedText style={[styles.viewAllLink, { color: colors.tint }]}>
               View All →
             </ThemedText>
           </TouchableOpacity>
-        )}
-      </View>
+        </View>
+      )}
 
       {rankings.length > 0 ? (
         <View style={[styles.rankingsList, { borderColor: colors.tabIconDefault + '30' }]}>
@@ -143,8 +140,9 @@ export function ClubRankings({
         </View>
       ) : (
         <View style={[styles.placeholder, { borderColor: colors.tabIconDefault + '40' }]}>
+          <ThemedText style={styles.placeholderEmoji}>🏆</ThemedText>
           <ThemedText style={[styles.placeholderText, { color: colors.tabIconDefault }]}>
-            Rankings will appear here once matches are recorded
+            No rankings yet • Be the first to play!
           </ThemedText>
           <ThemedText style={[styles.placeholderSubtext, { color: colors.tabIconDefault + '80' }]}>
             Play at least 5 matches to establish your ranking
@@ -161,7 +159,7 @@ const styles = StyleSheet.create({
   },
   header: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
+    justifyContent: 'flex-end',
     alignItems: 'center',
     marginBottom: 12,
   },
@@ -259,9 +257,14 @@ const styles = StyleSheet.create({
     padding: 20,
     alignItems: 'center',
   },
+  placeholderEmoji: {
+    fontSize: 32,
+    marginBottom: 8,
+  },
   placeholderText: {
     fontSize: 14,
     textAlign: 'center',
+    fontWeight: '600',
   },
   placeholderSubtext: {
     fontSize: 12,

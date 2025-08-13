@@ -34,6 +34,8 @@ export default function ClubDetailScreen() {
   const [showChallengeModal, setShowChallengeModal] = useState(false);
   const [challengeTarget, setChallengeTarget] = useState<{ id: string; name: string } | null>(null);
   const [pendingChallenges, setPendingChallenges] = useState<Set<string>>(new Set());
+  const [showInviteForm, setShowInviteForm] = useState(false);
+  const [hasOpenInvites, setHasOpenInvites] = useState(false);
 
   useEffect(() => {
     loadClubDetails();
@@ -270,63 +272,94 @@ export default function ClubDetailScreen() {
       </View>
 
       <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
-        {/* Record Match Button */}
-        <ThemedView style={styles.section}>
-          <ThemedText style={styles.sectionLabel}>Record Match</ThemedText>
+        {/* Action Buttons Section */}
+        <ThemedView style={[styles.sectionCard, { backgroundColor: colors.background, shadowColor: colors.text }]}>
           <TouchableOpacity 
-            style={[styles.recordMatchButton, { backgroundColor: colors.tint }]}
+            style={[styles.actionButton, { backgroundColor: colors.tint }]}
             onPress={handleRecordMatch}
           >
             <Ionicons name="add" size={20} color="white" />
-            <ThemedText style={styles.recordMatchButtonText}>Record Match</ThemedText>
+            <ThemedText style={styles.actionButtonText}>Record Match</ThemedText>
+          </TouchableOpacity>
+          
+          <TouchableOpacity
+            style={[styles.actionButton, { borderColor: colors.tint, borderWidth: 1, backgroundColor: 'transparent', marginTop: 12 }]}
+            onPress={() => setShowInviteForm(true)}
+          >
+            <Ionicons name="calendar-outline" size={20} color={colors.tint} />
+            <ThemedText style={[styles.actionButtonText, { color: colors.tint }]}>Schedule a Match</ThemedText>
           </TouchableOpacity>
         </ThemedView>
 
         {/* Active Challenges Section */}
         {user && (
-          <ClubChallenges 
-            userId={user.id}
-            clubId={id as string}
-            onRefresh={() => {
-              loadClubDetails();
-              loadPendingChallenges();
-            }}
-          />
+          <ThemedView style={[styles.sectionCard, { backgroundColor: colors.background, shadowColor: colors.text }]}>
+            <ClubChallenges 
+              userId={user.id}
+              clubId={id as string}
+              onRefresh={() => {
+                loadClubDetails();
+                loadPendingChallenges();
+              }}
+            />
+          </ThemedView>
         )}
 
-        {/* Looking to Play Section */}
-        <LookingToPlaySection clubId={id as string} />
+        {/* Looking to Play Section - Only show if there are invites or form is open */}
+        {(hasOpenInvites || showInviteForm) && (
+          <ThemedView style={[styles.sectionCard, { backgroundColor: colors.background, shadowColor: colors.text }]}>
+            <View style={styles.sectionHeader}>
+              <ThemedText style={[styles.sectionTitle, { color: colors.text }]}>Open Invites</ThemedText>
+            </View>
+            <LookingToPlaySection 
+              clubId={id as string} 
+              showInviteForm={showInviteForm}
+              onCloseInviteForm={() => setShowInviteForm(false)}
+              onInvitationsChange={setHasOpenInvites}
+            />
+          </ThemedView>
+        )}
 
         {/* Club Rankings */}
-        <ThemedView style={styles.section}>
+        <ThemedView style={[styles.sectionCard, { backgroundColor: colors.background, shadowColor: colors.text }]}>
+          <View style={styles.sectionHeader}>
+            <ThemedText style={[styles.sectionTitle, { color: colors.text }]}>
+              Rankings • {memberCount} members
+            </ThemedText>
+            <TouchableOpacity onPress={() => {
+              router.push({
+                pathname: '/club/[id]/rankings',
+                params: { id: id as string }
+              });
+            }}>
+              <ThemedText style={[styles.viewAllLink, { color: colors.tint }]}>
+                View All →
+              </ThemedText>
+            </TouchableOpacity>
+          </View>
           <ClubRankings
             rankings={rankings}
             memberCount={memberCount}
             currentUserId={user?.id}
             pendingChallenges={pendingChallenges}
-            onViewAll={() => {
-              router.push({
-                pathname: '/club/[id]/rankings',
-                params: { id: id as string }
-              });
-            }}
+            onViewAll={undefined}
             onPlayerPress={undefined}
             onChallengePress={handleChallengePlayer}
           />
         </ThemedView>
 
         {/* Recent Matches */}
-        <ThemedView style={styles.section}>
-          <View style={styles.sectionHeader}>
-            <ThemedText style={styles.sectionLabel}>Recent Matches</ThemedText>
-            {recentMatches.length > 0 && (
+        <ThemedView style={[styles.sectionCard, { backgroundColor: colors.background, shadowColor: colors.text }]}>
+          {recentMatches.length > 0 && (
+            <View style={styles.sectionHeader}>
+              <ThemedText style={[styles.sectionTitle, { color: colors.text }]}>Recent Matches</ThemedText>
               <TouchableOpacity onPress={handleViewAllMatches}>
                 <ThemedText style={[styles.viewAllLink, { color: colors.tint }]}>
                   View All →
                 </ThemedText>
               </TouchableOpacity>
-            )}
-          </View>
+            </View>
+          )}
           
           
           {recentMatches.length > 0 ? (
@@ -357,11 +390,12 @@ export default function ClubDetailScreen() {
             </View>
           ) : (
             <View style={[styles.placeholder, { borderColor: colors.tabIconDefault }]}>
+              <ThemedText style={styles.placeholderEmoji}>🎾</ThemedText>
               <ThemedText style={[styles.placeholderText, { color: colors.tabIconDefault }]}>
-                No matches recorded yet
+                No matches yet • Be the first to play!
               </ThemedText>
               <ThemedText style={[styles.placeholderSubtext, { color: colors.tabIconDefault }]}>
-                Be the first to record a match!
+                Record your match to start building rankings
               </ThemedText>
             </View>
           )}
@@ -425,6 +459,25 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     paddingVertical: 16,
   },
+  sectionCard: {
+    marginHorizontal: 16,
+    marginVertical: 8,
+    padding: 16,
+    borderRadius: 12,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.08,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  sectionHeaderWithIcon: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 12,
+  },
+  sectionIcon: {
+    fontSize: 20,
+    marginRight: 8,
+  },
   sectionLabel: {
     fontSize: 14,
     fontWeight: '600',
@@ -437,19 +490,23 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: 12,
   },
+  sectionTitle: {
+    fontSize: 14,
+    fontWeight: '600',
+    opacity: 0.8,
+  },
   viewAllLink: {
     fontSize: 14,
     fontWeight: '500',
   },
-  recordMatchButton: {
+  actionButton: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     padding: 12,
     borderRadius: 8,
   },
-  recordMatchButtonText: {
-    color: 'white',
+  actionButtonText: {
     fontSize: 16,
     fontWeight: '600',
     marginLeft: 8,
@@ -461,9 +518,14 @@ const styles = StyleSheet.create({
     padding: 20,
     alignItems: 'center',
   },
+  placeholderEmoji: {
+    fontSize: 32,
+    marginBottom: 8,
+  },
   placeholderText: {
     fontSize: 14,
     textAlign: 'center',
+    fontWeight: '600',
   },
   placeholderSubtext: {
     fontSize: 12,

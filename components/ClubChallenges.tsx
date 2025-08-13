@@ -197,7 +197,7 @@ const ClubChallenges: React.FC<ClubChallengesProps> = ({
   }
 
   return (
-    <ThemedView style={styles.section}>
+    <ThemedView>
       <View style={styles.sectionHeader}>
         <ThemedText style={styles.sectionLabel}>Active Challenges</ThemedText>
         <View style={[styles.badge, { backgroundColor: colors.tint }]}>
@@ -263,10 +263,6 @@ const ClubChallenges: React.FC<ClubChallengesProps> = ({
 };
 
 const styles = StyleSheet.create({
-  section: {
-    padding: 16,
-    marginBottom: 16,
-  },
   sectionHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -274,8 +270,9 @@ const styles = StyleSheet.create({
     marginBottom: 12,
   },
   sectionLabel: {
-    fontSize: 18,
+    fontSize: 14,
     fontWeight: '600',
+    opacity: 0.8,
   },
   badge: {
     paddingHorizontal: 8,

@@ -13,6 +13,7 @@
     "ios": {
       "supportsTablet": true,
       "usesAppleSignIn": false,
+      "deploymentTarget": "15.0",
       "infoPlist": {
         "NSAppTransportSecurity": {
           "NSAllowsArbitraryLoads": true
