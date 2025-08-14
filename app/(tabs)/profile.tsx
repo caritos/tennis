@@ -166,6 +166,20 @@ export default function ProfileScreen() {
           <ThemedText type="subtitle" style={styles.sectionTitle}>Settings</ThemedText>
           <View style={styles.settingsContainer}>
             <TouchableOpacity
+              style={[styles.settingsItem, { borderColor: colors.icon + '20' }]}
+              onPress={() => router.push('/faq')}
+              accessibilityRole="button"
+              accessibilityLabel="FAQ"
+              accessibilityHint="View frequently asked questions"
+            >
+              <View style={styles.settingsItemContent}>
+                <Ionicons name="help-circle-outline" size={24} color={colors.tint} />
+                <ThemedText style={styles.settingsItemText}>FAQ / Help</ThemedText>
+              </View>
+              <Ionicons name="chevron-forward" size={20} color={colors.icon} />
+            </TouchableOpacity>
+            
+            <TouchableOpacity
               style={[styles.signOutButton, { backgroundColor: colors.tint }]}
               onPress={handleSignOut}
               accessibilityRole="button"
@@ -291,6 +305,25 @@ const styles = StyleSheet.create({
   },
   settingsContainer: {
     paddingVertical: 8,
+    gap: 12,
+  },
+  settingsItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingVertical: 16,
+    paddingHorizontal: 16,
+    borderRadius: 12,
+    borderWidth: 1,
+  },
+  settingsItemContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
+  settingsItemText: {
+    fontSize: 16,
+    fontWeight: '500',
   },
   signOutButton: {
     paddingVertical: 14,

@@ -8,28 +8,28 @@
 
 /* Begin PBXBuildFile section */
 		13B07FBF1A68108700A75B9A /* Images.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 13B07FB51A68108700A75B9A /* Images.xcassets */; };
+		3921A2CC637245D646F4E2E3 /* libPods-PlayServeTennisCommunity.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 42BF505EAECFFFB9D7BE1971 /* libPods-PlayServeTennisCommunity.a */; };
 		3E461D99554A48A4959DE609 /* SplashScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = AA286B85B6C04FC6940260E9 /* SplashScreen.storyboard */; };
-		530B0827EBD6B2A627D4E2E0 /* ExpoModulesProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = ACB037210E68D1E5C1CA492A /* ExpoModulesProvider.swift */; };
-		9C8E0B2BAEF4074B64DE418D /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = 9889508DA91C0810D9B48C3B /* PrivacyInfo.xcprivacy */; };
+		53C1282E5BFF5F84508458F4 /* ExpoModulesProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = F6AAD73B5FA95A6AE0E4DF84 /* ExpoModulesProvider.swift */; };
 		BB2F792D24A3F905000567C9 /* Expo.plist in Resources */ = {isa = PBXBuildFile; fileRef = BB2F792C24A3F905000567C9 /* Expo.plist */; };
 		F11748422D0307B40044C1D9 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = F11748412D0307B40044C1D9 /* AppDelegate.swift */; };
-		F4243BC3BB40FAC240ED9158 /* libPods-PlayServeTennisCommunity.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 064E07FB6F5AE8DF85C2C1D8 /* libPods-PlayServeTennisCommunity.a */; };
+		FE2AE6CCFD98C67327A06768 /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = FA4E9276921DE6D49FD7D80C /* PrivacyInfo.xcprivacy */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
-		064E07FB6F5AE8DF85C2C1D8 /* libPods-PlayServeTennisCommunity.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = "libPods-PlayServeTennisCommunity.a"; sourceTree = BUILT_PRODUCTS_DIR; };
+		0A29AA57EBBB0F4898323CB7 /* Pods-PlayServeTennisCommunity.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-PlayServeTennisCommunity.release.xcconfig"; path = "Target Support Files/Pods-PlayServeTennisCommunity/Pods-PlayServeTennisCommunity.release.xcconfig"; sourceTree = "<group>"; };
 		13B07F961A680F5B00A75B9A /* PlayServeTennisCommunity.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = PlayServeTennisCommunity.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		13B07FB51A68108700A75B9A /* Images.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; name = Images.xcassets; path = PlayServeTennisCommunity/Images.xcassets; sourceTree = "<group>"; };
 		13B07FB61A68108700A75B9A /* Info.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; name = Info.plist; path = PlayServeTennisCommunity/Info.plist; sourceTree = "<group>"; };
-		466D41DEA740A2DA83C3EBDA /* Pods-PlayServeTennisCommunity.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-PlayServeTennisCommunity.debug.xcconfig"; path = "Target Support Files/Pods-PlayServeTennisCommunity/Pods-PlayServeTennisCommunity.debug.xcconfig"; sourceTree = "<group>"; };
-		9889508DA91C0810D9B48C3B /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; includeInIndex = 1; name = PrivacyInfo.xcprivacy; path = PlayServeTennisCommunity/PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
+		3FF2C8E24503C490D910C411 /* Pods-PlayServeTennisCommunity.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-PlayServeTennisCommunity.debug.xcconfig"; path = "Target Support Files/Pods-PlayServeTennisCommunity/Pods-PlayServeTennisCommunity.debug.xcconfig"; sourceTree = "<group>"; };
+		42BF505EAECFFFB9D7BE1971 /* libPods-PlayServeTennisCommunity.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = "libPods-PlayServeTennisCommunity.a"; sourceTree = BUILT_PRODUCTS_DIR; };
 		AA286B85B6C04FC6940260E9 /* SplashScreen.storyboard */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.storyboard; name = SplashScreen.storyboard; path = PlayServeTennisCommunity/SplashScreen.storyboard; sourceTree = "<group>"; };
-		ACB037210E68D1E5C1CA492A /* ExpoModulesProvider.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = ExpoModulesProvider.swift; path = "Pods/Target Support Files/Pods-PlayServeTennisCommunity/ExpoModulesProvider.swift"; sourceTree = "<group>"; };
 		BB2F792C24A3F905000567C9 /* Expo.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = Expo.plist; sourceTree = "<group>"; };
 		ED297162215061F000B7C4FE /* JavaScriptCore.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = JavaScriptCore.framework; path = System/Library/Frameworks/JavaScriptCore.framework; sourceTree = SDKROOT; };
 		F11748412D0307B40044C1D9 /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = AppDelegate.swift; path = PlayServeTennisCommunity/AppDelegate.swift; sourceTree = "<group>"; };
 		F11748442D0722820044C1D9 /* PlayServeTennisCommunity-Bridging-Header.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = "PlayServeTennisCommunity-Bridging-Header.h"; path = "PlayServeTennisCommunity/PlayServeTennisCommunity-Bridging-Header.h"; sourceTree = "<group>"; };
-		FB48AF98DCBF74F2844BCD22 /* Pods-PlayServeTennisCommunity.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-PlayServeTennisCommunity.release.xcconfig"; path = "Target Support Files/Pods-PlayServeTennisCommunity/Pods-PlayServeTennisCommunity.release.xcconfig"; sourceTree = "<group>"; };
+		F6AAD73B5FA95A6AE0E4DF84 /* ExpoModulesProvider.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = ExpoModulesProvider.swift; path = "Pods/Target Support Files/Pods-PlayServeTennisCommunity/ExpoModulesProvider.swift"; sourceTree = "<group>"; };
+		FA4E9276921DE6D49FD7D80C /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; includeInIndex = 1; name = PrivacyInfo.xcprivacy; path = PlayServeTennisCommunity/PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -37,19 +37,21 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				F4243BC3BB40FAC240ED9158 /* libPods-PlayServeTennisCommunity.a in Frameworks */,
+				3921A2CC637245D646F4E2E3 /* libPods-PlayServeTennisCommunity.a in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
-		0653903E20A123E8D6CACDBD /* PlayServeTennisCommunity */ = {
+		02FAA8ECA2B0ED35F0DC300D /* Pods */ = {
 			isa = PBXGroup;
 			children = (
-				ACB037210E68D1E5C1CA492A /* ExpoModulesProvider.swift */,
+				3FF2C8E24503C490D910C411 /* Pods-PlayServeTennisCommunity.debug.xcconfig */,
+				0A29AA57EBBB0F4898323CB7 /* Pods-PlayServeTennisCommunity.release.xcconfig */,
 			);
-			name = PlayServeTennisCommunity;
+			name = Pods;
+			path = Pods;
 			sourceTree = "<group>";
 		};
 		13B07FAE1A68108700A75B9A /* PlayServeTennisCommunity */ = {
@@ -61,7 +63,7 @@
 				13B07FB51A68108700A75B9A /* Images.xcassets */,
 				13B07FB61A68108700A75B9A /* Info.plist */,
 				AA286B85B6C04FC6940260E9 /* SplashScreen.storyboard */,
-				9889508DA91C0810D9B48C3B /* PrivacyInfo.xcprivacy */,
+				FA4E9276921DE6D49FD7D80C /* PrivacyInfo.xcprivacy */,
 			);
 			name = PlayServeTennisCommunity;
 			sourceTree = "<group>";
@@ -70,27 +72,25 @@
 			isa = PBXGroup;
 			children = (
 				ED297162215061F000B7C4FE /* JavaScriptCore.framework */,
-				064E07FB6F5AE8DF85C2C1D8 /* libPods-PlayServeTennisCommunity.a */,
+				42BF505EAECFFFB9D7BE1971 /* libPods-PlayServeTennisCommunity.a */,
 			);
 			name = Frameworks;
 			sourceTree = "<group>";
 		};
-		4094C4BC566D8179F094744B /* ExpoModulesProviders */ = {
+		53A3538E618ED4E7191CD53A /* PlayServeTennisCommunity */ = {
 			isa = PBXGroup;
 			children = (
-				0653903E20A123E8D6CACDBD /* PlayServeTennisCommunity */,
+				F6AAD73B5FA95A6AE0E4DF84 /* ExpoModulesProvider.swift */,
 			);
-			name = ExpoModulesProviders;
+			name = PlayServeTennisCommunity;
 			sourceTree = "<group>";
 		};
-		83065D0004544CF45E920BFF /* Pods */ = {
+		7787A42F5A79B0EA9CFD9EF8 /* ExpoModulesProviders */ = {
 			isa = PBXGroup;
 			children = (
-				466D41DEA740A2DA83C3EBDA /* Pods-PlayServeTennisCommunity.debug.xcconfig */,
-				FB48AF98DCBF74F2844BCD22 /* Pods-PlayServeTennisCommunity.release.xcconfig */,
+				53A3538E618ED4E7191CD53A /* PlayServeTennisCommunity */,
 			);
-			name = Pods;
-			path = Pods;
+			name = ExpoModulesProviders;
 			sourceTree = "<group>";
 		};
 		832341AE1AAA6A7D00B99B32 /* Libraries */ = {
@@ -107,8 +107,8 @@
 				832341AE1AAA6A7D00B99B32 /* Libraries */,
 				83CBBA001A601CBA00E9B192 /* Products */,
 				2D16E6871FA4F8E400B85C8A /* Frameworks */,
-				83065D0004544CF45E920BFF /* Pods */,
-				4094C4BC566D8179F094744B /* ExpoModulesProviders */,
+				02FAA8ECA2B0ED35F0DC300D /* Pods */,
+				7787A42F5A79B0EA9CFD9EF8 /* ExpoModulesProviders */,
 			);
 			indentWidth = 2;
 			sourceTree = "<group>";
@@ -140,13 +140,13 @@
 			buildConfigurationList = 13B07F931A680F5B00A75B9A /* Build configuration list for PBXNativeTarget "PlayServeTennisCommunity" */;
 			buildPhases = (
 				08A4A3CD28434E44B6B9DE2E /* [CP] Check Pods Manifest.lock */,
-				3082067E1B6D0317A33FD0CD /* [Expo] Configure project */,
+				52568D693BAF6E25FF8DAA18 /* [Expo] Configure project */,
 				13B07F871A680F5B00A75B9A /* Sources */,
 				13B07F8C1A680F5B00A75B9A /* Frameworks */,
 				13B07F8E1A680F5B00A75B9A /* Resources */,
 				00DD1BFF1BD5951E006B06BC /* Bundle React Native code and images */,
 				800E24972A6A228C8D4807E9 /* [CP] Copy Pods Resources */,
-				9235AA9C8501BE3252DF2C59 /* [CP] Embed Pods Frameworks */,
+				AEE3C333A2363F38820D78C1 /* [CP] Embed Pods Frameworks */,
 			);
 			buildRules = (
 			);
@@ -196,7 +196,7 @@
 				BB2F792D24A3F905000567C9 /* Expo.plist in Resources */,
 				13B07FBF1A68108700A75B9A /* Images.xcassets in Resources */,
 				3E461D99554A48A4959DE609 /* SplashScreen.storyboard in Resources */,
-				9C8E0B2BAEF4074B64DE418D /* PrivacyInfo.xcprivacy in Resources */,
+				FE2AE6CCFD98C67327A06768 /* PrivacyInfo.xcprivacy in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -240,7 +240,7 @@
 			shellScript = "diff \"${PODS_PODFILE_DIR_PATH}/Podfile.lock\" \"${PODS_ROOT}/Manifest.lock\" > /dev/null\nif [ $? != 0 ] ; then\n    # print error to STDERR\n    echo \"error: The sandbox is not in sync with the Podfile.lock. Run 'pod install' or update your CocoaPods installation.\" >&2\n    exit 1\nfi\n# This output is used by Xcode 'outputs' to avoid re-running this script phase.\necho \"SUCCESS\" > \"${SCRIPT_OUTPUT_FILE_0}\"\n";
 			showEnvVarsInLog = 0;
 		};
-		3082067E1B6D0317A33FD0CD /* [Expo] Configure project */ = {
+		52568D693BAF6E25FF8DAA18 /* [Expo] Configure project */ = {
 			isa = PBXShellScriptBuildPhase;
 			alwaysOutOfDate = 1;
 			buildActionMask = 2147483647;
@@ -303,7 +303,7 @@
 			shellScript = "\"${PODS_ROOT}/Target Support Files/Pods-PlayServeTennisCommunity/Pods-PlayServeTennisCommunity-resources.sh\"\n";
 			showEnvVarsInLog = 0;
 		};
-		9235AA9C8501BE3252DF2C59 /* [CP] Embed Pods Frameworks */ = {
+		AEE3C333A2363F38820D78C1 /* [CP] Embed Pods Frameworks */ = {
 			isa = PBXShellScriptBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -329,7 +329,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				F11748422D0307B40044C1D9 /* AppDelegate.swift in Sources */,
-				530B0827EBD6B2A627D4E2E0 /* ExpoModulesProvider.swift in Sources */,
+				53C1282E5BFF5F84508458F4 /* ExpoModulesProvider.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -338,7 +338,7 @@
 /* Begin XCBuildConfiguration section */
 		13B07F941A680F5B00A75B9A /* Debug */ = {
 			isa = XCBuildConfiguration;
-			baseConfigurationReference = 466D41DEA740A2DA83C3EBDA /* Pods-PlayServeTennisCommunity.debug.xcconfig */;
+			baseConfigurationReference = 3FF2C8E24503C490D910C411 /* Pods-PlayServeTennisCommunity.debug.xcconfig */;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CLANG_ENABLE_MODULES = YES;
@@ -375,7 +375,7 @@
 		};
 		13B07F951A680F5B00A75B9A /* Release */ = {
 			isa = XCBuildConfiguration;
-			baseConfigurationReference = FB48AF98DCBF74F2844BCD22 /* Pods-PlayServeTennisCommunity.release.xcconfig */;
+			baseConfigurationReference = 0A29AA57EBBB0F4898323CB7 /* Pods-PlayServeTennisCommunity.release.xcconfig */;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CLANG_ENABLE_MODULES = YES;
