@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, StyleSheet, Text, Animated, Alert, TouchableOpacity } from 'react-native';
+import { View, StyleSheet, Text, Animated, TouchableOpacity } from 'react-native';
 import { useRouter, useSegments, useLocalSearchParams } from 'expo-router';
 import { MatchRecordingForm } from '../../components/MatchRecordingForm';
 import { updateMatch, getMatchHistory, UpdateMatchData } from '../../services/matchService';

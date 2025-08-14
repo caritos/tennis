@@ -20,6 +20,7 @@ interface ClubRankingsProps {
   onChallengePress?: (playerId: string, playerName: string) => void;
   showAll?: boolean;
   currentUserId?: string; // To hide challenge button for current user
+  pendingChallenges?: Set<string>; // Players with pending challenges
 }
 
 export function ClubRankings({ 
@@ -29,7 +30,8 @@ export function ClubRankings({
   onPlayerPress,
   onChallengePress,
   showAll = false,
-  currentUserId
+  currentUserId,
+  pendingChallenges = new Set()
 }: ClubRankingsProps) {
   const colorScheme = useColorScheme();
   const colors = Colors[colorScheme ?? 'light'];
@@ -93,11 +95,19 @@ export function ClubRankings({
         {/* Challenge Button */}
         {!isCurrentUser && onChallengePress && (
           <TouchableOpacity
-            style={[styles.challengeButton, { borderColor: colors.tint }]}
+            style={[
+              styles.challengeButton, 
+              { borderColor: pendingChallenges.has(player.playerId) ? colors.tabIconDefault : colors.tint },
+              pendingChallenges.has(player.playerId) && styles.challengeButtonDisabled
+            ]}
             onPress={() => onChallengePress(player.playerId, player.playerName)}
+            disabled={pendingChallenges.has(player.playerId)}
           >
-            <ThemedText style={[styles.challengeButtonText, { color: colors.tint }]}>
-              Challenge
+            <ThemedText style={[
+              styles.challengeButtonText, 
+              { color: pendingChallenges.has(player.playerId) ? colors.tabIconDefault : colors.tint }
+            ]}>
+              {pendingChallenges.has(player.playerId) ? 'Pending' : 'Challenge'}
             </ThemedText>
           </TouchableOpacity>
         )}
@@ -107,18 +117,15 @@ export function ClubRankings({
 
   return (
     <ThemedView style={styles.container}>
-      <View style={styles.header}>
-        <ThemedText style={styles.sectionLabel}>
-          Club Rankings ({memberCount} members)
-        </ThemedText>
-        {!showAll && rankings.length > 5 && onViewAll && (
+      {!showAll && onViewAll && rankings.length > 0 && (
+        <View style={styles.header}>
           <TouchableOpacity onPress={onViewAll}>
             <ThemedText style={[styles.viewAllLink, { color: colors.tint }]}>
               View All →
             </ThemedText>
           </TouchableOpacity>
-        )}
-      </View>
+        </View>
+      )}
 
       {rankings.length > 0 ? (
         <View style={[styles.rankingsList, { borderColor: colors.tabIconDefault + '30' }]}>
@@ -133,8 +140,9 @@ export function ClubRankings({
         </View>
       ) : (
         <View style={[styles.placeholder, { borderColor: colors.tabIconDefault + '40' }]}>
+          <ThemedText style={styles.placeholderEmoji}>🏆</ThemedText>
           <ThemedText style={[styles.placeholderText, { color: colors.tabIconDefault }]}>
-            Rankings will appear here once matches are recorded
+            No rankings yet • Be the first to play!
           </ThemedText>
           <ThemedText style={[styles.placeholderSubtext, { color: colors.tabIconDefault + '80' }]}>
             Play at least 5 matches to establish your ranking
@@ -151,7 +159,7 @@ const styles = StyleSheet.create({
   },
   header: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
+    justifyContent: 'flex-end',
     alignItems: 'center',
     marginBottom: 12,
   },
@@ -249,9 +257,14 @@ const styles = StyleSheet.create({
     padding: 20,
     alignItems: 'center',
   },
+  placeholderEmoji: {
+    fontSize: 32,
+    marginBottom: 8,
+  },
   placeholderText: {
     fontSize: 14,
     textAlign: 'center',
+    fontWeight: '600',
   },
   placeholderSubtext: {
     fontSize: 12,
@@ -268,5 +281,8 @@ const styles = StyleSheet.create({
   challengeButtonText: {
     fontSize: 12,
     fontWeight: '600',
+  },
+  challengeButtonDisabled: {
+    opacity: 0.6,
   },
 });

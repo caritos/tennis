@@ -51,7 +51,7 @@ export function CreateClubButton({
   };
 
   const getButtonStyles = () => {
-    const baseStyles = [styles.button];
+    const baseStyles: any[] = [styles.button];
     
     // Size styles
     switch (size) {
@@ -102,7 +102,7 @@ export function CreateClubButton({
   };
 
   const getTextStyles = () => {
-    const baseStyles = [styles.buttonText];
+    const baseStyles: any[] = [styles.buttonText];
 
     // Size text styles
     switch (size) {

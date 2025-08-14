@@ -30,5 +30,10 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - Documented notifications implementation and committed changes to GitHub repository
 - Always find the root cause of the problem rather than getting a fix that does not fix the source
 - You can view the expo logs at 'logs/expo.log' (use a subagent to tail at least 200 lines and return the relevant lines)
+- **🚀 v1.0.1 Release Preparation (Jan 2025)**: Major updates for App Store submission including challenge management improvements, push notification configuration, and Apple Sign In temporarily disabled for simpler initial release
+- **Challenge System Enhancement**: Implemented pending challenge tracking with disabled buttons, comprehensive challenge visibility in club detail page, and 7-day auto-expiration
+- **TypeScript Fixes**: Resolved 200+ compilation errors including icon names, profile photo types, and router imports
+- **App Store Strategy**: v1.0.0 to TestFlight, v1.0.1 for production with push notifications enabled
+- **🎨 Major Club Detail Screen UI/UX Overhaul (Aug 2025)**: Completely redesigned the club detail screen with modern card-based layout system. Key improvements include: consolidated action buttons at top ("Record Match" + "Schedule a Match"), conditional section rendering (Open Invites only show when present), enhanced empty states with emojis and encouraging messaging, consistent visual hierarchy with subtle shadows and rounded corners, improved typography with proper opacity levels, and always-visible "View All" link in Rankings. Also fixed authentication screen issues including clickable Terms/Privacy links. This creates a more polished, engaging user experience that reduces clutter while maintaining full functionality.
 
 [... rest of the existing content remains unchanged ...]

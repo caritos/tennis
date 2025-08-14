@@ -51,9 +51,19 @@ We use a points-based system that combines both singles and doubles matches:
 - Upset win vs higher player = 100 + games + 50 bonus
 
 **Provisional Rankings:**
-- Players with fewer than 5 matches show "P" indicator
+- Players with fewer than 5 matches show "Provisional" badge
 - Higher point volatility during provisional period
 - Bonus points for beating established players
+
+### What does "Provisional" mean in rankings?
+Players are marked as "Provisional" when they have fewer than 5 matches played in a club. This serves several purposes:
+
+- **Ranking Stability**: Indicates the player's ranking isn't yet established since they haven't played enough matches
+- **Higher Volatility**: Provisional players experience larger point swings per match as their rating is still being determined
+- **Bonus Opportunities**: Provisional players get bonus points for beating established (non-provisional) players
+- **User Clarity**: Shows other players that this person's ranking may not accurately reflect their true skill level yet
+
+Once you reach 5+ matches, the provisional badge disappears and your ranking is considered established and reliable.
 
 ### How do I record match results?
 Any match participant can record results using our honor system:

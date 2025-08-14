@@ -6,7 +6,7 @@ import { ThemedText } from './ThemedText';
 import { ThemedView } from './ThemedView';
 import { useColorScheme } from '@/hooks/useColorScheme';
 import { Colors } from '@/constants/Colors';
-import AppleSignInButton from './AppleSignInButton';
+// import AppleSignInButton from './AppleSignInButton'; // Disabled for v1.0
 
 interface SignUpScreenProps {
   onBack: () => void;
@@ -160,15 +160,8 @@ export function SignUpScreen({
               </ThemedText>
             </TouchableOpacity>
 
-            {Platform.OS === 'ios' ? (
-              <View style={styles.appleSignUpContainer}>
-                <AppleSignInButton
-                  onSuccess={onAppleSignUpSuccess}
-                  onError={onAppleSignUpError}
-                  disabled={isLoading}
-                />
-              </View>
-            ) : (
+            {/* Apple Sign In - Disabled for v1.0, will enable in future update */}
+            {/* {false && (
               <TouchableOpacity
                 style={[
                   styles.signUpButton,
@@ -188,7 +181,7 @@ export function SignUpScreen({
                   🍎 Continue with Apple
                 </ThemedText>
               </TouchableOpacity>
-            )}
+            )} */}
 
           </View>
 

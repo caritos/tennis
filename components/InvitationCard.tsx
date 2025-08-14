@@ -168,7 +168,7 @@ export const InvitationCard: React.FC<InvitationCardProps> = ({
         <View style={styles.details}>
           {invitation.matchType && (
             <View style={styles.detailItem}>
-              <Ionicons name="tennis" size={16} color={colors.tabIconDefault} />
+              <Ionicons name="tennisball" size={16} color={colors.tabIconDefault} />
               <ThemedText style={[styles.detailText, { color: colors.tabIconDefault }]}>
                 {invitation.matchType.charAt(0).toUpperCase() + invitation.matchType.slice(1)}
               </ThemedText>

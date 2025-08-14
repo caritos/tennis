@@ -60,7 +60,6 @@ export default function AppleSignInButton({
       const { data: authData, error: authError } = await supabase.auth.signInWithIdToken({
         provider: 'apple',
         token: credential.identityToken,
-        nonce: credential.nonce,
       });
 
       if (authError) {
@@ -177,9 +176,9 @@ export default function AppleSignInButton({
       style={{
         width: '100%',
         height: 50,
+        opacity: disabled ? 0.5 : 1,
       }}
-      onPress={handleAppleSignIn}
-      disabled={disabled}
+      onPress={disabled ? () => {} : handleAppleSignIn}
     />
   );
 }

@@ -22,7 +22,7 @@ export default function ResetPasswordScreen() {
   const colorScheme = useColorScheme();
   const colors = Colors[colorScheme ?? 'light'];
   const { showSuccess, showError } = useNotification();
-  const params = useLocalSearchParams();
+  const _params = useLocalSearchParams();
   
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');

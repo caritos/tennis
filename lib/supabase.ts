@@ -179,5 +179,27 @@ export const supabase = createClient<Database>(config.url, config.anonKey, {
     headers: {
       'Content-Type': 'application/json',
     },
+    fetch: async (url, options = {}) => {
+      // Add timeout to prevent hanging requests
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second timeout
+      
+      try {
+        const response = await fetch(url, {
+          ...options,
+          signal: controller.signal,
+        });
+        clearTimeout(timeoutId);
+        return response;
+      } catch (error) {
+        clearTimeout(timeoutId);
+        // Don't log network errors to reduce noise
+        if (error.message?.includes('Network request failed')) {
+          throw error;
+        }
+        console.error('Supabase fetch error:', error);
+        throw error;
+      }
+    },
   },
 });

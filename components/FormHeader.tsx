@@ -10,7 +10,7 @@ interface FormHeaderProps {
 }
 
 export default function FormHeader({ title, onBack, rightAction }: FormHeaderProps) {
-  const borderColor = useThemeColor({}, 'border');
+  const borderColor = useThemeColor({}, 'tabIconDefault');
   const textColor = useThemeColor({}, 'text');
 
   return (

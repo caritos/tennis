@@ -13,6 +13,9 @@ import { DoublesMatchParticipants } from './DoublesMatchParticipants';
 
 interface LookingToPlaySectionProps {
   clubId: string;
+  showInviteForm?: boolean;
+  onCloseInviteForm?: () => void;
+  onInvitationsChange?: (hasInvitations: boolean) => void;
 }
 
 interface InvitationWithResponses extends MatchInvitation {
@@ -20,7 +23,12 @@ interface InvitationWithResponses extends MatchInvitation {
   userResponse?: InvitationResponse;
 }
 
-const LookingToPlaySection: React.FC<LookingToPlaySectionProps> = ({ clubId }) => {
+const LookingToPlaySection: React.FC<LookingToPlaySectionProps> = ({ 
+  clubId, 
+  showInviteForm = false,
+  onCloseInviteForm,
+  onInvitationsChange 
+}) => {
   const colorScheme = useColorScheme();
   const colors = Colors[colorScheme ?? 'light'];
   const { showSuccess, showError } = useNotification();
@@ -28,7 +36,6 @@ const LookingToPlaySection: React.FC<LookingToPlaySectionProps> = ({ clubId }) =
 
   const [invitations, setInvitations] = useState<InvitationWithResponses[]>([]);
   const [isLoading, setIsLoading] = useState(false);
-  const [showForm, setShowForm] = useState(false);
 
   useEffect(() => {
     loadInvitations();
@@ -56,6 +63,7 @@ const LookingToPlaySection: React.FC<LookingToPlaySectionProps> = ({ clubId }) =
       );
 
       setInvitations(invitationsWithResponses);
+      onInvitationsChange?.(invitationsWithResponses.length > 0);
     } catch (error) {
       console.error('Failed to load invitations:', error);
       showError('Failed to Load', 'Could not load match invitations.');
@@ -238,11 +246,14 @@ const LookingToPlaySection: React.FC<LookingToPlaySectionProps> = ({ clubId }) =
     );
   };
 
+  // Only show content if there are invitations
+  if (invitations.length === 0 && !showInviteForm) {
+    return null;
+  }
+
   return (
-    <ThemedView style={styles.section}>
-      <View style={styles.sectionHeader}>
-        <ThemedText style={styles.sectionLabel}>Open Invites</ThemedText>
-      </View>
+    <ThemedView>
+      {/* Removed section header since it's now in the parent component */}
 
       <ScrollView
         style={styles.invitationsList}
@@ -255,32 +266,16 @@ const LookingToPlaySection: React.FC<LookingToPlaySectionProps> = ({ clubId }) =
         }
         showsVerticalScrollIndicator={false}
       >
-        {invitations.length > 0 ? (
+        {invitations.length > 0 && (
           <View style={styles.invitationsContainer}>
             {invitations.map(renderInvitation)}
-          </View>
-        ) : (
-          <View style={[styles.placeholder, { borderColor: colors.tabIconDefault }]}>
-            <ThemedText style={[styles.placeholderText, { color: colors.tabIconDefault }]}>
-              No one is looking to play right now
-            </ThemedText>
           </View>
         )}
       </ScrollView>
 
-      <TouchableOpacity
-        style={[styles.lookingToPlayButton, { borderColor: colors.tint }]}
-        onPress={() => setShowForm(true)}
-      >
-        <Ionicons name="add" size={20} color={colors.tint} />
-        <ThemedText style={[styles.lookingToPlayButtonText, { color: colors.tint }]}>
-          Invite players to join you
-        </ThemedText>
-      </TouchableOpacity>
-
       {/* Match Invitation Form Modal */}
       <Modal
-        visible={showForm}
+        visible={showInviteForm}
         animationType="slide"
         presentationStyle="pageSheet"
       >
@@ -288,8 +283,11 @@ const LookingToPlaySection: React.FC<LookingToPlaySectionProps> = ({ clubId }) =
           <MatchInvitationForm
             clubId={clubId}
             creatorId={user.id}
-            onClose={() => setShowForm(false)}
-            onSuccess={loadInvitations}
+            onClose={() => onCloseInviteForm?.()}
+            onSuccess={() => {
+              loadInvitations();
+              onCloseInviteForm?.();
+            }}
           />
         )}
       </Modal>
@@ -446,19 +444,5 @@ const styles = StyleSheet.create({
   placeholderText: {
     fontSize: 14,
     textAlign: 'center',
-  },
-  lookingToPlayButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    padding: 10,
-    borderRadius: 8,
-    borderWidth: 1,
-    marginTop: 12,
-  },
-  lookingToPlayButtonText: {
-    fontSize: 14,
-    fontWeight: '500',
-    marginLeft: 6,
   },
 });

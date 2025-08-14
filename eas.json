@@ -24,7 +24,8 @@
     },
     "production": {
       "ios": {
-        "resourceClass": "m-medium"
+        "resourceClass": "m-medium",
+        "credentialsSource": "remote"
       },
       "android": {
         "resourceClass": "medium",
@@ -37,9 +38,6 @@
       "ios": {
         "appleId": "eladio@caritos.com",
         "ascAppId": "6749282626",
-        "ascApiKeyPath": "./ios/certs/AuthKey_C7K94PD368.p8",
-        "ascApiKeyId": "C7K94PD368",
-        "ascApiKeyIssuerId": "3U8L77G9QV",
         "bundleIdentifier": "com.caritos.tennis"
       },
       "android": {

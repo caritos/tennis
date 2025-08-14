@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, StyleSheet, Platform , TouchableOpacity } from 'react-native';
+import { View, StyleSheet, TouchableOpacity, TextInput, KeyboardAvoidingView, Platform, ScrollView } from 'react-native';
 import { router } from 'expo-router';
 import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
@@ -7,10 +7,15 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useColorScheme } from '@/hooks/useColorScheme';
 import { Colors } from '@/constants/Colors';
-import AppleSignInButton from '@/components/AppleSignInButton';
+import { supabase } from '@/lib/supabase';
+import { initializeDatabase } from '@/database/database';
+import { getAuthErrorMessage, logError } from '@/utils/errorHandling';
 
 export default function SignInPage() {
   const [isLoading, setIsLoading] = useState(false);
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const colorScheme = useColorScheme();
   const colors = Colors[colorScheme ?? 'light'];
   const [error, setError] = useState<string | null>(null);
@@ -20,26 +25,113 @@ export default function SignInPage() {
     router.back();
   };
 
-  const handleEmailSignIn = async () => {
-    console.log('Email sign in pressed - navigating to email sign in form');
-    router.push('/email-signin');
+  const handleSignIn = async () => {
+    if (!email || !password) {
+      setError('Please enter both email and password');
+      return;
+    }
+
+    console.log('Email sign in submitted');
+    setIsLoading(true);
+    setError(null);
+    
+    try {
+      const { data: authData, error } = await supabase.auth.signInWithPassword({
+        email: email.trim(),
+        password: password,
+      });
+      
+      if (error) {
+        logError('email-signin', error);
+        throw new Error(getAuthErrorMessage(error));
+      }
+      
+      if (!authData.user || !authData.session) {
+        throw new Error('Sign in failed - no user session created');
+      }
+      
+      // Ensure user exists in local database
+      if (authData.user) {
+        const db = await initializeDatabase();
+        
+        // Check if user exists locally
+        const existingUser = await db.getFirstAsync(
+          `SELECT * FROM users WHERE id = ?`,
+          [authData.user.id]
+        );
+        
+        // If user doesn't exist locally, sync from Supabase
+        if (!existingUser) {
+          const { data: userProfile, error: profileError } = await supabase
+            .from('users')
+            .select('*')
+            .eq('id', authData.user.id)
+            .single();
+            
+          if (userProfile && !profileError) {
+            await db.runAsync(
+              `INSERT OR REPLACE INTO users (id, full_name, email, phone, role, created_at) 
+               VALUES (?, ?, ?, ?, ?, datetime('now'))`,
+              [
+                userProfile.id,
+                userProfile.full_name,
+                userProfile.email,
+                userProfile.phone,
+                userProfile.role || 'player'
+              ]
+            );
+          } else {
+            // Fallback: use auth metadata
+            const fullName = authData.user.user_metadata?.full_name || 
+                           authData.user.email?.split('@')[0] || 'User';
+            
+            await db.runAsync(
+              `INSERT OR REPLACE INTO users (id, full_name, email, phone, role, created_at) 
+               VALUES (?, ?, ?, ?, ?, datetime('now'))`,
+              [
+                authData.user.id,
+                fullName,
+                authData.user.email,
+                authData.user.user_metadata?.phone || null,
+                'player'
+              ]
+            );
+          }
+        }
+      }
+      
+      console.log('User signed in successfully:', authData.user?.id);
+      
+      // Navigate to index route, which will handle routing to tabs after auth is ready
+      router.replace('/');
+      setIsLoading(false);
+      
+    } catch (error: any) {
+      console.error('Failed to sign in:', error);
+      setError(error.message || 'Failed to sign in');
+      setIsLoading(false);
+    }
   };
 
-  const handleAppleSignInSuccess = () => {
-    console.log('Apple sign in successful - navigating to main app');
-    router.replace('/(tabs)');
-  };
-
-  const handleAppleSignInError = (errorMessage: string) => {
-    console.error('Apple sign in error:', errorMessage);
-    setError(errorMessage);
-    setIsLoading(false);
+  const handleForgotPassword = () => {
+    console.log('Forgot password pressed');
+    router.push('/forgot-password');
   };
 
 
   const handleSignUpPress = () => {
     console.log('Sign up pressed - navigating to sign up');
     router.push('/signup');
+  };
+
+  const handleTermsPress = () => {
+    console.log('Terms of Service pressed');
+    router.push('/terms-of-service');
+  };
+
+  const handlePrivacyPress = () => {
+    console.log('Privacy Policy pressed');
+    router.push('/privacy-policy');
   };
 
   return (
@@ -92,48 +184,97 @@ export default function SignInPage() {
             </ThemedText>
           </View>
 
-          {/* Sign In Methods */}
-          <View style={styles.signInMethods}>
-            <TouchableOpacity
-              style={[
-                styles.signInButton,
-                { backgroundColor: colors.background, borderColor: colors.tabIconDefault }
-              ]}
-              onPress={handleEmailSignIn}
-              disabled={isLoading}
-              testID="email-signin-button"
-            >
-              <ThemedText style={styles.signInButtonText}>
-                📧 Continue with Email
-              </ThemedText>
-            </TouchableOpacity>
-
-            {Platform.OS === 'ios' ? (
-              <View style={styles.appleSignInContainer}>
-                <AppleSignInButton
-                  onSuccess={handleAppleSignInSuccess}
-                  onError={handleAppleSignInError}
-                  disabled={isLoading}
+          {/* Sign In Form */}
+          <KeyboardAvoidingView 
+            behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+            style={styles.formContainer}
+          >
+            <ScrollView showsVerticalScrollIndicator={false}>
+              <View style={styles.inputContainer}>
+                <ThemedText style={[styles.inputLabel, { color: colors.text }]}>Email</ThemedText>
+                <TextInput
+                  style={[
+                    styles.input,
+                    { 
+                      backgroundColor: colors.background,
+                      borderColor: colors.tabIconDefault,
+                      color: colors.text
+                    }
+                  ]}
+                  value={email}
+                  onChangeText={setEmail}
+                  placeholder="Enter your email"
+                  placeholderTextColor={colors.tabIconDefault}
+                  keyboardType="email-address"
+                  autoCapitalize="none"
+                  autoCorrect={false}
+                  editable={!isLoading}
+                  testID="email-input"
                 />
               </View>
-            ) : (
+
+              <View style={styles.inputContainer}>
+                <ThemedText style={[styles.inputLabel, { color: colors.text }]}>Password</ThemedText>
+                <View style={styles.passwordContainer}>
+                  <TextInput
+                    style={[
+                      styles.passwordInput,
+                      { 
+                        backgroundColor: colors.background,
+                        borderColor: colors.tabIconDefault,
+                        color: colors.text
+                      }
+                    ]}
+                    value={password}
+                    onChangeText={setPassword}
+                    placeholder="Enter your password"
+                    placeholderTextColor={colors.tabIconDefault}
+                    secureTextEntry={!showPassword}
+                    autoCapitalize="none"
+                    autoCorrect={false}
+                    editable={!isLoading}
+                    testID="password-input"
+                  />
+                  <TouchableOpacity
+                    style={styles.eyeButton}
+                    onPress={() => setShowPassword(!showPassword)}
+                    disabled={isLoading}
+                  >
+                    <Ionicons 
+                      name={showPassword ? 'eye-off' : 'eye'} 
+                      size={20} 
+                      color={colors.tabIconDefault} 
+                    />
+                  </TouchableOpacity>
+                </View>
+              </View>
+
+              <TouchableOpacity
+                onPress={handleForgotPassword}
+                disabled={isLoading}
+                style={styles.forgotPasswordContainer}
+              >
+                <ThemedText style={[styles.forgotPasswordText, { color: colors.tint }]}>
+                  Forgot Password?
+                </ThemedText>
+              </TouchableOpacity>
+
               <TouchableOpacity
                 style={[
                   styles.signInButton,
-                  { backgroundColor: colors.background, borderColor: colors.tabIconDefault }
+                  { backgroundColor: colors.tint },
+                  isLoading && styles.disabledButton
                 ]}
-                onPress={() => {
-                  setError('Apple Sign In is only available on iOS devices');
-                }}
+                onPress={handleSignIn}
                 disabled={isLoading}
+                testID="signin-button"
               >
-                <ThemedText style={styles.signInButtonText}>
-                  🍎 Continue with Apple
+                <ThemedText style={[styles.signInButtonText, { color: '#fff' }]}>
+                  {isLoading ? 'Signing In...' : 'Sign In'}
                 </ThemedText>
               </TouchableOpacity>
-            )}
-
-          </View>
+            </ScrollView>
+          </KeyboardAvoidingView>
 
           {/* Sign Up Link */}
           <View style={styles.signUpSection}>
@@ -153,9 +294,21 @@ export default function SignInPage() {
 
           {/* Footer Links */}
           <View style={styles.footer}>
-            <ThemedText style={[styles.footerText, { color: colors.tabIconDefault }]}>
-              Terms of Service | Privacy Policy
-            </ThemedText>
+            <View style={styles.footerLinksContainer}>
+              <TouchableOpacity onPress={handleTermsPress} disabled={isLoading}>
+                <ThemedText style={[styles.footerLink, { color: colors.tabIconDefault }]}>
+                  Terms of Service
+                </ThemedText>
+              </TouchableOpacity>
+              <ThemedText style={[styles.footerSeparator, { color: colors.tabIconDefault }]}>
+                {' '}|{' '}
+              </ThemedText>
+              <TouchableOpacity onPress={handlePrivacyPress} disabled={isLoading}>
+                <ThemedText style={[styles.footerLink, { color: colors.tabIconDefault }]}>
+                  Privacy Policy
+                </ThemedText>
+              </TouchableOpacity>
+            </View>
           </View>
         </ThemedView>
       </SafeAreaView>
@@ -224,19 +377,58 @@ const styles = StyleSheet.create({
   subtitle: {
     fontSize: 16,
   },
-  signInMethods: {
-    marginBottom: 40,
+  formContainer: {
+    flex: 1,
+  },
+  inputContainer: {
+    marginBottom: 20,
+  },
+  inputLabel: {
+    fontSize: 14,
+    fontWeight: '600',
+    marginBottom: 8,
+  },
+  input: {
+    borderWidth: 1,
+    borderRadius: 8,
+    paddingHorizontal: 12,
+    paddingVertical: 12,
+    fontSize: 16,
+  },
+  passwordContainer: {
+    position: 'relative',
+  },
+  passwordInput: {
+    borderWidth: 1,
+    borderRadius: 8,
+    paddingHorizontal: 12,
+    paddingVertical: 12,
+    paddingRight: 45,
+    fontSize: 16,
+  },
+  eyeButton: {
+    position: 'absolute',
+    right: 12,
+    top: 12,
+    padding: 4,
+  },
+  forgotPasswordContainer: {
+    alignSelf: 'flex-end',
+    marginBottom: 24,
+  },
+  forgotPasswordText: {
+    fontSize: 14,
+    fontWeight: '500',
   },
   signInButton: {
     paddingVertical: 16,
     paddingHorizontal: 24,
     borderRadius: 12,
-    borderWidth: 1,
-    marginBottom: 16,
+    marginBottom: 24,
     alignItems: 'center',
   },
-  appleSignInContainer: {
-    marginBottom: 16,
+  disabledButton: {
+    opacity: 0.6,
   },
   signInButtonText: {
     fontSize: 16,
@@ -261,6 +453,17 @@ const styles = StyleSheet.create({
     marginTop: 'auto',
   },
   footerText: {
+    fontSize: 14,
+  },
+  footerLinksContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  footerLink: {
+    fontSize: 14,
+    textDecorationLine: 'underline',
+  },
+  footerSeparator: {
     fontSize: 14,
   },
 });
