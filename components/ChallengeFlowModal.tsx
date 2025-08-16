@@ -11,7 +11,6 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { ThemedText } from './ThemedText';
-import { ThemedView } from './ThemedView';
 import { useColorScheme } from '@/hooks/useColorScheme';
 import { Colors } from '@/constants/Colors';
 import { challengeService, CreateChallengeData } from '@/services/challengeService';
@@ -53,6 +52,7 @@ const ChallengeFlowModal: React.FC<ChallengeFlowModalProps> = ({
   const [selectedTime, setSelectedTime] = useState<TimeOption>('tomorrow');
   const [message, setMessage] = useState('');
   const [selectedPlayers, setSelectedPlayers] = useState<Player[]>([]);
+  const [playerSearchText, setPlayerSearchText] = useState('');
 
   // UI state
   const [availablePlayers, setAvailablePlayers] = useState<Player[]>([]);
@@ -71,6 +71,7 @@ const ChallengeFlowModal: React.FC<ChallengeFlowModalProps> = ({
     setSelectedTime('tomorrow');
     setMessage('');
     setSelectedPlayers([]);
+    setPlayerSearchText('');
     
     // Auto-select target player if provided
     if (targetPlayerId && targetPlayerName) {
@@ -119,8 +120,8 @@ const ChallengeFlowModal: React.FC<ChallengeFlowModalProps> = ({
     const isSelected = selectedPlayers.some(p => p.id === player.id);
     
     if (isSelected) {
-      // Don't allow deselecting the target player for singles
-      if (matchType === 'singles' && player.id === targetPlayerId) {
+      // Don't allow deselecting the target player 
+      if (player.id === targetPlayerId) {
         return;
       }
       setSelectedPlayers(prev => prev.filter(p => p.id !== player.id));
@@ -258,7 +259,14 @@ const ChallengeFlowModal: React.FC<ChallengeFlowModalProps> = ({
                       backgroundColor: colors.tint + '10'
                     }
                   ]}
-                  onPress={() => setMatchType('singles')}
+                  onPress={() => {
+                    setMatchType('singles');
+                    setPlayerSearchText('');
+                    // Reset to only target player for singles
+                    if (targetPlayerId && targetPlayerName) {
+                      setSelectedPlayers([{ id: targetPlayerId, full_name: targetPlayerName }]);
+                    }
+                  }}
                 >
                   <View style={[
                     styles.radioCircle,
@@ -281,7 +289,16 @@ const ChallengeFlowModal: React.FC<ChallengeFlowModalProps> = ({
                       backgroundColor: colors.tint + '10'
                     }
                   ]}
-                  onPress={() => setMatchType('doubles')}
+                  onPress={() => {
+                    setMatchType('doubles');
+                    setPlayerSearchText('');
+                    // Keep target player when switching to doubles
+                    if (targetPlayerId && targetPlayerName) {
+                      setSelectedPlayers([{ id: targetPlayerId, full_name: targetPlayerName }]);
+                    } else {
+                      setSelectedPlayers([]);
+                    }
+                  }}
                 >
                   <View style={[
                     styles.radioCircle,
@@ -301,10 +318,79 @@ const ChallengeFlowModal: React.FC<ChallengeFlowModalProps> = ({
             {matchType === 'doubles' && (
               <View style={styles.section}>
                 <ThemedText style={styles.sectionLabel}>
-                  Select 3 players for doubles:
+                  {targetPlayerId 
+                    ? `Select 2 more players for doubles (${selectedPlayers.length}/3 selected)`
+                    : `Select 3 players to invite for doubles (${selectedPlayers.length}/3 selected)`
+                  }
                 </ThemedText>
-                
-                <ScrollView style={styles.playersList} showsVerticalScrollIndicator={false}>
+
+                {/* Selected Players Display */}
+                {selectedPlayers.length > 0 && (
+                  <View style={styles.selectedPlayersContainer}>
+                    <ThemedText style={[styles.selectedLabel, { color: colors.tabIconDefault }]}>
+                      Selected players:
+                    </ThemedText>
+                    <View style={styles.selectedPlayersList}>
+                      {selectedPlayers.map((player) => (
+                        <View
+                          key={player.id}
+                          style={[styles.playerChip, { backgroundColor: colors.tint + '20' }]}
+                        >
+                          <ThemedText style={styles.playerChipText}>
+                            {player.full_name}
+                          </ThemedText>
+                          <TouchableOpacity
+                            onPress={() => handlePlayerToggle(player)}
+                            hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+                            disabled={player.id === targetPlayerId} // Don't allow removing the target player
+                          >
+                            <Ionicons 
+                              name={player.id === targetPlayerId ? "lock-closed" : "close-circle"} 
+                              size={20} 
+                              color={player.id === targetPlayerId ? colors.tabIconDefault : colors.tint} 
+                            />
+                          </TouchableOpacity>
+                        </View>
+                      ))}
+                    </View>
+                  </View>
+                )}
+
+                {/* Search Input */}
+                <View style={styles.searchContainer}>
+                  <Ionicons 
+                    name="search" 
+                    size={20} 
+                    color={colors.tabIconDefault} 
+                    style={styles.searchIcon}
+                  />
+                  <TextInput
+                    style={[
+                      styles.searchInput,
+                      {
+                        color: colors.text,
+                        backgroundColor: colors.card,
+                      }
+                    ]}
+                    placeholder="Search players by name..."
+                    placeholderTextColor={colors.tabIconDefault}
+                    value={playerSearchText}
+                    onChangeText={setPlayerSearchText}
+                    autoCapitalize="none"
+                    autoCorrect={false}
+                  />
+                  {playerSearchText.length > 0 && (
+                    <TouchableOpacity
+                      onPress={() => setPlayerSearchText('')}
+                      hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+                    >
+                      <Ionicons name="close-circle" size={20} color={colors.tabIconDefault} />
+                    </TouchableOpacity>
+                  )}
+                </View>
+
+                {/* Available Players List */}
+                <View style={[styles.availablePlayersList, { maxHeight: 200 }]}>
                   {isLoadingPlayers ? (
                     <View style={styles.loadingContainer}>
                       <ActivityIndicator size="small" color={colors.tint} />
@@ -313,44 +399,47 @@ const ChallengeFlowModal: React.FC<ChallengeFlowModalProps> = ({
                       </ThemedText>
                     </View>
                   ) : (
-                    availablePlayers.map((player) => {
-                      const isSelected = selectedPlayers.some(p => p.id === player.id);
-                      const isTargetPlayer = player.id === targetPlayerId;
-                      
-                      return (
-                        <TouchableOpacity
-                          key={player.id}
-                          style={[styles.playerCheckboxItem, { borderColor: colors.tabIconDefault + '30' }]}
-                          onPress={() => handlePlayerToggle(player)}
-                        >
-                          <View style={[
-                            styles.checkbox,
-                            { borderColor: colors.tabIconDefault },
-                            isSelected && { backgroundColor: colors.tint, borderColor: colors.tint }
-                          ]}>
-                            {isSelected && (
-                              <Ionicons name="checkmark" size={16} color="white" />
-                            )}
-                          </View>
-                          <ThemedText style={styles.playerName}>
-                            {player.full_name}
-                            {isTargetPlayer && (
-                              <ThemedText style={[styles.autoSelectedText, { color: colors.tabIconDefault }]}>
-                                {' '}(auto-selected)
-                              </ThemedText>
-                            )}
-                          </ThemedText>
-                        </TouchableOpacity>
-                      );
-                    })
+                    <ScrollView showsVerticalScrollIndicator={true}>
+                      {availablePlayers
+                        .filter(player => {
+                          // Filter by search text
+                          const matchesSearch = player.full_name.toLowerCase().includes(playerSearchText.toLowerCase());
+                          // Don't show already selected players
+                          const notSelected = !selectedPlayers.some(p => p.id === player.id);
+                          return matchesSearch && notSelected;
+                        })
+                        .map((player) => (
+                          <TouchableOpacity
+                            key={player.id}
+                            style={[styles.availablePlayerItem, { borderColor: colors.tabIconDefault + '30' }]}
+                            onPress={() => {
+                              if (selectedPlayers.length < 3) {
+                                handlePlayerToggle(player);
+                                setPlayerSearchText(''); // Clear search after selection
+                              }
+                            }}
+                            disabled={selectedPlayers.length >= 3}
+                          >
+                            <ThemedText style={[
+                              styles.playerName,
+                              selectedPlayers.length >= 3 && { opacity: 0.5 }
+                            ]}>
+                              {player.full_name}
+                            </ThemedText>
+                            <Ionicons 
+                              name="add-circle-outline" 
+                              size={22} 
+                              color={selectedPlayers.length >= 3 ? colors.tabIconDefault : colors.tint} 
+                            />
+                          </TouchableOpacity>
+                        ))}
+                    </ScrollView>
                   )}
-                </ScrollView>
+                </View>
 
-                {matchType === 'doubles' && (
-                  <ThemedText style={[styles.doublesNote, { color: colors.tabIconDefault }]}>
-                    Teams will be decided when you meet up.
-                  </ThemedText>
-                )}
+                <ThemedText style={[styles.doublesNote, { color: colors.tabIconDefault }]}>
+                  Teams will be decided when you meet up.
+                </ThemedText>
               </View>
             )}
 
@@ -627,5 +716,60 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
+  },
+  selectedPlayersContainer: {
+    marginBottom: 16,
+  },
+  selectedLabel: {
+    fontSize: 14,
+    marginBottom: 8,
+  },
+  selectedPlayersList: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+  },
+  playerChip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 6,
+    paddingHorizontal: 12,
+    borderRadius: 20,
+    gap: 8,
+  },
+  playerChipText: {
+    fontSize: 14,
+    fontWeight: '500',
+  },
+  searchContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 12,
+    paddingHorizontal: 12,
+    borderWidth: 1,
+    borderRadius: 8,
+    borderColor: '#e0e0e0',
+  },
+  searchIcon: {
+    marginRight: 8,
+  },
+  searchInput: {
+    flex: 1,
+    paddingVertical: 12,
+    fontSize: 16,
+  },
+  availablePlayersList: {
+    borderWidth: 1,
+    borderRadius: 8,
+    borderColor: '#e0e0e0',
+    marginBottom: 12,
+  },
+  availablePlayerItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    borderBottomWidth: 1,
   },
 });
