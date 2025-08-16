@@ -74,6 +74,11 @@ const faqData: FAQItem[] = [
     question: "What do the member statistics show?",
     answer: "Each member's card displays:\n• **Total matches played** in this club\n• **Total wins** in this club\n• **Win rate percentage** calculated from their match history\n• **Color-coded progress bar**: Green (60%+ win rate), Orange (40-59%), Red (<40%)\n• **Join date** when they became a club member\n\nThis helps you find players at your skill level or playing style preference."
   },
+  {
+    category: "Finding and Playing Matches",
+    question: "How do I filter matches in the Matches tab?",
+    answer: "The Matches tab provides simple filtering options:\n• **Type**: Filter by match format (All, Singles, or Doubles)\n• **Date**: Filter by time period (All Time, Last Week, or Last Month)\n\nThese filters help you quickly find specific matches or review recent club activity."
+  },
   
   // Rankings and Scoring
   {
