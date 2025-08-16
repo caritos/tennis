@@ -1,5 +1,6 @@
 import { createClient } from '@supabase/supabase-js';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { config } from './config';
 
 // Database Types - Complete schema matching Supabase tables
 export interface User {
@@ -145,30 +146,8 @@ export interface Database {
   };
 }
 
-export interface SupabaseConfig {
-  url: string;
-  anonKey: string;
-}
-
-export function getSupabaseConfig(): SupabaseConfig {
-  const url = process.env.EXPO_PUBLIC_SUPABASE_URL;
-  const anonKey = process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY;
-
-  if (!url) {
-    throw new Error('Missing Supabase URL. Please set EXPO_PUBLIC_SUPABASE_URL in your environment variables.');
-  }
-
-  if (!anonKey) {
-    throw new Error('Missing Supabase anon key. Please set EXPO_PUBLIC_SUPABASE_ANON_KEY in your environment variables.');
-  }
-
-  return { url, anonKey };
-}
-
-// Create Supabase client
-const config = getSupabaseConfig();
-
-export const supabase = createClient<Database>(config.url, config.anonKey, {
+// Create Supabase client with environment-specific configuration
+export const supabase = createClient<Database>(config.supabase.url, config.supabase.anonKey, {
   auth: {
     storage: AsyncStorage,
     autoRefreshToken: true,
