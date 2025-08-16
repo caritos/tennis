@@ -443,20 +443,28 @@ export default function ClubDetailScreen() {
                 </View>
                 
                 <View style={styles.statItem}>
-                  <ThemedText style={styles.statNumber}>
-                    {recentMatches.length > 0 
-                      ? (() => {
+                  {recentMatches.length > 0 ? (
+                    <>
+                      <ThemedText style={styles.recentMatchText}>
+                        {recentMatches[0].player1_name} vs {recentMatches[0].player2_name}
+                      </ThemedText>
+                      <ThemedText style={[styles.recentMatchDate, { color: colors.tabIconDefault }]}>
+                        {(() => {
                           const latestMatch = recentMatches[0];
                           const matchDate = new Date(latestMatch.date);
                           const now = new Date();
                           const diffTime = Math.abs(now.getTime() - matchDate.getTime());
                           const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-                          return diffDays <= 1 ? 'Today' : `${diffDays}d ago`;
-                        })()
-                      : '--'
-                    }
-                  </ThemedText>
-                  <ThemedText style={[styles.statLabel, { color: colors.tabIconDefault }]}>Recent Activity</ThemedText>
+                          return diffDays <= 1 ? 'Today' : `${diffDays} days ago`;
+                        })()}
+                      </ThemedText>
+                    </>
+                  ) : (
+                    <>
+                      <ThemedText style={styles.statNumber}>--</ThemedText>
+                      <ThemedText style={[styles.statLabel, { color: colors.tabIconDefault }]}>Recent Activity</ThemedText>
+                    </>
+                  )}
                 </View>
               </View>
             </ThemedView>
@@ -495,7 +503,6 @@ export default function ClubDetailScreen() {
             <ClubChallenges 
               userId={user.id}
               clubId={id as string}
-              recentMatches={recentMatches}
               onRefresh={() => {
                 loadClubDetails();
                 loadPendingChallenges();
@@ -944,5 +951,16 @@ const styles = StyleSheet.create({
     color: 'white',
     fontSize: 10,
     fontWeight: '600',
+  },
+  recentMatchText: {
+    fontSize: 14,
+    fontWeight: '600',
+    textAlign: 'center',
+    marginBottom: 2,
+  },
+  recentMatchDate: {
+    fontSize: 12,
+    textAlign: 'center',
+    opacity: 0.8,
   },
 });
