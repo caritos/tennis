@@ -524,47 +524,38 @@ export class MatchService {
       // Clean up any orphaned matches first
       await this.cleanupOrphanedMatches();
       
-      // Get all players who have played matches in this club
-      // Use INNER JOIN to ensure we only get players that exist in users table
-      const playersWithMatches = await db.getAllAsync(`
-        SELECT DISTINCT u.id as player_id, u.full_name
+      // Get ALL club members, not just those with matches
+      const allClubMembers = await db.getAllAsync(`
+        SELECT u.id as player_id, u.full_name
         FROM users u
-        INNER JOIN (
-          SELECT player1_id as player_id FROM matches 
-          WHERE club_id = ? AND player1_id IS NOT NULL
-          UNION
-          SELECT player2_id as player_id FROM matches 
-          WHERE club_id = ? AND player2_id IS NOT NULL
-          UNION
-          SELECT player3_id as player_id FROM matches 
-          WHERE club_id = ? AND player3_id IS NOT NULL
-          UNION
-          SELECT player4_id as player_id FROM matches 
-          WHERE club_id = ? AND player4_id IS NOT NULL
-        ) as match_players ON u.id = match_players.player_id
-        WHERE u.full_name IS NOT NULL AND u.full_name != ''
-      `, [clubId, clubId, clubId, clubId]);
+        INNER JOIN club_members cm ON u.id = cm.user_id
+        WHERE cm.club_id = ?
+          AND u.full_name IS NOT NULL 
+          AND u.full_name != ''
+      `, [clubId]);
 
-      console.log(`🔍 Found ${playersWithMatches.length} valid players with matches in club ${clubId}`);
+      console.log(`🔍 Found ${allClubMembers.length} total members in club ${clubId}`);
 
       const leaderboard = [];
 
-      for (const player of playersWithMatches) {
+      for (const player of allClubMembers) {
         if (player.player_id && player.full_name) {
           const stats = await this.getMatchStats(player.player_id, clubId);
           
-          // Only include players with at least 1 match
+          console.log(`📊 Player ${player.full_name}: ${stats.totalMatches} matches, ${stats.wins} wins`);
+          
+          // Calculate points - 0 for players with no matches
+          let points = 0;
+          let isProvisional = true;
+          
           if (stats.totalMatches > 0) {
-            console.log(`📊 Player ${player.full_name}: ${stats.totalMatches} matches, ${stats.wins} wins`);
-            
             // Calculate points based on tennis ranking system
-            // Base points for wins, bonus for win percentage, penalty for losses
             const basePointsPerWin = 100;
             const winStreakBonus = Math.min(stats.wins * 10, 200); // Max 200 bonus
             const consistencyBonus = stats.winPercentage >= 60 ? 100 : 0;
             const activityBonus = Math.min(stats.totalMatches * 5, 150); // Max 150 for activity
             
-            const points = Math.round(
+            points = Math.round(
               (stats.wins * basePointsPerWin) + 
               winStreakBonus + 
               consistencyBonus + 
@@ -572,26 +563,40 @@ export class MatchService {
               (stats.losses * 20) // Small penalty for losses to encourage competitive play
             );
             
-            leaderboard.push({
-              playerId: player.player_id,
-              playerName: player.full_name, // Now we get this directly from the query
-              stats,
-              ranking: 0, // Will be calculated after sorting
-              points: Math.max(0, points), // Never negative
-              isProvisional: stats.totalMatches < 5, // Provisional if less than 5 matches
-            });
+            points = Math.max(0, points); // Never negative
+            isProvisional = stats.totalMatches < 5; // Provisional if less than 5 matches
           }
+          
+          leaderboard.push({
+            playerId: player.player_id,
+            playerName: player.full_name,
+            stats,
+            ranking: 0, // Will be calculated after sorting
+            points,
+            isProvisional,
+          });
         }
       }
 
-      // Sort by points (descending), then by win percentage (descending), then by total matches (descending)
+      // Sort with provisional players (including 0 matches) at the end
       leaderboard.sort((a, b) => {
+        // Non-provisional players come first
+        if (!a.isProvisional && b.isProvisional) return -1;
+        if (a.isProvisional && !b.isProvisional) return 1;
+        
+        // Within the same provisional status, sort by points
         if (a.points !== b.points) {
           return b.points - a.points;
         }
-        if (a.stats.winPercentage !== b.stats.winPercentage) {
-          return b.stats.winPercentage - a.stats.winPercentage;
+        
+        // Then by win percentage (handle 0 matches case)
+        const aWinPct = a.stats.totalMatches > 0 ? a.stats.winPercentage : 0;
+        const bWinPct = b.stats.totalMatches > 0 ? b.stats.winPercentage : 0;
+        if (aWinPct !== bWinPct) {
+          return bWinPct - aWinPct;
         }
+        
+        // Finally by total matches
         return b.stats.totalMatches - a.stats.totalMatches;
       });
 
