@@ -40,6 +40,7 @@ export default function ClubDetailScreen() {
   const [pendingChallenges, setPendingChallenges] = useState<Set<string>>(new Set());
   const [activeTab, setActiveTab] = useState<TabType>('overview');
   const [showInviteForm, setShowInviteForm] = useState(false);
+  const [unreadChallengeCount, setUnreadChallengeCount] = useState(0);
 
   useEffect(() => {
     loadClubDetails();
@@ -66,6 +67,7 @@ export default function ClubDetailScreen() {
       // Load pending challenges for the current user
       if (user?.id) {
         await loadPendingChallenges();
+        await loadChallengeCount();
       }
       
       // Get club details
@@ -285,6 +287,22 @@ export default function ClubDetailScreen() {
     }
   };
 
+  const loadChallengeCount = async () => {
+    if (!user?.id || !id) return;
+    
+    try {
+      // Get received challenges count for badge
+      const received = await challengeService.getUserReceivedChallenges(user.id);
+      const unreadCount = received.filter(challenge => 
+        challenge.status === 'pending' && challenge.club_id === id
+      ).length;
+      
+      setUnreadChallengeCount(unreadCount);
+    } catch (error) {
+      console.error('Failed to load challenge count:', error);
+    }
+  };
+
   const handleBack = () => {
     router.back();
   };
@@ -306,6 +324,7 @@ export default function ClubDetailScreen() {
     // Refresh rankings and pending challenges
     loadClubDetails();
     loadPendingChallenges();
+    loadChallengeCount();
   };
 
   const handleViewAllMatches = () => {
@@ -366,9 +385,16 @@ export default function ClubDetailScreen() {
           ]}
           onPress={() => setActiveTab('overview')}
         >
-          <ThemedText style={[styles.tabText, activeTab === 'overview' && { color: colors.tint }]}>
-            Overview
-          </ThemedText>
+          <View style={styles.tabContent}>
+            <ThemedText style={[styles.tabText, activeTab === 'overview' && { color: colors.tint }]}>
+              Overview
+            </ThemedText>
+            {unreadChallengeCount > 0 && (
+              <View style={[styles.badge, { backgroundColor: '#FF6B6B' }]}>
+                <ThemedText style={styles.badgeText}>{unreadChallengeCount}</ThemedText>
+              </View>
+            )}
+          </View>
         </TouchableOpacity>
         
         <TouchableOpacity
@@ -401,6 +427,40 @@ export default function ClubDetailScreen() {
         {/* Overview Tab */}
         {activeTab === 'overview' && (
           <>
+            {/* Club Stats Section */}
+            <ThemedView style={[styles.sectionCard, { backgroundColor: colors.background, shadowColor: colors.text }]}>
+              <View style={styles.statsContainer}>
+                <View style={styles.statItem}>
+                  <ThemedText style={styles.statNumber}>{memberCount}</ThemedText>
+                  <ThemedText style={[styles.statLabel, { color: colors.tabIconDefault }]}>Total Members</ThemedText>
+                </View>
+                
+                <View style={styles.statItem}>
+                  <ThemedText style={styles.statNumber}>
+                    {rankings.length > 0 ? rankings[0].playerName.split(' ')[0] : '--'}
+                  </ThemedText>
+                  <ThemedText style={[styles.statLabel, { color: colors.tabIconDefault }]}>Top Player</ThemedText>
+                </View>
+                
+                <View style={styles.statItem}>
+                  <ThemedText style={styles.statNumber}>
+                    {recentMatches.length > 0 
+                      ? (() => {
+                          const latestMatch = recentMatches[0];
+                          const matchDate = new Date(latestMatch.date);
+                          const now = new Date();
+                          const diffTime = Math.abs(now.getTime() - matchDate.getTime());
+                          const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+                          return diffDays <= 1 ? 'Today' : `${diffDays}d ago`;
+                        })()
+                      : '--'
+                    }
+                  </ThemedText>
+                  <ThemedText style={[styles.statLabel, { color: colors.tabIconDefault }]}>Recent Activity</ThemedText>
+                </View>
+              </View>
+            </ThemedView>
+
             {/* Action Buttons Section */}
             <ThemedView style={[styles.sectionCard, { backgroundColor: colors.background, shadowColor: colors.text }]}>
               <TouchableOpacity 
@@ -420,12 +480,22 @@ export default function ClubDetailScreen() {
               </TouchableOpacity>
             </ThemedView>
 
-        {/* Active Challenges Section */}
+        {/* Playing Opportunities Section */}
         {user && (
           <ThemedView style={[styles.sectionCard, { backgroundColor: colors.background, shadowColor: colors.text }]}>
+            <View style={styles.sectionHeaderWithIcon}>
+              <ThemedText style={styles.sectionIcon}>🎾</ThemedText>
+              <View style={styles.sectionTitleContainer}>
+                <ThemedText style={styles.sectionTitle}>Playing Opportunities</ThemedText>
+                <ThemedText style={[styles.sectionHelper, { color: colors.tabIconDefault }]}>
+                  Challenges you&apos;ve received and sent
+                </ThemedText>
+              </View>
+            </View>
             <ClubChallenges 
               userId={user.id}
               clubId={id as string}
+              recentMatches={recentMatches}
               onRefresh={() => {
                 loadClubDetails();
                 loadPendingChallenges();
@@ -827,5 +897,52 @@ const styles = StyleSheet.create({
     fontSize: 13,
     fontWeight: '500',
     marginLeft: 4,
+  },
+  statsContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+    alignItems: 'center',
+  },
+  statItem: {
+    alignItems: 'center',
+    flex: 1,
+  },
+  statNumber: {
+    fontSize: 24,
+    fontWeight: '700',
+    marginBottom: 4,
+  },
+  statLabel: {
+    fontSize: 12,
+    fontWeight: '500',
+    textAlign: 'center',
+    opacity: 0.8,
+  },
+  sectionTitleContainer: {
+    flex: 1,
+  },
+  sectionHelper: {
+    fontSize: 12,
+    opacity: 0.7,
+    marginTop: 2,
+  },
+  tabContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  badge: {
+    marginLeft: 6,
+    minWidth: 18,
+    height: 18,
+    borderRadius: 9,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 4,
+  },
+  badgeText: {
+    color: 'white',
+    fontSize: 10,
+    fontWeight: '600',
   },
 });

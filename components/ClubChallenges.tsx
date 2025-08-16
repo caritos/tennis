@@ -17,12 +17,14 @@ interface ClubChallengesProps {
   userId: string;
   clubId: string;
   onRefresh?: () => void;
+  recentMatches?: any[];
 }
 
 const ClubChallenges: React.FC<ClubChallengesProps> = ({
   userId,
   clubId,
   onRefresh,
+  recentMatches = [],
 }) => {
   const colorScheme = useColorScheme();
   const colors = Colors[colorScheme ?? 'light'];
@@ -314,9 +316,27 @@ const ClubChallenges: React.FC<ClubChallengesProps> = ({
               {openInvites.map(invite => renderOpenInvite(invite))}
             </>
           ) : (
-            <ThemedText style={[styles.emptyText, { color: colors.tabIconDefault }]}>
-              No playing opportunities available
-            </ThemedText>
+            <View style={styles.emptyState}>
+              <ThemedText style={[styles.emptyText, { color: colors.tabIconDefault }]}>
+                No playing opportunities available
+              </ThemedText>
+              {recentMatches.length > 0 && (
+                <View style={styles.recentActivity}>
+                  <ThemedText style={[styles.recentActivityHeader, { color: colors.tabIconDefault }]}>
+                    Recent Activity
+                  </ThemedText>
+                  <ThemedText style={[styles.recentActivityText, { color: colors.tabIconDefault }]}>
+                    {recentMatches[0].player1_name} vs {recentMatches[0].player2_name} • {(() => {
+                      const matchDate = new Date(recentMatches[0].date);
+                      const now = new Date();
+                      const diffTime = Math.abs(now.getTime() - matchDate.getTime());
+                      const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+                      return diffDays <= 1 ? 'Today' : `${diffDays} days ago`;
+                    })()}
+                  </ThemedText>
+                </View>
+              )}
+            </View>
           )
         ) : (
           totalSent > 0 ? (
@@ -443,6 +463,27 @@ const styles = StyleSheet.create({
     fontSize: 14,
     textAlign: 'center',
     paddingVertical: 16,
+  },
+  emptyState: {
+    alignItems: 'center',
+  },
+  recentActivity: {
+    marginTop: 16,
+    padding: 12,
+    backgroundColor: '#f8f9fa',
+    borderRadius: 8,
+    alignItems: 'center',
+  },
+  recentActivityHeader: {
+    fontSize: 12,
+    fontWeight: '600',
+    marginBottom: 4,
+    opacity: 0.8,
+  },
+  recentActivityText: {
+    fontSize: 12,
+    textAlign: 'center',
+    opacity: 0.7,
   },
 });
 
