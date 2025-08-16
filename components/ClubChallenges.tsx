@@ -10,6 +10,7 @@ import { ThemedView } from './ThemedView';
 import { useColorScheme } from '@/hooks/useColorScheme';
 import { Colors } from '@/constants/Colors';
 import { challengeService, ChallengeWithUsers } from '@/services/challengeService';
+import { matchInvitationService, MatchInvitation, InvitationResponse } from '@/services/matchInvitationService';
 import { useNotification } from '@/contexts/NotificationContext';
 
 interface ClubChallengesProps {
@@ -29,6 +30,7 @@ const ClubChallenges: React.FC<ClubChallengesProps> = ({
 
   const [sentChallenges, setSentChallenges] = useState<ChallengeWithUsers[]>([]);
   const [receivedChallenges, setReceivedChallenges] = useState<ChallengeWithUsers[]>([]);
+  const [openInvites, setOpenInvites] = useState<MatchInvitation[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [processingChallenge, setProcessingChallenge] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<'received' | 'sent'>('received');
@@ -41,18 +43,29 @@ const ClubChallenges: React.FC<ClubChallengesProps> = ({
     try {
       setIsLoading(true);
       
-      // Load both sent and received challenges
-      const [sent, received] = await Promise.all([
+      // Load challenges and open invites
+      const [sent, received, invites] = await Promise.all([
         challengeService.getUserSentChallenges(userId),
         challengeService.getUserReceivedChallenges(userId),
+        matchInvitationService.getClubInvitations(clubId),
       ]);
       
       // Filter for this club and pending status
       const clubSent = sent.filter(c => c.club_id === clubId && c.status === 'pending');
       const clubReceived = received.filter(c => c.club_id === clubId && c.status === 'pending');
       
+      // Filter open invites (exclude user's own invites and those they've already responded to)
+      const availableInvites = invites.filter(invite => {
+        if (invite.creator_id === userId) return false; // Don't show own invites
+        if (invite.status !== 'active') return false; // Only active invites
+        
+        // Check if user has already responded
+        return !invite.responses?.some(response => response.user_id === userId);
+      });
+      
       setSentChallenges(clubSent);
       setReceivedChallenges(clubReceived);
+      setOpenInvites(availableInvites);
     } catch (error) {
       console.error('Failed to load challenges:', error);
       showError('Error', 'Failed to load challenges');
@@ -98,6 +111,26 @@ const ClubChallenges: React.FC<ClubChallengesProps> = ({
     }
   };
 
+  const handleJoinInvite = async (inviteId: string, creatorName: string) => {
+    try {
+      setProcessingChallenge(inviteId);
+      await matchInvitationService.respondToInvitation(inviteId, userId, 'interested');
+      
+      showSuccess(
+        'Interest Expressed!',
+        `You expressed interest in ${creatorName}'s match invitation.`
+      );
+      
+      await loadChallenges();
+      onRefresh?.();
+    } catch (error) {
+      console.error('Failed to join invite:', error);
+      showError('Error', 'Failed to respond to invitation');
+    } finally {
+      setProcessingChallenge(null);
+    }
+  };
+
   const formatDate = (dateString?: string) => {
     if (!dateString) return 'Flexible timing';
     
@@ -123,6 +156,40 @@ const ClubChallenges: React.FC<ClubChallengesProps> = ({
           return proposedDate;
         }
     }
+  };
+
+  const renderOpenInvite = (invite: MatchInvitation) => {
+    const isProcessing = processingChallenge === invite.id;
+    
+    return (
+      <View key={invite.id} style={[styles.challengeCard, { backgroundColor: colors.background }]}>
+        <View style={styles.challengeHeader}>
+          <View style={styles.challengeInfo}>
+            <ThemedText style={styles.playerName}>{invite.creator_name}</ThemedText>
+            <ThemedText style={[styles.matchType, { color: colors.tabIconDefault }]}>
+              Looking for {invite.match_type} • {formatDate(invite.date)}
+            </ThemedText>
+            {invite.notes && (
+              <ThemedText style={[styles.message, { color: colors.tabIconDefault }]}>
+                &ldquo;{invite.notes}&rdquo;
+              </ThemedText>
+            )}
+          </View>
+          
+          <TouchableOpacity
+            style={[styles.acceptButton, { backgroundColor: colors.tint }]}
+            onPress={() => handleJoinInvite(invite.id, invite.creator_name || 'Player')}
+            disabled={isProcessing}
+          >
+            {isProcessing ? (
+              <ActivityIndicator size="small" color="white" />
+            ) : (
+              <ThemedText style={styles.buttonText}>Join</ThemedText>
+            )}
+          </TouchableOpacity>
+        </View>
+      </View>
+    );
   };
 
   const renderChallenge = (challenge: ChallengeWithUsers, type: 'sent' | 'received') => {
@@ -188,18 +255,20 @@ const ClubChallenges: React.FC<ClubChallengesProps> = ({
     );
   }
 
-  const totalChallenges = sentChallenges.length + receivedChallenges.length;
+  const totalOpportunities = receivedChallenges.length + openInvites.length;
+  const totalSent = sentChallenges.length;
+  const totalAll = totalOpportunities + totalSent;
   
-  if (totalChallenges === 0) {
-    return null; // Don't show section if no challenges
+  if (totalAll === 0) {
+    return null; // Don't show section if no challenges or invites
   }
 
   return (
     <ThemedView>
       <View style={styles.sectionHeader}>
-        <ThemedText style={styles.sectionLabel}>Active Challenges</ThemedText>
+        <ThemedText style={styles.sectionLabel}>Playing Opportunities</ThemedText>
         <View style={[styles.badge, { backgroundColor: colors.tint }]}>
-          <ThemedText style={styles.badgeText}>{totalChallenges}</ThemedText>
+          <ThemedText style={styles.badgeText}>{totalAll}</ThemedText>
         </View>
       </View>
       
@@ -216,7 +285,7 @@ const ClubChallenges: React.FC<ClubChallengesProps> = ({
             styles.tabText,
             activeTab === 'received' && { color: colors.tint, fontWeight: '600' }
           ]}>
-            Received ({receivedChallenges.length})
+            For You ({totalOpportunities})
           </ThemedText>
         </TouchableOpacity>
         
@@ -231,23 +300,26 @@ const ClubChallenges: React.FC<ClubChallengesProps> = ({
             styles.tabText,
             activeTab === 'sent' && { color: colors.tint, fontWeight: '600' }
           ]}>
-            Sent ({sentChallenges.length})
+            Sent ({totalSent})
           </ThemedText>
         </TouchableOpacity>
       </View>
       
-      {/* Challenge List */}
+      {/* Challenge & Invite List */}
       <View style={styles.challengeList}>
         {activeTab === 'received' ? (
-          receivedChallenges.length > 0 ? (
-            receivedChallenges.map(challenge => renderChallenge(challenge, 'received'))
+          totalOpportunities > 0 ? (
+            <>
+              {receivedChallenges.map(challenge => renderChallenge(challenge, 'received'))}
+              {openInvites.map(invite => renderOpenInvite(invite))}
+            </>
           ) : (
             <ThemedText style={[styles.emptyText, { color: colors.tabIconDefault }]}>
-              No pending challenges received
+              No playing opportunities available
             </ThemedText>
           )
         ) : (
-          sentChallenges.length > 0 ? (
+          totalSent > 0 ? (
             sentChallenges.map(challenge => renderChallenge(challenge, 'sent'))
           ) : (
             <ThemedText style={[styles.emptyText, { color: colors.tabIconDefault }]}>

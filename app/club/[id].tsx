@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useCallback } from 'react';
-import { View, ScrollView, StyleSheet, TouchableOpacity, ActivityIndicator } from 'react-native';
+import { View, ScrollView, StyleSheet, TouchableOpacity, ActivityIndicator, Modal } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useLocalSearchParams, router, useFocusEffect } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
@@ -12,11 +12,13 @@ import { initializeDatabase } from '@/database/database';
 import { useAuth } from '@/contexts/AuthContext';
 import { TennisScoreDisplay } from '@/components/TennisScoreDisplay';
 import { ClubRankings, RankedPlayer } from '@/components/ClubRankings';
-import LookingToPlaySection from '@/components/LookingToPlaySection';
 import ChallengeFlowModal from '@/components/ChallengeFlowModal';
 import ClubChallenges from '@/components/ClubChallenges';
+import LookingToPlaySection from '@/components/LookingToPlaySection';
 import { getClubLeaderboard } from '@/services/matchService';
 import { challengeService } from '@/services/challengeService';
+
+type TabType = 'overview' | 'members' | 'matches';
 
 export default function ClubDetailScreen() {
   const { id } = useLocalSearchParams();
@@ -28,14 +30,16 @@ export default function ClubDetailScreen() {
   const [memberCount, setMemberCount] = useState(0);
   const [rankings, setRankings] = useState<RankedPlayer[]>([]);
   const [recentMatches, setRecentMatches] = useState<any[]>([]);
+  const [allMatches, setAllMatches] = useState<any[]>([]);
+  const [clubMembers, setClubMembers] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isCreator, setIsCreator] = useState(false);
   const [showChallengeModal, setShowChallengeModal] = useState(false);
   const [challengeTarget, setChallengeTarget] = useState<{ id: string; name: string } | null>(null);
   const [pendingChallenges, setPendingChallenges] = useState<Set<string>>(new Set());
+  const [activeTab, setActiveTab] = useState<TabType>('overview');
   const [showInviteForm, setShowInviteForm] = useState(false);
-  const [hasOpenInvites, setHasOpenInvites] = useState(false);
 
   useEffect(() => {
     loadClubDetails();
@@ -168,6 +172,91 @@ export default function ClubDetailScreen() {
       console.log('ClubDetails: Setting processed matches:', processedMatches.length, processedMatches);
       setRecentMatches(processedMatches);
       
+      // Load all matches for the matches tab
+      const allMatchesData = await db.getAllAsync(
+        `SELECT m.*, 
+                p1.full_name as player1_name, 
+                p2.full_name as player2_name,
+                p3.full_name as player3_name,
+                p4.full_name as player4_name
+         FROM matches m
+         LEFT JOIN users p1 ON m.player1_id = p1.id
+         LEFT JOIN users p2 ON m.player2_id = p2.id
+         LEFT JOIN users p3 ON m.player3_id = p3.id
+         LEFT JOIN users p4 ON m.player4_id = p4.id
+         WHERE m.club_id = ?
+         ORDER BY m.date DESC, m.created_at DESC`,
+        [id]
+      );
+      
+      // Process all matches using the same logic
+      const processedAllMatches = allMatchesData?.map((match: any) => {
+        // Simple winner determination based on sets won
+        const sets = match.scores.split(',');
+        let player1Sets = 0;
+        let player2Sets = 0;
+        
+        sets.forEach((set: string) => {
+          const scores = set.replace(/\([^)]*\)/g, '').split('-'); // Remove tiebreak notation
+          const p1Score = parseInt(scores[0]);
+          const p2Score = parseInt(scores[1]);
+          
+          if (p1Score > p2Score) {
+            player1Sets++;
+          } else {
+            player2Sets++;
+          }
+        });
+        
+        const winner = player1Sets > player2Sets ? 1 : 2;
+        
+        // Format player names for doubles
+        let player1DisplayName = match.player1_name || 'Unknown Player';
+        let player2DisplayName = match.player2_name || match.opponent2_name || 'Unknown Opponent';
+        
+        if (match.match_type === 'doubles') {
+          // For doubles, combine player names
+          if (match.player3_name || match.partner3_name) {
+            player1DisplayName = `${player1DisplayName} & ${match.player3_name || match.partner3_name}`;
+          }
+          if (match.player4_name || match.partner4_name) {
+            player2DisplayName = `${player2DisplayName} & ${match.player4_name || match.partner4_name}`;
+          }
+        }
+        
+        return {
+          ...match,
+          player1_name: player1DisplayName,
+          player2_name: player2DisplayName,
+          winner,
+          processed: true
+        };
+      }) || [];
+      
+      setAllMatches(processedAllMatches);
+      
+      // Load club members
+      const members = await db.getAllAsync(
+        `SELECT u.*, cm.joined_at,
+                COALESCE(
+                  (SELECT COUNT(*) FROM matches 
+                   WHERE (player1_id = u.id OR player2_id = u.id OR player3_id = u.id OR player4_id = u.id) 
+                   AND club_id = ?), 0
+                ) as match_count,
+                COALESCE(
+                  (SELECT COUNT(*) FROM matches 
+                   WHERE ((player1_id = u.id AND scores LIKE '%won%') OR (player2_id = u.id AND scores NOT LIKE '%won%'))
+                   AND club_id = ?), 0
+                ) as wins
+         FROM users u
+         INNER JOIN club_members cm ON u.id = cm.user_id
+         WHERE cm.club_id = ?
+         ORDER BY cm.joined_at DESC`,
+        [id, id, id]
+      );
+      
+      setClubMembers(members || []);
+      
     } catch (err) {
       console.error('Failed to load club details:', err);
       setError('Failed to load club details');
@@ -220,11 +309,8 @@ export default function ClubDetailScreen() {
   };
 
   const handleViewAllMatches = () => {
-    // Navigate to club matches page
-    router.push({
-      pathname: '/club/[id]/matches',
-      params: { id: id as string }
-    });
+    // Switch to matches tab
+    setActiveTab('matches');
   };
 
   if (isLoading) {
@@ -271,25 +357,68 @@ export default function ClubDetailScreen() {
         )}
       </View>
 
-      <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
-        {/* Action Buttons Section */}
-        <ThemedView style={[styles.sectionCard, { backgroundColor: colors.background, shadowColor: colors.text }]}>
-          <TouchableOpacity 
-            style={[styles.actionButton, { backgroundColor: colors.tint }]}
-            onPress={handleRecordMatch}
-          >
-            <Ionicons name="add" size={20} color="white" />
-            <ThemedText style={styles.actionButtonText}>Record Match</ThemedText>
-          </TouchableOpacity>
-          
-          <TouchableOpacity
-            style={[styles.actionButton, { borderColor: colors.tint, borderWidth: 1, backgroundColor: 'transparent', marginTop: 12 }]}
-            onPress={() => setShowInviteForm(true)}
-          >
-            <Ionicons name="calendar-outline" size={20} color={colors.tint} />
-            <ThemedText style={[styles.actionButtonText, { color: colors.tint }]}>Schedule a Match</ThemedText>
-          </TouchableOpacity>
-        </ThemedView>
+      {/* Tabs */}
+      <View style={[styles.tabContainer, { borderBottomColor: colors.tabIconDefault + '30' }]}>
+        <TouchableOpacity
+          style={[
+            styles.tab,
+            activeTab === 'overview' && { borderBottomColor: colors.tint, borderBottomWidth: 2 }
+          ]}
+          onPress={() => setActiveTab('overview')}
+        >
+          <ThemedText style={[styles.tabText, activeTab === 'overview' && { color: colors.tint }]}>
+            Overview
+          </ThemedText>
+        </TouchableOpacity>
+        
+        <TouchableOpacity
+          style={[
+            styles.tab,
+            activeTab === 'members' && { borderBottomColor: colors.tint, borderBottomWidth: 2 }
+          ]}
+          onPress={() => setActiveTab('members')}
+        >
+          <ThemedText style={[styles.tabText, activeTab === 'members' && { color: colors.tint }]}>
+            Members ({memberCount})
+          </ThemedText>
+        </TouchableOpacity>
+        
+        <TouchableOpacity
+          style={[
+            styles.tab,
+            activeTab === 'matches' && { borderBottomColor: colors.tint, borderBottomWidth: 2 }
+          ]}
+          onPress={() => setActiveTab('matches')}
+        >
+          <ThemedText style={[styles.tabText, activeTab === 'matches' && { color: colors.tint }]}>
+            Matches
+          </ThemedText>
+        </TouchableOpacity>
+      </View>
+
+      <>
+        <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
+        {/* Overview Tab */}
+        {activeTab === 'overview' && (
+          <>
+            {/* Action Buttons Section */}
+            <ThemedView style={[styles.sectionCard, { backgroundColor: colors.background, shadowColor: colors.text }]}>
+              <TouchableOpacity 
+                style={[styles.actionButton, { backgroundColor: colors.tint }]}
+                onPress={handleRecordMatch}
+              >
+                <Ionicons name="add" size={20} color="white" />
+                <ThemedText style={styles.actionButtonText}>Record Match</ThemedText>
+              </TouchableOpacity>
+              
+              <TouchableOpacity
+                style={[styles.actionButton, { borderColor: colors.tint, borderWidth: 1, backgroundColor: 'transparent', marginTop: 12 }]}
+                onPress={() => setShowInviteForm(true)}
+              >
+                <Ionicons name="calendar-outline" size={20} color={colors.tint} />
+                <ThemedText style={[styles.actionButtonText, { color: colors.tint }]}>Schedule a Match</ThemedText>
+              </TouchableOpacity>
+            </ThemedView>
 
         {/* Active Challenges Section */}
         {user && (
@@ -304,116 +433,174 @@ export default function ClubDetailScreen() {
             />
           </ThemedView>
         )}
-
-        {/* Looking to Play Section - Only show if there are invites or form is open */}
-        {(hasOpenInvites || showInviteForm) && (
-          <ThemedView style={[styles.sectionCard, { backgroundColor: colors.background, shadowColor: colors.text }]}>
-            <View style={styles.sectionHeader}>
-              <ThemedText style={[styles.sectionTitle, { color: colors.text }]}>Open Invites</ThemedText>
-            </View>
-            <LookingToPlaySection 
-              clubId={id as string} 
-              showInviteForm={showInviteForm}
-              onCloseInviteForm={() => setShowInviteForm(false)}
-              onInvitationsChange={setHasOpenInvites}
-            />
-          </ThemedView>
+        </>
         )}
 
-        {/* Club Rankings */}
-        <ThemedView style={[styles.sectionCard, { backgroundColor: colors.background, shadowColor: colors.text }]}>
-          <View style={styles.sectionHeader}>
-            <ThemedText style={[styles.sectionTitle, { color: colors.text }]}>
-              Rankings • {memberCount} members
-            </ThemedText>
-            <TouchableOpacity onPress={() => {
-              router.push({
-                pathname: '/club/[id]/rankings',
-                params: { id: id as string }
-              });
-            }}>
-              <ThemedText style={[styles.viewAllLink, { color: colors.tint }]}>
-                View All →
-              </ThemedText>
-            </TouchableOpacity>
-          </View>
-          <ClubRankings
-            rankings={rankings}
-            memberCount={memberCount}
-            currentUserId={user?.id}
-            pendingChallenges={pendingChallenges}
-            onViewAll={undefined}
-            onPlayerPress={undefined}
-            onChallengePress={handleChallengePlayer}
+        {/* Members Tab */}
+        {activeTab === 'members' && (
+          <>
+            <ThemedView style={[styles.sectionCard, { backgroundColor: colors.background, shadowColor: colors.text }]}>
+              <View style={styles.sectionHeaderWithIcon}>
+                <ThemedText style={styles.sectionIcon}>👥</ThemedText>
+                <ThemedText style={styles.sectionTitle}>Club Members ({clubMembers.length})</ThemedText>
+              </View>
+              
+              {clubMembers.length > 0 ? (
+                <View>
+                  {clubMembers.map((member, index) => (
+                    <View 
+                      key={member.id} 
+                      style={[
+                        styles.memberItem,
+                        index !== clubMembers.length - 1 && styles.memberItemBorder,
+                        { borderColor: colors.tabIconDefault }
+                      ]}
+                    >
+                      <View style={styles.memberInfo}>
+                        <ThemedText style={styles.memberName}>{member.full_name || 'Unknown Member'}</ThemedText>
+                        <ThemedText style={[styles.memberStats, { color: colors.tabIconDefault }]}>
+                          {member.match_count} matches • {member.wins} wins
+                        </ThemedText>
+                        <ThemedText style={[styles.memberJoined, { color: colors.tabIconDefault }]}>
+                          Joined {new Date(member.joined_at).toLocaleDateString()}
+                        </ThemedText>
+                      </View>
+                      {user && user.id !== member.id && (
+                        <TouchableOpacity
+                          style={[
+                            styles.challengeButton,
+                            { borderColor: colors.tint },
+                            pendingChallenges.has(member.id) && { opacity: 0.5 }
+                          ]}
+                          onPress={() => handleChallengePlayer(member.id, member.full_name)}
+                          disabled={pendingChallenges.has(member.id)}
+                        >
+                          <Ionicons 
+                            name={pendingChallenges.has(member.id) ? "time-outline" : "trophy-outline"} 
+                            size={16} 
+                            color={colors.tint} 
+                          />
+                          <ThemedText style={[styles.challengeButtonText, { color: colors.tint }]}>
+                            {pendingChallenges.has(member.id) ? 'Pending' : 'Challenge'}
+                          </ThemedText>
+                        </TouchableOpacity>
+                      )}
+                    </View>
+                  ))}
+                </View>
+              ) : (
+                <View style={[styles.placeholder, { borderColor: colors.tabIconDefault }]}>
+                  <ThemedText style={styles.placeholderEmoji}>👥</ThemedText>
+                  <ThemedText style={[styles.placeholderText, { color: colors.tabIconDefault }]}>
+                    No members yet
+                  </ThemedText>
+                </View>
+              )}
+            </ThemedView>
+          </>
+        )}
+
+        {/* Matches Tab */}
+        {activeTab === 'matches' && (
+          <>
+            <ThemedView style={[styles.sectionCard, { backgroundColor: colors.background, shadowColor: colors.text }]}>
+              <View style={styles.sectionHeaderWithIcon}>
+                <ThemedText style={styles.sectionIcon}>🎾</ThemedText>
+                <ThemedText style={styles.sectionTitle}>All Matches ({allMatches.length})</ThemedText>
+              </View>
+              
+              {allMatches.length > 0 ? (
+                <View>
+                  {allMatches.map((match: any, index) => {
+                    const formatDate = (dateString: string) => {
+                      const date = new Date(dateString);
+                      const today = new Date();
+                      const yesterday = new Date(today);
+                      yesterday.setDate(yesterday.getDate() - 1);
+                      
+                      if (date.toDateString() === today.toDateString()) {
+                        return 'Today';
+                      } else if (date.toDateString() === yesterday.toDateString()) {
+                        return 'Yesterday';
+                      } else {
+                        return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+                      }
+                    };
+                    
+                    return (
+                      <View 
+                        key={match.id} 
+                        style={[
+                          styles.matchItem,
+                          index !== allMatches.length - 1 && styles.matchItemBorder,
+                          { borderColor: colors.tabIconDefault }
+                        ]}
+                      >
+                        <View style={styles.matchHeader}>
+                          <ThemedText style={[styles.matchDate, { color: colors.tabIconDefault }]}>
+                            {formatDate(match.date)}
+                          </ThemedText>
+                          <ThemedText style={[styles.matchType, { color: colors.tabIconDefault }]}>
+                            {match.match_type === 'doubles' ? 'Doubles' : 'Singles'}
+                          </ThemedText>
+                        </View>
+                        <TennisScoreDisplay
+                          player1Name={match.player1_name}
+                          player2Name={match.player2_name}
+                          scores={match.scores}
+                          winner={match.winner}
+                          matchId={match.id}
+                          player1Id={match.player1_id}
+                          player2Id={match.player2_id}
+                          player3Id={match.player3_id}
+                          player4Id={match.player4_id}
+                        />
+                      </View>
+                    );
+                  })}
+                </View>
+              ) : (
+                <View style={[styles.placeholder, { borderColor: colors.tabIconDefault }]}>
+                  <ThemedText style={styles.placeholderEmoji}>🎾</ThemedText>
+                  <ThemedText style={[styles.placeholderText, { color: colors.tabIconDefault }]}>
+                    No matches yet • Be the first to play!
+                  </ThemedText>
+                  <ThemedText style={[styles.placeholderSubtext, { color: colors.tabIconDefault }]}>
+                    Record your match to start building history
+                  </ThemedText>
+                </View>
+              )}
+            </ThemedView>
+          </>
+        )}
+        </ScrollView>
+
+        {/* Challenge Modal */}
+        <ChallengeFlowModal
+          clubId={id as string}
+          targetPlayerId={challengeTarget?.id}
+          targetPlayerName={challengeTarget?.name}
+          isVisible={showChallengeModal}
+          onClose={() => {
+            setShowChallengeModal(false);
+            setChallengeTarget(null);
+          }}
+          onSuccess={handleChallengeSuccess}
+        />
+
+        {/* Match Invitation Modal */}
+        <Modal
+          visible={showInviteForm}
+          animationType="slide"
+          presentationStyle="pageSheet"
+        >
+          <LookingToPlaySection
+            clubId={id as string}
+            showInviteForm={showInviteForm}
+            onCloseInviteForm={() => setShowInviteForm(false)}
           />
-        </ThemedView>
-
-        {/* Recent Matches */}
-        <ThemedView style={[styles.sectionCard, { backgroundColor: colors.background, shadowColor: colors.text }]}>
-          {recentMatches.length > 0 && (
-            <View style={styles.sectionHeader}>
-              <ThemedText style={[styles.sectionTitle, { color: colors.text }]}>Recent Matches</ThemedText>
-              <TouchableOpacity onPress={handleViewAllMatches}>
-                <ThemedText style={[styles.viewAllLink, { color: colors.tint }]}>
-                  View All →
-                </ThemedText>
-              </TouchableOpacity>
-            </View>
-          )}
-          
-          
-          {recentMatches.length > 0 ? (
-            <View style={styles.matchesList}>
-              {recentMatches.map((match, index) => {
-                console.log('ClubDetails: Rendering match:', match.id, match.player1_name, 'vs', match.player2_name, match.scores);
-                return (
-                  <View key={match.id} style={styles.matchItem}>
-                    <TennisScoreDisplay
-                      player1Name={match.player1_name}
-                      player2Name={match.player2_name}
-                      scores={match.scores}
-                      matchType={match.match_type}
-                      winner={match.winner}
-                      isCompleted={true}
-                      clubName={club.name}
-                      matchDate={match.date}
-                      notes={match.notes}
-                      matchId={match.id}
-                      player1Id={match.player1_id}
-                      player2Id={match.player2_id}
-                      player3Id={match.player3_id}
-                      player4Id={match.player4_id}
-                    />
-                  </View>
-                );
-              })}
-            </View>
-          ) : (
-            <View style={[styles.placeholder, { borderColor: colors.tabIconDefault }]}>
-              <ThemedText style={styles.placeholderEmoji}>🎾</ThemedText>
-              <ThemedText style={[styles.placeholderText, { color: colors.tabIconDefault }]}>
-                No matches yet • Be the first to play!
-              </ThemedText>
-              <ThemedText style={[styles.placeholderSubtext, { color: colors.tabIconDefault }]}>
-                Record your match to start building rankings
-              </ThemedText>
-            </View>
-          )}
-        </ThemedView>
-      </ScrollView>
-
-      {/* Challenge Modal */}
-      <ChallengeFlowModal
-        clubId={id as string}
-        targetPlayerId={challengeTarget?.id}
-        targetPlayerName={challengeTarget?.name}
-        isVisible={showChallengeModal}
-        onClose={() => {
-          setShowChallengeModal(false);
-          setChallengeTarget(null);
-        }}
-        onSuccess={handleChallengeSuccess}
-      />
+        </Modal>
+      </>
     </SafeAreaView>
   );
 }
@@ -539,11 +726,23 @@ const styles = StyleSheet.create({
   matchItem: {
     marginBottom: 8,
   },
+  matchItemBorder: {
+    borderBottomWidth: 1,
+  },
+  matchHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginBottom: 8,
+  },
   matchMeta: {
     paddingTop: 8,
     alignItems: 'center',
   },
   matchDate: {
+    fontSize: 12,
+    fontWeight: '500',
+  },
+  matchType: {
     fontSize: 12,
     fontWeight: '500',
   },
@@ -576,5 +775,57 @@ const styles = StyleSheet.create({
     color: 'white',
     fontSize: 16,
     fontWeight: '600',
+  },
+  tabContainer: {
+    flexDirection: 'row',
+    borderBottomWidth: 1,
+    borderBottomColor: '#e0e0e0',
+  },
+  tab: {
+    flex: 1,
+    paddingVertical: 12,
+    alignItems: 'center',
+  },
+  tabText: {
+    fontSize: 15,
+    fontWeight: '600',
+  },
+  memberItem: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingVertical: 12,
+  },
+  memberItemBorder: {
+    borderBottomWidth: 1,
+  },
+  memberInfo: {
+    flex: 1,
+  },
+  memberName: {
+    fontSize: 16,
+    fontWeight: '500',
+    marginBottom: 4,
+  },
+  memberStats: {
+    fontSize: 13,
+    marginBottom: 2,
+  },
+  memberJoined: {
+    fontSize: 12,
+  },
+  challengeButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderWidth: 1,
+    borderRadius: 6,
+    marginLeft: 12,
+  },
+  challengeButtonText: {
+    fontSize: 13,
+    fontWeight: '500',
+    marginLeft: 4,
   },
 });
