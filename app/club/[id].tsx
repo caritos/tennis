@@ -441,6 +441,23 @@ export default function ClubDetailScreen() {
                   </ThemedText>
                   <ThemedText style={[styles.statLabel, { color: colors.tabIconDefault }]}>Top Player</ThemedText>
                 </View>
+                
+                <View style={styles.statItem}>
+                  <ThemedText style={styles.statNumber}>
+                    {recentMatches.length > 0 
+                      ? (() => {
+                          const latestMatch = recentMatches[0];
+                          const matchDate = new Date(latestMatch.date);
+                          const now = new Date();
+                          const diffTime = Math.abs(now.getTime() - matchDate.getTime());
+                          const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+                          return diffDays <= 1 ? 'Today' : `${diffDays}d ago`;
+                        })()
+                      : '--'
+                    }
+                  </ThemedText>
+                  <ThemedText style={[styles.statLabel, { color: colors.tabIconDefault }]}>Recent Activity</ThemedText>
+                </View>
               </View>
             </ThemedView>
 
