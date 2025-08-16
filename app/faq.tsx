@@ -54,12 +54,32 @@ const faqData: FAQItem[] = [
     question: "Can I play singles and doubles?",
     answer: "Yes! Play Serve supports both singles and doubles matches. When recording or scheduling a match, you can specify the format you want to play."
   },
+  {
+    category: "Finding and Playing Matches",
+    question: "How do I find members in my club?",
+    answer: "Use the Members tab in any club to browse all club members. You can sort and filter members to find ideal playing partners based on your preferences."
+  },
+  {
+    category: "Finding and Playing Matches",
+    question: "What are the sorting options in the Members tab?",
+    answer: "You can sort club members by:\n• **Name**: Alphabetical order (A-Z)\n• **Wins**: Most wins first (great for finding competitive players)\n• **Matches**: Most active players first (members who play frequently)\n• **Recent**: Recently joined members first (newest members)"
+  },
+  {
+    category: "Finding and Playing Matches",
+    question: "What are the filter options in the Members tab?",
+    answer: "You can filter club members by activity level:\n• **All**: Shows every club member\n• **Active**: Shows members with 3+ matches played (experienced, regular players)\n• **New**: Shows members who joined in the last 30 days (great for welcoming newcomers)\n\nActive members have an 'ACTIVE' badge, and new members have a 'NEW' badge for easy identification."
+  },
+  {
+    category: "Finding and Playing Matches",
+    question: "What do the member statistics show?",
+    answer: "Each member's card displays:\n• **Total matches played** in this club\n• **Total wins** in this club\n• **Win rate percentage** calculated from their match history\n• **Color-coded progress bar**: Green (60%+ win rate), Orange (40-59%), Red (<40%)\n• **Join date** when they became a club member\n\nThis helps you find players at your skill level or playing style preference."
+  },
   
   // Rankings and Scoring
   {
     category: "Rankings and Scoring",
     question: "How do rankings work?",
-    answer: "Rankings use a point-based system similar to professional tennis. You earn points for wins, with more points awarded for beating higher-ranked opponents. Rankings are calculated separately for each club you're in."
+    answer: "Rankings are calculated based on:\n• Match wins (100 points per win)\n• Win streaks (up to 200 bonus points)\n• Consistency (100 bonus points for 60%+ win rate)\n• Activity (up to 150 points based on matches played)\n• Small penalties for losses to encourage competitive play\n\nRankings are updated immediately after each match and are specific to each club."
   },
   {
     category: "Rankings and Scoring",
@@ -74,7 +94,7 @@ const faqData: FAQItem[] = [
   {
     category: "Rankings and Scoring",
     question: "What are provisional rankings?",
-    answer: "New players start with provisional rankings (shown with *) until they've played enough matches. This helps establish an accurate skill level. Provisional players may see larger ranking changes initially."
+    answer: "Provisional rankings are for players with fewer than 5 matches in a club. They're indicated by a '*' symbol and appear at the bottom of the rankings list. This includes:\n• New club members with 0 matches\n• Players with 1-4 matches\n\nOnce you play 5 matches, you'll establish a non-provisional ranking and compete for top positions. Provisional players may see larger ranking changes as the system learns their skill level."
   },
   
   // Community Guidelines
