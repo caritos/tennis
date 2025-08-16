@@ -23,6 +23,33 @@ interface ClubRankingsProps {
   pendingChallenges?: Set<string>; // Players with pending challenges
 }
 
+// Helper function to get trending upward players
+const getTrendingPlayers = (rankings: RankedPlayer[]): RankedPlayer[] => {
+  // Filter for active players with good recent performance
+  const trendingCandidates = rankings.filter(player => {
+    // Must have played at least 1 match
+    if (player.stats.totalMatches === 0) return false;
+    
+    // For players with fewer matches, they're "trending" if they have a good win rate
+    if (player.stats.totalMatches <= 3) {
+      return player.stats.winPercentage >= 50;
+    }
+    
+    // For established players, look for high activity and good performance
+    return player.stats.winPercentage >= 60 || player.stats.totalMatches >= 8;
+  });
+  
+  // Sort by a combination of win percentage, recent activity, and points
+  const sorted = trendingCandidates.sort((a, b) => {
+    const aScore = (a.stats.winPercentage * 0.4) + (a.stats.totalMatches * 2) + (a.points * 0.001);
+    const bScore = (b.stats.winPercentage * 0.4) + (b.stats.totalMatches * 2) + (b.points * 0.001);
+    return bScore - aScore;
+  });
+  
+  // Return top 3
+  return sorted.slice(0, 3);
+};
+
 export function ClubRankings({ 
   rankings, 
   memberCount, 
@@ -36,8 +63,8 @@ export function ClubRankings({
   const colorScheme = useColorScheme();
   const colors = Colors[colorScheme ?? 'light'];
 
-  // Show top 5 by default, or all if showAll is true
-  const displayedRankings = showAll ? rankings : rankings.slice(0, 5);
+  // Show trending players by default, or all if showAll is true
+  const displayedRankings = showAll ? rankings : getTrendingPlayers(rankings);
 
   const renderTrophyIcon = (rank: number) => {
     switch (rank) {

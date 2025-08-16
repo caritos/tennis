@@ -127,21 +127,6 @@ export default function ClubRankingsScreen() {
         <View style={styles.headerSpacer} />
       </View>
 
-      {/* Rankings Information */}
-      <ThemedView style={styles.infoSection}>
-        <View style={styles.infoRow}>
-          <Ionicons name="information-circle-outline" size={20} color={colors.tabIconDefault} />
-          <ThemedText style={[styles.infoText, { color: colors.tabIconDefault }]}>
-            Rankings are calculated based on match wins, consistency, and activity
-          </ThemedText>
-        </View>
-        <View style={styles.infoRow}>
-          <Ionicons name="trophy-outline" size={20} color={colors.tabIconDefault} />
-          <ThemedText style={[styles.infoText, { color: colors.tabIconDefault }]}>
-            Play at least 5 matches to establish a non-provisional ranking
-          </ThemedText>
-        </View>
-      </ThemedView>
 
       <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
         <ThemedView style={styles.content}>
@@ -203,22 +188,6 @@ const styles = StyleSheet.create({
   content: {
     paddingHorizontal: 20,
     paddingVertical: 16,
-  },
-  infoSection: {
-    paddingHorizontal: 20,
-    paddingVertical: 12,
-    borderBottomWidth: 1,
-    borderBottomColor: '#e0e0e0',
-  },
-  infoRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 8,
-  },
-  infoText: {
-    fontSize: 12,
-    marginLeft: 8,
-    flex: 1,
   },
   loadingContainer: {
     flex: 1,
