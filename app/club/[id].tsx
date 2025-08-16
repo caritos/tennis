@@ -41,7 +41,7 @@ export default function ClubDetailScreen() {
   const [activeTab, setActiveTab] = useState<TabType>('overview');
   const [showInviteForm, setShowInviteForm] = useState(false);
   const [unreadChallengeCount, setUnreadChallengeCount] = useState(0);
-  const [memberSortBy, setMemberSortBy] = useState<'name' | 'wins' | 'matches' | 'joined'>('name');
+  const [memberSortBy, setMemberSortBy] = useState<'name' | 'wins' | 'matches' | 'joined' | 'ranking'>('name');
   const [memberFilterBy, setMemberFilterBy] = useState<'all' | 'active' | 'new'>('all');
   const [matchFilterType, setMatchFilterType] = useState<'all' | 'singles' | 'doubles'>('all');
   const [matchFilterPlayer, setMatchFilterPlayer] = useState<string>('all');
@@ -529,6 +529,7 @@ export default function ClubDetailScreen() {
                   <View style={styles.segmentedControl}>
                     {[
                       { key: 'name', label: 'Name' },
+                      { key: 'ranking', label: 'Ranking' },
                       { key: 'wins', label: 'Wins' },
                       { key: 'matches', label: 'Matches' },
                       { key: 'joined', label: 'Recent' }
@@ -601,6 +602,15 @@ export default function ClubDetailScreen() {
                     // Sort members
                     filteredMembers.sort((a, b) => {
                       switch (memberSortBy) {
+                        case 'ranking':
+                          // Find each member's ranking position
+                          const rankingA = rankings.findIndex(r => r.playerId === a.id);
+                          const rankingB = rankings.findIndex(r => r.playerId === b.id);
+                          // Handle cases where member is not in rankings (put at end)
+                          if (rankingA === -1 && rankingB === -1) return 0;
+                          if (rankingA === -1) return 1;
+                          if (rankingB === -1) return -1;
+                          return rankingA - rankingB; // Lower index = higher rank
                         case 'wins':
                           return (b.wins || 0) - (a.wins || 0);
                         case 'matches':
@@ -727,52 +737,6 @@ export default function ClubDetailScreen() {
         {/* Matches Tab */}
         {activeTab === 'matches' && (
           <>
-            {/* Club Leaderboard Section */}
-            <ThemedView style={[styles.sectionCard, { backgroundColor: colors.background, shadowColor: colors.text }]}>
-              <View style={styles.sectionHeaderWithIcon}>
-                <ThemedText style={styles.sectionIcon}>🏆</ThemedText>
-                <ThemedText style={styles.sectionTitle}>Club Leaderboard</ThemedText>
-                <TouchableOpacity onPress={() => setActiveTab('members')}>
-                  <ThemedText style={[styles.viewAllLink, { color: colors.tint }]}>View All</ThemedText>
-                </TouchableOpacity>
-              </View>
-              
-              {rankings.length > 0 ? (
-                <View style={styles.leaderboardContainer}>
-                  {rankings.slice(0, 5).map((player, index) => (
-                    <View key={player.playerId} style={[styles.leaderboardItem, index !== 4 && index !== rankings.slice(0, 5).length - 1 && styles.memberItemBorder, { borderColor: colors.tabIconDefault }]}>
-                      <View style={styles.leaderboardRank}>
-                        <ThemedText style={[styles.rankNumber, { color: index < 3 ? '#FFD700' : colors.text }]}>
-                          {index + 1}
-                        </ThemedText>
-                      </View>
-                      <View style={styles.leaderboardPlayerInfo}>
-                        <ThemedText style={styles.leaderboardPlayerName}>{player.playerName}</ThemedText>
-                        <ThemedText style={[styles.leaderboardStats, { color: colors.tabIconDefault }]}>
-                          {player.points} pts • {player.stats.wins}W-{player.stats.losses}L • {Math.round(player.stats.winPercentage)}%
-                        </ThemedText>
-                      </View>
-                      {!player.isProvisional && index < 3 && (
-                        <View style={styles.trophyContainer}>
-                          <ThemedText style={styles.trophyIcon}>
-                            {index === 0 ? '🥇' : index === 1 ? '🥈' : '🥉'}
-                          </ThemedText>
-                        </View>
-                      )}
-                    </View>
-                  ))}
-                </View>
-              ) : (
-                <View style={[styles.placeholder, { borderColor: colors.tabIconDefault }]}>
-                  <ThemedText style={styles.placeholderEmoji}>🏆</ThemedText>
-                  <ThemedText style={[styles.placeholderText, { color: colors.tabIconDefault }]}>
-                    No rankings yet • Play matches to start competing!
-                  </ThemedText>
-                </View>
-              )}
-            </ThemedView>
-            
-            {/* Match History Section */}
             <ThemedView style={[styles.sectionCard, { backgroundColor: colors.background, shadowColor: colors.text }]}>
               <View style={styles.sectionHeaderWithIcon}>
                 <ThemedText style={styles.sectionIcon}>🎾</ThemedText>
@@ -1399,41 +1363,5 @@ const styles = StyleSheet.create({
   playerPickerText: {
     fontSize: 14,
     flex: 1,
-  },
-  leaderboardContainer: {
-    gap: 0,
-  },
-  leaderboardItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingVertical: 12,
-    paddingHorizontal: 0,
-  },
-  leaderboardRank: {
-    width: 40,
-    alignItems: 'center',
-  },
-  rankNumber: {
-    fontSize: 18,
-    fontWeight: '700',
-  },
-  leaderboardPlayerInfo: {
-    flex: 1,
-    marginLeft: 12,
-  },
-  leaderboardPlayerName: {
-    fontSize: 16,
-    fontWeight: '600',
-    marginBottom: 2,
-  },
-  leaderboardStats: {
-    fontSize: 13,
-    opacity: 0.8,
-  },
-  trophyContainer: {
-    marginLeft: 8,
-  },
-  trophyIcon: {
-    fontSize: 20,
   },
 });
