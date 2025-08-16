@@ -43,6 +43,9 @@ export default function ClubDetailScreen() {
   const [unreadChallengeCount, setUnreadChallengeCount] = useState(0);
   const [memberSortBy, setMemberSortBy] = useState<'name' | 'wins' | 'matches' | 'joined'>('name');
   const [memberFilterBy, setMemberFilterBy] = useState<'all' | 'active' | 'new'>('all');
+  const [matchFilterType, setMatchFilterType] = useState<'all' | 'singles' | 'doubles'>('all');
+  const [matchFilterPlayer, setMatchFilterPlayer] = useState<string>('all');
+  const [matchFilterDate, setMatchFilterDate] = useState<'all' | 'week' | 'month'>('all');
 
   useEffect(() => {
     loadClubDetails();
@@ -724,15 +727,183 @@ export default function ClubDetailScreen() {
         {/* Matches Tab */}
         {activeTab === 'matches' && (
           <>
+            {/* Club Leaderboard Section */}
+            <ThemedView style={[styles.sectionCard, { backgroundColor: colors.background, shadowColor: colors.text }]}>
+              <View style={styles.sectionHeaderWithIcon}>
+                <ThemedText style={styles.sectionIcon}>🏆</ThemedText>
+                <ThemedText style={styles.sectionTitle}>Club Leaderboard</ThemedText>
+                <TouchableOpacity onPress={() => setActiveTab('members')}>
+                  <ThemedText style={[styles.viewAllLink, { color: colors.tint }]}>View All</ThemedText>
+                </TouchableOpacity>
+              </View>
+              
+              {rankings.length > 0 ? (
+                <View style={styles.leaderboardContainer}>
+                  {rankings.slice(0, 5).map((player, index) => (
+                    <View key={player.playerId} style={[styles.leaderboardItem, index !== 4 && index !== rankings.slice(0, 5).length - 1 && styles.memberItemBorder, { borderColor: colors.tabIconDefault }]}>
+                      <View style={styles.leaderboardRank}>
+                        <ThemedText style={[styles.rankNumber, { color: index < 3 ? '#FFD700' : colors.text }]}>
+                          {index + 1}
+                        </ThemedText>
+                      </View>
+                      <View style={styles.leaderboardPlayerInfo}>
+                        <ThemedText style={styles.leaderboardPlayerName}>{player.playerName}</ThemedText>
+                        <ThemedText style={[styles.leaderboardStats, { color: colors.tabIconDefault }]}>
+                          {player.points} pts • {player.stats.wins}W-{player.stats.losses}L • {Math.round(player.stats.winPercentage)}%
+                        </ThemedText>
+                      </View>
+                      {!player.isProvisional && index < 3 && (
+                        <View style={styles.trophyContainer}>
+                          <ThemedText style={styles.trophyIcon}>
+                            {index === 0 ? '🥇' : index === 1 ? '🥈' : '🥉'}
+                          </ThemedText>
+                        </View>
+                      )}
+                    </View>
+                  ))}
+                </View>
+              ) : (
+                <View style={[styles.placeholder, { borderColor: colors.tabIconDefault }]}>
+                  <ThemedText style={styles.placeholderEmoji}>🏆</ThemedText>
+                  <ThemedText style={[styles.placeholderText, { color: colors.tabIconDefault }]}>
+                    No rankings yet • Play matches to start competing!
+                  </ThemedText>
+                </View>
+              )}
+            </ThemedView>
+            
+            {/* Match History Section */}
             <ThemedView style={[styles.sectionCard, { backgroundColor: colors.background, shadowColor: colors.text }]}>
               <View style={styles.sectionHeaderWithIcon}>
                 <ThemedText style={styles.sectionIcon}>🎾</ThemedText>
                 <ThemedText style={styles.sectionTitle}>All Matches ({allMatches.length})</ThemedText>
               </View>
               
+              {/* Match Filtering Controls */}
+              <View style={styles.controlsContainer}>
+                <View style={styles.controlGroup}>
+                  <ThemedText style={[styles.controlLabel, { color: colors.tabIconDefault }]}>Type:</ThemedText>
+                  <View style={styles.segmentedControl}>
+                    {[
+                      { key: 'all', label: 'All' },
+                      { key: 'singles', label: 'Singles' },
+                      { key: 'doubles', label: 'Doubles' }
+                    ].map((option) => (
+                      <TouchableOpacity
+                        key={option.key}
+                        style={[
+                          styles.segmentButton,
+                          { borderColor: colors.tint },
+                          matchFilterType === option.key && { backgroundColor: colors.tint }
+                        ]}
+                        onPress={() => setMatchFilterType(option.key as any)}
+                      >
+                        <ThemedText style={[
+                          styles.segmentButtonText,
+                          { color: matchFilterType === option.key ? 'white' : colors.tint }
+                        ]}>
+                          {option.label}
+                        </ThemedText>
+                      </TouchableOpacity>
+                    ))}
+                  </View>
+                </View>
+                
+                <View style={styles.controlGroup}>
+                  <ThemedText style={[styles.controlLabel, { color: colors.tabIconDefault }]}>Player:</ThemedText>
+                  <View style={styles.playerPickerContainer}>
+                    <TouchableOpacity
+                      style={[styles.playerPicker, { borderColor: colors.tabIconDefault }]}
+                      onPress={() => {
+                        // Create player options from all matches
+                        const playerSet = new Set<string>();
+                        allMatches.forEach((match: any) => {
+                          if (match.player1_name) playerSet.add(match.player1_name);
+                          if (match.player2_name) playerSet.add(match.player2_name);
+                          if (match.player3_name) playerSet.add(match.player3_name);
+                          if (match.player4_name) playerSet.add(match.player4_name);
+                        });
+                        // For now, cycle through options (can be enhanced with a modal later)
+                        const players = ['all', ...Array.from(playerSet).sort()];
+                        const currentIndex = players.indexOf(matchFilterPlayer);
+                        const nextIndex = (currentIndex + 1) % players.length;
+                        setMatchFilterPlayer(players[nextIndex]);
+                      }}
+                    >
+                      <ThemedText style={[styles.playerPickerText, { color: colors.text }]}>
+                        {matchFilterPlayer === 'all' ? 'All Players' : matchFilterPlayer}
+                      </ThemedText>
+                      <Ionicons name="chevron-down" size={16} color={colors.tabIconDefault} />
+                    </TouchableOpacity>
+                  </View>
+                </View>
+                
+                <View style={styles.controlGroup}>
+                  <ThemedText style={[styles.controlLabel, { color: colors.tabIconDefault }]}>Date:</ThemedText>
+                  <View style={styles.segmentedControl}>
+                    {[
+                      { key: 'all', label: 'All Time' },
+                      { key: 'week', label: 'Last Week' },
+                      { key: 'month', label: 'Last Month' }
+                    ].map((option) => (
+                      <TouchableOpacity
+                        key={option.key}
+                        style={[
+                          styles.segmentButton,
+                          { borderColor: colors.tint },
+                          matchFilterDate === option.key && { backgroundColor: colors.tint }
+                        ]}
+                        onPress={() => setMatchFilterDate(option.key as any)}
+                      >
+                        <ThemedText style={[
+                          styles.segmentButtonText,
+                          { color: matchFilterDate === option.key ? 'white' : colors.tint }
+                        ]}>
+                          {option.label}
+                        </ThemedText>
+                      </TouchableOpacity>
+                    ))}
+                  </View>
+                </View>
+              </View>
+              
               {allMatches.length > 0 ? (
                 <View>
-                  {allMatches.map((match: any, index) => {
+                  {(() => {
+                    // Filter matches based on current filter settings
+                    let filteredMatches = allMatches.filter((match: any) => {
+                      // Type filter
+                      if (matchFilterType !== 'all') {
+                        if (matchFilterType === 'singles' && match.match_type !== 'singles') return false;
+                        if (matchFilterType === 'doubles' && match.match_type !== 'doubles') return false;
+                      }
+                      
+                      // Player filter
+                      if (matchFilterPlayer !== 'all') {
+                        const matchPlayers = [match.player1_name, match.player2_name, match.player3_name, match.player4_name]
+                          .filter(name => name && name.trim() !== '');
+                        if (!matchPlayers.includes(matchFilterPlayer)) return false;
+                      }
+                      
+                      // Date filter
+                      if (matchFilterDate !== 'all') {
+                        const matchDate = new Date(match.date);
+                        const now = new Date();
+                        
+                        if (matchFilterDate === 'week') {
+                          const weekAgo = new Date(now);
+                          weekAgo.setDate(weekAgo.getDate() - 7);
+                          if (matchDate < weekAgo) return false;
+                        } else if (matchFilterDate === 'month') {
+                          const monthAgo = new Date(now);
+                          monthAgo.setMonth(monthAgo.getMonth() - 1);
+                          if (matchDate < monthAgo) return false;
+                        }
+                      }
+                      
+                      return true;
+                    });
+                    
                     const formatDate = (dateString: string) => {
                       const date = new Date(dateString);
                       const today = new Date();
@@ -748,7 +919,7 @@ export default function ClubDetailScreen() {
                       }
                     };
                     
-                    return (
+                    return filteredMatches.map((match: any, index) => (
                       <View 
                         key={match.id} 
                         style={[
@@ -777,8 +948,8 @@ export default function ClubDetailScreen() {
                           player4Id={match.player4_id}
                         />
                       </View>
-                    );
-                  })}
+                    ));
+                  })()}
                 </View>
               ) : (
                 <View style={[styles.placeholder, { borderColor: colors.tabIconDefault }]}>
@@ -1211,5 +1382,58 @@ const styles = StyleSheet.create({
     fontSize: 12,
     textAlign: 'center',
     opacity: 0.7,
+  },
+  playerPickerContainer: {
+    flex: 1,
+  },
+  playerPicker: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    borderWidth: 1,
+    borderRadius: 8,
+    backgroundColor: 'transparent',
+  },
+  playerPickerText: {
+    fontSize: 14,
+    flex: 1,
+  },
+  leaderboardContainer: {
+    gap: 0,
+  },
+  leaderboardItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 12,
+    paddingHorizontal: 0,
+  },
+  leaderboardRank: {
+    width: 40,
+    alignItems: 'center',
+  },
+  rankNumber: {
+    fontSize: 18,
+    fontWeight: '700',
+  },
+  leaderboardPlayerInfo: {
+    flex: 1,
+    marginLeft: 12,
+  },
+  leaderboardPlayerName: {
+    fontSize: 16,
+    fontWeight: '600',
+    marginBottom: 2,
+  },
+  leaderboardStats: {
+    fontSize: 13,
+    opacity: 0.8,
+  },
+  trophyContainer: {
+    marginLeft: 8,
+  },
+  trophyIcon: {
+    fontSize: 20,
   },
 });
