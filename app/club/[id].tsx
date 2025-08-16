@@ -737,10 +737,6 @@ export default function ClubDetailScreen() {
         {activeTab === 'matches' && (
           <>
             <ThemedView style={[styles.sectionCard, { backgroundColor: colors.background, shadowColor: colors.text }]}>
-              <View style={styles.sectionHeaderWithIcon}>
-                <ThemedText style={styles.sectionIcon}>🎾</ThemedText>
-                <ThemedText style={styles.sectionTitle}>All Matches ({allMatches.length})</ThemedText>
-              </View>
               
               {/* Match Filtering Controls */}
               <View style={styles.controlsContainer}>
