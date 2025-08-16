@@ -353,16 +353,18 @@ export default function ClubScreen() {
                 ))
             )}
           </View>
-        </ThemedView>
-
-
-        {/* Create Club Button at Bottom */}
-        <ThemedView style={styles.createClubSection}>
-          <CreateClubButton 
-            onPress={handleCreateClub}
-            size="large"
-            variant="primary"
-          />
+          
+          {/* Explanatory text and Create Club Button */}
+          <View style={styles.createClubContainer}>
+            <ThemedText style={[styles.createClubText, { color: colors.tabIconDefault }]}>
+              Can&apos;t find your club? Create a new one for your community.
+            </ThemedText>
+            <CreateClubButton 
+              onPress={handleCreateClub}
+              size="large"
+              variant="primary"
+            />
+          </View>
         </ThemedView>
       </ScrollView>
       
@@ -476,10 +478,15 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     lineHeight: 24,
   },
-  createClubSection: {
-    paddingHorizontal: 20,
-    paddingVertical: 16,
-    borderTopWidth: 1,
-    borderTopColor: '#e0e0e0',
+  createClubContainer: {
+    marginTop: 24,
+    alignItems: 'center',
+    gap: 12,
+  },
+  createClubText: {
+    fontSize: 16,
+    textAlign: 'center',
+    opacity: 0.8,
+    marginBottom: 4,
   },
 });
