@@ -44,7 +44,6 @@ export default function ClubDetailScreen() {
   const [memberSortBy, setMemberSortBy] = useState<'name' | 'wins' | 'matches' | 'joined' | 'ranking'>('name');
   const [memberFilterBy, setMemberFilterBy] = useState<'all' | 'active' | 'new'>('all');
   const [matchFilterType, setMatchFilterType] = useState<'all' | 'singles' | 'doubles'>('all');
-  const [matchFilterPlayer, setMatchFilterPlayer] = useState<string>('all');
   const [matchFilterDate, setMatchFilterDate] = useState<'all' | 'week' | 'month'>('all');
 
   useEffect(() => {
@@ -772,36 +771,7 @@ export default function ClubDetailScreen() {
                     ))}
                   </View>
                 </View>
-                
-                <View style={styles.controlGroup}>
-                  <ThemedText style={[styles.controlLabel, { color: colors.tabIconDefault }]}>Player:</ThemedText>
-                  <View style={styles.playerPickerContainer}>
-                    <TouchableOpacity
-                      style={[styles.playerPicker, { borderColor: colors.tabIconDefault }]}
-                      onPress={() => {
-                        // Create player options from all matches
-                        const playerSet = new Set<string>();
-                        allMatches.forEach((match: any) => {
-                          if (match.player1_name) playerSet.add(match.player1_name);
-                          if (match.player2_name) playerSet.add(match.player2_name);
-                          if (match.player3_name) playerSet.add(match.player3_name);
-                          if (match.player4_name) playerSet.add(match.player4_name);
-                        });
-                        // For now, cycle through options (can be enhanced with a modal later)
-                        const players = ['all', ...Array.from(playerSet).sort()];
-                        const currentIndex = players.indexOf(matchFilterPlayer);
-                        const nextIndex = (currentIndex + 1) % players.length;
-                        setMatchFilterPlayer(players[nextIndex]);
-                      }}
-                    >
-                      <ThemedText style={[styles.playerPickerText, { color: colors.text }]}>
-                        {matchFilterPlayer === 'all' ? 'All Players' : matchFilterPlayer}
-                      </ThemedText>
-                      <Ionicons name="chevron-down" size={16} color={colors.tabIconDefault} />
-                    </TouchableOpacity>
-                  </View>
-                </View>
-                
+
                 <View style={styles.controlGroup}>
                   <ThemedText style={[styles.controlLabel, { color: colors.tabIconDefault }]}>Date:</ThemedText>
                   <View style={styles.segmentedControl}>
@@ -840,13 +810,6 @@ export default function ClubDetailScreen() {
                       if (matchFilterType !== 'all') {
                         if (matchFilterType === 'singles' && match.match_type !== 'singles') return false;
                         if (matchFilterType === 'doubles' && match.match_type !== 'doubles') return false;
-                      }
-                      
-                      // Player filter
-                      if (matchFilterPlayer !== 'all') {
-                        const matchPlayers = [match.player1_name, match.player2_name, match.player3_name, match.player4_name]
-                          .filter(name => name && name.trim() !== '');
-                        if (!matchPlayers.includes(matchFilterPlayer)) return false;
                       }
                       
                       // Date filter
@@ -1346,22 +1309,5 @@ const styles = StyleSheet.create({
     fontSize: 12,
     textAlign: 'center',
     opacity: 0.7,
-  },
-  playerPickerContainer: {
-    flex: 1,
-  },
-  playerPicker: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingVertical: 8,
-    paddingHorizontal: 12,
-    borderWidth: 1,
-    borderRadius: 8,
-    backgroundColor: 'transparent',
-  },
-  playerPickerText: {
-    fontSize: 14,
-    flex: 1,
   },
 });
