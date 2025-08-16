@@ -41,6 +41,8 @@ export default function ClubDetailScreen() {
   const [activeTab, setActiveTab] = useState<TabType>('overview');
   const [showInviteForm, setShowInviteForm] = useState(false);
   const [unreadChallengeCount, setUnreadChallengeCount] = useState(0);
+  const [memberSortBy, setMemberSortBy] = useState<'name' | 'wins' | 'matches' | 'joined'>('name');
+  const [memberFilterBy, setMemberFilterBy] = useState<'all' | 'active' | 'new'>('all');
 
   useEffect(() => {
     loadClubDetails();
@@ -522,48 +524,195 @@ export default function ClubDetailScreen() {
                 <ThemedText style={styles.sectionTitle}>Club Members ({clubMembers.length})</ThemedText>
               </View>
               
+              {/* Filtering and Sorting Controls */}
+              <View style={styles.controlsContainer}>
+                <View style={styles.controlGroup}>
+                  <ThemedText style={[styles.controlLabel, { color: colors.tabIconDefault }]}>Sort by:</ThemedText>
+                  <View style={styles.segmentedControl}>
+                    {[
+                      { key: 'name', label: 'Name' },
+                      { key: 'wins', label: 'Wins' },
+                      { key: 'matches', label: 'Matches' },
+                      { key: 'joined', label: 'Recent' }
+                    ].map((option) => (
+                      <TouchableOpacity
+                        key={option.key}
+                        style={[
+                          styles.segmentButton,
+                          { borderColor: colors.tint },
+                          memberSortBy === option.key && { backgroundColor: colors.tint }
+                        ]}
+                        onPress={() => setMemberSortBy(option.key as any)}
+                      >
+                        <ThemedText style={[
+                          styles.segmentButtonText,
+                          { color: memberSortBy === option.key ? 'white' : colors.tint }
+                        ]}>
+                          {option.label}
+                        </ThemedText>
+                      </TouchableOpacity>
+                    ))}
+                  </View>
+                </View>
+                
+                <View style={styles.controlGroup}>
+                  <ThemedText style={[styles.controlLabel, { color: colors.tabIconDefault }]}>Filter:</ThemedText>
+                  <View style={styles.segmentedControl}>
+                    {[
+                      { key: 'all', label: 'All' },
+                      { key: 'active', label: 'Active' },
+                      { key: 'new', label: 'New' }
+                    ].map((option) => (
+                      <TouchableOpacity
+                        key={option.key}
+                        style={[
+                          styles.segmentButton,
+                          { borderColor: colors.tint },
+                          memberFilterBy === option.key && { backgroundColor: colors.tint }
+                        ]}
+                        onPress={() => setMemberFilterBy(option.key as any)}
+                      >
+                        <ThemedText style={[
+                          styles.segmentButtonText,
+                          { color: memberFilterBy === option.key ? 'white' : colors.tint }
+                        ]}>
+                          {option.label}
+                        </ThemedText>
+                      </TouchableOpacity>
+                    ))}
+                  </View>
+                </View>
+              </View>
+              
               {clubMembers.length > 0 ? (
                 <View>
-                  {clubMembers.map((member, index) => (
-                    <View 
-                      key={member.id} 
-                      style={[
-                        styles.memberItem,
-                        index !== clubMembers.length - 1 && styles.memberItemBorder,
-                        { borderColor: colors.tabIconDefault }
-                      ]}
-                    >
-                      <View style={styles.memberInfo}>
-                        <ThemedText style={styles.memberName}>{member.full_name || 'Unknown Member'}</ThemedText>
-                        <ThemedText style={[styles.memberStats, { color: colors.tabIconDefault }]}>
-                          {member.match_count} matches • {member.wins} wins
-                        </ThemedText>
-                        <ThemedText style={[styles.memberJoined, { color: colors.tabIconDefault }]}>
-                          Joined {new Date(member.joined_at).toLocaleDateString()}
-                        </ThemedText>
-                      </View>
-                      {user && user.id !== member.id && (
-                        <TouchableOpacity
+                  {(() => {
+                    // Filter members
+                    let filteredMembers = clubMembers.filter(member => {
+                      if (memberFilterBy === 'active') {
+                        return member.match_count > 3;
+                      } else if (memberFilterBy === 'new') {
+                        const joinedDate = new Date(member.joined_at);
+                        const thirtyDaysAgo = new Date();
+                        thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+                        return joinedDate > thirtyDaysAgo;
+                      }
+                      return true;
+                    });
+                    
+                    // Sort members
+                    filteredMembers.sort((a, b) => {
+                      switch (memberSortBy) {
+                        case 'wins':
+                          return (b.wins || 0) - (a.wins || 0);
+                        case 'matches':
+                          return (b.match_count || 0) - (a.match_count || 0);
+                        case 'joined':
+                          return new Date(b.joined_at).getTime() - new Date(a.joined_at).getTime();
+                        default: // name
+                          return (a.full_name || '').localeCompare(b.full_name || '');
+                      }
+                    });
+                    
+                    return filteredMembers.map((member, index) => {
+                      const winRate = member.match_count > 0 ? (member.wins / member.match_count) * 100 : 0;
+                      const isActive = member.match_count > 3;
+                      const isNew = (() => {
+                        const joinedDate = new Date(member.joined_at);
+                        const thirtyDaysAgo = new Date();
+                        thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+                        return joinedDate > thirtyDaysAgo;
+                      })();
+                      
+                      return (
+                        <View 
+                          key={member.id} 
                           style={[
-                            styles.challengeButton,
-                            { borderColor: colors.tint },
-                            pendingChallenges.has(member.id) && { opacity: 0.5 }
+                            styles.enhancedMemberItem,
+                            index !== filteredMembers.length - 1 && styles.memberItemBorder,
+                            { borderColor: colors.tabIconDefault }
                           ]}
-                          onPress={() => handleChallengePlayer(member.id, member.full_name)}
-                          disabled={pendingChallenges.has(member.id)}
                         >
-                          <Ionicons 
-                            name={pendingChallenges.has(member.id) ? "time-outline" : "trophy-outline"} 
-                            size={16} 
-                            color={colors.tint} 
-                          />
-                          <ThemedText style={[styles.challengeButtonText, { color: colors.tint }]}>
-                            {pendingChallenges.has(member.id) ? 'Pending' : 'Challenge'}
-                          </ThemedText>
-                        </TouchableOpacity>
-                      )}
-                    </View>
-                  ))}
+                          <View style={styles.memberHeader}>
+                            <View style={styles.memberNameContainer}>
+                              <ThemedText style={styles.enhancedMemberName}>{member.full_name || 'Unknown Member'}</ThemedText>
+                              <View style={styles.memberBadges}>
+                                {isNew && (
+                                  <View style={[styles.memberBadge, { backgroundColor: '#4CAF50' }]}>
+                                    <ThemedText style={styles.badgeText}>NEW</ThemedText>
+                                  </View>
+                                )}
+                                {isActive && (
+                                  <View style={[styles.memberBadge, { backgroundColor: colors.tint }]}>
+                                    <ThemedText style={styles.badgeText}>ACTIVE</ThemedText>
+                                  </View>
+                                )}
+                              </View>
+                            </View>
+                            {user && user.id !== member.id && (
+                              <TouchableOpacity
+                                style={[
+                                  styles.enhancedChallengeButton,
+                                  { 
+                                    backgroundColor: pendingChallenges.has(member.id) ? colors.tabIconDefault : colors.tint,
+                                    opacity: pendingChallenges.has(member.id) ? 0.6 : 1
+                                  }
+                                ]}
+                                onPress={() => handleChallengePlayer(member.id, member.full_name)}
+                                disabled={pendingChallenges.has(member.id)}
+                              >
+                                <Ionicons 
+                                  name={pendingChallenges.has(member.id) ? "hourglass-outline" : "tennisball"} 
+                                  size={18} 
+                                  color="white" 
+                                />
+                                <ThemedText style={styles.enhancedChallengeButtonText}>
+                                  {pendingChallenges.has(member.id) ? 'Pending' : 'Challenge'}
+                                </ThemedText>
+                              </TouchableOpacity>
+                            )}
+                          </View>
+                          
+                          <View style={styles.memberStatsContainer}>
+                            <View style={styles.statGroup}>
+                              <View style={styles.statItem}>
+                                <ThemedText style={styles.statValue}>{member.match_count}</ThemedText>
+                                <ThemedText style={[styles.statLabelSmall, { color: colors.tabIconDefault }]}>Matches</ThemedText>
+                              </View>
+                              <View style={styles.statItem}>
+                                <ThemedText style={styles.statValue}>{member.wins}</ThemedText>
+                                <ThemedText style={[styles.statLabelSmall, { color: colors.tabIconDefault }]}>Wins</ThemedText>
+                              </View>
+                              <View style={styles.statItem}>
+                                <ThemedText style={styles.statValue}>{Math.round(winRate)}%</ThemedText>
+                                <ThemedText style={[styles.statLabelSmall, { color: colors.tabIconDefault }]}>Win Rate</ThemedText>
+                              </View>
+                            </View>
+                            
+                            {member.match_count > 0 && (
+                              <View style={styles.progressBarContainer}>
+                                <View style={[styles.progressBar, { backgroundColor: colors.tabIconDefault + '20' }]}>
+                                  <View 
+                                    style={[
+                                      styles.progressFill,
+                                      { 
+                                        backgroundColor: winRate >= 60 ? '#4CAF50' : winRate >= 40 ? '#FF9800' : '#FF5722',
+                                        width: `${winRate}%`
+                                      }
+                                    ]}
+                                  />
+                                </View>
+                              </View>
+                            )}
+                            
+                            <ThemedText style={[styles.memberJoinedDate, { color: colors.tabIconDefault }]}>
+                              Joined {new Date(member.joined_at).toLocaleDateString()}
+                            </ThemedText>
+                          </View>
+                        </View>
+                      );
+                    });
+                  })()}
                 </View>
               ) : (
                 <View style={[styles.placeholder, { borderColor: colors.tabIconDefault }]}>
@@ -962,5 +1111,110 @@ const styles = StyleSheet.create({
     fontSize: 12,
     textAlign: 'center',
     opacity: 0.8,
+  },
+  controlsContainer: {
+    marginBottom: 16,
+    gap: 12,
+  },
+  controlGroup: {
+    gap: 8,
+  },
+  controlLabel: {
+    fontSize: 14,
+    fontWeight: '600',
+    marginBottom: 4,
+  },
+  segmentedControl: {
+    flexDirection: 'row',
+    borderRadius: 8,
+    overflow: 'hidden',
+  },
+  segmentButton: {
+    flex: 1,
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    borderWidth: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  segmentButtonText: {
+    fontSize: 12,
+    fontWeight: '500',
+  },
+  enhancedMemberItem: {
+    paddingVertical: 16,
+    paddingHorizontal: 0,
+  },
+  memberHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
+    marginBottom: 12,
+  },
+  memberNameContainer: {
+    flex: 1,
+  },
+  enhancedMemberName: {
+    fontSize: 18,
+    fontWeight: '600',
+    marginBottom: 6,
+  },
+  memberBadges: {
+    flexDirection: 'row',
+    gap: 6,
+  },
+  memberBadge: {
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 10,
+  },
+  enhancedChallengeButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    borderRadius: 20,
+    gap: 6,
+  },
+  enhancedChallengeButtonText: {
+    color: 'white',
+    fontSize: 14,
+    fontWeight: '600',
+  },
+  memberStatsContainer: {
+    gap: 12,
+  },
+  statGroup: {
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+    paddingVertical: 8,
+  },
+  statValue: {
+    fontSize: 20,
+    fontWeight: '700',
+    textAlign: 'center',
+  },
+  statLabelSmall: {
+    fontSize: 11,
+    textAlign: 'center',
+    opacity: 0.8,
+    marginTop: 2,
+  },
+  progressBarContainer: {
+    marginHorizontal: 16,
+  },
+  progressBar: {
+    height: 6,
+    borderRadius: 3,
+    overflow: 'hidden',
+  },
+  progressFill: {
+    height: '100%',
+    borderRadius: 3,
+  },
+  memberJoinedDate: {
+    fontSize: 12,
+    textAlign: 'center',
+    opacity: 0.7,
   },
 });
