@@ -19,7 +19,7 @@ This is an [Expo](https://expo.dev) project created with [`create-expo-app`](htt
 2.A Start the app with developing
 
   ```bash
-  npx expo start --ios --clear 2>&1 | tee logs/expo.log
+  npx expo start --clear 2>&1 | tee logs/expo.log\n
    ```
 
 In the output, you'll find options to open the app in a

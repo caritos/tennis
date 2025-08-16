@@ -7,12 +7,18 @@
     "development": {
       "developmentClient": true,
       "distribution": "internal",
+      "env": {
+        "EXPO_PUBLIC_APP_ENV": "development"
+      },
       "ios": {
         "resourceClass": "m-medium"
       }
     },
     "preview": {
       "distribution": "internal",
+      "env": {
+        "EXPO_PUBLIC_APP_ENV": "preview"
+      },
       "ios": {
         "simulator": true,
         "resourceClass": "m-medium"
@@ -23,6 +29,9 @@
       }
     },
     "production": {
+      "env": {
+        "EXPO_PUBLIC_APP_ENV": "production"
+      },
       "ios": {
         "resourceClass": "m-medium",
         "credentialsSource": "remote"
