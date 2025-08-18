@@ -117,7 +117,10 @@ export default function ClubDetailScreen() {
                 p1.full_name as player1_name, 
                 p2.full_name as player2_name,
                 p3.full_name as player3_name,
-                p4.full_name as player4_name
+                p4.full_name as player4_name,
+                m.opponent2_name,
+                m.partner3_name,
+                m.partner4_name
          FROM matches m
          LEFT JOIN users p1 ON m.player1_id = p1.id
          LEFT JOIN users p2 ON m.player2_id = p2.id
@@ -159,10 +162,10 @@ export default function ClubDetailScreen() {
         if (match.match_type === 'doubles') {
           // For doubles, combine player names
           if (match.player3_name || match.partner3_name) {
-            player1DisplayName = `${player1DisplayName} & ${match.player3_name || match.partner3_name}`;
+            player1DisplayName = `${player1DisplayName} & ${match.player3_name || match.partner3_name || 'Unknown Partner'}`;
           }
           if (match.player4_name || match.partner4_name) {
-            player2DisplayName = `${player2DisplayName} & ${match.player4_name || match.partner4_name}`;
+            player2DisplayName = `${player2DisplayName} & ${match.player4_name || match.partner4_name || 'Unknown Partner'}`;
           }
         }
         
@@ -184,7 +187,10 @@ export default function ClubDetailScreen() {
                 p1.full_name as player1_name, 
                 p2.full_name as player2_name,
                 p3.full_name as player3_name,
-                p4.full_name as player4_name
+                p4.full_name as player4_name,
+                m.opponent2_name,
+                m.partner3_name,
+                m.partner4_name
          FROM matches m
          LEFT JOIN users p1 ON m.player1_id = p1.id
          LEFT JOIN users p2 ON m.player2_id = p2.id
@@ -223,10 +229,10 @@ export default function ClubDetailScreen() {
         if (match.match_type === 'doubles') {
           // For doubles, combine player names
           if (match.player3_name || match.partner3_name) {
-            player1DisplayName = `${player1DisplayName} & ${match.player3_name || match.partner3_name}`;
+            player1DisplayName = `${player1DisplayName} & ${match.player3_name || match.partner3_name || 'Unknown Partner'}`;
           }
           if (match.player4_name || match.partner4_name) {
-            player2DisplayName = `${player2DisplayName} & ${match.player4_name || match.partner4_name}`;
+            player2DisplayName = `${player2DisplayName} & ${match.player4_name || match.partner4_name || 'Unknown Partner'}`;
           }
         }
         
@@ -334,6 +340,34 @@ export default function ClubDetailScreen() {
   const handleViewAllMatches = () => {
     // Switch to matches tab
     setActiveTab('matches');
+  };
+
+  const handleClaimMatch = async (matchId: string, playerPosition: 'player2' | 'player3' | 'player4') => {
+    if (!user?.id) return;
+    
+    try {
+      const db = await initializeDatabase();
+      
+      // Update the match to replace the unregistered player name with the current user's ID
+      const updateColumn = playerPosition + '_id';
+      const nameColumn = playerPosition === 'player2' ? 'opponent2_name' : 
+                         playerPosition === 'player3' ? 'partner3_name' : 'partner4_name';
+      
+      await db.runAsync(
+        `UPDATE matches 
+         SET ${updateColumn} = ?, ${nameColumn} = NULL 
+         WHERE id = ?`,
+        [user.id, matchId]
+      );
+      
+      // Reload matches to reflect the change
+      loadClubDetails();
+      
+      // Show success message (you might want to add a toast/alert here)
+      console.log('Match claimed successfully');
+    } catch (error) {
+      console.error('Failed to claim match:', error);
+    }
   };
 
   if (isLoading) {
@@ -842,36 +876,47 @@ export default function ClubDetailScreen() {
                       }
                     };
                     
-                    return filteredMatches.map((match: any, index) => (
-                      <View 
-                        key={match.id} 
-                        style={[
-                          styles.matchItem,
-                          index !== allMatches.length - 1 && styles.matchItemBorder,
-                          { borderColor: colors.tabIconDefault }
-                        ]}
-                      >
-                        <View style={styles.matchHeader}>
-                          <ThemedText style={[styles.matchDate, { color: colors.tabIconDefault }]}>
-                            {formatDate(match.date)}
-                          </ThemedText>
-                          <ThemedText style={[styles.matchType, { color: colors.tabIconDefault }]}>
-                            {match.match_type === 'doubles' ? 'Doubles' : 'Singles'}
-                          </ThemedText>
+                    return filteredMatches.map((match: any, index) => {
+                      return (
+                        <View 
+                          key={match.id} 
+                          style={[
+                            styles.matchItem,
+                            index !== allMatches.length - 1 && styles.matchItemBorder,
+                            { borderColor: colors.tabIconDefault }
+                          ]}
+                        >
+                          <View style={styles.matchHeader}>
+                            <ThemedText style={[styles.matchDate, { color: colors.tabIconDefault }]}>
+                              {formatDate(match.date)}
+                            </ThemedText>
+                            <ThemedText style={[styles.matchType, { color: colors.tabIconDefault }]}>
+                              {match.match_type === 'doubles' ? 'Doubles' : 'Singles'}
+                            </ThemedText>
+                          </View>
+                          <TennisScoreDisplay
+                            player1Name={match.player1_name}
+                            player2Name={match.player2_name || match.opponent2_name}
+                            scores={match.scores}
+                            winner={match.winner}
+                            matchId={match.id}
+                            player1Id={match.player1_id}
+                            player2Id={match.player2_id}
+                            player3Id={match.player3_id}
+                            player4Id={match.player4_id}
+                            matchType={match.match_type}
+                            isPlayer1Unregistered={false} // Player 1 is always registered
+                            isPlayer2Unregistered={!match.player2_id && !!match.opponent2_name}
+                            isPlayer3Unregistered={!match.player3_id && !!match.partner3_name}
+                            isPlayer4Unregistered={!match.player4_id && !!match.partner4_name}
+                            unregisteredPlayer2Name={match.opponent2_name}
+                            unregisteredPlayer3Name={match.partner3_name}
+                            unregisteredPlayer4Name={match.partner4_name}
+                            onClaimMatch={handleClaimMatch}
+                          />
                         </View>
-                        <TennisScoreDisplay
-                          player1Name={match.player1_name}
-                          player2Name={match.player2_name}
-                          scores={match.scores}
-                          winner={match.winner}
-                          matchId={match.id}
-                          player1Id={match.player1_id}
-                          player2Id={match.player2_id}
-                          player3Id={match.player3_id}
-                          player4Id={match.player4_id}
-                        />
-                      </View>
-                    ));
+                      );
+                    });
                   })()}
                 </View>
               ) : (
@@ -1047,6 +1092,7 @@ const styles = StyleSheet.create({
   matchHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
+    alignItems: 'center',
     marginBottom: 8,
   },
   matchMeta: {

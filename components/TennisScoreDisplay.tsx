@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, StyleSheet, TouchableOpacity, Modal } from 'react-native';
+import { View, StyleSheet, TouchableOpacity, Modal, Alert } from 'react-native';
 import { ThemedText } from './ThemedText';
 import { ThemedView } from './ThemedView';
 import { useColorScheme } from '@/hooks/useColorScheme';
@@ -12,7 +12,7 @@ interface TennisScoreDisplayProps {
   player1Name: string;
   player2Name: string;
   scores: string; // Format: "6-4,7-6(7-3),6-2"
-  matchType: 'singles' | 'doubles';
+  matchType?: 'singles' | 'doubles';
   winner?: 1 | 2; // Which player won
   isCompleted?: boolean;
   showDuration?: boolean;
@@ -25,6 +25,14 @@ interface TennisScoreDisplayProps {
   player2Id?: string;
   player3Id?: string;
   player4Id?: string;
+  isPlayer1Unregistered?: boolean;
+  isPlayer2Unregistered?: boolean;
+  isPlayer3Unregistered?: boolean;
+  isPlayer4Unregistered?: boolean;
+  unregisteredPlayer2Name?: string;
+  unregisteredPlayer3Name?: string;
+  unregisteredPlayer4Name?: string;
+  onClaimMatch?: (matchId: string, playerPosition: 'player2' | 'player3' | 'player4') => void;
 }
 
 interface ParsedSet {
@@ -40,7 +48,7 @@ export function TennisScoreDisplay({
   player1Name,
   player2Name,
   scores,
-  matchType,
+  matchType = 'singles',
   winner,
   isCompleted = false,
   showDuration = false,
@@ -52,7 +60,15 @@ export function TennisScoreDisplay({
   player1Id,
   player2Id,
   player3Id,
-  player4Id
+  player4Id,
+  isPlayer1Unregistered = false,
+  isPlayer2Unregistered = false,
+  isPlayer3Unregistered = false,
+  isPlayer4Unregistered = false,
+  unregisteredPlayer2Name,
+  unregisteredPlayer3Name,
+  unregisteredPlayer4Name,
+  onClaimMatch
 }: TennisScoreDisplayProps) {
   const colorScheme = useColorScheme();
   const colors = Colors[colorScheme ?? 'light'];
@@ -110,6 +126,26 @@ export function TennisScoreDisplay({
     } else {
       console.error('🎾 No matchId available for editing');
     }
+  };
+
+  const handleClaimConfirmation = (playerName: string, playerPosition: 'player2' | 'player3' | 'player4') => {
+    if (!matchId || !onClaimMatch) return;
+    
+    Alert.alert(
+      'Claim Match',
+      `Are you "${playerName}"?\n\nThis will add this match to your personal record and you'll be able to edit the match details.`,
+      [
+        {
+          text: 'Cancel',
+          style: 'cancel',
+        },
+        {
+          text: 'Yes, Claim Match',
+          style: 'default',
+          onPress: () => onClaimMatch(matchId, playerPosition),
+        },
+      ]
+    );
   };
 
   const formatMatchDate = (dateString: string) => {
@@ -176,13 +212,29 @@ export function TennisScoreDisplay({
                 <Ionicons name="checkmark" size={16} color="#4CAF50" />
               )}
             </View>
-            <ThemedText 
-              style={[styles.playerName, { color: colors.text, fontSize: nameSize }]}
-              numberOfLines={matchType === 'doubles' ? 2 : 1}
-              ellipsizeMode="tail"
-            >
-              {player1Name}
-            </ThemedText>
+            <View style={styles.playerNameWithButton}>
+              <ThemedText 
+                style={[styles.playerName, { color: colors.text, fontSize: nameSize }]}
+                numberOfLines={matchType === 'doubles' ? 2 : 1}
+                ellipsizeMode="tail"
+              >
+                {player1Name}
+              </ThemedText>
+              {(isPlayer1Unregistered || isPlayer3Unregistered) && matchId && onClaimMatch && (
+                <TouchableOpacity
+                  style={[styles.claimButton, { backgroundColor: colors.tint }]}
+                  onPress={() => {
+                    if (isPlayer3Unregistered && unregisteredPlayer3Name) {
+                      handleClaimConfirmation(unregisteredPlayer3Name, 'player3');
+                    }
+                  }}
+                >
+                  <ThemedText style={styles.claimButtonText}>
+                    unregistered
+                  </ThemedText>
+                </TouchableOpacity>
+              )}
+            </View>
           </View>
           {sets.map((set, index) => (
             <View key={index} style={[styles.setColumn, { minWidth: setColumnWidth }]}>
@@ -210,13 +262,31 @@ export function TennisScoreDisplay({
                 <Ionicons name="checkmark" size={16} color="#4CAF50" />
               )}
             </View>
-            <ThemedText 
-              style={[styles.playerName, { color: colors.text, fontSize: nameSize }]}
-              numberOfLines={matchType === 'doubles' ? 2 : 1}
-              ellipsizeMode="tail"
-            >
-              {player2Name}
-            </ThemedText>
+            <View style={styles.playerNameWithButton}>
+              <ThemedText 
+                style={[styles.playerName, { color: colors.text, fontSize: nameSize }]}
+                numberOfLines={matchType === 'doubles' ? 2 : 1}
+                ellipsizeMode="tail"
+              >
+                {player2Name}
+              </ThemedText>
+              {(isPlayer2Unregistered || isPlayer4Unregistered) && matchId && onClaimMatch && (
+                <TouchableOpacity
+                  style={[styles.claimButton, { backgroundColor: colors.tint }]}
+                  onPress={() => {
+                    if (isPlayer2Unregistered && unregisteredPlayer2Name) {
+                      handleClaimConfirmation(unregisteredPlayer2Name, 'player2');
+                    } else if (isPlayer4Unregistered && unregisteredPlayer4Name) {
+                      handleClaimConfirmation(unregisteredPlayer4Name, 'player4');
+                    }
+                  }}
+                >
+                  <ThemedText style={styles.claimButtonText}>
+                    unregistered
+                  </ThemedText>
+                </TouchableOpacity>
+              )}
+            </View>
           </View>
           {sets.map((set, index) => (
             <View key={index} style={[styles.setColumn, { minWidth: setColumnWidth }]}>
@@ -360,6 +430,22 @@ const styles = StyleSheet.create({
     fontWeight: '500',
     flex: 1,
     minWidth: 90, // Ensure minimum readable width
+  },
+  playerNameWithButton: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+  },
+  claimButton: {
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 8,
+  },
+  claimButtonText: {
+    color: 'white',
+    fontSize: 10,
+    fontWeight: '600',
   },
   setScore: {
     fontSize: 18, // Slightly smaller for better fit with 6 sets
