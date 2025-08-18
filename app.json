@@ -11,7 +11,7 @@
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
     "ios": {
-      "supportsTablet": true,
+      "supportsTablet": false,
       "usesAppleSignIn": false,
       "deploymentTarget": "15.0",
       "infoPlist": {
@@ -29,7 +29,7 @@
       },
       "bundleIdentifier": "com.caritos.tennis",
       "appleTeamId": "3U8L77G9QV",
-      "buildNumber": "2"
+      "buildNumber": "3"
     },
     "android": {
       "adaptiveIcon": {

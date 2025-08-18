@@ -224,15 +224,6 @@ export default function FAQScreen() {
               })}
           </View>
         ))}
-        
-        <View style={styles.footer}>
-          <ThemedText style={styles.footerText}>
-            Still have questions?
-          </ThemedText>
-          <ThemedText style={[styles.footerEmail, { color: colors.tint }]}>
-            support@playserve.tennis
-          </ThemedText>
-        </View>
       </ScrollView>
     </SafeAreaView>
   );
