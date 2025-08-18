@@ -158,42 +158,33 @@ export function TennisScoreDisplay({
 
   return (
     <ThemedView style={[styles.container, { backgroundColor: colors.background }]}>
-      {/* Header */}
-      <View style={styles.header}>
-        <ThemedText style={[styles.clubName, { color: colors.tabIconDefault }]}>
-          {clubName || 'Tennis Club'}
-        </ThemedText>
-        <View style={styles.headerRight}>
-          <ThemedText style={[styles.matchDate, { color: colors.tabIconDefault }]}>
-            {matchDate ? formatMatchDate(matchDate) : ''}
-          </ThemedText>
-          {notes && notes.trim() && (
-            <TouchableOpacity
-              onPress={() => setShowNotesModal(true)}
-              style={styles.notesIcon}
-              activeOpacity={0.7}
-            >
-              <Ionicons name="document-text" size={16} color={colors.tabIconDefault} />
-            </TouchableOpacity>
-          )}
-          {canEdit && (
-            <TouchableOpacity
-              onPress={handleEditMatch}
-              style={styles.editIcon}
-              activeOpacity={0.7}
-            >
-              <Ionicons name="pencil" size={16} color={colors.tint} />
-            </TouchableOpacity>
-          )}
-        </View>
-      </View>
 
       {/* Score Grid */}
       <View style={styles.scoreGrid}>
         {/* Column Headers */}
         <View style={styles.headerRow}>
           <View style={styles.playerInfo}>
-            {/* Empty space to match player row structure */}
+            {/* Action icons in top-left corner */}
+            <View style={styles.actionIcons}>
+              {canEdit && (
+                <TouchableOpacity
+                  onPress={handleEditMatch}
+                  style={styles.editIconInline}
+                  activeOpacity={0.7}
+                >
+                  <Ionicons name="pencil" size={14} color={colors.tint} />
+                </TouchableOpacity>
+              )}
+              {notes && notes.trim() && (
+                <TouchableOpacity
+                  onPress={() => setShowNotesModal(true)}
+                  style={styles.notesIconInline}
+                  activeOpacity={0.7}
+                >
+                  <Ionicons name="document-text" size={14} color={colors.tabIconDefault} />
+                </TouchableOpacity>
+              )}
+            </View>
           </View>
           {Array.from({ length: actualSetsPlayed }, (_, i) => (
             <View key={i} style={[styles.setColumn, { minWidth: setColumnWidth }]}>
@@ -348,7 +339,7 @@ export function TennisScoreDisplay({
 
 const styles = StyleSheet.create({
   container: {
-    borderRadius: 12,
+    borderRadius: 8,
     borderWidth: 1,
     borderColor: '#e0e0e0',
     overflow: 'hidden',
@@ -385,13 +376,28 @@ const styles = StyleSheet.create({
     padding: 4,
     borderRadius: 4,
   },
+  actionIcons: {
+    position: 'absolute',
+    top: -2,
+    left: 0,
+    flexDirection: 'row',
+    gap: 4,
+  },
+  editIconInline: {
+    padding: 3,
+    borderRadius: 4,
+  },
+  notesIconInline: {
+    padding: 3,
+    borderRadius: 4,
+  },
   scoreGrid: {
-    padding: 12,
+    padding: 8,
   },
   headerRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 6,
+    marginBottom: 4,
   },
   setColumn: {
     minWidth: 35, // Reduce from 45 to 35
@@ -410,7 +416,7 @@ const styles = StyleSheet.create({
   playerRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginVertical: 2,
+    marginVertical: 1,
   },
   playerInfo: {
     flexDirection: 'row',

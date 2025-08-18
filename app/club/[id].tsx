@@ -890,9 +890,6 @@ export default function ClubDetailScreen() {
                             <ThemedText style={[styles.matchDate, { color: colors.tabIconDefault }]}>
                               {formatDate(match.date)}
                             </ThemedText>
-                            <ThemedText style={[styles.matchType, { color: colors.tabIconDefault }]}>
-                              {match.match_type === 'doubles' ? 'Doubles' : 'Singles'}
-                            </ThemedText>
                           </View>
                           <TennisScoreDisplay
                             player1Name={match.player1_name}
@@ -1084,16 +1081,16 @@ const styles = StyleSheet.create({
     gap: 16,
   },
   matchItem: {
-    marginBottom: 8,
+    marginBottom: 6,
   },
   matchItemBorder: {
     borderBottomWidth: 1,
   },
   matchHeader: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
+    justifyContent: 'flex-start',
     alignItems: 'center',
-    marginBottom: 8,
+    marginBottom: 6,
   },
   matchMeta: {
     paddingTop: 8,
