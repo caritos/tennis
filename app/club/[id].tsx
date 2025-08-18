@@ -528,23 +528,23 @@ export default function ClubDetailScreen() {
                   <View style={styles.segmentedControl}>
                     {[
                       { key: 'name', label: 'Name' },
-                      { key: 'ranking', label: 'Ranking' },
+                      { key: 'ranking', label: 'Rank' },
                       { key: 'wins', label: 'Wins' },
-                      { key: 'matches', label: 'Matches' },
-                      { key: 'joined', label: 'Recent' }
-                    ].map((option) => (
+                      { key: 'matches', label: 'Games' },
+                      { key: 'joined', label: 'Joined' }
+                    ].map((option, index) => (
                       <TouchableOpacity
                         key={option.key}
                         style={[
                           styles.segmentButton,
-                          { borderColor: colors.tint },
-                          memberSortBy === option.key && { backgroundColor: colors.tint }
+                          memberSortBy === option.key && { backgroundColor: colors.tint },
+                          index === 4 && { borderRightWidth: 0 }
                         ]}
                         onPress={() => setMemberSortBy(option.key as any)}
                       >
                         <ThemedText style={[
                           styles.segmentButtonText,
-                          { color: memberSortBy === option.key ? 'white' : colors.tint }
+                          { color: memberSortBy === option.key ? 'white' : colors.text }
                         ]}>
                           {option.label}
                         </ThemedText>
@@ -560,19 +560,19 @@ export default function ClubDetailScreen() {
                       { key: 'all', label: 'All' },
                       { key: 'active', label: 'Active' },
                       { key: 'new', label: 'New' }
-                    ].map((option) => (
+                    ].map((option, index) => (
                       <TouchableOpacity
                         key={option.key}
                         style={[
                           styles.segmentButton,
-                          { borderColor: colors.tint },
-                          memberFilterBy === option.key && { backgroundColor: colors.tint }
+                          memberFilterBy === option.key && { backgroundColor: colors.tint },
+                          index === 2 && { borderRightWidth: 0 }
                         ]}
                         onPress={() => setMemberFilterBy(option.key as any)}
                       >
                         <ThemedText style={[
                           styles.segmentButtonText,
-                          { color: memberFilterBy === option.key ? 'white' : colors.tint }
+                          { color: memberFilterBy === option.key ? 'white' : colors.text }
                         ]}>
                           {option.label}
                         </ThemedText>
@@ -747,19 +747,19 @@ export default function ClubDetailScreen() {
                       { key: 'all', label: 'All' },
                       { key: 'singles', label: 'Singles' },
                       { key: 'doubles', label: 'Doubles' }
-                    ].map((option) => (
+                    ].map((option, index) => (
                       <TouchableOpacity
                         key={option.key}
                         style={[
                           styles.segmentButton,
-                          { borderColor: colors.tint },
-                          matchFilterType === option.key && { backgroundColor: colors.tint }
+                          matchFilterType === option.key && { backgroundColor: colors.tint },
+                          index === 2 && { borderRightWidth: 0 }
                         ]}
                         onPress={() => setMatchFilterType(option.key as any)}
                       >
                         <ThemedText style={[
                           styles.segmentButtonText,
-                          { color: matchFilterType === option.key ? 'white' : colors.tint }
+                          { color: matchFilterType === option.key ? 'white' : colors.text }
                         ]}>
                           {option.label}
                         </ThemedText>
@@ -775,19 +775,19 @@ export default function ClubDetailScreen() {
                       { key: 'all', label: 'All Time' },
                       { key: 'week', label: 'Last Week' },
                       { key: 'month', label: 'Last Month' }
-                    ].map((option) => (
+                    ].map((option, index) => (
                       <TouchableOpacity
                         key={option.key}
                         style={[
                           styles.segmentButton,
-                          { borderColor: colors.tint },
-                          matchFilterDate === option.key && { backgroundColor: colors.tint }
+                          matchFilterDate === option.key && { backgroundColor: colors.tint },
+                          index === 2 && { borderRightWidth: 0 }
                         ]}
                         onPress={() => setMatchFilterDate(option.key as any)}
                       >
                         <ThemedText style={[
                           styles.segmentButtonText,
-                          { color: matchFilterDate === option.key ? 'white' : colors.tint }
+                          { color: matchFilterDate === option.key ? 'white' : colors.text }
                         ]}>
                           {option.label}
                         </ThemedText>
@@ -1217,18 +1217,24 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     borderRadius: 8,
     overflow: 'hidden',
+    backgroundColor: '#f5f5f5',
+    borderWidth: 1,
+    borderColor: '#e0e0e0',
   },
   segmentButton: {
     flex: 1,
     paddingVertical: 8,
-    paddingHorizontal: 12,
-    borderWidth: 1,
+    paddingHorizontal: 8,
     alignItems: 'center',
     justifyContent: 'center',
+    borderRightWidth: 1,
+    borderRightColor: '#e0e0e0',
+    minHeight: 36,
   },
   segmentButtonText: {
-    fontSize: 12,
+    fontSize: 11,
     fontWeight: '500',
+    textAlign: 'center',
   },
   enhancedMemberItem: {
     paddingVertical: 16,
