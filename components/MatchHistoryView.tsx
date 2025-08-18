@@ -177,7 +177,7 @@ export function MatchHistoryView({ playerId, clubId }: MatchHistoryViewProps) {
               matchType={match.match_type}
               winner={winner}
               isCompleted={true}
-              clubName={match.club_name || 'Tennis Club'}
+              clubName={match.club_name}
               matchDate={match.date}
               notes={match.notes}
               matchId={match.id}

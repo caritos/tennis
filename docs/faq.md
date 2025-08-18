@@ -148,7 +148,7 @@ Location is used only to help you discover nearby tennis clubs. You can disable 
 1. Try closing and reopening the app
 2. Check that you have the latest version installed
 3. Ensure you have a stable internet connection
-4. Contact us at support@tennisclub.app if problems persist
+4. Use the "Contact Support" button in the app's Settings tab if problems persist
 
 ### How do I update my profile information?
 Go to Profile tab → Edit Profile. You can update your name, email, and phone number anytime. Remember that real names are required for community trust.
@@ -162,12 +162,10 @@ You can leave any club through the club details page. This will remove you from 
 ## Contact and Support
 
 ### How do I contact Tennis Club support?
-- **General Support**: support@tennisclub.app
-- **Privacy Questions**: privacy@tennisclub.app
-- **Legal Issues**: legal@tennisclub.app
+Use the "Contact Support" button in the app's Profile → Settings tab. This will open your email app with a pre-filled support request including helpful device information.
 
 ### How do I suggest new features?
-We love feedback! Email us at support@tennisclub.app with your ideas. While we keep the app focused and simple, we're always looking for ways to improve the tennis community experience.
+Use the "Contact Support" button in the app's Settings to send us your ideas! While we keep the app focused and simple, we're always looking for ways to improve the tennis community experience.
 
 ### Where can I find the latest app updates?
 Check out our [Changelog](changelog.md) for the latest features and improvements.
@@ -176,5 +174,3 @@ Check out our [Changelog](changelog.md) for the latest features and improvements
 Yes. We use encryption for all data transmission and storage, never sell your personal information, and follow strict security practices. See our [Privacy Policy](privacy-policy.md) for complete details.
 
 ---
-
-**Still have questions?** Contact us at support@tennisclub.app and we'll help you out!

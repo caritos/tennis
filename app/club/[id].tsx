@@ -877,11 +877,6 @@ export default function ClubDetailScreen() {
                             { borderColor: colors.tabIconDefault }
                           ]}
                         >
-                          <View style={styles.matchHeader}>
-                            <ThemedText style={[styles.matchDate, { color: colors.tabIconDefault }]}>
-                              {formatDate(match.date)}
-                            </ThemedText>
-                          </View>
                           <TennisScoreDisplay
                             player1Name={match.player1_name}
                             player2Name={match.player2_name || match.opponent2_name}
@@ -893,6 +888,8 @@ export default function ClubDetailScreen() {
                             player3Id={match.player3_id}
                             player4Id={match.player4_id}
                             matchType={match.match_type}
+                            clubName={club?.name}
+                            matchDate={match.date}
                             isPlayer1Unregistered={false} // Player 1 is always registered
                             isPlayer2Unregistered={!match.player2_id && !!match.opponent2_name}
                             isPlayer3Unregistered={!match.player3_id && !!match.partner3_name}

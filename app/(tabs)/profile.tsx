@@ -1,4 +1,4 @@
-import { ScrollView, StyleSheet, View, TouchableOpacity } from 'react-native';
+import { ScrollView, StyleSheet, View, TouchableOpacity, Linking, Platform, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
 import React, { useState, useEffect } from 'react';
@@ -16,51 +16,17 @@ import { MatchHistoryView } from '@/components/MatchHistoryView';
 import { PlayerStatsDisplay } from '@/components/PlayerStatsDisplay';
 import { usePlayerStats } from '@/hooks/usePlayerStats';
 
+type TabType = 'profile' | 'stats' | 'matches' | 'settings';
+
 export default function ProfileScreen() {
   const colorScheme = useColorScheme();
   const colors = Colors[colorScheme ?? 'light'];
   
   const { user, signOut } = useAuth();
-  const [userClubs, setUserClubs] = useState<Club[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [activeTab, setActiveTab] = useState<TabType>('profile');
 
   // Load player statistics
   const { stats, loading: statsLoading, error: statsError, refreshStats } = usePlayerStats(user?.id || null);
-
-  const loadUserClubs = async () => {
-    if (!user?.id) {
-      console.log('ProfileScreen: No user ID available');
-      setUserClubs([]);
-      setLoading(false);
-      return;
-    }
-
-    console.log('ProfileScreen: Loading clubs for user:', user.id);
-    console.log('ProfileScreen: User object:', JSON.stringify(user, null, 2));
-
-    try {
-      setLoading(true);
-      const clubs = await clubService.getUserClubs(user.id);
-      console.log('ProfileScreen: Received clubs:', clubs);
-      setUserClubs(clubs);
-    } catch (error) {
-      console.error('Failed to load user clubs:', error);
-      setUserClubs([]);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    loadUserClubs();
-  }, [user?.id]); // Reload when user changes
-
-  // Reload clubs whenever the profile tab comes into focus
-  useFocusEffect(
-    React.useCallback(() => {
-      loadUserClubs();
-    }, [user?.id])
-  );
 
   const handleSignOut = async () => {
     console.log('🔘 BUTTON: Sign Out pressed');
@@ -69,129 +35,253 @@ export default function ProfileScreen() {
     router.replace('/welcome');
   };
 
+  const handleContactSupport = async () => {
+    console.log('📧 Contact Support button pressed');
+    
+    const supportEmail = 'eladio@caritos.com';
+    const subject = 'Tennis Club App Support Request';
+    
+    // Try simple mailto first
+    const simpleEmailUrl = `mailto:${supportEmail}`;
+    
+    try {
+      console.log('📧 Trying simple email URL:', simpleEmailUrl);
+      const supported = await Linking.canOpenURL(simpleEmailUrl);
+      console.log('📧 Simple email supported:', supported);
+      
+      if (supported) {
+        // Try with subject and body
+        const body = `Hi Support Team,
+
+I need help with the Tennis Club app.
+
+Issue Description:
+[Please describe your issue or question here]
+
+Device Information:
+- Platform: ${Platform.OS} ${Platform.Version}
+- User: ${user?.email || 'Not signed in'}
+
+Thank you!`;
+
+        const fullEmailUrl = `mailto:${supportEmail}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+        console.log('📧 Trying full email URL');
+        
+        await Linking.openURL(fullEmailUrl);
+        console.log('📧 Email app opened successfully');
+      } else {
+        console.log('📧 Email client not available, showing alert');
+        Alert.alert(
+          'Contact Support',
+          `Please send an email to:\n\n${supportEmail}\n\nSubject: ${subject}`,
+          [{ text: 'OK' }]
+        );
+      }
+    } catch (error) {
+      console.error('📧 Error opening email client:', error);
+      Alert.alert(
+        'Contact Support',
+        `Please send an email to:\n\n${supportEmail}\n\nSubject: ${subject}`,
+        [{ text: 'OK' }]
+      );
+    }
+  };
+
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
+      {/* Header with user name */}
+      <View style={[styles.header, { borderBottomColor: colors.tabIconDefault + '20' }]}>
+        <ThemedText type="title" style={styles.headerTitle}>
+          {user?.user_metadata?.full_name || user?.email || 'Tennis Player'}
+        </ThemedText>
+      </View>
+
+      {/* Tab Bar */}
+      <View style={[styles.tabBar, { borderBottomColor: colors.tabIconDefault + '20' }]}>
+        <TouchableOpacity
+          style={[styles.tab, activeTab === 'profile' && { borderBottomColor: colors.tint }]}
+          onPress={() => setActiveTab('profile')}
+        >
+          <Ionicons 
+            name={activeTab === 'profile' ? 'person' : 'person-outline'} 
+            size={20} 
+            color={activeTab === 'profile' ? colors.tint : colors.tabIconDefault}
+          />
+          <ThemedText style={[styles.tabText, activeTab === 'profile' && { color: colors.tint }]}>
+            Profile
+          </ThemedText>
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          style={[styles.tab, activeTab === 'stats' && { borderBottomColor: colors.tint }]}
+          onPress={() => setActiveTab('stats')}
+        >
+          <Ionicons 
+            name={activeTab === 'stats' ? 'stats-chart' : 'stats-chart-outline'} 
+            size={20} 
+            color={activeTab === 'stats' ? colors.tint : colors.tabIconDefault}
+          />
+          <ThemedText style={[styles.tabText, activeTab === 'stats' && { color: colors.tint }]}>
+            Stats
+          </ThemedText>
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          style={[styles.tab, activeTab === 'matches' && { borderBottomColor: colors.tint }]}
+          onPress={() => setActiveTab('matches')}
+        >
+          <Ionicons 
+            name={activeTab === 'matches' ? 'tennisball' : 'tennisball-outline'} 
+            size={20} 
+            color={activeTab === 'matches' ? colors.tint : colors.tabIconDefault}
+          />
+          <ThemedText style={[styles.tabText, activeTab === 'matches' && { color: colors.tint }]}>
+            Matches
+          </ThemedText>
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          style={[styles.tab, activeTab === 'settings' && { borderBottomColor: colors.tint }]}
+          onPress={() => setActiveTab('settings')}
+        >
+          <Ionicons 
+            name={activeTab === 'settings' ? 'settings' : 'settings-outline'} 
+            size={20} 
+            color={activeTab === 'settings' ? colors.tint : colors.tabIconDefault}
+          />
+          <ThemedText style={[styles.tabText, activeTab === 'settings' && { color: colors.tint }]}>
+            Settings
+          </ThemedText>
+        </TouchableOpacity>
+      </View>
+
       <ScrollView showsVerticalScrollIndicator={false}>
+        {/* Profile Tab */}
+        {activeTab === 'profile' && (
+          <>
+            <ThemedView style={styles.section}>
+              <View style={styles.userSection}>
+                <View style={styles.userInfoContainer}>
+                  <View>
+                    <ThemedText style={styles.userEmail}>{user?.email}</ThemedText>
+                    {user?.phone && (
+                      <ThemedText style={styles.userPhone}>{user.phone}</ThemedText>
+                    )}
+                  </View>
+                  <TouchableOpacity
+                    style={[styles.editButton, { borderColor: colors.tint }]}
+                    onPress={() => router.push('/edit-profile')}
+                  >
+                    <Ionicons name="pencil" size={16} color={colors.tint} />
+                    <ThemedText style={[styles.editButtonText, { color: colors.tint }]}>
+                      Edit Profile
+                    </ThemedText>
+                  </TouchableOpacity>
+                </View>
+              </View>
+            </ThemedView>
 
-        <ThemedView style={styles.section}>
-          <View style={styles.userSection}>
+          </>
+        )}
 
-            <View style={styles.userInfoContainer}>
-              <ThemedText type="subtitle" style={styles.userName}>
-                {user?.user_metadata?.full_name || user?.email || 'Tennis Player'}
-              </ThemedText>
+        {/* Stats Tab */}
+        {activeTab === 'stats' && (
+          <ThemedView style={styles.section}>
+            <PlayerStatsDisplay 
+              stats={stats || {
+                totalMatches: 0,
+                wins: 0,
+                losses: 0,
+                winPercentage: 0,
+                singlesRecord: { wins: 0, losses: 0, winPercentage: 0 },
+                doublesRecord: { wins: 0, losses: 0, winPercentage: 0 },
+                setsWon: 0,
+                setsLost: 0,
+                gamesWon: 0,
+                gamesLost: 0,
+              }}
+              loading={statsLoading}
+              error={statsError}
+            />
+          </ThemedView>
+        )}
+
+        {/* Matches Tab */}
+        {activeTab === 'matches' && (
+          <ThemedView style={styles.section}>
+            {user?.id ? (
+              <View style={styles.matchHistoryContainer}>
+                <MatchHistoryView playerId={user.id} />
+              </View>
+            ) : (
+              <ThemedView style={[styles.placeholder, { borderColor: colors.icon }]}>
+                <ThemedText style={styles.placeholderText}>Sign in to view match history</ThemedText>
+              </ThemedView>
+            )}
+          </ThemedView>
+        )}
+
+        {/* Settings Tab */}
+        {activeTab === 'settings' && (
+          <ThemedView style={styles.section}>
+            <View style={styles.settingsContainer}>
               <TouchableOpacity
-                style={[styles.editButton, { borderColor: colors.tint }]}
-                onPress={() => router.push('/edit-profile')}
+                style={[styles.settingsItem, { borderColor: colors.icon + '20' }]}
+                onPress={() => router.push('/faq')}
+                accessibilityRole="button"
+                accessibilityLabel="FAQ"
+                accessibilityHint="View frequently asked questions"
               >
-                <Ionicons name="pencil" size={16} color={colors.tint} />
-                <ThemedText style={[styles.editButtonText, { color: colors.tint }]}>
-                  Edit
+                <View style={styles.settingsItemContent}>
+                  <Ionicons name="help-circle-outline" size={24} color={colors.tint} />
+                  <ThemedText style={styles.settingsItemText}>FAQ / Help</ThemedText>
+                </View>
+                <Ionicons name="chevron-forward" size={20} color={colors.icon} />
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={[styles.settingsItem, { borderColor: colors.icon + '20' }]}
+                onPress={() => router.push('/privacy-policy')}
+                accessibilityRole="button"
+                accessibilityLabel="Privacy Policy"
+                accessibilityHint="View privacy policy"
+              >
+                <View style={styles.settingsItemContent}>
+                  <Ionicons name="shield-checkmark-outline" size={24} color={colors.tint} />
+                  <ThemedText style={styles.settingsItemText}>Privacy Policy</ThemedText>
+                </View>
+                <Ionicons name="chevron-forward" size={20} color={colors.icon} />
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={[styles.settingsItem, { borderColor: colors.icon + '20' }]}
+                onPress={handleContactSupport}
+                accessibilityRole="button"
+                accessibilityLabel="Contact Support"
+                accessibilityHint="Send an email to support"
+              >
+                <View style={styles.settingsItemContent}>
+                  <Ionicons name="mail-outline" size={24} color={colors.tint} />
+                  <ThemedText style={styles.settingsItemText}>Contact Support</ThemedText>
+                </View>
+                <Ionicons name="chevron-forward" size={20} color={colors.icon} />
+              </TouchableOpacity>
+              
+              <TouchableOpacity
+                style={[styles.signOutButton, { backgroundColor: colors.tint }]}
+                onPress={handleSignOut}
+                accessibilityRole="button"
+                accessibilityLabel="Sign Out"
+                accessibilityHint="Sign out of your account"
+              >
+                <ThemedText style={styles.signOutButtonText}>
+                  Sign Out
                 </ThemedText>
               </TouchableOpacity>
             </View>
-            {user?.email && (
-              <ThemedText style={styles.userEmail}>{user.email}</ThemedText>
-            )}
-            {user?.phone && (
-              <ThemedText style={styles.userPhone}>{user.phone}</ThemedText>
-            )}
-          </View>
-        </ThemedView>
+          </ThemedView>
+        )}
 
-        <ThemedView style={styles.section}>
-          <ThemedText type="subtitle" style={styles.sectionTitle}>Tennis Stats</ThemedText>
-          <PlayerStatsDisplay 
-            stats={stats || {
-              totalMatches: 0,
-              wins: 0,
-              losses: 0,
-              winPercentage: 0,
-              singlesRecord: { wins: 0, losses: 0, winPercentage: 0 },
-              doublesRecord: { wins: 0, losses: 0, winPercentage: 0 },
-              setsWon: 0,
-              setsLost: 0,
-              gamesWon: 0,
-              gamesLost: 0,
-            }}
-            loading={statsLoading}
-            error={statsError}
-          />
-        </ThemedView>
-
-        <ThemedView style={styles.section}>
-          <ThemedText type="subtitle" style={styles.sectionTitle}>Match History</ThemedText>
-          {user?.id ? (
-            <View style={styles.matchHistoryContainer}>
-              <MatchHistoryView playerId={user.id} />
-            </View>
-          ) : (
-            <ThemedView style={[styles.placeholder, { borderColor: colors.icon }]}>
-              <ThemedText style={styles.placeholderText}>Sign in to view match history</ThemedText>
-            </ThemedView>
-          )}
-        </ThemedView>
-
-        <ThemedView style={styles.section}>
-          <ThemedText type="subtitle" style={styles.sectionTitle}>
-            Club Memberships {userClubs.length > 0 ? `(${userClubs.length})` : ''}
-          </ThemedText>
-          {loading ? (
-            <ThemedView style={styles.loadingContainer}>
-              <ThemedText style={styles.loadingText}>Loading clubs...</ThemedText>
-            </ThemedView>
-          ) : userClubs.length > 0 ? (
-            <View style={styles.clubsList}>
-              {userClubs.map((club) => (
-                <View key={club.id} style={[styles.clubCard, { borderColor: colors.icon + '30' }]}>
-                  <ThemedText style={styles.clubName}>{club.name}</ThemedText>
-                  <ThemedText style={styles.clubLocation}>{club.location}</ThemedText>
-                  {club.memberCount && (
-                    <ThemedText style={styles.clubMembers}>
-                      {club.memberCount} members
-                    </ThemedText>
-                  )}
-                </View>
-              ))}
-            </View>
-          ) : (
-            <ThemedView style={[styles.placeholder, { borderColor: colors.icon }]}>
-              <ThemedText style={styles.placeholderText}>No club memberships</ThemedText>
-              <ThemedText style={styles.placeholderSubtext}>Join a club to start playing!</ThemedText>
-            </ThemedView>
-          )}
-        </ThemedView>
-
-        <ThemedView style={styles.section}>
-          <ThemedText type="subtitle" style={styles.sectionTitle}>Settings</ThemedText>
-          <View style={styles.settingsContainer}>
-            <TouchableOpacity
-              style={[styles.settingsItem, { borderColor: colors.icon + '20' }]}
-              onPress={() => router.push('/faq')}
-              accessibilityRole="button"
-              accessibilityLabel="FAQ"
-              accessibilityHint="View frequently asked questions"
-            >
-              <View style={styles.settingsItemContent}>
-                <Ionicons name="help-circle-outline" size={24} color={colors.tint} />
-                <ThemedText style={styles.settingsItemText}>FAQ / Help</ThemedText>
-              </View>
-              <Ionicons name="chevron-forward" size={20} color={colors.icon} />
-            </TouchableOpacity>
-            
-            <TouchableOpacity
-              style={[styles.signOutButton, { backgroundColor: colors.tint }]}
-              onPress={handleSignOut}
-              accessibilityRole="button"
-              accessibilityLabel="Sign Out"
-              accessibilityHint="Sign out of your account"
-            >
-              <ThemedText style={styles.signOutButtonText}>
-                Sign Out
-              </ThemedText>
-            </TouchableOpacity>
-          </View>
-        </ThemedView>
       </ScrollView>
     </SafeAreaView>
   );
@@ -205,10 +295,28 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     paddingTop: 20,
     paddingBottom: 10,
+    borderBottomWidth: 1,
   },
   headerTitle: {
     fontSize: 28,
     fontWeight: 'bold',
+  },
+  tabBar: {
+    flexDirection: 'row',
+    borderBottomWidth: 1,
+  },
+  tab: {
+    flex: 1,
+    flexDirection: 'column',
+    alignItems: 'center',
+    paddingVertical: 12,
+    borderBottomWidth: 2,
+    borderBottomColor: 'transparent',
+    gap: 4,
+  },
+  tabText: {
+    fontSize: 12,
+    fontWeight: '500',
   },
   section: {
     paddingHorizontal: 20,
@@ -221,6 +329,7 @@ const styles = StyleSheet.create({
   userInfoContainer: {
     flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'space-between',
     gap: 12,
   },
   editButton: {
