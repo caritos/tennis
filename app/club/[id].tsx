@@ -465,48 +465,6 @@ export default function ClubDetailScreen() {
         {/* Overview Tab */}
         {activeTab === 'overview' && (
           <>
-            {/* Club Stats Section */}
-            <ThemedView style={[styles.sectionCard, { backgroundColor: colors.background, shadowColor: colors.text }]}>
-              <View style={styles.statsContainer}>
-                <View style={styles.statItem}>
-                  <ThemedText style={styles.statNumber}>{memberCount}</ThemedText>
-                  <ThemedText style={[styles.statLabel, { color: colors.tabIconDefault }]}>Total Members</ThemedText>
-                </View>
-                
-                <View style={styles.statItem}>
-                  <ThemedText style={styles.statNumber}>
-                    {rankings.length > 0 ? rankings[0].playerName.split(' ')[0] : '--'}
-                  </ThemedText>
-                  <ThemedText style={[styles.statLabel, { color: colors.tabIconDefault }]}>Top Player</ThemedText>
-                </View>
-                
-                <View style={styles.statItem}>
-                  {recentMatches.length > 0 ? (
-                    <>
-                      <ThemedText style={styles.recentMatchText}>
-                        {recentMatches[0].player1_name} vs {recentMatches[0].player2_name}
-                      </ThemedText>
-                      <ThemedText style={[styles.recentMatchDate, { color: colors.tabIconDefault }]}>
-                        {(() => {
-                          const latestMatch = recentMatches[0];
-                          const matchDate = new Date(latestMatch.date);
-                          const now = new Date();
-                          const diffTime = Math.abs(now.getTime() - matchDate.getTime());
-                          const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-                          return diffDays <= 1 ? 'Today' : `${diffDays} days ago`;
-                        })()}
-                      </ThemedText>
-                    </>
-                  ) : (
-                    <>
-                      <ThemedText style={styles.statNumber}>--</ThemedText>
-                      <ThemedText style={[styles.statLabel, { color: colors.tabIconDefault }]}>Recent Activity</ThemedText>
-                    </>
-                  )}
-                </View>
-              </View>
-            </ThemedView>
-
             {/* Action Buttons Section */}
             <ThemedView style={[styles.sectionCard, { backgroundColor: colors.background, shadowColor: colors.text }]}>
               <TouchableOpacity 
@@ -548,6 +506,38 @@ export default function ClubDetailScreen() {
             />
           </ThemedView>
         )}
+
+            {/* Club Stats Section - Moved to bottom */}
+            <ThemedView style={[styles.sectionCard, { backgroundColor: colors.background, shadowColor: colors.text }]}>
+              <View style={styles.statsTextContainer}>
+                <ThemedText style={[styles.statSentence, { color: colors.text }]}>
+                  The club has {memberCount} total members.
+                </ThemedText>
+                
+                <ThemedText style={[styles.statSentence, { color: colors.text }]}>
+                  {rankings.length > 0 
+                    ? `${rankings[0].playerName.split(' ')[0]} is the top player of the club.`
+                    : 'No rankings available yet.'
+                  }
+                </ThemedText>
+                
+                {recentMatches.length > 0 ? (
+                  <ThemedText style={[styles.statSentence, { color: colors.text }]}>
+                    {(() => {
+                      const match = recentMatches[0];
+                      const winner = match.winner === 1 ? match.player1_name : match.player2_name;
+                      const loser = match.winner === 1 ? match.player2_name : match.player1_name;
+                      const matchDate = new Date(match.date).toLocaleDateString();
+                      return `${winner} beat ${loser} ${match.scores} on ${matchDate}.`;
+                    })()}
+                  </ThemedText>
+                ) : (
+                  <ThemedText style={[styles.statSentence, { color: colors.tabIconDefault }]}>
+                    No recent matches to display.
+                  </ThemedText>
+                )}
+              </View>
+            </ThemedView>
         </>
         )}
 
@@ -676,18 +666,23 @@ export default function ClubDetailScreen() {
                         >
                           <View style={styles.memberHeader}>
                             <View style={styles.memberNameContainer}>
-                              <ThemedText style={styles.enhancedMemberName}>{member.full_name || 'Unknown Member'}</ThemedText>
-                              <View style={styles.memberBadges}>
-                                {isNew && (
-                                  <View style={[styles.memberBadge, { backgroundColor: '#4CAF50' }]}>
-                                    <ThemedText style={styles.badgeText}>NEW</ThemedText>
-                                  </View>
-                                )}
-                                {isActive && (
-                                  <View style={[styles.memberBadge, { backgroundColor: colors.tint }]}>
-                                    <ThemedText style={styles.badgeText}>ACTIVE</ThemedText>
-                                  </View>
-                                )}
+                              <View style={styles.memberNameRow}>
+                                <View style={styles.nameWithBadge}>
+                                  <ThemedText style={styles.enhancedMemberName}>{member.full_name || 'Unknown Member'}</ThemedText>
+                                  {isNew && (
+                                    <View style={[styles.memberBadge, { backgroundColor: '#4CAF50' }]}>
+                                      <ThemedText style={styles.badgeText}>NEW</ThemedText>
+                                    </View>
+                                  )}
+                                  {isActive && (
+                                    <View style={[styles.memberBadge, { backgroundColor: colors.tint }]}>
+                                      <ThemedText style={styles.badgeText}>ACTIVE</ThemedText>
+                                    </View>
+                                  )}
+                                </View>
+                                <ThemedText style={[styles.memberJoinedDateInline, { color: colors.tabIconDefault }]}>
+                                  Joined {new Date(member.joined_at).toLocaleDateString()}
+                                </ThemedText>
                               </View>
                             </View>
                             {user && user.id !== member.id && (
@@ -704,7 +699,7 @@ export default function ClubDetailScreen() {
                               >
                                 <Ionicons 
                                   name={pendingChallenges.has(member.id) ? "hourglass-outline" : "tennisball"} 
-                                  size={18} 
+                                  size={14} 
                                   color="white" 
                                 />
                                 <ThemedText style={styles.enhancedChallengeButtonText}>
@@ -745,10 +740,6 @@ export default function ClubDetailScreen() {
                                 </View>
                               </View>
                             )}
-                            
-                            <ThemedText style={[styles.memberJoinedDate, { color: colors.tabIconDefault }]}>
-                              Joined {new Date(member.joined_at).toLocaleDateString()}
-                            </ThemedText>
                           </View>
                         </View>
                       );
@@ -1186,25 +1177,15 @@ const styles = StyleSheet.create({
     fontWeight: '500',
     marginLeft: 4,
   },
-  statsContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-around',
-    alignItems: 'center',
+  statsTextContainer: {
+    gap: 12,
+    paddingVertical: 4,
   },
-  statItem: {
-    alignItems: 'center',
-    flex: 1,
-  },
-  statNumber: {
-    fontSize: 24,
-    fontWeight: '700',
-    marginBottom: 4,
-  },
-  statLabel: {
-    fontSize: 12,
+  statSentence: {
+    fontSize: 14,
     fontWeight: '500',
-    textAlign: 'center',
-    opacity: 0.8,
+    lineHeight: 20,
+    textAlign: 'left',
   },
   sectionTitleContainer: {
     flex: 1,
@@ -1233,16 +1214,13 @@ const styles = StyleSheet.create({
     fontSize: 10,
     fontWeight: '600',
   },
-  recentMatchText: {
-    fontSize: 14,
-    fontWeight: '600',
-    textAlign: 'center',
-    marginBottom: 2,
-  },
-  recentMatchDate: {
+  recentMatchNews: {
     fontSize: 12,
+    fontWeight: '500',
     textAlign: 'center',
-    opacity: 0.8,
+    marginTop: 4,
+    lineHeight: 16,
+    opacity: 0.9,
   },
   controlsContainer: {
     marginBottom: 16,
@@ -1280,26 +1258,32 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   enhancedMemberItem: {
-    paddingVertical: 16,
+    paddingVertical: 10,
     paddingHorizontal: 0,
   },
   memberHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'flex-start',
-    marginBottom: 12,
+    marginBottom: 8,
   },
   memberNameContainer: {
+    flex: 1,
+  },
+  memberNameRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  nameWithBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
     flex: 1,
   },
   enhancedMemberName: {
     fontSize: 18,
     fontWeight: '600',
-    marginBottom: 6,
-  },
-  memberBadges: {
-    flexDirection: 'row',
-    gap: 6,
   },
   memberBadge: {
     paddingHorizontal: 6,
@@ -1309,23 +1293,23 @@ const styles = StyleSheet.create({
   enhancedChallengeButton: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: 16,
-    paddingVertical: 10,
-    borderRadius: 20,
-    gap: 6,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 16,
+    gap: 4,
   },
   enhancedChallengeButtonText: {
     color: 'white',
-    fontSize: 14,
+    fontSize: 12,
     fontWeight: '600',
   },
   memberStatsContainer: {
-    gap: 12,
+    gap: 8,
   },
   statGroup: {
     flexDirection: 'row',
     justifyContent: 'space-around',
-    paddingVertical: 8,
+    paddingVertical: 6,
   },
   statValue: {
     fontSize: 20,
@@ -1339,7 +1323,7 @@ const styles = StyleSheet.create({
     marginTop: 2,
   },
   progressBarContainer: {
-    marginHorizontal: 16,
+    marginHorizontal: 12,
   },
   progressBar: {
     height: 6,
@@ -1354,5 +1338,10 @@ const styles = StyleSheet.create({
     fontSize: 12,
     textAlign: 'center',
     opacity: 0.7,
+  },
+  memberJoinedDateInline: {
+    fontSize: 12,
+    opacity: 0.7,
+    marginLeft: 8,
   },
 });

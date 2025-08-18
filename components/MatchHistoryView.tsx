@@ -26,7 +26,7 @@ interface MatchHistoryViewProps {
 export function MatchHistoryView({ playerId, clubId }: MatchHistoryViewProps) {
   const colorScheme = useColorScheme();
   const colors = Colors[colorScheme ?? 'light'];
-  const [matches, setMatches] = useState<Match[]>([]);
+  const [matches, setMatches] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -36,8 +36,37 @@ export function MatchHistoryView({ playerId, clubId }: MatchHistoryViewProps) {
       if (!isRefreshing) setLoading(true);
       setError(null);
       
-      const matchHistory = await getMatchHistory(playerId, clubId);
-      setMatches(matchHistory);
+      // Import the database
+      const { initializeDatabase } = await import('@/database/database');
+      const db = await initializeDatabase();
+      
+      // Get matches with player names
+      let query = `
+        SELECT m.*, 
+               c.name as club_name,
+               p1.full_name as player1_name,
+               p2.full_name as player2_name,
+               p3.full_name as player3_name,
+               p4.full_name as player4_name
+        FROM matches m
+        LEFT JOIN clubs c ON m.club_id = c.id
+        LEFT JOIN users p1 ON m.player1_id = p1.id
+        LEFT JOIN users p2 ON m.player2_id = p2.id
+        LEFT JOIN users p3 ON m.player3_id = p3.id
+        LEFT JOIN users p4 ON m.player4_id = p4.id
+        WHERE (m.player1_id = ? OR m.player2_id = ? OR m.player3_id = ? OR m.player4_id = ?)
+      `;
+      const params = [playerId, playerId, playerId, playerId];
+      
+      if (clubId) {
+        query += ` AND m.club_id = ?`;
+        params.push(clubId);
+      }
+      
+      query += ` ORDER BY m.date DESC, m.created_at DESC`;
+      
+      const matchHistory = await db.getAllAsync(query, params);
+      setMatches(matchHistory || []);
     } catch (err) {
       logError('MatchHistoryView.loadMatches', err, playerId);
       setError('Failed to load match history');
@@ -96,21 +125,41 @@ export function MatchHistoryView({ playerId, clubId }: MatchHistoryViewProps) {
   return (
     <View style={styles.container}>
       {matches.map((match) => {
-        // Determine player names for doubles
-        const player1Name = match.match_type === 'doubles' && match.partner3_name ? 
-          `You & ${match.partner3_name}` : "You";
-        const player2Name = match.match_type === 'doubles' && match.partner4_name ? 
-          `${match.opponent2_name || 'Opponent'} & ${match.partner4_name}` : 
-          match.opponent2_name || 'Opponent';
+        // Determine which side the current player is on
+        const isPlayer1Side = match.player1_id === playerId || match.player3_id === playerId;
+        
+        // Build player names for doubles matches
+        let player1DisplayName, player2DisplayName;
+        
+        if (match.match_type === 'doubles') {
+          // Player 1 side (player1 & player3)
+          const p1Name = match.player1_name || 'Unknown';
+          const p3Name = match.player3_name || match.partner3_name || 'Unknown';
+          player1DisplayName = `${p1Name} & ${p3Name}`;
+          
+          // Player 2 side (player2 & player4)
+          const p2Name = match.player2_name || match.opponent2_name || 'Unknown';
+          const p4Name = match.player4_name || match.partner4_name || 'Unknown';
+          player2DisplayName = `${p2Name} & ${p4Name}`;
+        } else {
+          // Singles match
+          player1DisplayName = match.player1_name || 'Unknown';
+          player2DisplayName = match.player2_name || match.opponent2_name || 'Unknown';
+        }
+        
+        // Swap names if current player is on player 2 side (to always show "You" perspective first)
+        if (!isPlayer1Side) {
+          [player1DisplayName, player2DisplayName] = [player2DisplayName, player1DisplayName];
+        }
 
         // Proper winner determination using TennisScore utility
         let winner: 1 | 2 | undefined;
         try {
           const scoreObj = new TennisScore(match.scores);
           if (scoreObj.winner === 'player1') {
-            winner = 1;
+            winner = isPlayer1Side ? 1 : 2;
           } else if (scoreObj.winner === 'player2') {
-            winner = 2;
+            winner = isPlayer1Side ? 2 : 1;
           }
         } catch (error) {
           console.warn('Failed to parse tennis score:', match.scores);
@@ -122,8 +171,8 @@ export function MatchHistoryView({ playerId, clubId }: MatchHistoryViewProps) {
             backgroundColor: colorScheme === 'dark' ? colors.background : '#FFFFFF' 
           }]}>
             <TennisScoreDisplay
-              player1Name={player1Name}
-              player2Name={player2Name}
+              player1Name={player1DisplayName}
+              player2Name={player2DisplayName}
               scores={match.scores}
               matchType={match.match_type}
               winner={winner}
@@ -165,10 +214,7 @@ const styles = StyleSheet.create({
     marginTop: 12,
   },
   matchItem: {
-    borderRadius: 12,
-    padding: 16,
-    marginBottom: 12,
-    borderWidth: 1,
+    marginBottom: 6,
   },
   matchMeta: {
     marginTop: 8,

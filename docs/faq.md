@@ -65,6 +65,24 @@ Players are marked as "Provisional" when they have fewer than 5 matches played i
 
 Once you reach 5+ matches, the provisional badge disappears and your ranking is considered established and reliable.
 
+### What do the colored progress bars mean in member lists?
+In the club members tab, each player has a colored progress bar below their stats that represents their win rate performance:
+
+- **🟢 Green Bar**: Win rate 60% or higher (Excellent performance)
+- **🟠 Orange Bar**: Win rate 40-59% (Good performance)  
+- **🔴 Red Bar**: Win rate below 40% (Needs improvement)
+
+The width of the bar shows the exact win percentage - a player with 100% win rate gets a full-width green bar, while someone with 50% gets a half-width orange bar. This gives you a quick visual way to identify the strongest players in your club!
+
+### What do the different challenge button states mean?
+In the club members tab, you'll see different buttons next to each player's name:
+
+- **"Challenge"** (blue button): You can send a challenge invitation to this player
+- **"Pending"** (gray button): You've already sent a challenge to this player and are waiting for their response
+- **No button**: Either it's your own profile or there are other restrictions
+
+The "Pending" state prevents you from sending multiple challenge requests to the same person while they're considering your invitation. Once they accept, decline, or the challenge expires (after 7 days), the button will return to "Challenge" so you can invite them again. This keeps the challenge system organized and prevents spam invitations.
+
 ### How do I record match results?
 Any match participant can record results using our honor system:
 - Enter the score immediately after playing

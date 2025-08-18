@@ -6,7 +6,7 @@
     "orientation": "portrait",
     "description": "Connect with tennis players in your local clubs. Find matches, track scores, climb rankings, and build your tennis community. Join clubs near you today!",
     "primaryColor": "#007AFF",
-    "icon": "./assets/images/icon.png",
+    "icon": "./assets/images/retro-tennis-ball-motion.png",
     "scheme": "playserve",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
@@ -69,7 +69,7 @@
       [
         "expo-notifications",
         {
-          "icon": "./assets/images/icon.png",
+          "icon": "./assets/images/retro-tennis-ball-motion.png",
           "color": "#007AFF",
           "defaultChannel": "play-serve-notifications"
         }
