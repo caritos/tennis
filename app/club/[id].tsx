@@ -528,7 +528,20 @@ export default function ClubDetailScreen() {
                       const winner = match.winner === 1 ? match.player1_name : match.player2_name;
                       const loser = match.winner === 1 ? match.player2_name : match.player1_name;
                       const matchDate = new Date(match.date).toLocaleDateString();
-                      return `${winner} beat ${loser} ${match.scores} on ${matchDate}.`;
+                      
+                      // Format scores properly
+                      let formattedScores = match.scores;
+                      // Check if scores are in JSON format
+                      if (formattedScores.includes('{') && formattedScores.includes('}')) {
+                        try {
+                          const scoresArray = JSON.parse(formattedScores);
+                          formattedScores = scoresArray.map((set: any) => `${set.player}-${set.opponent}`).join(', ');
+                        } catch (e) {
+                          // If parsing fails, use the original scores
+                        }
+                      }
+                      
+                      return `${winner} beat ${loser} ${formattedScores} on ${matchDate}.`;
                     })()}
                   </ThemedText>
                 ) : (
