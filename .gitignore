@@ -50,3 +50,7 @@ ios/certs/
 
 logs/expo*.log
 logs/
+
+# Credentials and sensitive files
+credentials.json
+credentials/
