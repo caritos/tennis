@@ -50,6 +50,7 @@ Play Serve is a React Native tennis community app built with Expo, focusing on c
 ### **Deployment**
 - **App Store**: `/docs/deployment/app-store/`
 - **Build Process**: `/docs/deployment/eas-app-store-guide.md`
+- **EAS Workflows**: `/docs/deployment/eas-workflows-setup.md`
 
 ## Development Principles
 
@@ -88,9 +89,14 @@ npm run e2e                 # End-to-end tests
 npm run wiki:update         # Sync all content to GitHub Wiki
 npm run wiki:generate-legal # Generate legal documents from JSON
 
-# Build & Deploy
+# Build & Deploy (Manual)
 npx eas build --platform ios --profile production
 npx eas submit --platform ios
+
+# EAS Workflows (Automated) 
+git push origin main                           # Triggers production build + submit
+git push origin feature/my-feature            # Triggers preview build + tests
+eas workflow:run production-release           # Manual workflow trigger
 ```
 
 ## Important Notes
@@ -108,6 +114,7 @@ Development logs are available at `logs/expo.log`. Use a subagent to tail and an
 - **Version**: Semantic versioning (1.0.1)
 - **Build Numbers**: Date-based format (YYYYMMDDNNN)
 - **Platforms**: Universal iOS app (iPhone + iPad), Android
+- **EAS Workflows**: Automated builds on branch pushes (30 builds/month free tier)
 
 ## Quick Problem Resolution
 

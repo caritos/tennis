@@ -1,0 +1,33 @@
+name: Test and Build Preview
+description: Run tests and create preview builds for feature branches
+
+on:
+  push:
+    branches: ['feature/*', 'fix/*', 'experiment/*']
+    
+jobs:
+  run_tests:
+    name: Run Quality Checks
+    type: custom
+    steps:
+      - run: npm ci
+      - run: npm run lint
+      - run: npm run type-check  
+      - run: npm run test:unit
+      - run: echo "✅ All quality checks passed!"
+      
+  build_preview_ios:
+    name: Build iOS Preview
+    type: build
+    depends_on: run_tests
+    params:
+      platform: ios
+      profile: preview
+      
+  notify_preview_ready:
+    name: Notify Preview Ready
+    type: custom
+    depends_on: build_preview_ios
+    steps:
+      - run: echo "✅ Preview build ready for testing!"
+      - run: echo "Install via TestFlight or Expo Go"
