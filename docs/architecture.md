@@ -20,11 +20,15 @@ Play Serve is a React Native mobile application built with Expo, designed to con
   - Real-time subscriptions
   - Edge functions for server-side logic
 
-### Data Management
-- **Expo SQLite** - Local data storage and offline support
+### Data Management - Hybrid Database Architecture
+- **Expo SQLite** - Primary local database for all app data
+- **Supabase PostgreSQL** - Cloud database for authentication and sync
 - **AsyncStorage** - Key-value storage for settings and preferences
-- **Offline-first architecture** - Local SQLite as source of truth
-- **Bi-directional sync** - Automatic synchronization with Supabase
+- **Hybrid Architecture Benefits**:
+  - Offline-first capability with SQLite for instant performance
+  - Cloud backup and sync with Supabase for data persistence
+  - Works without internet connection (SQLite handles all operations)
+  - Automatic sync when connection restored (Supabase synchronization)
 
 ## Architecture Patterns
 
@@ -56,13 +60,31 @@ Service Layer (Business Logic):
 └── realtimeService - WebSocket connections
 ```
 
-### 3. Data Layer Pattern
+### 3. Data Layer Pattern - Hybrid Database Design
 ```
 Data Flow:
-UI Components → Custom Hooks → Service Layer → Local SQLite ↔ Supabase
+UI Components → Custom Hooks → Service Layer → SQLite (Primary) → Supabase (Sync)
 
-Offline Support:
-Local SQLite (Source of Truth) ↔ Offline Queue Manager ↔ Network Sync
+Database Responsibilities:
+SQLite (Local):
+├── All app data (users, clubs, matches, etc.)
+├── Immediate read/write operations
+├── Offline functionality
+├── Local caching and performance
+└── 9 tables with full schema
+
+Supabase (Cloud):
+├── User authentication (Supabase Auth)
+├── Data backup and persistence
+├── Cross-device synchronization
+├── Real-time subscriptions
+└── Remote data access
+
+Sync Strategy:
+1. Write to SQLite immediately (instant UI feedback)
+2. Queue sync operation for Supabase
+3. Sync when network available
+4. Handle conflicts with last-write-wins
 ```
 
 ### 4. Component Architecture
@@ -132,22 +154,31 @@ Navigation Structure:
 - **Real-time Updates**: Live data synchronization
 - **Contextual Prompts**: Smart user guidance based on app state
 
-## Offline-First Architecture
+## Offline-First Architecture with Hybrid Database
+
+### Why Hybrid SQLite + Supabase?
+This architecture provides the best of both worlds:
+- **SQLite**: Lightning-fast local queries, offline functionality, no network latency
+- **Supabase**: Authentication, cloud backup, cross-device sync, real-time features
 
 ### Offline Queue System
 ```
 Network States:
-Online: Direct sync with Supabase
-Offline: Queue operations locally
-Reconnection: Automatic batch sync with conflict resolution
+Online: SQLite writes → Immediate Supabase sync
+Offline: SQLite writes → Queue for later sync
+Reconnection: Batch sync from queue → Supabase
+
+Database Interaction:
+User Action → SQLite (instant) → Sync Queue → Supabase (when online)
 ```
 
 ### Data Synchronization Strategy
-1. **Local First**: All operations write to SQLite immediately
-2. **Background Sync**: Automatic sync when network available
-3. **Conflict Resolution**: Last-write-wins with user notification
-4. **Retry Logic**: Exponential backoff for failed operations
-5. **Batch Processing**: Efficient bulk operations on reconnection
+1. **SQLite First**: All operations write to SQLite for instant feedback
+2. **Async Supabase Sync**: Background sync without blocking UI
+3. **Bidirectional Sync**: Pull changes from Supabase on app launch
+4. **Conflict Resolution**: Last-write-wins with timestamp comparison
+5. **Retry Logic**: Exponential backoff for failed sync operations
+6. **Batch Processing**: Efficient bulk sync on reconnection
 
 ### Offline Capabilities
 - Create and join clubs
@@ -246,12 +277,12 @@ Project Structure:
 ## Third-Party Integrations
 
 ### Core Libraries
-- **@supabase/supabase-js** - Backend integration
+- **@supabase/supabase-js** - Cloud authentication and sync
+- **expo-sqlite** - Primary local database (9 tables)
 - **expo-location** - GPS and location services
 - **expo-notifications** - Push notification system
 - **expo-image-picker** - Camera and photo library
 - **react-native-reanimated** - High-performance animations
-- **expo-sqlite** - Local database management
 
 ### Platform Services
 - **Apple Developer Services**: App Store submission and Apple Sign-In
