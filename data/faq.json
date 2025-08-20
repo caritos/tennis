@@ -103,7 +103,7 @@
       "questions": [
         {
           "question": "Who can see my profile information?",
-          "answer": "• Your name and stats are visible to members of clubs you've joined\n• Your email and phone remain private\n• Match history is visible to club members\n• You control what information you add to your profile"
+          "answer": "• Your name and stats are visible to members of clubs you've joined\n• Your email remains private\n• Match history is visible to club members\n• You control what information you add to your profile"
         },
         {
           "question": "Is my location tracked?",

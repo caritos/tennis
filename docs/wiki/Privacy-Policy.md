@@ -10,7 +10,7 @@ Play Serve ("we," "our," or "us") is committed to protecting your privacy. This 
 
 ### Personal Information
 
-- **Account Information**: Name, email address, phone number
+- **Account Information**: Name, email address
 - **Profile Information**: Tennis skill level, playing style, profile photo
 - **Location Data**: Your location to help find nearby tennis clubs (only when you grant permission)
 

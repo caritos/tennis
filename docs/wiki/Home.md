@@ -6,7 +6,7 @@ Welcome to Play Serve support! We're here to help you connect with tennis player
 
 ### Getting Started
 - **Download**: Available on the iOS App Store
-- **Sign Up**: Create your account with email or phone
+- **Sign Up**: Create your account with email
 - **Join Clubs**: Find and join tennis clubs near you
 - **Find Matches**: Browse available players and send match invitations
 
