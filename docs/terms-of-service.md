@@ -1,12 +1,12 @@
 # Terms of Service
 
-**Effective Date: [DATE]**
+**Effective Date: January 1, 2025**
 
-Welcome to Tennis Club! These Terms of Service ("Terms") govern your use of our mobile application and services. By using Tennis Club, you agree to these Terms.
+Welcome to Play Serve! These Terms of Service ("Terms") govern your use of the Play Serve mobile application ("App") operated by Caritos ("we," "our," or "us"). By downloading, installing, or using Play Serve, you agree to be bound by these Terms.
 
-## 1. About Tennis Club
+## 1. Description of Service
 
-Tennis Club is a mobile application that connects tennis players within local clubs. Our service allows you to:
+Play Serve is a mobile application that connects tennis players within local clubs, enabling users to:
 - Join tennis clubs in your area
 - Find other players for matches
 - Record match results and track rankings
@@ -15,7 +15,7 @@ Tennis Club is a mobile application that connects tennis players within local cl
 ## 2. Account Requirements
 
 ### Eligibility
-- You must be at least 13 years old to use Tennis Club
+- You must be at least 13 years old to use Play Serve
 - You must provide accurate and complete information
 - You are responsible for maintaining account security
 
@@ -27,7 +27,7 @@ Tennis Club is a mobile application that connects tennis players within local cl
 ## 3. Community Standards
 
 ### Expected Behavior
-All Tennis Club users must:
+All Play Serve users must:
 - **Honor Commitments**: Show up for confirmed matches on time
 - **Be Respectful**: Treat all players with courtesy and sportsmanship
 - **Play Fair**: Report accurate match scores using our honor system
@@ -96,7 +96,7 @@ For complete details, see our [Privacy Policy](privacy-policy.md).
 ## 7. Intellectual Property
 
 ### Our Rights
-Tennis Club, including all software, designs, and content, is owned by us and protected by intellectual property laws.
+Play Serve and all related content are protected by intellectual property laws. You may not copy, modify, distribute, or reverse engineer the App.
 
 ### Your Content
 - You retain ownership of match data you create
@@ -106,7 +106,7 @@ Tennis Club, including all software, designs, and content, is owned by us and pr
 ## 8. Service Availability
 
 ### App Access
-- Tennis Club is provided "as is" without warranties
+- Play Serve is provided "as is" without warranties
 - We may modify, suspend, or discontinue features at any time
 - You are responsible for device compatibility and internet access
 
@@ -174,13 +174,11 @@ For any disputes or concerns:
 
 ## 13. Contact Information
 
-For questions about these Terms or Tennis Club:
+For questions about these Terms of Service:
 
-**Email**: support@tennisclub.app  
-**Legal**: legal@tennisclub.app  
-**Privacy**: privacy@tennisclub.app
-
-**Business Address**: [Your Business Address]
+**Email**: legal@caritos.com
+**Support**: https://github.com/caritos/tennis/wiki
+**Privacy Questions**: privacy@caritos.com
 
 ## 14. Severability
 
@@ -188,10 +186,10 @@ If any provision of these Terms is found to be unenforceable, the remaining prov
 
 ## 15. Entire Agreement
 
-These Terms, together with our Privacy Policy, constitute the entire agreement between you and Tennis Club regarding use of our service.
+These Terms, together with our Privacy Policy, constitute the entire agreement between you and Play Serve regarding use of our service.
 
 ---
 
 **Last Updated**: [DATE]
 
-By using Tennis Club, you acknowledge that you have read, understood, and agree to be bound by these Terms of Service.
+By using Play Serve, you acknowledge that you have read, understood, and agree to be bound by these Terms of Service.

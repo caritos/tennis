@@ -33,7 +33,7 @@
     },
     "android": {
       "adaptiveIcon": {
-        "foregroundImage": "./assets/images/Retro Tennis Ball Motion Icon.png",
+        "foregroundImage": "./assets/images/retro-tennis-ball-motion.png",
         "backgroundColor": "#ffffff"
       },
       "edgeToEdgeEnabled": true,
@@ -53,7 +53,7 @@
       [
         "expo-splash-screen",
         {
-          "image": "./assets/images/Retro Tennis Ball Motion Icon.png",
+          "image": "./assets/images/retro-tennis-ball-motion.png",
           "imageWidth": 200,
           "resizeMode": "contain",
           "backgroundColor": "#ffffff"

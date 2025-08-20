@@ -1,16 +1,15 @@
 # Privacy Policy
 
-**Effective Date: [DATE]**
+**Effective Date: January 1, 2025**
 
-Tennis Club ("we," "our," or "us") is committed to protecting your privacy. This Privacy Policy explains how we collect, use, and protect your information when you use our mobile application.
+Play Serve ("we," "our," or "us") is committed to protecting your privacy. This Privacy Policy explains how we collect, use, and protect your information when you use the Play Serve mobile application.
 
 ## Information We Collect
 
 ### Personal Information
-- **Name**: Your full name for identification within tennis clubs
-- **Email Address**: For account creation and essential communications
-- **Phone Number**: Shared automatically with match partners for coordination
-- **Location Data**: Your approximate location to discover nearby tennis clubs
+- **Account Information**: Name, email address, phone number
+- **Profile Information**: Tennis skill level, playing style, profile photo
+- **Location Data**: Your location to help find nearby tennis clubs (only when you grant permission)
 
 ### Tennis Activity Data
 - **Match Results**: Scores, dates, and opponents from your tennis matches
@@ -98,7 +97,7 @@ When you delete your account:
 
 ## Children's Privacy
 
-Tennis Club is not intended for users under 13 years old. We do not knowingly collect personal information from children under 13.
+Play Serve is not intended for children under 13. We do not knowingly collect personal information from children under 13. If we become aware that we have collected such information, we will delete it promptly.
 
 ## International Users
 
@@ -112,8 +111,9 @@ We may update this Privacy Policy to reflect changes in our practices or legal r
 
 If you have questions about this Privacy Policy or your privacy rights:
 
-**Email**: privacy@tennisclub.app  
-**Address**: [Your Business Address]
+**Email**: privacy@caritos.com
+**Support**: https://github.com/caritos/tennis/wiki
+**Address**: [Company Address - to be added]
 
 ## State-Specific Rights
 
@@ -132,4 +132,4 @@ European residents have rights under the General Data Protection Regulation:
 - Right to restrict or object to processing
 - Right to data portability
 
-To exercise these rights, contact us at privacy@tennisclub.app.
+To exercise these rights, contact us at privacy@caritos.com.
