@@ -9,6 +9,10 @@ dist/
 web-build/
 expo-env.d.ts
 
+# Generated files (single source of truth in data/ directory)
+docs/privacy-policy.html
+docs/terms-of-service.md
+
 # Native
 .kotlin/
 *.orig.*
