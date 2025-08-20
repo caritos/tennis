@@ -38,7 +38,7 @@ export default function ProfileScreen() {
   const handleContactSupport = async () => {
     console.log('📧 Contact Support button pressed');
     
-    const supportEmail = 'eladio@caritos.com';
+    const supportEmail = 'support@caritos.com';
     const subject = 'Tennis Club App Support Request';
     
     // Try simple mailto first

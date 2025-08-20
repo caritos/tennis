@@ -255,10 +255,10 @@ export default function CommunityGuidelinesScreen() {
           </ThemedText>
           
           <ThemedText style={styles.paragraph}>
-            <ThemedText style={styles.bold}>Safety & Trust Team</ThemedText>: eladio@caritos.com
+            <ThemedText style={styles.bold}>Safety & Trust Team</ThemedText>: support@caritos.com
           </ThemedText>
           <ThemedText style={styles.paragraph}>
-            <ThemedText style={styles.bold}>General Support</ThemedText>: eladio@caritos.com
+            <ThemedText style={styles.bold}>General Support</ThemedText>: support@caritos.com
           </ThemedText>
           <ThemedText style={styles.paragraph}>
             <ThemedText style={styles.bold}>Response Time</ThemedText>: We aim to respond to all safety reports within 24-48 hours

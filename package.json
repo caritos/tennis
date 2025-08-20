@@ -5,7 +5,7 @@
   "author": "Eladio Caritos",
   "description": "Connect with tennis players in your local clubs",
   "appMeta": {
-    "supportEmail": "eladio@caritos.com",
+    "supportEmail": "support@caritos.com",
     "website": "caritos.com/tennis"
   },
   "scripts": {
@@ -35,6 +35,9 @@
     "e2e:devices:ipad": "./scripts/run-device-tests.sh ipad",
     "app-store:metadata": "./scripts/update-app-metadata.sh",
     "app-store:safety": "echo 'Safety features implemented: Report/Block system, Community Guidelines'",
+    "wiki:update": "./scripts/update-wiki.sh",
+    "wiki:generate-faq": "node scripts/generate-wiki-faq.js",
+    "wiki:generate-legal": "node scripts/generate-legal-docs.js",
     "checks:pre-commit": "npm run lint && npm run type-check && npm run test:unit",
     "checks:pre-push": "npm run lint && npm run type-check && npm run test:all && npm run e2e:check",
     "checks:all": "npm run lint && npm run type-check && npm run test:all && npm run e2e",

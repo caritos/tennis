@@ -40,10 +40,11 @@ When reporting issues, please include:
 - Step-by-step description of the problem
 - Screenshots if helpful
 
-## Privacy & Terms
+## Additional Resources
 
-- [Privacy Policy](https://github.com/caritos/tennis/blob/main/docs/privacy-policy.md)
-- [Terms of Service](https://github.com/caritos/tennis/blob/main/docs/terms-of-service.md)
+- [Frequently Asked Questions (FAQ)](FAQ)
+- [Privacy Policy](Privacy-Policy)
+- [Terms of Service](Terms-of-Service)
 
 ## App Information
 

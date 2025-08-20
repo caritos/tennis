@@ -1,0 +1,57 @@
+name: Update GitHub Wiki
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'docs/wiki/**'
+      - 'docs/terms-of-service.md'
+      - 'data/faq.json'
+  workflow_dispatch: # Allow manual trigger
+
+jobs:
+  update-wiki:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+      
+    - name: Update wiki
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      run: |
+        # Configure git
+        git config --global user.name "github-actions[bot]"
+        git config --global user.email "github-actions[bot]@users.noreply.github.com"
+        
+        # Clone wiki repository
+        git clone "https://x-access-token:${GITHUB_TOKEN}@github.com/${GITHUB_REPOSITORY}.wiki.git" wiki-repo
+        
+        cd wiki-repo
+        
+        # Generate FAQ from shared data
+        cd ..
+        node scripts/generate-wiki-faq.js
+        cd wiki-repo
+        
+        # Copy updated content
+        cp ../docs/wiki/Home.md Home.md
+        cp ../docs/wiki/Privacy-Policy.md Privacy-Policy.md  
+        cp ../docs/wiki/Terms-of-Service.md Terms-of-Service.md
+        cp ../docs/wiki/FAQ.md FAQ.md
+        
+        # Check for changes and commit
+        if ! git diff --quiet; then
+          git add .
+          git commit -m "docs: automated wiki update from repository
+          
+          Updated wiki content from docs/wiki/ directory
+          
+          🤖 Automated update via GitHub Actions"
+          
+          git push origin master
+          echo "✅ Wiki updated successfully"
+        else
+          echo "ℹ️ No wiki changes detected"
+        fi

@@ -52,8 +52,8 @@ tennis, tennis partner, tennis match, tennis club, tennis score, tennis tracker,
 
 **Support URL**: https://github.com/caritos/tennis/wiki
 **Marketing URL**: https://caritos.com/tennis
-**Privacy Policy URL**: https://github.com/caritos/tennis/blob/main/docs/privacy-policy.md
-**Terms of Service URL**: https://github.com/caritos/tennis/blob/main/docs/terms-of-service.md
+**Privacy Policy URL**: https://github.com/caritos/tennis/wiki/Privacy-Policy
+**Terms of Service URL**: https://github.com/caritos/tennis/wiki/Terms-of-Service
 
 ## Age Rating
 
