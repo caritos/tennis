@@ -53,8 +53,6 @@
     <string>Allow $(PRODUCT_NAME) to access your location</string>
     <key>NSLocationWhenInUseUsageDescription</key>
     <string>Play Serve uses your location to find tennis clubs and players near you.</string>
-    <key>NSMicrophoneUsageDescription</key>
-    <string>Allow $(PRODUCT_NAME) to access your microphone</string>
     <key>NSPhotoLibraryUsageDescription</key>
     <string>Play Serve needs access to your photo library to upload profile photos.</string>
     <key>NSUserActivityTypes</key>
