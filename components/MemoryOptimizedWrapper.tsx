@@ -23,7 +23,7 @@ export const withMemoryOptimization = <P extends object>(
         return { ...props, ...relevantProps };
       }
       return props;
-    }, [props, dependencies]);
+    }, [props]);
 
     return <Component {...memoizedProps} />;
   }, (prevProps, nextProps) => {
@@ -55,7 +55,7 @@ export const MemoryOptimizedWrapper: React.FC<MemoryOptimizedWrapperProps> = ({
   dependencies = [],
   shouldMemo = true
 }) => {
-  const memoizedChildren = useMemo(() => children, [children, ...dependencies]);
+  const memoizedChildren = useMemo(() => children, [children]);
 
   return shouldMemo ? <React.Fragment>{memoizedChildren}</React.Fragment> : <React.Fragment>{children}</React.Fragment>;
 };
