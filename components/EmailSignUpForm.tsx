@@ -2,18 +2,19 @@ import React, { useState } from 'react';
 import { 
   StyleSheet, 
   View, 
-  TouchableOpacity, 
-  TextInput, 
   ScrollView,
   Platform
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { Ionicons } from '@expo/vector-icons';
-import Checkbox from 'expo-checkbox';
 import { ThemedText } from './ThemedText';
 import { ThemedView } from './ThemedView';
 import { useColorScheme } from '@/hooks/useColorScheme';
 import { Colors } from '@/constants/Colors';
+import SignUpHeader from './auth/SignUpHeader';
+import FormFields from './auth/FormFields';
+import TermsAgreement from './auth/TermsAgreement';
+import ErrorDisplay from './auth/ErrorDisplay';
+import SignUpActions from './auth/SignUpActions';
 
 interface EmailSignUpFormProps {
   onBack: () => void;
@@ -183,43 +184,15 @@ export function EmailSignUpForm({
     });
   };
 
-  const handleTermsPress = () => {
-    onTermsPress?.();
-  };
-
-  const handlePrivacyPress = () => {
-    onPrivacyPress?.();
-  };
 
   return (
     <SafeAreaView 
       style={[styles.container, { backgroundColor: colors.background }]}
     >
-      {/* Header */}
-      <View style={styles.header}>
-        <TouchableOpacity
-          style={styles.backButton}
-          onPress={() => {
-            console.log('🔘 BUTTON: Back button pressed');
-            onBack();
-          }}
-          accessibilityRole="button"
-          accessibilityLabel="Back"
-          accessibilityHint="Go back to the previous screen"
-        >
-          <Ionicons 
-            name="chevron-back" 
-            size={24} 
-            color={colors.text} 
-          />
-        </TouchableOpacity>
-        
-        <ThemedText type="title" style={styles.headerTitle}>
-          Create Account
-        </ThemedText>
-        
-        <View style={styles.headerSpacer} />
-      </View>
+      <SignUpHeader
+        colors={colors}
+        onBack={onBack}
+      />
 
       <ScrollView 
         style={styles.scrollView}
@@ -230,289 +203,44 @@ export function EmailSignUpForm({
         automaticallyAdjustKeyboardInsets={true}
       >
           <View style={styles.content}>
-              {/* Form Fields */}
-                {/* Full Name */}
-                <View style={styles.inputGroup}>
-                  <ThemedText style={styles.label}>Full Name</ThemedText>
-                  <TextInput
-                    style={[
-                      styles.input,
-                      { 
-                        backgroundColor: colors.background, 
-                        color: colors.text,
-                        borderColor: errors.fullName ? '#FF6B6B' : colors.tabIconDefault 
-                      }
-                    ]}
-                    placeholder="John Smith"
-                    placeholderTextColor={colors.tabIconDefault}
-                    value={fullName}
-                    onFocus={() => {
-                      console.log('📝 FULL NAME FOCUSED');
-                    }}
-                    onChangeText={(text) => {
-                      console.log('📝 FULL NAME CHANGED:', text, 'length:', text.length);
-                      setFullName(text);
-                      clearError('fullName');
-                    }}
-                    onEndEditing={(e) => {
-                      console.log('📝 Full Name onEndEditing:', e.nativeEvent.text);
-                      setFullName(e.nativeEvent.text);
-                    }}
-                    autoCapitalize="words"
-                    autoCorrect={false}
-                    accessibilityLabel="Full Name"
-                    testID="full-name-input"
-                  />
-                  {errors.fullName && (
-                    <ThemedText style={styles.errorText} accessibilityRole="alert" testID="full-name-error">
-                      {errors.fullName}
-                    </ThemedText>
-                  )}
-                </View>
+              <FormFields
+                fullName={fullName}
+                email={email}
+                password={password}
+                confirmPassword={confirmPassword}
+                phone={phone}
+                errors={errors}
+                isE2EEnvironment={isE2EEnvironment}
+                colors={colors}
+                onFullNameChange={setFullName}
+                onEmailChange={setEmail}
+                onPasswordChange={setPassword}
+                onConfirmPasswordChange={setConfirmPassword}
+                onPhoneChange={setPhone}
+                onClearError={clearError}
+              />
 
-                {/* Email */}
-                <View style={styles.inputGroup}>
-                  <ThemedText style={styles.label}>Email Address</ThemedText>
-                  <TextInput
-                    style={[
-                      styles.input,
-                      { 
-                        backgroundColor: colors.background, 
-                        color: colors.text,
-                        borderColor: errors.email ? '#FF6B6B' : colors.tabIconDefault 
-                      }
-                    ]}
-                    placeholder="john@example.com"
-                    placeholderTextColor={colors.tabIconDefault}
-                    value={email}
-                    onFocus={() => {
-                      console.log('📝 EMAIL FOCUSED');
-                    }}
-                    onChangeText={(text) => {
-                      console.log('📝 EMAIL CHANGED:', text, 'length:', text.length);
-                      setEmail(text);
-                      clearError('email');
-                    }}
-                    keyboardType="email-address"
-                    autoCapitalize="none"
-                    autoCorrect={false}
-                    accessibilityLabel="Email Address"
-                    testID="email-input"
-                  />
-                  {errors.email && (
-                    <ThemedText style={styles.errorText} accessibilityRole="alert" testID="email-error">
-                      {errors.email}
-                    </ThemedText>
-                  )}
-                </View>
+                <TermsAgreement
+                  agreedToTerms={agreedToTerms}
+                  errors={errors}
+                  colors={colors}
+                  onAgreedToTermsChange={setAgreedToTerms}
+                  onTermsPress={onTermsPress}
+                  onPrivacyPress={onPrivacyPress}
+                  onClearError={clearError}
+                />
 
-                {/* Password */}
-                <View style={styles.inputGroup}>
-                  <ThemedText style={styles.label}>Password</ThemedText>
-                  <TextInput
-                    style={[
-                      styles.input,
-                      { 
-                        backgroundColor: colors.background, 
-                        color: colors.text,
-                        borderColor: errors.password ? '#FF6B6B' : colors.tabIconDefault 
-                      }
-                    ]}
-                    placeholder="••••••••••••"
-                    placeholderTextColor={colors.tabIconDefault}
-                    value={password}
-                    onChangeText={(text) => {
-                      setPassword(text);
-                      clearError('password');
-                    }}
-                    secureTextEntry={!isE2EEnvironment}
-                    autoCapitalize="none"
-                    autoCorrect={false}
-                    autoComplete="new-password"
-                    textContentType="none"
-                    keyboardType="default"
-                    spellCheck={false}
-                    accessibilityLabel="Password"
-                    testID="password-input"
-                  />
-                  {errors.password && (
-                    <ThemedText style={styles.errorText} accessibilityRole="alert" testID="password-error">
-                      {errors.password}
-                    </ThemedText>
-                  )}
-                </View>
+                <ErrorDisplay
+                  errors={errors}
+                  colors={colors}
+                />
 
-                {/* Confirm Password */}
-                <View style={styles.inputGroup}>
-                  <ThemedText style={styles.label}>Confirm Password</ThemedText>
-                  <TextInput
-                    style={[
-                      styles.input,
-                      { 
-                        backgroundColor: colors.background, 
-                        color: colors.text,
-                        borderColor: errors.confirmPassword ? '#FF6B6B' : colors.tabIconDefault 
-                      }
-                    ]}
-                    placeholder="••••••••••••"
-                    placeholderTextColor={colors.tabIconDefault}
-                    value={confirmPassword}
-                    onChangeText={(text) => {
-                      setConfirmPassword(text);
-                      clearError('confirmPassword');
-                    }}
-                    secureTextEntry={!isE2EEnvironment}
-                    autoCapitalize="none"
-                    autoCorrect={false}
-                    autoComplete="new-password"
-                    textContentType="none"
-                    keyboardType="default"
-                    spellCheck={false}
-                    accessibilityLabel="Confirm Password"
-                    testID="confirm-password-input"
-                  />
-                  {errors.confirmPassword && (
-                    <ThemedText style={styles.errorText} accessibilityRole="alert" testID="confirm-password-error">
-                      {errors.confirmPassword}
-                    </ThemedText>
-                  )}
-                </View>
-
-                {/* Phone Number */}
-                <View style={styles.inputGroup}>
-                  <ThemedText style={styles.label}>Phone Number (Optional)</ThemedText>
-                  <TextInput
-                    style={[
-                      styles.input,
-                      { 
-                        backgroundColor: colors.background, 
-                        color: colors.text,
-                        borderColor: errors.phone ? '#FF6B6B' : colors.tabIconDefault 
-                      }
-                    ]}
-                    placeholder="(555) 123-4567"
-                    placeholderTextColor={colors.tabIconDefault}
-                    value={phone}
-                    onChangeText={(text) => {
-                      setPhone(text);
-                      clearError('phone');
-                    }}
-                    keyboardType="phone-pad"
-                    autoCorrect={false}
-                    accessibilityLabel="Phone Number (Optional)"
-                    testID="phone-input"
-                  />
-                  <ThemedText style={[styles.helpText, { color: colors.tabIconDefault }]}>
-                    For match coordination and contact sharing
-                  </ThemedText>
-                  {errors.phone && (
-                    <ThemedText style={styles.errorText} accessibilityRole="alert" testID="phone-error">
-                      {errors.phone}
-                    </ThemedText>
-                  )}
-                </View>
-
-                {/* Terms Agreement */}
-                <View style={styles.termsSection}>
-                  <View style={styles.checkbox}>
-                    <Checkbox
-                      value={agreedToTerms}
-                      onValueChange={(value) => {
-                        console.log('🔘 CHECKBOX: Terms agreement checkbox pressed -', value ? 'checked' : 'unchecked');
-                        setAgreedToTerms(value);
-                        clearError('terms');
-                      }}
-                      color={agreedToTerms ? colors.tint : undefined}
-                      style={styles.checkboxBox}
-                      accessibilityLabel="I agree to the Terms of Service and Privacy Policy"
-                      testID="terms-checkbox"
-                    />
-                    <View style={styles.termsTextContainer}>
-                      <ThemedText style={[styles.termsText, { color: colors.text }]}>
-                        I agree to the{' '}
-                      </ThemedText>
-                      <TouchableOpacity 
-                        onPress={() => {
-                          console.log('🔘 BUTTON: Terms of Service link pressed');
-                          handleTermsPress();
-                        }}
-                        testID="terms-link"
-                      >
-                        <ThemedText style={[styles.termsLink, { color: colors.tint }]}>
-                          Terms of Service
-                        </ThemedText>
-                      </TouchableOpacity>
-                      <ThemedText style={[styles.termsText, { color: colors.text }]}>
-                        {' '}and{' '}
-                      </ThemedText>
-                      <TouchableOpacity 
-                        onPress={() => {
-                          console.log('🔘 BUTTON: Privacy Policy link pressed');
-                          handlePrivacyPress();
-                        }}
-                        testID="privacy-link"
-                      >
-                        <ThemedText style={[styles.termsLink, { color: colors.tint }]}>
-                          Privacy Policy
-                        </ThemedText>
-                      </TouchableOpacity>
-                    </View>
-                  </View>
-                  {errors.terms && (
-                    <ThemedText style={styles.errorText} accessibilityRole="alert" testID="terms-error">
-                      {errors.terms}
-                    </ThemedText>
-                  )}
-                </View>
-
-                {/* General Error */}
-                {errors.general && (
-                  <ThemedText style={[styles.errorText, styles.generalError]} accessibilityRole="alert" testID="general-error">
-                    {errors.general}
-                  </ThemedText>
-                )}
-
-                {/* Submit Button */}
-                <View style={styles.submitButtonContainer}>
-                  <TouchableOpacity
-                    style={[
-                      styles.submitButton,
-                      { backgroundColor: isLoading ? colors.tabIconDefault : colors.tint },
-                      isLoading && styles.submitButtonDisabled
-                    ]}
-                    onPress={() => {
-                      console.log('🔘 BUTTON: Create Account pressed!');
-                      handleSubmit();
-                    }}
-                    disabled={isLoading}
-                    testID="create-account-button"
-                    activeOpacity={0.8}
-                  >
-                    <ThemedText style={styles.submitButtonText}>
-                      {isLoading ? 'Creating Account...' : 'Create Account'}
-                    </ThemedText>
-                  </TouchableOpacity>
-                </View>
-
-                {/* Sign In Link */}
-                <View style={styles.signInSection}>
-                  <ThemedText style={[styles.signInPrompt, { color: colors.tabIconDefault }]}>
-                    Already have an account?{' '}
-                  </ThemedText>
-                  <TouchableOpacity
-                    onPress={() => {
-                      console.log('🔘 BUTTON: Sign In link pressed');
-                      onSignInPress();
-                    }}
-                    accessibilityRole="button"
-                    accessibilityLabel="Sign In"
-                    accessibilityHint="Go to sign in screen"
-                  >
-                    <ThemedText style={[styles.signInLink, { color: colors.tint }]}>
-                      Sign In
-                    </ThemedText>
-                  </TouchableOpacity>
-                </View>
+                <SignUpActions
+                  isLoading={isLoading}
+                  colors={colors}
+                  onSubmit={handleSubmit}
+                  onSignInPress={onSignInPress}
+                />
           </View>
       </ScrollView>
     </SafeAreaView>
@@ -522,26 +250,6 @@ export function EmailSignUpForm({
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-  },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    borderBottomWidth: 1,
-    borderBottomColor: '#e0e0e0',
-  },
-  backButton: {
-    padding: 8,
-  },
-  headerTitle: {
-    flex: 1,
-    textAlign: 'center',
-    fontSize: 18,
-    fontWeight: '600',
-  },
-  headerSpacer: {
-    width: 40,
   },
   scrollView: {
     flex: 1,
@@ -553,98 +261,5 @@ const styles = StyleSheet.create({
   },
   content: {
     width: '100%',
-  },
-  titleSection: {
-    alignItems: 'center',
-    marginBottom: 16,
-  },
-  appTitle: {
-    fontSize: 20,
-    fontWeight: 'bold',
-  },
-  inputGroup: {
-    marginBottom: 12,
-  },
-  label: {
-    fontSize: 14,
-    fontWeight: '500',
-    marginBottom: 4,
-  },
-  input: {
-    borderWidth: 1,
-    borderRadius: 8,
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    fontSize: 15,
-  },
-  helpText: {
-    fontSize: 12,
-    marginTop: 2,
-  },
-  errorText: {
-    color: '#FF6B6B',
-    fontSize: 12,
-    marginTop: 2,
-  },
-  termsSection: {
-    marginBottom: 16,
-  },
-  checkbox: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-  },
-  checkboxBox: {
-    width: 20,
-    height: 20,
-    marginRight: 8,
-  },
-  termsTextContainer: {
-    flex: 1,
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-  },
-  termsText: {
-    fontSize: 13,
-  },
-  termsLink: {
-    fontSize: 13,
-    textDecorationLine: 'underline',
-  },
-  generalError: {
-    marginBottom: 12,
-    textAlign: 'center',
-  },
-  submitButtonContainer: {
-    marginTop: 16,
-    marginBottom: 8,
-  },
-  submitButton: {
-    paddingVertical: 12,
-    paddingHorizontal: 24,
-    borderRadius: 10,
-    alignItems: 'center',
-    justifyContent: 'center',
-    minHeight: 44,
-  },
-  submitButtonDisabled: {
-    opacity: 0.8,
-  },
-  submitButtonText: {
-    color: '#ffffff',
-    fontSize: 16,
-    fontWeight: '600',
-  },
-  signInSection: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-    marginTop: 8,
-  },
-  signInPrompt: {
-    fontSize: 14,
-  },
-  signInLink: {
-    fontSize: 14,
-    fontWeight: '600',
-    textDecorationLine: 'underline',
   },
 });

@@ -15,8 +15,14 @@ import { useAuth } from '@/contexts/AuthContext';
 import { CompactStyles } from '@/constants/CompactStyles';
 import { CreateMatchData } from '../services/matchService';
 import { isValidTennisScore, validateSetScore } from '../utils/tennisScore';
-import { TennisScoreEntry } from './TennisScoreEntry';
+import MatchTypeSelector from './match-recording/MatchTypeSelector';
+import PlayerSearchField from './match-recording/PlayerSearchField';
+import MatchDateSection from './match-recording/MatchDateSection';
+import ScoreSection from './match-recording/ScoreSection';
+import NotesSection from './match-recording/NotesSection';
+import FormActions from './match-recording/FormActions';
 import { CalendarDatePicker } from './CalendarDatePicker';
+import { TennisScoreEntry } from './TennisScoreEntry';
 import { TennisSet } from '@/types/tennis';
 import { formatScoreString } from '../utils/tennisUtils';
 import { initializeDatabase } from '../database/database';
@@ -289,13 +295,13 @@ export function MatchRecordingForm(componentProps: MatchRecordingFormProps) {
     onCancel: typeof onCancel 
   });
 
-  // Handle radio button selection
-  const handleMatchTypeChange = (selectedId: string) => {
-    setMatchTypeRadioId(selectedId);
-    setMatchType(selectedId as 'singles' | 'doubles');
+  // Handle match type selection
+  const handleMatchTypeChange = (matchType: 'singles' | 'doubles') => {
+    setMatchType(matchType);
+    setMatchTypeRadioId(matchType);
     
     // Clear doubles fields when switching to singles
-    if (selectedId === 'singles') {
+    if (matchType === 'singles') {
       setSelectedPartner(null);
       setPartnerSearchText('');
       setSelectedOpponentPartner(null);
@@ -714,16 +720,11 @@ export function MatchRecordingForm(componentProps: MatchRecordingFormProps) {
         )}
 
         {/* Match Type */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Match Type</Text>
-          <RadioGroup 
-            radioButtons={matchTypeRadioButtons}
-            onPress={handleMatchTypeChange}
-            selectedId={matchTypeRadioId}
-            layout="row"
-            containerStyle={styles.radioGroupContainer}
-          />
-        </View>
+        <MatchTypeSelector
+          selectedType={matchType}
+          onTypeChange={handleMatchTypeChange}
+          colors={colors}
+        />
 
         {/* Your Partner - Only show for doubles matches */}
         {matchType === 'doubles' && (
