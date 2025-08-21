@@ -1,4 +1,5 @@
 import { Database } from '@/database/database';
+import QueryOptimizer from '@/database/queryOptimizer';
 
 export interface Notification {
   id: string;
@@ -26,7 +27,15 @@ export interface CreateNotificationParams {
 }
 
 export class NotificationService {
-  constructor(private db: Database) {}
+  private queryOptimizer: QueryOptimizer;
+
+  constructor(private db: Database) {
+    this.queryOptimizer = new QueryOptimizer(db);
+    // Initialize performance indexes
+    this.queryOptimizer.createPerformanceIndexes().catch(error => 
+      console.warn('Failed to create performance indexes:', error)
+    );
+  }
 
   async createNotification(params: CreateNotificationParams): Promise<string> {
     const id = `notification_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
@@ -61,13 +70,14 @@ export class NotificationService {
 
   async getNotifications(userId: string, limit: number = 50): Promise<Notification[]> {
     try {
-      const notifications = await this.db.getAllAsync(
+      const notifications = await this.queryOptimizer.cachedQuery<Notification>(
         `SELECT * FROM notifications 
          WHERE user_id = ? 
          ORDER BY created_at DESC 
          LIMIT ?`,
-        [userId, limit]
-      ) as Notification[];
+        [userId, limit],
+        30 // Cache for 30 seconds
+      );
 
       return notifications.map(notification => ({
         ...notification,
@@ -82,12 +92,13 @@ export class NotificationService {
 
   async getUnreadCount(userId: string): Promise<number> {
     try {
-      const result = await this.db.getFirstAsync(
+      const result = await this.queryOptimizer.cachedQuery<{ count: number }>(
         'SELECT COUNT(*) as count FROM notifications WHERE user_id = ? AND is_read = 0',
-        [userId]
-      ) as { count: number };
+        [userId],
+        60 // Cache unread count for 1 minute
+      );
 
-      return result.count;
+      return result[0]?.count || 0;
     } catch (error) {
       console.error('❌ Failed to get unread count:', error);
       return 0;
@@ -101,6 +112,9 @@ export class NotificationService {
         [notificationId]
       );
 
+      // Clear cache to ensure fresh data on next read
+      this.queryOptimizer.clearCache();
+      
       console.log('✅ Notification marked as read:', notificationId);
     } catch (error) {
       console.error('❌ Failed to mark notification as read:', error);
@@ -115,6 +129,9 @@ export class NotificationService {
         [userId]
       );
 
+      // Clear cache to ensure fresh data on next read
+      this.queryOptimizer.clearCache();
+      
       console.log('✅ All notifications marked as read for user:', userId);
     } catch (error) {
       console.error('❌ Failed to mark all notifications as read:', error);
@@ -129,6 +146,9 @@ export class NotificationService {
         [notificationId]
       );
 
+      // Clear cache to ensure fresh data on next read
+      this.queryOptimizer.clearCache();
+      
       console.log('✅ Notification deleted:', notificationId);
     } catch (error) {
       console.error('❌ Failed to delete notification:', error);

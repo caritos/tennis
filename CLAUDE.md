@@ -115,6 +115,7 @@ Development logs are available at `logs/expo.log`. Use a subagent to tail and an
 - **Build Numbers**: Date-based format (YYYYMMDDNNN)
 - **Platforms**: Universal iOS app (iPhone + iPad), Android
 - **EAS Workflows**: Automated builds on branch pushes (30 builds/month free tier)
+- **JavaScript Engine**: JSC (JavaScriptCore) - More stable than Hermes, especially on iPad
 
 ## Quick Problem Resolution
 
@@ -145,6 +146,12 @@ For detailed development history and major milestones, see:
 - **Development History**: `/docs/project-management/development-history.md`
 - **Session Summaries**: `/docs/project-management/`
 - **Architecture Decisions**: `/docs/development/`
+
+## Build Checklist
+
+- Before making a new EAS build, ensure the following:
+  - Build number is correct with the correct date
+  - Iteration number is not a duplicate
 
 ---
 

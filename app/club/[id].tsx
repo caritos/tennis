@@ -4,16 +4,16 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useLocalSearchParams, router, useFocusEffect } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { ThemedText } from '@/components/ThemedText';
-import { ThemedView } from '@/components/ThemedView';
 import { useColorScheme } from '@/hooks/useColorScheme';
 import { Colors } from '@/constants/Colors';
 import { Club } from '@/lib/supabase';
 import { initializeDatabase } from '@/database/database';
 import { useAuth } from '@/contexts/AuthContext';
-import { TennisScoreDisplay } from '@/components/TennisScoreDisplay';
-import { ClubRankings, RankedPlayer } from '@/components/ClubRankings';
+import { RankedPlayer } from '@/components/ClubRankings';
 import ChallengeFlowModal from '@/components/ChallengeFlowModal';
-import ClubChallenges from '@/components/ClubChallenges';
+import ClubOverview from '@/components/club/ClubOverview';
+import ClubMembers from '@/components/club/ClubMembers';
+import ClubMatches from '@/components/club/ClubMatches';
 import LookingToPlaySection from '@/components/LookingToPlaySection';
 import { getClubLeaderboard } from '@/services/matchService';
 import { challengeService } from '@/services/challengeService';
@@ -464,472 +464,50 @@ export default function ClubDetailScreen() {
         <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
         {/* Overview Tab */}
         {activeTab === 'overview' && (
-          <>
-            {/* Action Buttons Section */}
-            <ThemedView style={[styles.sectionCard, { backgroundColor: colors.background, shadowColor: colors.text }]}>
-              <TouchableOpacity 
-                style={[styles.actionButton, { backgroundColor: colors.tint }]}
-                onPress={handleRecordMatch}
-              >
-                <Ionicons name="add" size={20} color="white" />
-                <ThemedText style={styles.actionButtonText}>Record Match</ThemedText>
-              </TouchableOpacity>
-              
-              <TouchableOpacity
-                style={[styles.actionButton, { borderColor: colors.tint, borderWidth: 1, backgroundColor: 'transparent', marginTop: 12 }]}
-                onPress={() => setShowInviteForm(true)}
-              >
-                <Ionicons name="calendar-outline" size={20} color={colors.tint} />
-                <ThemedText style={[styles.actionButtonText, { color: colors.tint }]}>Schedule a Match</ThemedText>
-              </TouchableOpacity>
-            </ThemedView>
-
-        {/* Playing Opportunities Section */}
-        {user && (
-          <ThemedView style={[styles.sectionCard, { backgroundColor: colors.background, shadowColor: colors.text }]}>
-            <View style={styles.sectionHeaderWithIcon}>
-              <ThemedText style={styles.sectionIcon}>🎾</ThemedText>
-              <View style={styles.sectionTitleContainer}>
-                <ThemedText style={styles.sectionTitle}>Playing Opportunities</ThemedText>
-                <ThemedText style={[styles.sectionHelper, { color: colors.tabIconDefault }]}>
-                  Challenges you&apos;ve received and sent
-                </ThemedText>
-              </View>
-            </View>
-            <ClubChallenges 
-              userId={user.id}
-              clubId={id as string}
-              onRefresh={() => {
-                loadClubDetails();
-                loadPendingChallenges();
-              }}
-            />
-          </ThemedView>
-        )}
-
-            {/* Club Stats Section - Moved to bottom */}
-            <ThemedView style={[styles.sectionCard, { backgroundColor: colors.background, shadowColor: colors.text }]}>
-              <View style={styles.statsTextContainer}>
-                <ThemedText style={[styles.statSentence, { color: colors.text }]}>
-                  The club has {memberCount} total members.
-                </ThemedText>
-                
-                <ThemedText style={[styles.statSentence, { color: colors.text }]}>
-                  {rankings.length > 0 
-                    ? `${rankings[0].playerName.split(' ')[0]} is the top player of the club.`
-                    : 'No rankings available yet.'
-                  }
-                </ThemedText>
-                
-                {recentMatches.length > 0 ? (
-                  <ThemedText style={[styles.statSentence, { color: colors.text }]}>
-                    {(() => {
-                      const match = recentMatches[0];
-                      const winner = match.winner === 1 ? match.player1_name : match.player2_name;
-                      const loser = match.winner === 1 ? match.player2_name : match.player1_name;
-                      const matchDate = new Date(match.date).toLocaleDateString();
-                      
-                      // Format scores properly
-                      let formattedScores = match.scores;
-                      // Check if scores are in JSON format
-                      if (formattedScores.includes('{') && formattedScores.includes('}')) {
-                        try {
-                          const scoresArray = JSON.parse(formattedScores);
-                          formattedScores = scoresArray.map((set: any) => `${set.player}-${set.opponent}`).join(', ');
-                        } catch (e) {
-                          // If parsing fails, use the original scores
-                        }
-                      }
-                      
-                      return `${winner} beat ${loser} ${formattedScores} on ${matchDate}.`;
-                    })()}
-                  </ThemedText>
-                ) : (
-                  <ThemedText style={[styles.statSentence, { color: colors.tabIconDefault }]}>
-                    No recent matches to display.
-                  </ThemedText>
-                )}
-              </View>
-            </ThemedView>
-        </>
+          <ClubOverview
+            club={club!}
+            memberCount={memberCount}
+            rankings={rankings}
+            recentMatches={recentMatches}
+            colors={colors}
+            user={user}
+            pendingChallenges={pendingChallenges}
+            onChallengePress={(target) => handleChallengePlayer(target.id, target.name)}
+            onViewAllMatches={() => setActiveTab('matches')}
+            onViewAllMembers={() => setActiveTab('members')}
+            onRecordMatch={handleRecordMatch}
+            onInvitePlayers={() => setShowInviteForm(true)}
+          />
         )}
 
         {/* Members Tab */}
         {activeTab === 'members' && (
-          <>
-            <ThemedView style={[styles.sectionCard, { backgroundColor: colors.background, shadowColor: colors.text }]}>
-              {/* Filtering and Sorting Controls */}
-              <View style={styles.controlsContainer}>
-                <View style={styles.controlGroup}>
-                  <ThemedText style={[styles.controlLabel, { color: colors.tabIconDefault }]}>Sort by:</ThemedText>
-                  <View style={styles.segmentedControl}>
-                    {[
-                      { key: 'name', label: 'Name' },
-                      { key: 'ranking', label: 'Rank' },
-                      { key: 'wins', label: 'Wins' },
-                      { key: 'matches', label: 'Games' },
-                      { key: 'joined', label: 'Joined' }
-                    ].map((option, index) => (
-                      <TouchableOpacity
-                        key={option.key}
-                        style={[
-                          styles.segmentButton,
-                          memberSortBy === option.key && { backgroundColor: colors.tint },
-                          index === 4 && { borderRightWidth: 0 }
-                        ]}
-                        onPress={() => setMemberSortBy(option.key as any)}
-                      >
-                        <ThemedText style={[
-                          styles.segmentButtonText,
-                          { color: memberSortBy === option.key ? 'white' : colors.text }
-                        ]}>
-                          {option.label}
-                        </ThemedText>
-                      </TouchableOpacity>
-                    ))}
-                  </View>
-                </View>
-                
-                <View style={styles.controlGroup}>
-                  <ThemedText style={[styles.controlLabel, { color: colors.tabIconDefault }]}>Filter:</ThemedText>
-                  <View style={styles.segmentedControl}>
-                    {[
-                      { key: 'all', label: 'All' },
-                      { key: 'active', label: 'Active' },
-                      { key: 'new', label: 'New' }
-                    ].map((option, index) => (
-                      <TouchableOpacity
-                        key={option.key}
-                        style={[
-                          styles.segmentButton,
-                          memberFilterBy === option.key && { backgroundColor: colors.tint },
-                          index === 2 && { borderRightWidth: 0 }
-                        ]}
-                        onPress={() => setMemberFilterBy(option.key as any)}
-                      >
-                        <ThemedText style={[
-                          styles.segmentButtonText,
-                          { color: memberFilterBy === option.key ? 'white' : colors.text }
-                        ]}>
-                          {option.label}
-                        </ThemedText>
-                      </TouchableOpacity>
-                    ))}
-                  </View>
-                </View>
-              </View>
-              
-              {clubMembers.length > 0 ? (
-                <View>
-                  {(() => {
-                    // Filter members
-                    let filteredMembers = clubMembers.filter(member => {
-                      if (memberFilterBy === 'active') {
-                        return member.match_count > 3;
-                      } else if (memberFilterBy === 'new') {
-                        const joinedDate = new Date(member.joined_at);
-                        const thirtyDaysAgo = new Date();
-                        thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
-                        return joinedDate > thirtyDaysAgo;
-                      }
-                      return true;
-                    });
-                    
-                    // Sort members
-                    filteredMembers.sort((a, b) => {
-                      switch (memberSortBy) {
-                        case 'ranking':
-                          // Find each member's ranking position
-                          const rankingA = rankings.findIndex(r => r.playerId === a.id);
-                          const rankingB = rankings.findIndex(r => r.playerId === b.id);
-                          // Handle cases where member is not in rankings (put at end)
-                          if (rankingA === -1 && rankingB === -1) return 0;
-                          if (rankingA === -1) return 1;
-                          if (rankingB === -1) return -1;
-                          return rankingA - rankingB; // Lower index = higher rank
-                        case 'wins':
-                          return (b.wins || 0) - (a.wins || 0);
-                        case 'matches':
-                          return (b.match_count || 0) - (a.match_count || 0);
-                        case 'joined':
-                          return new Date(b.joined_at).getTime() - new Date(a.joined_at).getTime();
-                        default: // name
-                          return (a.full_name || '').localeCompare(b.full_name || '');
-                      }
-                    });
-                    
-                    return filteredMembers.map((member, index) => {
-                      const winRate = member.match_count > 0 ? (member.wins / member.match_count) * 100 : 0;
-                      const isActive = member.match_count > 3;
-                      const isNew = (() => {
-                        const joinedDate = new Date(member.joined_at);
-                        const thirtyDaysAgo = new Date();
-                        thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
-                        return joinedDate > thirtyDaysAgo;
-                      })();
-                      
-                      return (
-                        <View 
-                          key={member.id} 
-                          style={[
-                            styles.enhancedMemberItem,
-                            index !== filteredMembers.length - 1 && styles.memberItemBorder,
-                            { borderColor: colors.tabIconDefault }
-                          ]}
-                        >
-                          <View style={styles.memberHeader}>
-                            <View style={styles.memberNameContainer}>
-                              <View style={styles.memberNameRow}>
-                                <View style={styles.nameWithBadge}>
-                                  <ThemedText style={styles.enhancedMemberName}>{member.full_name || 'Unknown Member'}</ThemedText>
-                                  {isNew && (
-                                    <View style={[styles.memberBadge, { backgroundColor: '#4CAF50' }]}>
-                                      <ThemedText style={styles.badgeText}>NEW</ThemedText>
-                                    </View>
-                                  )}
-                                  {isActive && (
-                                    <View style={[styles.memberBadge, { backgroundColor: colors.tint }]}>
-                                      <ThemedText style={styles.badgeText}>ACTIVE</ThemedText>
-                                    </View>
-                                  )}
-                                </View>
-                                <ThemedText style={[styles.memberJoinedDateInline, { color: colors.tabIconDefault }]}>
-                                  Joined {new Date(member.joined_at).toLocaleDateString()}
-                                </ThemedText>
-                              </View>
-                            </View>
-                            {user && user.id !== member.id && (
-                              <TouchableOpacity
-                                style={[
-                                  styles.enhancedChallengeButton,
-                                  { 
-                                    backgroundColor: pendingChallenges.has(member.id) ? colors.tabIconDefault : colors.tint,
-                                    opacity: pendingChallenges.has(member.id) ? 0.6 : 1
-                                  }
-                                ]}
-                                onPress={() => handleChallengePlayer(member.id, member.full_name)}
-                                disabled={pendingChallenges.has(member.id)}
-                              >
-                                <Ionicons 
-                                  name={pendingChallenges.has(member.id) ? "hourglass-outline" : "tennisball"} 
-                                  size={14} 
-                                  color="white" 
-                                />
-                                <ThemedText style={styles.enhancedChallengeButtonText}>
-                                  {pendingChallenges.has(member.id) ? 'Pending' : 'Challenge'}
-                                </ThemedText>
-                              </TouchableOpacity>
-                            )}
-                          </View>
-                          
-                          <View style={styles.memberStatsContainer}>
-                            <View style={styles.statGroup}>
-                              <View style={styles.statItem}>
-                                <ThemedText style={styles.statValue}>{member.match_count}</ThemedText>
-                                <ThemedText style={[styles.statLabelSmall, { color: colors.tabIconDefault }]}>Matches</ThemedText>
-                              </View>
-                              <View style={styles.statItem}>
-                                <ThemedText style={styles.statValue}>{member.wins}</ThemedText>
-                                <ThemedText style={[styles.statLabelSmall, { color: colors.tabIconDefault }]}>Wins</ThemedText>
-                              </View>
-                              <View style={styles.statItem}>
-                                <ThemedText style={styles.statValue}>{Math.round(winRate)}%</ThemedText>
-                                <ThemedText style={[styles.statLabelSmall, { color: colors.tabIconDefault }]}>Win Rate</ThemedText>
-                              </View>
-                            </View>
-                            
-                            {member.match_count > 0 && (
-                              <View style={styles.progressBarContainer}>
-                                <View style={[styles.progressBar, { backgroundColor: colors.tabIconDefault + '20' }]}>
-                                  <View 
-                                    style={[
-                                      styles.progressFill,
-                                      { 
-                                        backgroundColor: winRate >= 60 ? '#4CAF50' : winRate >= 40 ? '#FF9800' : '#FF5722',
-                                        width: `${winRate}%`
-                                      }
-                                    ]}
-                                  />
-                                </View>
-                              </View>
-                            )}
-                          </View>
-                        </View>
-                      );
-                    });
-                  })()}
-                </View>
-              ) : (
-                <View style={[styles.placeholder, { borderColor: colors.tabIconDefault }]}>
-                  <ThemedText style={styles.placeholderEmoji}>👥</ThemedText>
-                  <ThemedText style={[styles.placeholderText, { color: colors.tabIconDefault }]}>
-                    No members yet
-                  </ThemedText>
-                </View>
-              )}
-            </ThemedView>
-          </>
+          <ClubMembers
+            members={clubMembers}
+            colors={colors}
+            user={user}
+            pendingChallenges={pendingChallenges}
+            sortBy={memberSortBy}
+            filterBy={memberFilterBy}
+            onSortChange={setMemberSortBy}
+            onFilterChange={setMemberFilterBy}
+            onChallengePress={(target) => handleChallengePlayer(target.id, target.name)}
+          />
         )}
 
         {/* Matches Tab */}
         {activeTab === 'matches' && (
-          <>
-            <ThemedView style={[styles.sectionCard, { backgroundColor: colors.background, shadowColor: colors.text }]}>
-              
-              {/* Match Filtering Controls */}
-              <View style={styles.controlsContainer}>
-                <View style={styles.controlGroup}>
-                  <ThemedText style={[styles.controlLabel, { color: colors.tabIconDefault }]}>Type:</ThemedText>
-                  <View style={styles.segmentedControl}>
-                    {[
-                      { key: 'all', label: 'All' },
-                      { key: 'singles', label: 'Singles' },
-                      { key: 'doubles', label: 'Doubles' }
-                    ].map((option, index) => (
-                      <TouchableOpacity
-                        key={option.key}
-                        style={[
-                          styles.segmentButton,
-                          matchFilterType === option.key && { backgroundColor: colors.tint },
-                          index === 2 && { borderRightWidth: 0 }
-                        ]}
-                        onPress={() => setMatchFilterType(option.key as any)}
-                      >
-                        <ThemedText style={[
-                          styles.segmentButtonText,
-                          { color: matchFilterType === option.key ? 'white' : colors.text }
-                        ]}>
-                          {option.label}
-                        </ThemedText>
-                      </TouchableOpacity>
-                    ))}
-                  </View>
-                </View>
-
-                <View style={styles.controlGroup}>
-                  <ThemedText style={[styles.controlLabel, { color: colors.tabIconDefault }]}>Date:</ThemedText>
-                  <View style={styles.segmentedControl}>
-                    {[
-                      { key: 'all', label: 'All Time' },
-                      { key: 'week', label: 'Last Week' },
-                      { key: 'month', label: 'Last Month' }
-                    ].map((option, index) => (
-                      <TouchableOpacity
-                        key={option.key}
-                        style={[
-                          styles.segmentButton,
-                          matchFilterDate === option.key && { backgroundColor: colors.tint },
-                          index === 2 && { borderRightWidth: 0 }
-                        ]}
-                        onPress={() => setMatchFilterDate(option.key as any)}
-                      >
-                        <ThemedText style={[
-                          styles.segmentButtonText,
-                          { color: matchFilterDate === option.key ? 'white' : colors.text }
-                        ]}>
-                          {option.label}
-                        </ThemedText>
-                      </TouchableOpacity>
-                    ))}
-                  </View>
-                </View>
-              </View>
-              
-              {allMatches.length > 0 ? (
-                <View>
-                  {(() => {
-                    // Filter matches based on current filter settings
-                    let filteredMatches = allMatches.filter((match: any) => {
-                      // Type filter
-                      if (matchFilterType !== 'all') {
-                        if (matchFilterType === 'singles' && match.match_type !== 'singles') return false;
-                        if (matchFilterType === 'doubles' && match.match_type !== 'doubles') return false;
-                      }
-                      
-                      // Date filter
-                      if (matchFilterDate !== 'all') {
-                        const matchDate = new Date(match.date);
-                        const now = new Date();
-                        
-                        if (matchFilterDate === 'week') {
-                          const weekAgo = new Date(now);
-                          weekAgo.setDate(weekAgo.getDate() - 7);
-                          if (matchDate < weekAgo) return false;
-                        } else if (matchFilterDate === 'month') {
-                          const monthAgo = new Date(now);
-                          monthAgo.setMonth(monthAgo.getMonth() - 1);
-                          if (matchDate < monthAgo) return false;
-                        }
-                      }
-                      
-                      return true;
-                    });
-                    
-                    const formatDate = (dateString: string) => {
-                      const date = new Date(dateString);
-                      const today = new Date();
-                      const yesterday = new Date(today);
-                      yesterday.setDate(yesterday.getDate() - 1);
-                      
-                      if (date.toDateString() === today.toDateString()) {
-                        return 'Today';
-                      } else if (date.toDateString() === yesterday.toDateString()) {
-                        return 'Yesterday';
-                      } else {
-                        return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-                      }
-                    };
-                    
-                    return filteredMatches.map((match: any, index) => {
-                      return (
-                        <View 
-                          key={match.id} 
-                          style={[
-                            styles.matchItem,
-                            index !== allMatches.length - 1 && styles.matchItemBorder,
-                            { borderColor: colors.tabIconDefault }
-                          ]}
-                        >
-                          <TennisScoreDisplay
-                            player1Name={match.player1_name}
-                            player2Name={match.player2_name || match.opponent2_name}
-                            scores={match.scores}
-                            winner={match.winner}
-                            matchId={match.id}
-                            player1Id={match.player1_id}
-                            player2Id={match.player2_id}
-                            player3Id={match.player3_id}
-                            player4Id={match.player4_id}
-                            matchType={match.match_type}
-                            clubName={club?.name}
-                            matchDate={match.date}
-                            isPlayer1Unregistered={false} // Player 1 is always registered
-                            isPlayer2Unregistered={!match.player2_id && !!match.opponent2_name}
-                            isPlayer3Unregistered={!match.player3_id && !!match.partner3_name}
-                            isPlayer4Unregistered={!match.player4_id && !!match.partner4_name}
-                            unregisteredPlayer2Name={match.opponent2_name}
-                            unregisteredPlayer3Name={match.partner3_name}
-                            unregisteredPlayer4Name={match.partner4_name}
-                            onClaimMatch={handleClaimMatch}
-                          />
-                        </View>
-                      );
-                    });
-                  })()}
-                </View>
-              ) : (
-                <View style={[styles.placeholder, { borderColor: colors.tabIconDefault }]}>
-                  <ThemedText style={styles.placeholderEmoji}>🎾</ThemedText>
-                  <ThemedText style={[styles.placeholderText, { color: colors.tabIconDefault }]}>
-                    No matches yet • Be the first to play!
-                  </ThemedText>
-                  <ThemedText style={[styles.placeholderSubtext, { color: colors.tabIconDefault }]}>
-                    Record your match to start building history
-                  </ThemedText>
-                </View>
-              )}
-            </ThemedView>
-          </>
+          <ClubMatches
+            matches={allMatches}
+            club={club}
+            colors={colors}
+            filterType={matchFilterType}
+            filterDate={matchFilterDate}
+            onFilterTypeChange={setMatchFilterType}
+            onFilterDateChange={setMatchFilterDate}
+            onClaimMatch={handleClaimMatch}
+            onRecordMatch={handleRecordMatch}
+          />
         )}
         </ScrollView>
 

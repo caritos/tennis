@@ -11,7 +11,8 @@ Play Serve is a React Native mobile application built with Expo, designed to con
 - **Expo SDK** - Development toolchain and services
 - **TypeScript** - Type safety and developer experience
 - **Expo Router** - File-based navigation system
-- **Primary Target**: iOS phone app (supportsTablet: false)
+- **JavaScript Engine**: JavaScriptCore (JSC) - More stable than Hermes on iPad
+- **Primary Target**: iOS universal app (iPhone and iPad)
 
 ### Backend Services
 - **Supabase** - Backend-as-a-Service platform

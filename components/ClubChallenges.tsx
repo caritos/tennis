@@ -12,6 +12,7 @@ import { Colors } from '@/constants/Colors';
 import { challengeService, ChallengeWithUsers } from '@/services/challengeService';
 import { matchInvitationService, MatchInvitation, InvitationResponse } from '@/services/matchInvitationService';
 import { useNotification } from '@/contexts/NotificationContext';
+import { useOptimizedState } from '@/hooks/useOptimizedState';
 
 interface ClubChallengesProps {
   userId: string;
@@ -19,7 +20,7 @@ interface ClubChallengesProps {
   onRefresh?: () => void;
 }
 
-const ClubChallenges: React.FC<ClubChallengesProps> = ({
+const ClubChallenges = React.memo<ClubChallengesProps>(({
   userId,
   clubId,
   onRefresh,
@@ -28,9 +29,18 @@ const ClubChallenges: React.FC<ClubChallengesProps> = ({
   const colors = Colors[colorScheme ?? 'light'];
   const { showSuccess, showError } = useNotification();
 
-  const [sentChallenges, setSentChallenges] = useState<ChallengeWithUsers[]>([]);
-  const [receivedChallenges, setReceivedChallenges] = useState<ChallengeWithUsers[]>([]);
-  const [openInvites, setOpenInvites] = useState<MatchInvitation[]>([]);
+  const [sentChallenges, setSentChallenges] = useOptimizedState<ChallengeWithUsers[]>([], {
+    debounceMs: 100,
+    batchUpdates: true,
+  });
+  const [receivedChallenges, setReceivedChallenges] = useOptimizedState<ChallengeWithUsers[]>([], {
+    debounceMs: 100,
+    batchUpdates: true,
+  });
+  const [openInvites, setOpenInvites] = useOptimizedState<MatchInvitation[]>([], {
+    debounceMs: 100,
+    batchUpdates: true,
+  });
   const [isLoading, setIsLoading] = useState(true);
   const [processingChallenge, setProcessingChallenge] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<'received' | 'sent'>('received');
@@ -330,7 +340,7 @@ const ClubChallenges: React.FC<ClubChallengesProps> = ({
       </View>
     </ThemedView>
   );
-};
+});
 
 const styles = StyleSheet.create({
   sectionHeader: {

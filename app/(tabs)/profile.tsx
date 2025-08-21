@@ -1,20 +1,18 @@
-import { ScrollView, StyleSheet, View, TouchableOpacity, Linking, Platform, Alert } from 'react-native';
+import { ScrollView, StyleSheet, View, TouchableOpacity } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
-import React, { useState, useEffect } from 'react';
-import { useFocusEffect } from '@react-navigation/native';
+import React, { useState } from 'react';
 import { Ionicons } from '@expo/vector-icons';
 
 import { ThemedText } from '@/components/ThemedText';
-import { ThemedView } from '@/components/ThemedView';
 import { useColorScheme } from '@/hooks/useColorScheme';
 import { Colors } from '@/constants/Colors';
 import { useAuth } from '@/contexts/AuthContext';
-import clubService from '@/services/clubService';
-import { Club } from '@/lib/supabase';
-import { MatchHistoryView } from '@/components/MatchHistoryView';
-import { PlayerStatsDisplay } from '@/components/PlayerStatsDisplay';
 import { usePlayerStats } from '@/hooks/usePlayerStats';
+import ProfileTab from '@/components/profile/ProfileTab';
+import ProfileStats from '@/components/profile/ProfileStats';
+import ProfileMatches from '@/components/profile/ProfileMatches';
+import ProfileSettings from '@/components/profile/ProfileSettings';
 
 type TabType = 'profile' | 'stats' | 'matches' | 'settings';
 
@@ -26,7 +24,7 @@ export default function ProfileScreen() {
   const [activeTab, setActiveTab] = useState<TabType>('profile');
 
   // Load player statistics
-  const { stats, loading: statsLoading, error: statsError, refreshStats } = usePlayerStats(user?.id || null);
+  const { stats, loading: statsLoading, error: statsError } = usePlayerStats(user?.id || null);
 
   const handleSignOut = async () => {
     console.log('🔘 BUTTON: Sign Out pressed');
@@ -35,57 +33,6 @@ export default function ProfileScreen() {
     router.replace('/welcome');
   };
 
-  const handleContactSupport = async () => {
-    console.log('📧 Contact Support button pressed');
-    
-    const supportEmail = 'support@caritos.com';
-    const subject = 'Tennis Club App Support Request';
-    
-    // Try simple mailto first
-    const simpleEmailUrl = `mailto:${supportEmail}`;
-    
-    try {
-      console.log('📧 Trying simple email URL:', simpleEmailUrl);
-      const supported = await Linking.canOpenURL(simpleEmailUrl);
-      console.log('📧 Simple email supported:', supported);
-      
-      if (supported) {
-        // Try with subject and body
-        const body = `Hi Support Team,
-
-I need help with the Tennis Club app.
-
-Issue Description:
-[Please describe your issue or question here]
-
-Device Information:
-- Platform: ${Platform.OS} ${Platform.Version}
-- User: ${user?.email || 'Not signed in'}
-
-Thank you!`;
-
-        const fullEmailUrl = `mailto:${supportEmail}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
-        console.log('📧 Trying full email URL');
-        
-        await Linking.openURL(fullEmailUrl);
-        console.log('📧 Email app opened successfully');
-      } else {
-        console.log('📧 Email client not available, showing alert');
-        Alert.alert(
-          'Contact Support',
-          `Please send an email to:\n\n${supportEmail}\n\nSubject: ${subject}`,
-          [{ text: 'OK' }]
-        );
-      }
-    } catch (error) {
-      console.error('📧 Error opening email client:', error);
-      Alert.alert(
-        'Contact Support',
-        `Please send an email to:\n\n${supportEmail}\n\nSubject: ${subject}`,
-        [{ text: 'OK' }]
-      );
-    }
-  };
 
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
@@ -158,128 +105,30 @@ Thank you!`;
       <ScrollView showsVerticalScrollIndicator={false}>
         {/* Profile Tab */}
         {activeTab === 'profile' && (
-          <>
-            <ThemedView style={styles.section}>
-              <View style={styles.userSection}>
-                <View style={styles.userInfoContainer}>
-                  <View>
-                    <ThemedText style={styles.userEmail}>{user?.email}</ThemedText>
-                    {user?.phone && (
-                      <ThemedText style={styles.userPhone}>{user.phone}</ThemedText>
-                    )}
-                  </View>
-                  <TouchableOpacity
-                    style={[styles.editButton, { borderColor: colors.tint }]}
-                    onPress={() => router.push('/edit-profile')}
-                  >
-                    <Ionicons name="pencil" size={16} color={colors.tint} />
-                    <ThemedText style={[styles.editButtonText, { color: colors.tint }]}>
-                      Edit Profile
-                    </ThemedText>
-                  </TouchableOpacity>
-                </View>
-              </View>
-            </ThemedView>
-
-          </>
+          <ProfileTab user={user} colors={colors} />
         )}
 
         {/* Stats Tab */}
         {activeTab === 'stats' && (
-          <ThemedView style={styles.section}>
-            <PlayerStatsDisplay 
-              stats={stats || {
-                totalMatches: 0,
-                wins: 0,
-                losses: 0,
-                winPercentage: 0,
-                singlesRecord: { wins: 0, losses: 0, winPercentage: 0 },
-                doublesRecord: { wins: 0, losses: 0, winPercentage: 0 },
-                setsWon: 0,
-                setsLost: 0,
-                gamesWon: 0,
-                gamesLost: 0,
-              }}
-              loading={statsLoading}
-              error={statsError}
-            />
-          </ThemedView>
+          <ProfileStats
+            stats={stats}
+            loading={statsLoading}
+            error={statsError}
+          />
         )}
 
         {/* Matches Tab */}
         {activeTab === 'matches' && (
-          <ThemedView style={styles.section}>
-            {user?.id ? (
-              <View style={styles.matchHistoryContainer}>
-                <MatchHistoryView playerId={user.id} />
-              </View>
-            ) : (
-              <ThemedView style={[styles.placeholder, { borderColor: colors.icon }]}>
-                <ThemedText style={styles.placeholderText}>Sign in to view match history</ThemedText>
-              </ThemedView>
-            )}
-          </ThemedView>
+          <ProfileMatches user={user} colors={colors} />
         )}
 
         {/* Settings Tab */}
         {activeTab === 'settings' && (
-          <ThemedView style={styles.section}>
-            <View style={styles.settingsContainer}>
-              <TouchableOpacity
-                style={[styles.settingsItem, { borderColor: colors.icon + '20' }]}
-                onPress={() => router.push('/faq')}
-                accessibilityRole="button"
-                accessibilityLabel="FAQ"
-                accessibilityHint="View frequently asked questions"
-              >
-                <View style={styles.settingsItemContent}>
-                  <Ionicons name="help-circle-outline" size={24} color={colors.tint} />
-                  <ThemedText style={styles.settingsItemText}>FAQ / Help</ThemedText>
-                </View>
-                <Ionicons name="chevron-forward" size={20} color={colors.icon} />
-              </TouchableOpacity>
-
-              <TouchableOpacity
-                style={[styles.settingsItem, { borderColor: colors.icon + '20' }]}
-                onPress={() => router.push('/privacy-policy')}
-                accessibilityRole="button"
-                accessibilityLabel="Privacy Policy"
-                accessibilityHint="View privacy policy"
-              >
-                <View style={styles.settingsItemContent}>
-                  <Ionicons name="shield-checkmark-outline" size={24} color={colors.tint} />
-                  <ThemedText style={styles.settingsItemText}>Privacy Policy</ThemedText>
-                </View>
-                <Ionicons name="chevron-forward" size={20} color={colors.icon} />
-              </TouchableOpacity>
-
-              <TouchableOpacity
-                style={[styles.settingsItem, { borderColor: colors.icon + '20' }]}
-                onPress={handleContactSupport}
-                accessibilityRole="button"
-                accessibilityLabel="Contact Support"
-                accessibilityHint="Send an email to support"
-              >
-                <View style={styles.settingsItemContent}>
-                  <Ionicons name="mail-outline" size={24} color={colors.tint} />
-                  <ThemedText style={styles.settingsItemText}>Contact Support</ThemedText>
-                </View>
-                <Ionicons name="chevron-forward" size={20} color={colors.icon} />
-              </TouchableOpacity>
-              
-              <TouchableOpacity
-                style={[styles.signOutButton, { backgroundColor: colors.tint }]}
-                onPress={handleSignOut}
-                accessibilityRole="button"
-                accessibilityLabel="Sign Out"
-                accessibilityHint="Sign out of your account"
-              >
-                <ThemedText style={styles.signOutButtonText}>
-                  Sign Out
-                </ThemedText>
-              </TouchableOpacity>
-            </View>
-          </ThemedView>
+          <ProfileSettings
+            user={user}
+            colors={colors}
+            onSignOut={handleSignOut}
+          />
         )}
 
       </ScrollView>
@@ -317,133 +166,5 @@ const styles = StyleSheet.create({
   tabText: {
     fontSize: 12,
     fontWeight: '500',
-  },
-  section: {
-    paddingHorizontal: 20,
-    marginBottom: 24,
-  },
-  userSection: {
-    alignItems: 'center',
-    paddingVertical: 12,
-  },
-  userInfoContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    gap: 12,
-  },
-  editButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 16,
-    borderWidth: 1,
-  },
-  editButtonText: {
-    fontSize: 14,
-    fontWeight: '500',
-  },
-  userName: {
-    fontSize: 24,
-    fontWeight: '600',
-  },
-  userEmail: {
-    fontSize: 14,
-    opacity: 0.7,
-    marginTop: 4,
-  },
-  userPhone: {
-    fontSize: 14,
-    opacity: 0.7,
-    marginTop: 2,
-  },
-  sectionTitle: {
-    marginBottom: 12,
-  },
-  placeholder: {
-    borderWidth: 1,
-    borderStyle: 'dashed',
-    borderRadius: 12,
-    padding: 24,
-    alignItems: 'center',
-  },
-  placeholderText: {
-    fontSize: 16,
-    fontWeight: '500',
-    marginBottom: 4,
-  },
-  placeholderSubtext: {
-    fontSize: 14,
-    opacity: 0.7,
-  },
-  loadingContainer: {
-    padding: 20,
-    alignItems: 'center',
-  },
-  loadingText: {
-    fontSize: 16,
-    opacity: 0.7,
-  },
-  clubsList: {
-    gap: 12,
-  },
-  clubCard: {
-    borderWidth: 1,
-    borderRadius: 12,
-    padding: 16,
-    backgroundColor: 'transparent',
-  },
-  clubName: {
-    fontSize: 18,
-    fontWeight: '600',
-    marginBottom: 4,
-  },
-  clubLocation: {
-    fontSize: 14,
-    opacity: 0.7,
-    marginBottom: 4,
-  },
-  clubMembers: {
-    fontSize: 12,
-    opacity: 0.6,
-  },
-  matchHistoryContainer: {
-    // Remove maxHeight constraint to prevent overflow
-  },
-  settingsContainer: {
-    paddingVertical: 8,
-    gap: 12,
-  },
-  settingsItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingVertical: 16,
-    paddingHorizontal: 16,
-    borderRadius: 12,
-    borderWidth: 1,
-  },
-  settingsItemContent: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-  },
-  settingsItemText: {
-    fontSize: 16,
-    fontWeight: '500',
-  },
-  signOutButton: {
-    paddingVertical: 14,
-    paddingHorizontal: 24,
-    borderRadius: 10,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  signOutButtonText: {
-    color: '#ffffff',
-    fontSize: 16,
-    fontWeight: '600',
   },
 });

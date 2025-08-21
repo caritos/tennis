@@ -3,10 +3,10 @@ import {
   View,
   Text,
   StyleSheet,
-  FlatList,
   TouchableOpacity,
   RefreshControl,
 } from 'react-native';
+import { VirtualizedList } from '@/components/VirtualizedList';
 import { useRouter } from 'expo-router';
 import { ThemedView } from '@/components/ThemedView';
 import { ThemedText } from '@/components/ThemedText';
@@ -17,6 +17,7 @@ import { NotificationService, Notification } from '@/services/NotificationServic
 import { challengeService } from '@/services/challengeService';
 import { initializeDatabase } from '@/database/database';
 import { useAuth } from '@/contexts/AuthContext';
+import { useOptimizedState } from '@/hooks/useOptimizedState';
 
 interface NotificationItemProps {
   notification: Notification;
@@ -26,13 +27,13 @@ interface NotificationItemProps {
   colorScheme: 'light' | 'dark';
 }
 
-const NotificationItem: React.FC<NotificationItemProps> = ({
+const NotificationItem = React.memo<NotificationItemProps>(function NotificationItem({
   notification,
   onPress,
   onMarkAsRead,
   onChallengeAction,
   colorScheme,
-}) => {
+}) {
   const colors = Colors[colorScheme ?? 'light'];
 
   const getNotificationIcon = (type: Notification['type']) => {
@@ -146,10 +147,13 @@ const NotificationItem: React.FC<NotificationItemProps> = ({
       )}
     </TouchableOpacity>
   );
-};
+});
 
 export const NotificationList: React.FC = () => {
-  const [notifications, setNotifications] = useState<Notification[]>([]);
+  const [notifications, setNotifications] = useOptimizedState<Notification[]>([], {
+    debounceMs: 100,
+    batchUpdates: true,
+  });
   const [refreshing, setRefreshing] = useState(false);
   const colorScheme = useColorScheme();
   const colors = Colors[colorScheme ?? 'light'];
@@ -313,9 +317,11 @@ export const NotificationList: React.FC = () => {
           </ThemedText>
         </View>
       ) : (
-        <FlatList
+        <VirtualizedList
           data={Object.entries(groupedNotifications)}
           keyExtractor={([date]) => date}
+          itemHeight={120} // Approximate height for optimization
+          optimizeForIPad={true}
           refreshControl={
             <RefreshControl
               refreshing={refreshing}

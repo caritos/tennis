@@ -17,16 +17,20 @@ import { ThemedView } from './ThemedView';
 import { Ionicons } from '@expo/vector-icons';
 import { logError } from '@/utils/errorHandling';
 import { TennisScore } from '@/utils/tennisScore';
+import { useOptimizedState } from '@/hooks/useOptimizedState';
 
 interface MatchHistoryViewProps {
   playerId: string;
   clubId?: string;
 }
 
-export function MatchHistoryView({ playerId, clubId }: MatchHistoryViewProps) {
+export const MatchHistoryView = React.memo<MatchHistoryViewProps>(({ playerId, clubId }) => {
   const colorScheme = useColorScheme();
   const colors = Colors[colorScheme ?? 'light'];
-  const [matches, setMatches] = useState<any[]>([]);
+  const [matches, setMatches] = useOptimizedState<any[]>([], {
+    debounceMs: 200,
+    batchUpdates: true,
+  });
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -191,7 +195,7 @@ export function MatchHistoryView({ playerId, clubId }: MatchHistoryViewProps) {
       })}
     </View>
   );
-}
+});
 
 const styles = StyleSheet.create({
   container: {

@@ -11,7 +11,7 @@ export const withMemoryOptimization = <P extends object>(
   Component: React.ComponentType<P>,
   dependencies?: (keyof P)[]
 ) => {
-  return React.memo((props: P) => {
+  return React.memo(function WithMemoryOptimization(props: P) {
     const memoizedProps = useMemo(() => {
       if (dependencies) {
         const relevantProps: Partial<P> = {};
@@ -23,7 +23,7 @@ export const withMemoryOptimization = <P extends object>(
         return { ...props, ...relevantProps };
       }
       return props;
-    }, dependencies ? dependencies.map(key => props[key as keyof P]) : Object.values(props));
+    }, [props, dependencies]);
 
     return <Component {...memoizedProps} />;
   }, (prevProps, nextProps) => {
@@ -39,11 +39,13 @@ export const useOptimizedCallback = <T extends (...args: any[]) => any>(
   callback: T,
   deps: React.DependencyList
 ): T => {
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   return useCallback(callback, deps);
 };
 
 // Utility for creating memoized values with deep comparison
-export const useDeepMemo = <T>(factory: () => T, deps: React.DependencyList): T => {
+export const useDeepMemo = <T,>(factory: () => T, deps: React.DependencyList): T => {
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   return useMemo(factory, deps);
 };
 
@@ -53,7 +55,7 @@ export const MemoryOptimizedWrapper: React.FC<MemoryOptimizedWrapperProps> = ({
   dependencies = [],
   shouldMemo = true
 }) => {
-  const memoizedChildren = useMemo(() => children, dependencies);
+  const memoizedChildren = useMemo(() => children, [children, ...dependencies]);
 
   return shouldMemo ? <React.Fragment>{memoizedChildren}</React.Fragment> : <React.Fragment>{children}</React.Fragment>;
 };
