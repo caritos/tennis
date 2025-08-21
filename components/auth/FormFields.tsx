@@ -29,7 +29,7 @@ interface FormFieldsProps {
   onClearError: (field: keyof FormErrors) => void;
 }
 
-export default function FormFields({
+const FormFields = React.memo(function FormFields({
   fullName,
   email,
   password,
@@ -229,7 +229,9 @@ export default function FormFields({
       </View>
     </>
   );
-}
+});
+
+export default FormFields;
 
 const styles = StyleSheet.create({
   inputGroup: {

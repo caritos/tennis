@@ -23,7 +23,7 @@ interface TermsAgreementProps {
   onClearError: (field: keyof FormErrors) => void;
 }
 
-export default function TermsAgreement({
+const TermsAgreement = React.memo(function TermsAgreement({
   agreedToTerms,
   errors,
   colors,
@@ -93,7 +93,9 @@ export default function TermsAgreement({
       )}
     </View>
   );
-}
+});
+
+export default TermsAgreement;
 
 const styles = StyleSheet.create({
   termsSection: {

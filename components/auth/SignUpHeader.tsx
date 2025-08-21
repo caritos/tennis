@@ -8,7 +8,7 @@ interface SignUpHeaderProps {
   onBack: () => void;
 }
 
-export default function SignUpHeader({
+const SignUpHeader = React.memo(function SignUpHeader({
   colors,
   onBack,
 }: SignUpHeaderProps) {
@@ -38,7 +38,9 @@ export default function SignUpHeader({
       <View style={styles.headerSpacer} />
     </View>
   );
-}
+});
+
+export default SignUpHeader;
 
 const styles = StyleSheet.create({
   header: {

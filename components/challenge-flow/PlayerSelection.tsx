@@ -26,7 +26,7 @@ interface PlayerSelectionProps {
   onSearchTextChange: (text: string) => void;
 }
 
-export default function PlayerSelection({
+const PlayerSelection = React.memo(function PlayerSelection({
   selectedPlayers,
   availablePlayers,
   playerSearchText,
@@ -163,7 +163,9 @@ export default function PlayerSelection({
       </ThemedText>
     </View>
   );
-}
+});
+
+export default PlayerSelection;
 
 const styles = StyleSheet.create({
   section: {

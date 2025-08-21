@@ -11,7 +11,7 @@ interface FormActionsProps {
   colors: any;
 }
 
-export default function FormActions({
+const FormActions = React.memo(function FormActions({
   matchType,
   canSubmit,
   isSubmitting,
@@ -60,7 +60,9 @@ export default function FormActions({
       </TouchableOpacity>
     </View>
   );
-}
+});
+
+export default FormActions;
 
 const styles = StyleSheet.create({
   footer: {

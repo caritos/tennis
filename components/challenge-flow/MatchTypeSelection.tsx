@@ -8,7 +8,7 @@ interface MatchTypeSelectionProps {
   colors: any;
 }
 
-export default function MatchTypeSelection({
+const MatchTypeSelection = React.memo(function MatchTypeSelection({
   matchType,
   onMatchTypeChange,
   colors,
@@ -65,7 +65,9 @@ export default function MatchTypeSelection({
       </View>
     </View>
   );
-}
+});
+
+export default MatchTypeSelection;
 
 const styles = StyleSheet.create({
   section: {

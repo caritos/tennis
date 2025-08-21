@@ -9,7 +9,7 @@ interface SignUpActionsProps {
   onSignInPress: () => void;
 }
 
-export default function SignUpActions({
+const SignUpActions = React.memo(function SignUpActions({
   isLoading,
   colors,
   onSubmit,
@@ -60,7 +60,9 @@ export default function SignUpActions({
       </View>
     </>
   );
-}
+});
+
+export default SignUpActions;
 
 const styles = StyleSheet.create({
   submitButtonContainer: {

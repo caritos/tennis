@@ -9,7 +9,7 @@ interface MessageSectionProps {
   colors: any;
 }
 
-export default function MessageSection({
+const MessageSection = React.memo(function MessageSection({
   message,
   matchType,
   onMessageChange,
@@ -40,7 +40,9 @@ export default function MessageSection({
       />
     </View>
   );
-}
+});
+
+export default MessageSection;
 
 const styles = StyleSheet.create({
   section: {

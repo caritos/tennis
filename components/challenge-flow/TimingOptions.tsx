@@ -10,7 +10,7 @@ interface TimingOptionsProps {
   colors: any;
 }
 
-export default function TimingOptions({
+const TimingOptions = React.memo(function TimingOptions({
   selectedTime,
   onTimeChange,
   colors,
@@ -57,7 +57,9 @@ export default function TimingOptions({
       </View>
     </View>
   );
-}
+});
+
+export default TimingOptions;
 
 const styles = StyleSheet.create({
   section: {

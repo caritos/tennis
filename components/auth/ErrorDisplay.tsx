@@ -17,7 +17,7 @@ interface ErrorDisplayProps {
   colors: any;
 }
 
-export default function ErrorDisplay({
+const ErrorDisplay = React.memo(function ErrorDisplay({
   errors,
   colors,
 }: ErrorDisplayProps) {
@@ -30,7 +30,9 @@ export default function ErrorDisplay({
       {errors.general}
     </ThemedText>
   );
-}
+});
+
+export default ErrorDisplay;
 
 const styles = StyleSheet.create({
   errorText: {

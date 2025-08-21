@@ -14,6 +14,7 @@
       "supportsTablet": true,
       "usesAppleSignIn": false,
       "deploymentTarget": "15.0",
+      "jsEngine": "hermes",
       "infoPlist": {
         "NSAppTransportSecurity": {
           "NSAllowsArbitraryLoads": true
@@ -29,7 +30,7 @@
       },
       "bundleIdentifier": "com.caritos.tennis",
       "appleTeamId": "3U8L77G9QV",
-      "buildNumber": "20250820001"
+      "buildNumber": "20250821001"
     },
     "android": {
       "adaptiveIcon": {
