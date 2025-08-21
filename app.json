@@ -23,14 +23,16 @@
         "NSPhotoLibraryUsageDescription": "Play Serve needs access to your photo library to upload profile photos.",
         "NSCameraUsageDescription": "Play Serve needs access to your camera to take profile photos.",
         "ITSAppUsesNonExemptEncryption": false,
-        "UIBackgroundModes": ["remote-notification"]
+        "UIBackgroundModes": [
+          "remote-notification"
+        ]
       },
       "entitlements": {
         "aps-environment": "production"
       },
       "bundleIdentifier": "com.caritos.tennis",
       "appleTeamId": "3U8L77G9QV",
-      "buildNumber": "20250821002"
+      "buildNumber": "20250821005"
     },
     "android": {
       "adaptiveIcon": {
