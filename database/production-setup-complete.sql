@@ -174,7 +174,8 @@ CREATE TABLE matches (
   match_type TEXT NOT NULL CHECK (match_type IN ('singles', 'doubles')),
   date DATE NOT NULL,
   notes TEXT,
-  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
 -- Club members table
@@ -298,6 +299,10 @@ $$ language 'plpgsql';
 
 CREATE TRIGGER update_challenges_updated_at 
   BEFORE UPDATE ON challenges 
+  FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+
+CREATE TRIGGER update_matches_updated_at 
+  BEFORE UPDATE ON matches 
   FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
 -- Create admin check function

@@ -21,7 +21,6 @@ import { useLocation } from '@/hooks/useLocation';
 import { useAuth } from '@/contexts/AuthContext';
 import { useOnboarding } from '@/contexts/OnboardingContext';
 import clubService, { joinClub, getJoinedClubIds } from '@/services/clubService';
-import { seedSampleClubs } from '@/utils/seedData';
 
 export default function ClubScreen() {
   const colorScheme = useColorScheme();
@@ -60,10 +59,6 @@ export default function ClubScreen() {
       if (!isRefresh) setLoading(true);
       setError(null);
 
-      // Seed sample data if needed
-      console.log('Starting to seed sample clubs...');
-      await seedSampleClubs();
-      console.log('Finished seeding sample clubs');
 
       // Get nearby clubs with improved location handling
       let userLat, userLng;

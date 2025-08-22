@@ -258,15 +258,6 @@ export default function SignUpPage() {
         )}
 
         <ThemedView style={styles.content}>
-          {/* App Title and Message */}
-          <View style={styles.titleSection}>
-            <ThemedText type="title" style={styles.appTitle}>
-              🎾 Play Serve
-            </ThemedText>
-            <ThemedText type="default" style={[styles.subtitle, { color: colors.tabIconDefault }]}>
-              Join the tennis community!
-            </ThemedText>
-          </View>
 
           {/* Sign Up Form */}
           <ScrollView 
