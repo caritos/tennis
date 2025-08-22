@@ -35,37 +35,43 @@ export class SyncService {
   public async initialize(): Promise<void> {
     if (this.isInitialized) return;
 
-    // Register all sync strategies
-    const strategies = getAllSyncStrategies();
-    strategies.forEach(strategy => {
-      this.queueManager.registerStrategy(strategy);
-    });
+    try {
+      // Register all sync strategies
+      const strategies = getAllSyncStrategies();
+      strategies.forEach(strategy => {
+        this.queueManager.registerStrategy(strategy);
+      });
 
-    // Set up queue hooks for logging and monitoring
-    this.queueManager.setHooks({
-      onOperationAdded: (operation) => {
-        console.log('📝 Operation queued:', operation.entity, operation.operation);
-      },
-      onOperationSuccess: (operation, result) => {
-        console.log('✅ Operation synced:', operation.entity, operation.operation);
-      },
-      onOperationFailed: (operation, error) => {
-        console.log('❌ Operation failed:', operation.entity, operation.operation, error);
-      },
-      onQueueProcessingStarted: () => {
-        console.log('🔄 Starting sync...');
-      },
-      onQueueProcessingCompleted: (results) => {
-        console.log('✨ Sync completed:', results);
-      },
-    });
+      // Set up queue hooks for logging and monitoring
+      this.queueManager.setHooks({
+        onOperationAdded: (operation) => {
+          console.log('📝 Operation queued:', operation.entity, operation.operation);
+        },
+        onOperationSuccess: (operation, result) => {
+          console.log('✅ Operation synced:', operation.entity, operation.operation);
+        },
+        onOperationFailed: (operation, error) => {
+          console.log('❌ Operation failed:', operation.entity, operation.operation, error);
+        },
+        onQueueProcessingStarted: () => {
+          console.log('🔄 Starting sync...');
+        },
+        onQueueProcessingCompleted: (results) => {
+          console.log('✨ Sync completed:', results);
+        },
+      });
 
-    this.isInitialized = true;
-    console.log('🚀 SyncService initialized');
+      this.isInitialized = true;
+      console.log('🚀 SyncService initialized');
 
-    // Process any existing queue items
-    if (this.networkManager.isOnline()) {
-      await this.processQueue();
+      // Process any existing queue items from previous sessions
+      if (this.networkManager.isOnline()) {
+        console.log('📦 Processing existing queue items...');
+        await this.processQueue();
+      }
+    } catch (error) {
+      console.error('❌ SyncService initialization failed:', error);
+      // Don't throw - allow app to continue with degraded sync functionality
     }
   }
 
@@ -80,12 +86,17 @@ export class SyncService {
     matchData: CreateMatchData,
     localMatchId?: string
   ): Promise<string> {
-    return this.queueManager.addOperation(
+    const operationId = await this.queueManager.addOperation(
       'match',
       'create_match',
       matchData,
       { localId: localMatchId }
     );
+
+    // Trigger immediate sync if online
+    this.triggerImmediateSyncIfOnline();
+
+    return operationId;
   }
 
   /**
@@ -118,14 +129,45 @@ export class SyncService {
   // ================================
 
   /**
+   * Queue club creation operation
+   */
+  public async queueClubCreation(
+    clubData: {
+      id: string;
+      name: string;
+      description: string;
+      location: string;
+      lat: number;
+      lng: number;
+      creator_id: string;
+    }
+  ): Promise<string> {
+    const operationId = await this.queueManager.addOperation(
+      'club',
+      'create_club',
+      clubData
+    );
+
+    // Trigger immediate sync if online
+    this.triggerImmediateSyncIfOnline();
+
+    return operationId;
+  }
+
+  /**
    * Queue club join operation
    */
   public async queueClubJoin(clubId: string, userId: string): Promise<string> {
-    return this.queueManager.addOperation(
+    const operationId = await this.queueManager.addOperation(
       'club',
       'join_club',
       { club_id: clubId, user_id: userId }
     );
+
+    // Trigger immediate sync if online
+    this.triggerImmediateSyncIfOnline();
+
+    return operationId;
   }
 
   /**
@@ -150,11 +192,16 @@ export class SyncService {
     userId: string,
     updateData: Record<string, any>
   ): Promise<string> {
-    return this.queueManager.addOperation(
+    const operationId = await this.queueManager.addOperation(
       'user',
       'update_profile',
       { id: userId, ...updateData }
     );
+
+    // Trigger immediate sync if online
+    this.triggerImmediateSyncIfOnline();
+
+    return operationId;
   }
 
   // ================================
@@ -303,6 +350,23 @@ export class SyncService {
    */
   private async processQueue(): Promise<void> {
     await this.queueManager.processQueue();
+  }
+
+  /**
+   * Trigger immediate sync if online (internal helper)
+   */
+  private triggerImmediateSyncIfOnline(): void {
+    if (this.networkManager.isOnline()) {
+      // Use setTimeout to avoid blocking the current operation
+      setTimeout(() => {
+        console.log('🚀 Triggering immediate sync due to new operation');
+        this.processQueue().catch(error => {
+          console.warn('❌ Immediate sync failed:', error);
+        });
+      }, 50); // Reduced delay for faster sync
+    } else {
+      console.log('📴 Device offline - sync will happen when connection is restored');
+    }
   }
 
   /**

@@ -1,9 +1,9 @@
-import React from 'react';
-import { View, TouchableOpacity, StyleSheet } from 'react-native';
-import { router } from 'expo-router';
+import React, { useState, useEffect } from 'react';
+import { View, TouchableOpacity, StyleSheet, TextInput, Alert } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
+import { supabase } from '@/lib/supabase';
 
 interface User {
   id?: string;
@@ -11,35 +11,147 @@ interface User {
   phone?: string;
   user_metadata?: {
     full_name?: string;
+    phone?: string;
   };
 }
 
 interface ProfileTabProps {
   user: User | null;
   colors: any;
+  onUserUpdate?: (updatedUser: User) => void;
 }
 
-const ProfileTab = React.memo(function ProfileTab({ user, colors }: ProfileTabProps) {
+const ProfileTab = React.memo(function ProfileTab({ user, colors, onUserUpdate }: ProfileTabProps) {
+  const [fullName, setFullName] = useState(user?.user_metadata?.full_name || '');
+  const [phone, setPhone] = useState(user?.phone || user?.user_metadata?.phone || '');
+  const [isSaving, setIsSaving] = useState(false);
+  const [hasChanges, setHasChanges] = useState(false);
+
+  useEffect(() => {
+    setFullName(user?.user_metadata?.full_name || '');
+    setPhone(user?.phone || user?.user_metadata?.phone || '');
+    setHasChanges(false);
+  }, [user]);
+
+  const handleSave = async () => {
+    if (!user?.id || !hasChanges) return;
+
+    setIsSaving(true);
+    try {
+      // Update users table
+      const { error: dbError } = await supabase
+        .from('users')
+        .upsert({
+          id: user.id,
+          full_name: fullName.trim(),
+          email: user.email,
+          phone: phone.trim() || null,
+        });
+
+      if (dbError) {
+        console.error('Database update error:', dbError);
+        Alert.alert('Error', 'Failed to update profile. Please try again.');
+        return;
+      }
+
+      // Update auth metadata for full name
+      const { error: authError } = await supabase.auth.updateUser({
+        data: { full_name: fullName.trim() }
+      });
+
+      if (authError) {
+        console.error('Auth update error:', authError);
+      }
+
+      setHasChanges(false);
+      Alert.alert('Success', 'Profile updated successfully!');
+      
+      // Notify parent of user update if callback provided
+      if (onUserUpdate) {
+        onUserUpdate({
+          ...user,
+          user_metadata: { ...user.user_metadata, full_name: fullName.trim() },
+          phone: phone.trim() || null,
+        });
+      }
+    } catch (error) {
+      console.error('Profile update error:', error);
+      Alert.alert('Error', 'Failed to update profile. Please try again.');
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const handleFullNameChange = (text: string) => {
+    setFullName(text);
+    setHasChanges(text.trim() !== (user?.user_metadata?.full_name || ''));
+  };
+
+  const handlePhoneChange = (text: string) => {
+    setPhone(text);
+    const originalPhone = user?.phone || user?.user_metadata?.phone || '';
+    setHasChanges(text.trim() !== originalPhone);
+  };
+
   return (
     <ThemedView style={styles.section}>
-      <View style={styles.userSection}>
-        <View style={styles.userInfoContainer}>
-          <View>
-            <ThemedText style={styles.userEmail}>{user?.email}</ThemedText>
-            {user?.phone && (
-              <ThemedText style={styles.userPhone}>{user.phone}</ThemedText>
-            )}
+      <View style={styles.formContainer}>
+        {/* Full Name */}
+        <View style={styles.fieldContainer}>
+          <ThemedText style={styles.fieldLabel}>Full Name</ThemedText>
+          <TextInput
+            style={[styles.textInput, { 
+              borderColor: colors.tabIconDefault + '40',
+              color: colors.text,
+              backgroundColor: colors.background 
+            }]}
+            value={fullName}
+            onChangeText={handleFullNameChange}
+            placeholder="Enter your full name"
+            placeholderTextColor={colors.tabIconDefault}
+          />
+        </View>
+
+        {/* Email (read-only) */}
+        <View style={styles.fieldContainer}>
+          <ThemedText style={styles.fieldLabel}>Email</ThemedText>
+          <View style={[styles.readOnlyField, { backgroundColor: colors.tabIconDefault + '10' }]}>
+            <ThemedText style={[styles.readOnlyText, { color: colors.tabIconDefault }]}>
+              {user?.email}
+            </ThemedText>
           </View>
+        </View>
+
+        {/* Phone */}
+        <View style={styles.fieldContainer}>
+          <ThemedText style={styles.fieldLabel}>Phone Number</ThemedText>
+          <TextInput
+            style={[styles.textInput, { 
+              borderColor: colors.tabIconDefault + '40',
+              color: colors.text,
+              backgroundColor: colors.background 
+            }]}
+            value={phone}
+            onChangeText={handlePhoneChange}
+            placeholder="Enter your phone number"
+            placeholderTextColor={colors.tabIconDefault}
+            keyboardType="phone-pad"
+          />
+        </View>
+
+        {/* Save Button */}
+        {hasChanges && (
           <TouchableOpacity
-            style={[styles.editButton, { borderColor: colors.tint }]}
-            onPress={() => router.push('/edit-profile')}
+            style={[styles.saveButton, { backgroundColor: colors.tint }]}
+            onPress={handleSave}
+            disabled={isSaving}
           >
-            <Ionicons name="pencil" size={16} color={colors.tint} />
-            <ThemedText style={[styles.editButtonText, { color: colors.tint }]}>
-              Edit Profile
+            <Ionicons name="checkmark" size={16} color="white" />
+            <ThemedText style={styles.saveButtonText}>
+              {isSaving ? 'Saving...' : 'Save Changes'}
             </ThemedText>
           </TouchableOpacity>
-        </View>
+        )}
       </View>
     </ThemedView>
   );
@@ -52,37 +164,43 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     marginBottom: 24,
   },
-  userSection: {
-    alignItems: 'center',
+  formContainer: {
+    gap: 20,
+  },
+  fieldContainer: {
+    gap: 8,
+  },
+  fieldLabel: {
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  textInput: {
+    borderWidth: 1,
+    borderRadius: 8,
+    paddingHorizontal: 12,
+    paddingVertical: 12,
+    fontSize: 16,
+  },
+  readOnlyField: {
+    borderRadius: 8,
+    paddingHorizontal: 12,
     paddingVertical: 12,
   },
-  userInfoContainer: {
+  readOnlyText: {
+    fontSize: 16,
+  },
+  saveButton: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
-    gap: 12,
+    justifyContent: 'center',
+    gap: 8,
+    paddingVertical: 12,
+    borderRadius: 8,
+    marginTop: 8,
   },
-  editButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 16,
-    borderWidth: 1,
-  },
-  editButtonText: {
-    fontSize: 14,
-    fontWeight: '500',
-  },
-  userEmail: {
-    fontSize: 14,
-    opacity: 0.7,
-    marginTop: 4,
-  },
-  userPhone: {
-    fontSize: 14,
-    opacity: 0.7,
-    marginTop: 2,
+  saveButtonText: {
+    color: 'white',
+    fontSize: 16,
+    fontWeight: '600',
   },
 });

@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { Session, User } from '@supabase/supabase-js';
+import { AppState, AppStateStatus } from 'react-native';
 import { supabase } from '@/lib/supabase';
 import { initializeDatabase } from '@/database/database';
 import { syncService } from '@/services/sync';
@@ -57,36 +58,44 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           id: user.id,
           full_name: user.user_metadata?.full_name || user.email?.split('@')[0] || 'Tennis Player',
           email: user.email || '',
-          phone: user.user_metadata?.phone || null,
+          phone: user.user_metadata?.phone || null, // Temporary fallback for existing users
           role: 'player'
         };
         console.log('AuthContext: Using auth metadata fallback:', userData);
       }
       
-      // Always use INSERT OR REPLACE to handle any conflicts gracefully
-      // Include default values for new profile fields to avoid constraint issues
-      await db.runAsync(
-        `INSERT OR REPLACE INTO users (
-          id, full_name, email, phone, role, 
-          contact_preference, skill_level, playing_style,
-          profile_visibility, match_history_visibility, allow_challenges,
-          created_at
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, datetime('now'))`,
-        [
-          userData.id, 
-          userData.full_name, 
-          userData.email, 
-          userData.phone, 
-          userData.role,
-          'whatsapp', // default contact_preference
-          null, // skill_level (nullable)
-          null, // playing_style (nullable)
-          'public', // default profile_visibility
-          'public', // default match_history_visibility
-          'everyone', // default allow_challenges
-        ]
-      );
-      console.log('AuthContext: User synced/updated in local database successfully:', user.id);
+      // Temporarily disable foreign key constraints for user insertion to avoid registration issues
+      await db.execAsync('PRAGMA foreign_keys = OFF;');
+      
+      try {
+        // Always use INSERT OR REPLACE to handle any conflicts gracefully
+        // Include default values for new profile fields to avoid constraint issues
+        await db.runAsync(
+          `INSERT OR REPLACE INTO users (
+            id, full_name, email, phone, role, 
+            contact_preference, skill_level, playing_style,
+            profile_visibility, match_history_visibility, allow_challenges,
+            created_at
+          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, datetime('now'))`,
+          [
+            userData.id, 
+            userData.full_name, 
+            userData.email, 
+            userData.phone, 
+            userData.role,
+            'whatsapp', // default contact_preference
+            null, // skill_level (nullable)
+            null, // playing_style (nullable)
+            'public', // default profile_visibility
+            'public', // default match_history_visibility
+            'everyone', // default allow_challenges
+          ]
+        );
+        console.log('AuthContext: User synced/updated in local database successfully:', user.id);
+      } finally {
+        // Re-enable foreign key constraints
+        await db.execAsync('PRAGMA foreign_keys = ON;');
+      }
       
       // Verify the user was inserted
       const insertedUser = await db.getFirstAsync('SELECT * FROM users WHERE id = ?', [user.id]);
@@ -95,6 +104,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       return success;
     } catch (error) {
       console.error('AuthContext: Failed to sync user to local database:', error);
+      
+      // If it's a foreign key constraint error, provide more helpful info
+      if (error instanceof Error && error.message.includes('FOREIGN KEY constraint failed')) {
+        console.error('AuthContext: This is a foreign key constraint error. Check database schema and relationships.');
+        console.error('AuthContext: User data that failed to insert:', JSON.stringify({ id: user.id, email: user.email }));
+      }
+      
       return false;
     }
   };
@@ -106,6 +122,19 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         // Initialize sync service
         await syncService.initialize();
         console.log('AuthContext: Sync service initialized');
+        
+        // Trigger startup sync to sync any pending operations from previous sessions
+        if (syncService.isOnline()) {
+          console.log('AuthContext: Triggering startup sync...');
+          try {
+            await syncService.sync();
+            console.log('AuthContext: Startup sync completed successfully');
+          } catch (error) {
+            console.warn('AuthContext: Startup sync failed, will retry later:', error);
+          }
+        } else {
+          console.log('AuthContext: Device offline, startup sync will happen when connection is restored');
+        }
         
         // Get initial session with error handling for network failures
         console.log('AuthContext: Checking for existing session...');
@@ -179,8 +208,62 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     return () => subscription.unsubscribe();
   }, []);
 
+  // Add app state change listener for sync on app lifecycle events
+  useEffect(() => {
+    let appStateSubscription: any;
+    
+    const handleAppStateChange = async (nextAppState: AppStateStatus) => {
+      console.log('AuthContext: App state changed to:', nextAppState);
+      
+      if (nextAppState === 'active') {
+        // App came to foreground - trigger sync to get latest data
+        if (syncService.isOnline()) {
+          console.log('AuthContext: App became active, triggering foreground sync...');
+          try {
+            await syncService.sync();
+            console.log('AuthContext: Foreground sync completed successfully');
+          } catch (error) {
+            console.warn('AuthContext: Foreground sync failed:', error);
+          }
+        }
+      } else if (nextAppState === 'background') {
+        // App went to background - trigger sync to push any pending changes
+        if (syncService.isOnline()) {
+          console.log('AuthContext: App went to background, triggering background sync...');
+          try {
+            await syncService.sync();
+            console.log('AuthContext: Background sync completed successfully');
+          } catch (error) {
+            console.warn('AuthContext: Background sync failed:', error);
+          }
+        }
+      }
+    };
+
+    // Subscribe to app state changes
+    appStateSubscription = AppState.addEventListener('change', handleAppStateChange);
+
+    // Cleanup function
+    return () => {
+      if (appStateSubscription) {
+        appStateSubscription.remove();
+      }
+    };
+  }, []);
+
   const signOut = async () => {
     console.log('AuthContext: Signing out...');
+    
+    // Trigger final sync before signing out to push any pending changes
+    if (syncService.isOnline()) {
+      console.log('AuthContext: Triggering final sync before sign out...');
+      try {
+        await syncService.sync();
+        console.log('AuthContext: Final sync completed successfully');
+      } catch (error) {
+        console.warn('AuthContext: Final sync failed:', error);
+      }
+    }
     
     // Clean up realtime subscriptions
     realtimeService.cleanup();

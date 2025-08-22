@@ -11,22 +11,21 @@ export async function seedSampleClubs(): Promise<void> {
     const existingClubs = await db.getAllAsync('SELECT COUNT(*) as count FROM clubs') as any[];
     console.log('Existing clubs count:', existingClubs?.[0]?.count || 0);
     
-    // Only seed if we don't have clubs already
-    if (existingClubs?.[0]?.count > 0) {
-      console.log('Clubs already exist, skipping seeding');
-      return;
-    }
+    // Force re-seed to include NYC clubs (temporary for fixing coordinates)
+    // TODO: Remove this force-reseed logic after coordinates are fixed
+    console.log('Force re-seeding to fix club coordinates...');
     
     console.log('Seeding new data...');
     // Temporarily disable foreign key constraints for this connection
     await db.runAsync('PRAGMA foreign_keys = OFF');
     console.log('Disabled foreign key constraints for seeding');
 
-    // Clear any existing data first (if needed)
-    await db.runAsync('DELETE FROM club_members');
-    await db.runAsync('DELETE FROM clubs');
-    await db.runAsync('DELETE FROM users');
-    console.log('Cleared existing data');
+    // Only clear sample clubs (those with IDs starting with '550e8400-e29b-41d4-a716-4466554400')
+    // This preserves user-created clubs
+    await db.runAsync(`DELETE FROM club_members WHERE club_id LIKE '550e8400-e29b-41d4-a716-4466554400%'`);
+    await db.runAsync(`DELETE FROM clubs WHERE id LIKE '550e8400-e29b-41d4-a716-4466554400%'`);
+    await db.runAsync(`DELETE FROM users WHERE id LIKE '550e8400-e29b-41d4-a716-4466554400%'`);
+    console.log('Cleared only sample data, preserved user-created clubs');
 
     // First, create sample users (needed for foreign key constraints)
     const sampleUsers = [
@@ -145,6 +144,43 @@ export async function seedSampleClubs(): Promise<void> {
       lng: -80.1373,
       creator_id: '550e8400-e29b-41d4-a716-446655440015',
     },
+    // New York City area clubs
+    {
+      id: '550e8400-e29b-41d4-a716-446655440020',
+      name: 'Central Park Tennis Center',
+      description: 'Tennis courts in the heart of Manhattan',
+      location: 'New York, NY',
+      lat: 40.7829,
+      lng: -73.9654,
+      creator_id: '550e8400-e29b-41d4-a716-446655440011',
+    },
+    {
+      id: '550e8400-e29b-41d4-a716-446655440021',
+      name: 'Brooklyn Heights Tennis Club',
+      description: 'Scenic tennis with Manhattan skyline views',
+      location: 'Brooklyn, NY',
+      lat: 40.6962,
+      lng: -73.9936,
+      creator_id: '550e8400-e29b-41d4-a716-446655440012',
+    },
+    {
+      id: '550e8400-e29b-41d4-a716-446655440022',
+      name: 'Queens Tennis Academy',
+      description: 'Professional training facility',
+      location: 'Queens, NY',
+      lat: 40.7282,
+      lng: -73.7949,
+      creator_id: '550e8400-e29b-41d4-a716-446655440013',
+    },
+    {
+      id: '550e8400-e29b-41d4-a716-446655440023',
+      name: 'Westchester Racquet Club',
+      description: 'Premier tennis club north of the city',
+      location: 'White Plains, NY',
+      lat: 41.0340,
+      lng: -73.7629,
+      creator_id: '550e8400-e29b-41d4-a716-446655440014',
+    },
     // San Francisco Bay Area clubs (keep original ones too)
     {
       id: '550e8400-e29b-41d4-a716-446655440001',
@@ -157,16 +193,16 @@ export async function seedSampleClubs(): Promise<void> {
     },
     {
       id: '550e8400-e29b-41d4-a716-446655440002',
-      name: 'Marina District Tennis',
-      description: 'Waterfront tennis with Bay Bridge views',
+      name: 'Sunset Tennis Club',
+      description: 'Tennis club in the Sunset district',
       location: 'San Francisco, CA',
-      lat: 37.8044,
-      lng: -122.4324,
+      lat: 37.7559,
+      lng: -122.4951,
       creator_id: '550e8400-e29b-41d4-a716-446655440012',
     },
     {
       id: '550e8400-e29b-41d4-a716-446655440003',
-      name: 'Mission Bay Tennis Center',
+      name: 'Marina Bay Tennis Center',
       description: 'Modern courts in the heart of Mission Bay',
       location: 'San Francisco, CA',
       lat: 37.7706,

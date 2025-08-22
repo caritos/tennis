@@ -71,6 +71,7 @@ BEGIN
     -- Drop policies on club_members table if it exists
     IF EXISTS (SELECT FROM pg_tables WHERE schemaname = 'public' AND tablename = 'club_members') THEN
         DROP POLICY IF EXISTS "Club members can view other members" ON club_members;
+        DROP POLICY IF EXISTS "Users can view club memberships" ON club_members;
         DROP POLICY IF EXISTS "Users can join clubs" ON club_members;
         DROP POLICY IF EXISTS "Users can leave clubs" ON club_members;
     END IF;
@@ -192,6 +193,7 @@ CREATE TABLE match_invitations (
   match_type TEXT NOT NULL CHECK (match_type IN ('singles', 'doubles')),
   date DATE NOT NULL,
   time TIME,
+  location TEXT,
   notes TEXT,
   status TEXT DEFAULT 'active' CHECK (status IN ('active', 'matched', 'cancelled')),
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
@@ -403,14 +405,9 @@ CREATE POLICY "Match recorder can delete matches" ON matches
   FOR DELETE USING (auth.uid()::text = player1_id::text);
 
 -- CLUB_MEMBERS TABLE POLICIES
-CREATE POLICY "Club members can view other members" ON club_members
-  FOR SELECT USING (
-    EXISTS (
-      SELECT 1 FROM club_members cm 
-      WHERE cm.club_id = club_members.club_id 
-      AND cm.user_id::text = auth.uid()::text
-    )
-  );
+-- Allow users to view all club memberships (simplified to avoid recursion)
+CREATE POLICY "Users can view club memberships" ON club_members
+  FOR SELECT USING (auth.role() = 'authenticated');
 
 CREATE POLICY "Users can join clubs" ON club_members
   FOR INSERT WITH CHECK (
@@ -593,29 +590,8 @@ BEGIN
 END $$;
 
 -- ============================================================================
--- PART 8: SAMPLE DATA (OPTIONAL - REMOVE FOR PRODUCTION)
+-- PART 8: PRODUCTION READY - NO SAMPLE DATA
 -- ============================================================================
 
--- IMPORTANT: Comment out or remove this entire section for production deployment
--- This is only for testing purposes
-
-/*
--- Sample users (using fixed UUIDs for consistency)
-INSERT INTO users (id, full_name, email, phone, role) VALUES 
-  ('a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11', 'John Doe', 'john@example.com', '+1234567890', 'player'),
-  ('a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a12', 'Jane Smith', 'jane@example.com', '+1234567891', 'player'),
-  ('a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a13', 'Mike Wilson', 'mike@example.com', '+1234567892', 'player');
-
--- Sample clubs
-INSERT INTO clubs (id, name, description, location, lat, lng, creator_id) VALUES 
-  ('b0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11', 'Downtown Tennis Club', 'Premier tennis facility in downtown', 'Miami, FL', 25.7617, -80.1918, 'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11'),
-  ('b0eebc99-9c0b-4ef8-bb6d-6bb9bd380a12', 'Sunset Tennis Center', 'Beautiful courts with sunset views', 'Miami Beach, FL', 25.7907, -80.1300, 'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a12');
-
--- Sample club memberships
-INSERT INTO club_members (club_id, user_id) VALUES 
-  ('b0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11', 'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11'),
-  ('b0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11', 'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a12'),
-  ('b0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11', 'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a13'),
-  ('b0eebc99-9c0b-4ef8-bb6d-6bb9bd380a12', 'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a12'),
-  ('b0eebc99-9c0b-4ef8-bb6d-6bb9bd380a12', 'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a13');
-*/
+-- Database is now ready for production use with no sample data
+-- Users will create their own clubs and matches through the app

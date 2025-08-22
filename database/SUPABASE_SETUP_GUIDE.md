@@ -38,26 +38,18 @@ EXPO_PUBLIC_SUPABASE_URL=https://your-project-ref.supabase.co
 EXPO_PUBLIC_SUPABASE_ANON_KEY=your-anon-key-here
 ```
 
-### 3. Create Database Tables
+### 3. Create Database Tables and Configure Security
 
 1. **Go to SQL Editor** in your Supabase dashboard
-2. **Copy and paste** the entire contents of `database/supabase-setup.sql`
+2. **Copy and paste** the entire contents of `database/production-setup-complete.sql`
 3. **Click "Run"** to execute the script
-4. **Verify success** - you should see:
-   - ✅ All 8 tables created
-   - ✅ Indexes created  
-   - ✅ Triggers created
-   - ✅ Sample data inserted (optional)
+4. **Verify success** - you should see completion message:
+   - ✅ All 9 tables created successfully
+   - ✅ RLS policies configured
+   - ✅ Indexes and triggers configured
+   - ✅ Fixed infinite recursion in user policies
 
-### 4. Set Up Row Level Security (RLS)
-
-1. **In the SQL Editor**, create a new query
-2. **Copy and paste** the entire contents of `database/rls-policies.sql`
-3. **Click "Run"** to execute the policies
-4. **Verify RLS is enabled** - go to Authentication → Policies
-   - You should see policies for all tables
-
-### 5. Configure Authentication
+### 4. Configure Authentication
 
 1. **Go to Authentication → Settings**
 2. **Configure the following:**
@@ -69,7 +61,7 @@ EXPO_PUBLIC_SUPABASE_ANON_KEY=your-anon-key-here
    - **Apple Sign In**: Configure with your Apple Developer credentials
    - **Google Sign In**: Configure with Google OAuth credentials
 
-### 6. Test the Setup
+### 5. Test the Setup
 
 1. **Start your Expo app**: `npx expo run:ios`
 2. **Test user registration**: Create a new account
@@ -146,11 +138,11 @@ EXPO_PUBLIC_SUPABASE_ANON_KEY=your-prod-anon-key
 
 #### "relation does not exist" Error
 - **Cause**: Tables not created properly
-- **Solution**: Re-run `supabase-setup.sql` script
+- **Solution**: Re-run `production-setup-complete.sql` script
 
 #### "permission denied" Error
 - **Cause**: RLS policies not configured
-- **Solution**: Run `rls-policies.sql` script
+- **Solution**: Re-run `production-setup-complete.sql` script
 
 #### Authentication Not Working
 - **Cause**: Environment variables incorrect

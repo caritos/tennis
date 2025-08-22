@@ -68,7 +68,12 @@ export default function ClubOverview({
         </View>
       </ThemedView>
 
-
+      {/* Challenges & Looking to Play */}
+      <ThemedView style={[styles.sectionCard, styles.playingOpportunitiesCard, { backgroundColor: colors.card }]}>
+        <ClubChallenges clubId={club.id} userId={user?.id} />
+      </ThemedView>
+      
+      <LookingToPlaySection clubId={club.id} />
 
       {/* Rankings */}
       <ThemedView style={[styles.sectionCard, { backgroundColor: colors.card }]}>
@@ -157,10 +162,6 @@ export default function ClubOverview({
         )}
       </ThemedView>
 
-      {/* Challenges & Looking to Play */}
-      <ClubChallenges clubId={club.id} />
-      <LookingToPlaySection clubId={club.id} />
-
       {/* Information */}
       <ThemedView style={[styles.sectionCard, { backgroundColor: colors.card }]}>
         <View style={styles.sectionHeaderWithIcon}>
@@ -236,6 +237,9 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.08,
     shadowRadius: 4,
     elevation: 3,
+  },
+  playingOpportunitiesCard: {
+    marginTop: 4, // Reduce spacing between Quick Actions and Playing Opportunities
   },
   sectionHeaderWithIcon: {
     flexDirection: 'row',

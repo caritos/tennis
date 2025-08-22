@@ -13,7 +13,7 @@ export class NetworkManager {
   };
   private listeners: ((state: NetworkState) => void)[] = [];
   private autoSyncEnabled = true;
-  private syncCooldownMs = 5000; // 5 seconds between auto-syncs
+  private syncCooldownMs = 1000; // 1 second between auto-syncs (more aggressive)
   private lastSyncTime = 0;
 
   private constructor() {

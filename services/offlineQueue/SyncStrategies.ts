@@ -333,9 +333,62 @@ export const matchSyncStrategies: SyncStrategy[] = [
 ];
 
 /**
- * Club membership sync strategies
+ * Club management and membership sync strategies
  */
 export const clubSyncStrategies: SyncStrategy[] = [
+  {
+    entity: 'club',
+    operation: 'create_club',
+    validate: (payload: any) => {
+      return !!(payload.name && payload.description && payload.location && payload.creator_id);
+    },
+    execute: async (operation: QueueOperation): Promise<SyncResult> => {
+      try {
+        const clubData = operation.payload;
+        
+        return await SyncProtection.executeWithProtection(
+          async () => {
+            // Insert to Supabase
+            const { data, error } = await supabase
+              .from('clubs')
+              .insert({
+                ...clubData,
+                created_at: new Date().toISOString(),
+              })
+              .select()
+              .single();
+
+            if (error) {
+              throw new Error(`Supabase error: ${error.message}`);
+            }
+
+            // Sync with local database
+            await SyncProtection.syncWithLocal('clubs', data, 'insert');
+
+            return {
+              success: true,
+              data: data,
+            };
+          },
+          // Rollback: delete from Supabase if local sync fails
+          async () => {
+            if (clubData.id) {
+              await supabase.from('clubs').delete().eq('id', clubData.id);
+            }
+          },
+          'club creation'
+        );
+      } catch (error) {
+        console.error('Failed to sync club creation:', error);
+        return {
+          success: false,
+          error: error instanceof Error ? error.message : 'Unknown error',
+          shouldRetry: true,
+        };
+      }
+    },
+  },
+
   {
     entity: 'club',
     operation: 'join_club',
@@ -552,17 +605,37 @@ export const invitationSyncStrategies: SyncStrategy[] = [
       try {
         const invitationData = operation.payload;
         
+        // Prepare data for sync
+        const syncData = {
+          id: invitationData.id,
+          club_id: invitationData.club_id,
+          creator_id: invitationData.creator_id,
+          match_type: invitationData.match_type,
+          date: invitationData.date,
+          time: invitationData.time,
+          location: invitationData.location,
+          notes: invitationData.notes,
+          status: 'active',
+          created_at: new Date().toISOString(),
+          expires_at: invitationData.expires_at,
+        };
+
         const { data, error } = await supabase
           .from('match_invitations')
-          .insert({
-            ...invitationData,
-            created_at: new Date().toISOString(),
-            status: 'active',
-          })
+          .insert(syncData)
           .select()
           .single();
 
         if (error) {
+          // Check if table doesn't exist
+          if (error.message.includes('relation "match_invitations" does not exist')) {
+            console.warn('⚠️ match_invitations table does not exist in Supabase - skipping sync');
+            return {
+              success: false,
+              error: 'match_invitations table not created in Supabase yet',
+              shouldRetry: false, // Don't retry until table is created
+            };
+          }
           throw new Error(`Supabase error: ${error.message}`);
         }
 
@@ -575,7 +648,7 @@ export const invitationSyncStrategies: SyncStrategy[] = [
         return {
           success: false,
           error: error instanceof Error ? error.message : 'Unknown error',
-          shouldRetry: true,
+          shouldRetry: error instanceof Error && !error.message.includes('does not exist'),
         };
       }
     },

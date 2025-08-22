@@ -15,6 +15,7 @@ import ClubOverview from '@/components/club/ClubOverview';
 import ClubMembers from '@/components/club/ClubMembers';
 import ClubMatches from '@/components/club/ClubMatches';
 import LookingToPlaySection from '@/components/LookingToPlaySection';
+import MatchInvitationForm from '@/components/MatchInvitationForm';
 import { getClubLeaderboard } from '@/services/matchService';
 import { challengeService } from '@/services/challengeService';
 
@@ -525,17 +526,26 @@ export default function ClubDetailScreen() {
         />
 
         {/* Match Invitation Modal */}
-        <Modal
-          visible={showInviteForm}
-          animationType="slide"
-          presentationStyle="pageSheet"
-        >
-          <LookingToPlaySection
-            clubId={id as string}
-            showInviteForm={showInviteForm}
-            onCloseInviteForm={() => setShowInviteForm(false)}
-          />
-        </Modal>
+        {user && (
+          <Modal
+            visible={showInviteForm}
+            animationType="slide"
+            presentationStyle="pageSheet"
+          >
+            <MatchInvitationForm
+              clubId={id as string}
+              creatorId={user.id}
+              onClose={() => {
+                console.log('🔄 ClubDetailScreen: Closing invite form modal');
+                setShowInviteForm(false);
+              }}
+              onSuccess={() => {
+                console.log('🔄 ClubDetailScreen: Invitation created successfully, closing modal');
+                setShowInviteForm(false);
+              }}
+            />
+          </Modal>
+        )}
       </>
     </SafeAreaView>
   );

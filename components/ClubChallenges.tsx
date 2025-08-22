@@ -274,7 +274,7 @@ const ClubChallenges = React.memo<ClubChallengesProps>(({
   }
 
   return (
-    <ThemedView>
+    <View>
       <View style={styles.sectionHeader}>
         <ThemedText style={styles.sectionLabel}>Playing Opportunities</ThemedText>
         <View style={[styles.badge, { backgroundColor: colors.tint }]}>
@@ -283,7 +283,7 @@ const ClubChallenges = React.memo<ClubChallengesProps>(({
       </View>
       
       {/* Tab Selector */}
-      <View style={[styles.tabContainer, { backgroundColor: colors.background }]}>
+      <View style={styles.tabContainer}>
         <TouchableOpacity
           style={[
             styles.tab,
@@ -338,7 +338,7 @@ const ClubChallenges = React.memo<ClubChallengesProps>(({
           )
         )}
       </View>
-    </ThemedView>
+    </View>
   );
 });
 
@@ -368,8 +368,6 @@ const styles = StyleSheet.create({
   },
   tabContainer: {
     flexDirection: 'row',
-    borderRadius: 8,
-    padding: 4,
     marginBottom: 12,
   },
   tab: {

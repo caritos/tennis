@@ -88,17 +88,23 @@ export class MatchInvitationService {
         ]
       );
 
-      // Queue for sync
-      await syncService.queueInvitationCreation(
-        invitation.club_id,
-        invitation.creator_id,
-        invitation.match_type,
-        invitation.date,
-        invitation.time,
-        invitation.location,
-        invitation.notes,
-        invitation.expires_at
-      );
+      // Queue for sync (don't let sync failures block the UI)
+      try {
+        await syncService.queueInvitationCreation(
+          invitation.club_id,
+          invitation.creator_id,
+          invitation.match_type,
+          invitation.date,
+          invitation.time,
+          invitation.location,
+          invitation.notes,
+          invitation.expires_at
+        );
+        console.log('✅ Match invitation queued for sync:', invitation.id);
+      } catch (syncError) {
+        console.warn('⚠️ Failed to queue invitation for sync (invitation still created locally):', syncError);
+        // Don't throw - invitation was created locally successfully
+      }
 
       console.log('✅ Match invitation created:', invitation.id);
       return invitation;

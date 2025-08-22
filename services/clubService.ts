@@ -91,16 +91,18 @@ export class ClubService {
 
       // Queue club creation for sync using offline queue
       try {
-        // Create club creation operation (need to add this to sync strategies)
-        console.log('Queueing club creation for sync:', clubId);
-        // Note: Club creation sync strategy would need to be added to handle this case
-        // For now, keep the direct sync as fallback
-        this.syncClubToSupabase(club).catch(error => {
-          console.warn('Failed to sync club to Supabase:', error);
+        await syncService.queueClubCreation({
+          id: clubId,
+          name: clubData.name,
+          description: clubData.description,
+          location: clubData.location,
+          lat: clubData.lat,
+          lng: clubData.lng,
+          creator_id: clubData.creator_id,
         });
+        console.log('Successfully queued club creation for sync:', clubId);
       } catch (error) {
-        console.warn('Failed to queue club creation:', error);
-        // Fallback to direct sync
+        console.warn('Failed to queue club creation, falling back to direct sync:', error);
         this.syncClubToSupabase(club).catch(error => {
           console.warn('Failed to sync club to Supabase:', error);
         });

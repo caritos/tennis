@@ -42,15 +42,21 @@ const LookingToPlaySection: React.FC<LookingToPlaySectionProps> = ({
   }, [clubId]);
 
   const loadInvitations = async () => {
-    if (!clubId) return;
+    if (!clubId) {
+      console.log('⚠️ LookingToPlaySection: No clubId provided for loadInvitations');
+      return;
+    }
 
     try {
+      console.log('🔄 LookingToPlaySection: Loading invitations for club:', clubId);
       setIsLoading(true);
       const clubInvitations = await matchInvitationService.getClubInvitations(clubId);
+      console.log('📋 LookingToPlaySection: Loaded', clubInvitations.length, 'invitations');
       
       // Load responses for each invitation
       const invitationsWithResponses = await Promise.all(
         clubInvitations.map(async (invitation) => {
+          console.log('🔄 LookingToPlaySection: Loading responses for invitation:', invitation.id);
           const responses = await matchInvitationService.getInvitationResponses(invitation.id);
           const userResponse = user ? responses.find(r => r.user_id === user.id) : undefined;
           
@@ -62,12 +68,15 @@ const LookingToPlaySection: React.FC<LookingToPlaySectionProps> = ({
         })
       );
 
+      console.log('✅ LookingToPlaySection: Successfully processed all invitations with responses');
       setInvitations(invitationsWithResponses);
       onInvitationsChange?.(invitationsWithResponses.length > 0);
     } catch (error) {
-      console.error('Failed to load invitations:', error);
+      console.error('❌ LookingToPlaySection: Failed to load invitations:', error);
       showError('Failed to Load', 'Could not load match invitations.');
+      throw error; // Re-throw so the onSuccess callback can catch it
     } finally {
+      console.log('🔄 LookingToPlaySection: Setting isLoading to false');
       setIsLoading(false);
     }
   };
@@ -113,7 +122,7 @@ const LookingToPlaySection: React.FC<LookingToPlaySectionProps> = ({
   };
 
   const formatDate = (dateString: string) => {
-    const date = new Date(dateString);
+    const date = new Date(dateString + 'T00:00:00'); // Fix timezone conversion
     const today = new Date();
     const tomorrow = new Date(today);
     tomorrow.setDate(tomorrow.getDate() + 1);
@@ -252,26 +261,17 @@ const LookingToPlaySection: React.FC<LookingToPlaySectionProps> = ({
   }
 
   return (
-    <ThemedView>
-      {/* Removed section header since it's now in the parent component */}
-
-      <ScrollView
-        style={styles.invitationsList}
-        refreshControl={
-          <RefreshControl
-            refreshing={isLoading}
-            onRefresh={loadInvitations}
-            tintColor={colors.tint}
-          />
-        }
-        showsVerticalScrollIndicator={false}
-      >
-        {invitations.length > 0 && (
+    <>
+      {invitations.length > 0 && (
+        <ThemedView style={styles.sectionCard}>
+          <View style={styles.sectionHeader}>
+            <ThemedText style={styles.sectionLabel}>Looking to Play</ThemedText>
+          </View>
           <View style={styles.invitationsContainer}>
             {invitations.map(renderInvitation)}
           </View>
-        )}
-      </ScrollView>
+        </ThemedView>
+      )}
 
       {/* Match Invitation Form Modal */}
       <Modal
@@ -284,38 +284,47 @@ const LookingToPlaySection: React.FC<LookingToPlaySectionProps> = ({
             clubId={clubId}
             creatorId={user.id}
             onClose={() => onCloseInviteForm?.()}
-            onSuccess={() => {
-              loadInvitations();
+            onSuccess={async () => {
+              console.log('🔄 LookingToPlaySection: onSuccess callback triggered');
+              try {
+                await loadInvitations();
+                console.log('✅ LookingToPlaySection: Invitations reloaded successfully');
+              } catch (error) {
+                console.error('❌ LookingToPlaySection: Failed to reload invitations:', error);
+              }
+              console.log('🔄 LookingToPlaySection: Closing invite form');
               onCloseInviteForm?.();
             }}
           />
         )}
       </Modal>
-    </ThemedView>
+    </>
   );
 };
 
 export default LookingToPlaySection;
 
 const styles = StyleSheet.create({
+  sectionCard: {
+    marginHorizontal: 16,
+    marginVertical: 8,
+    padding: 16,
+    borderRadius: 12,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.08,
+    shadowRadius: 4,
+    elevation: 3,
+  },
   section: {
     paddingHorizontal: 20,
     paddingVertical: 16,
   },
   sectionHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
     marginBottom: 12,
   },
   sectionLabel: {
-    fontSize: 14,
+    fontSize: 16,
     fontWeight: '600',
-    marginBottom: 12,
-    opacity: 0.7,
-  },
-  invitationsList: {
-    maxHeight: 400, // Limit height so it doesn't take over the screen
   },
   invitationsContainer: {
     gap: 12,

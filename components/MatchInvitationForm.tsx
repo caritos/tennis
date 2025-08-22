@@ -48,10 +48,12 @@ const MatchInvitationForm: React.FC<MatchInvitationFormProps> = ({
 
     try {
       setIsSubmitting(true);
+      console.log('🎾 MatchInvitationForm: Starting invitation creation...');
 
       // Validate date format (selectedDate is already a string in YYYY-MM-DD format)
       const validDate = new Date(selectedDate + 'T00:00:00');
       if (isNaN(validDate.getTime())) {
+        console.error('❌ MatchInvitationForm: Invalid date:', selectedDate);
         showError('Invalid Date', 'Please select a valid date for your match invitation.');
         return;
       }
@@ -66,7 +68,11 @@ const MatchInvitationForm: React.FC<MatchInvitationFormProps> = ({
         notes: notes.trim() || undefined,
       };
 
+      console.log('🎾 MatchInvitationForm: Creating invitation with data:', invitationData);
+
       await matchInvitationService.createInvitation(invitationData);
+
+      console.log('✅ MatchInvitationForm: Invitation created successfully');
 
       showSuccess(
         'Looking to Play Posted!',
@@ -74,17 +80,20 @@ const MatchInvitationForm: React.FC<MatchInvitationFormProps> = ({
       );
 
       if (onSuccess) {
+        console.log('🔄 MatchInvitationForm: Calling onSuccess callback');
         onSuccess();
       }
       
+      console.log('🔄 MatchInvitationForm: Closing form');
       onClose();
     } catch (error) {
-      console.error('Failed to create invitation:', error);
+      console.error('❌ MatchInvitationForm: Failed to create invitation:', error);
       showError(
         'Failed to Post',
         'Something went wrong. Please try again.'
       );
     } finally {
+      console.log('🔄 MatchInvitationForm: Setting isSubmitting to false');
       setIsSubmitting(false);
     }
   };
@@ -122,7 +131,7 @@ const MatchInvitationForm: React.FC<MatchInvitationFormProps> = ({
       </View>
 
       <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
-        <ThemedView style={styles.formContainer}>
+        <View style={styles.formContainer}>
           {/* Match Type */}
           <View style={styles.section}>
             <ThemedText style={styles.sectionLabel}>Match Type</ThemedText>
@@ -177,8 +186,6 @@ const MatchInvitationForm: React.FC<MatchInvitationFormProps> = ({
 
           {/* Date & Time */}
           <View style={styles.section}>
-            <ThemedText style={styles.sectionLabel}>Date & Time</ThemedText>
-            
             <View style={styles.dateTimeContainer}>
               <View style={styles.dateContainer}>
                 <ThemedText style={styles.inputLabel}>Date</ThemedText>
@@ -253,35 +260,35 @@ const MatchInvitationForm: React.FC<MatchInvitationFormProps> = ({
               textAlignVertical="top"
             />
           </View>
-        </ThemedView>
+
+          {/* Footer Buttons */}
+          <View style={styles.footer}>
+            <TouchableOpacity
+              style={[styles.cancelButton, { borderColor: colors.tabIconDefault }]}
+              onPress={onClose}
+              disabled={isSubmitting}
+            >
+              <ThemedText style={[styles.cancelButtonText, { color: colors.text }]}>
+                Cancel
+              </ThemedText>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={[
+                styles.postButton,
+                { backgroundColor: colors.tint },
+                isSubmitting && { opacity: 0.6 }
+              ]}
+              onPress={handleSubmit}
+              disabled={isSubmitting}
+            >
+              <ThemedText style={styles.postButtonText}>
+                {isSubmitting ? 'Posting...' : 'Post'}
+              </ThemedText>
+            </TouchableOpacity>
+          </View>
+        </View>
       </ScrollView>
-
-      {/* Footer Buttons */}
-      <View style={[styles.footer, { borderTopColor: colors.tabIconDefault }]}>
-        <TouchableOpacity
-          style={[styles.cancelButton, { borderColor: colors.tabIconDefault }]}
-          onPress={onClose}
-          disabled={isSubmitting}
-        >
-          <ThemedText style={[styles.cancelButtonText, { color: colors.text }]}>
-            Cancel
-          </ThemedText>
-        </TouchableOpacity>
-
-        <TouchableOpacity
-          style={[
-            styles.postButton,
-            { backgroundColor: colors.tint },
-            isSubmitting && { opacity: 0.6 }
-          ]}
-          onPress={handleSubmit}
-          disabled={isSubmitting}
-        >
-          <ThemedText style={styles.postButtonText}>
-            {isSubmitting ? 'Posting...' : 'Post'}
-          </ThemedText>
-        </TouchableOpacity>
-      </View>
     </SafeAreaView>
   );
 };
@@ -395,7 +402,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     paddingHorizontal: 20,
     paddingVertical: 16,
-    borderTopWidth: 1,
+    paddingTop: 24,
     gap: 12,
   },
   cancelButton: {
