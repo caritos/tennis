@@ -2,6 +2,7 @@ import React, { createContext, useContext, useState, ReactNode } from 'react';
 import { View, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import NotificationBanner, { NotificationData, NotificationType } from '@/components/NotificationBanner';
+import { generateUUID } from '@/utils/uuid';
 
 interface NotificationContextType {
   showNotification: (
@@ -45,7 +46,7 @@ export const NotificationProvider: React.FC<NotificationProviderProps> = ({ chil
       customIcon?: 'tennis-info' | keyof typeof Ionicons.glyphMap;
     }
   ) => {
-    const id = `notification_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+    const id = generateUUID();
     
     const notification: NotificationData = {
       id,

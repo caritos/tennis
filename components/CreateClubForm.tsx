@@ -142,7 +142,7 @@ export function CreateClubForm({ onSuccess, onCancel }: CreateClubFormProps) {
       justifyContent: 'space-between',
       paddingHorizontal: CompactStyles.header.paddingHorizontal,
       paddingVertical: CompactStyles.header.paddingVertical,
-      borderBottomWidth: 1,
+      borderBottomWidth: 0,  // Remove the border for cleaner look
       borderBottomColor: colors.tabIconDefault + '20',
     },
     backButton: {
@@ -196,10 +196,8 @@ export function CreateClubForm({ onSuccess, onCancel }: CreateClubFormProps) {
     buttonContainer: {
       flexDirection: 'row',
       justifyContent: 'space-between',
-      paddingHorizontal: CompactStyles.scrollContent.paddingHorizontal,
-      paddingVertical: CompactStyles.sectionMargin,
-      borderTopWidth: 1,
-      borderTopColor: colors.tabIconDefault + '20',
+      marginTop: 24,
+      marginBottom: 20,
     },
     button: {
       flex: 1,
@@ -311,10 +309,8 @@ export function CreateClubForm({ onSuccess, onCancel }: CreateClubFormProps) {
             />
             {errors.zipCode && <Text style={styles.errorText}>{errors.zipCode}</Text>}
           </View>
-        </View>
-      </ScrollView>
 
-      <View style={styles.buttonContainer}>
+          <View style={styles.buttonContainer}>
         <TouchableOpacity style={[styles.button, styles.cancelButton]} onPress={onCancel}>
           <Text style={[styles.buttonText, styles.cancelButtonText]}>Cancel</Text>
         </TouchableOpacity>
@@ -334,7 +330,9 @@ export function CreateClubForm({ onSuccess, onCancel }: CreateClubFormProps) {
             <Text style={[styles.buttonText, styles.createButtonText]}>Create Club</Text>
           )}
         </TouchableOpacity>
-      </View>
+          </View>
+        </View>
+      </ScrollView>
     </SafeAreaView>
   );
 }

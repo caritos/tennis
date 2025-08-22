@@ -1,5 +1,6 @@
 import { Database } from '@/database/database';
 import QueryOptimizer from '@/database/queryOptimizer';
+import { generateUUID } from '../utils/uuid';
 
 export interface Notification {
   id: string;
@@ -38,7 +39,7 @@ export class NotificationService {
   }
 
   async createNotification(params: CreateNotificationParams): Promise<string> {
-    const id = `notification_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+    const id = generateUUID();
     
     try {
       await this.db.runAsync(

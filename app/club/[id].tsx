@@ -7,7 +7,7 @@ import { ThemedText } from '@/components/ThemedText';
 import { useColorScheme } from '@/hooks/useColorScheme';
 import { Colors } from '@/constants/Colors';
 import { Club } from '@/lib/supabase';
-import { initializeDatabase } from '@/database/database';
+import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/contexts/AuthContext';
 import { RankedPlayer } from '@/components/ClubRankings';
 import ChallengeFlowModal from '@/components/ChallengeFlowModal';
@@ -67,21 +67,21 @@ export default function ClubDetailScreen() {
     }
 
     try {
-      const db = await initializeDatabase();
-      
       // Load pending challenges for the current user
       if (user?.id) {
         await loadPendingChallenges();
         await loadChallengeCount();
       }
       
-      // Get club details
-      const clubData = await db.getFirstAsync(
-        'SELECT * FROM clubs WHERE id = ?',
-        [id]
-      );
+      // Get club details from Supabase
+      const { data: clubData, error: clubError } = await supabase
+        .from('clubs')
+        .select('*')
+        .eq('id', id)
+        .single();
       
-      if (!clubData) {
+      if (clubError || !clubData) {
+        console.error('Club not found:', clubError);
         setError('Club not found');
         setIsLoading(false);
         return;
@@ -94,13 +94,13 @@ export default function ClubDetailScreen() {
         setIsCreator(true);
       }
       
-      // Get member count and rankings
-      const countResult = await db.getFirstAsync(
-        'SELECT COUNT(*) as count FROM club_members WHERE club_id = ?',
-        [id]
-      );
+      // Get member count
+      const { count: memberCount } = await supabase
+        .from('club_members')
+        .select('*', { count: 'exact', head: true })
+        .eq('club_id', id);
       
-      setMemberCount((countResult as any)?.count || 0);
+      setMemberCount(memberCount || 0);
       
       // Get club rankings using the match service
       try {
@@ -113,30 +113,24 @@ export default function ClubDetailScreen() {
       
       // Get recent matches for this club
       console.log('ClubDetails: Loading recent matches for club:', id);
-      const matches = await db.getAllAsync(
-        `SELECT m.*, 
-                p1.full_name as player1_name, 
-                p2.full_name as player2_name,
-                p3.full_name as player3_name,
-                p4.full_name as player4_name,
-                m.opponent2_name,
-                m.partner3_name,
-                m.partner4_name
-         FROM matches m
-         LEFT JOIN users p1 ON m.player1_id = p1.id
-         LEFT JOIN users p2 ON m.player2_id = p2.id
-         LEFT JOIN users p3 ON m.player3_id = p3.id
-         LEFT JOIN users p4 ON m.player4_id = p4.id
-         WHERE m.club_id = ?
-         ORDER BY m.date DESC, m.created_at DESC
-         LIMIT 5`,
-        [id]
-      );
-      console.log('ClubDetails: Found matches:', matches.length, matches);
-      console.log('ClubDetails: Processing matches...', matches.map((m: any) => ({ id: m.id, scores: m.scores, player1_name: m.player1_name, player2_name: m.player2_name })));
+      const { data: matches } = await supabase
+        .from('matches')
+        .select(`
+          *,
+          player1:users!matches_player1_id_fkey(full_name),
+          player2:users!matches_player2_id_fkey(full_name),
+          player3:users!matches_player3_id_fkey(full_name),
+          player4:users!matches_player4_id_fkey(full_name)
+        `)
+        .eq('club_id', id)
+        .order('date', { ascending: false })
+        .order('created_at', { ascending: false })
+        .limit(5);
+      console.log('ClubDetails: Found matches:', matches?.length || 0, matches);
+      console.log('ClubDetails: Processing matches...', matches?.map((m: any) => ({ id: m.id, scores: m.scores, player1_name: m.player1?.full_name, player2_name: m.player2?.full_name })));
       
       // Process matches to determine winners and format for display
-      const processedMatches = matches?.map((match: any) => {
+      const processedMatches = (matches || [])?.map((match: any) => {
         // Simple winner determination based on sets won
         const sets = match.scores.split(',');
         let player1Sets = 0;
@@ -157,16 +151,16 @@ export default function ClubDetailScreen() {
         const winner = player1Sets > player2Sets ? 1 : 2;
         
         // Format player names for doubles
-        let player1DisplayName = match.player1_name || 'Unknown Player';
-        let player2DisplayName = match.player2_name || match.opponent2_name || 'Unknown Opponent';
+        let player1DisplayName = match.player1?.full_name || 'Unknown Player';
+        let player2DisplayName = match.player2?.full_name || match.opponent2_name || 'Unknown Opponent';
         
         if (match.match_type === 'doubles') {
           // For doubles, combine player names
-          if (match.player3_name || match.partner3_name) {
-            player1DisplayName = `${player1DisplayName} & ${match.player3_name || match.partner3_name || 'Unknown Partner'}`;
+          if (match.player3?.full_name || match.partner3_name) {
+            player1DisplayName = `${player1DisplayName} & ${match.player3?.full_name || match.partner3_name || 'Unknown Partner'}`;
           }
-          if (match.player4_name || match.partner4_name) {
-            player2DisplayName = `${player2DisplayName} & ${match.player4_name || match.partner4_name || 'Unknown Partner'}`;
+          if (match.player4?.full_name || match.partner4_name) {
+            player2DisplayName = `${player2DisplayName} & ${match.player4?.full_name || match.partner4_name || 'Unknown Partner'}`;
           }
         }
         
@@ -183,24 +177,18 @@ export default function ClubDetailScreen() {
       setRecentMatches(processedMatches);
       
       // Load all matches for the matches tab
-      const allMatchesData = await db.getAllAsync(
-        `SELECT m.*, 
-                p1.full_name as player1_name, 
-                p2.full_name as player2_name,
-                p3.full_name as player3_name,
-                p4.full_name as player4_name,
-                m.opponent2_name,
-                m.partner3_name,
-                m.partner4_name
-         FROM matches m
-         LEFT JOIN users p1 ON m.player1_id = p1.id
-         LEFT JOIN users p2 ON m.player2_id = p2.id
-         LEFT JOIN users p3 ON m.player3_id = p3.id
-         LEFT JOIN users p4 ON m.player4_id = p4.id
-         WHERE m.club_id = ?
-         ORDER BY m.date DESC, m.created_at DESC`,
-        [id]
-      );
+      const { data: allMatchesData } = await supabase
+        .from('matches')
+        .select(`
+          *,
+          player1:users!matches_player1_id_fkey(full_name),
+          player2:users!matches_player2_id_fkey(full_name),
+          player3:users!matches_player3_id_fkey(full_name),
+          player4:users!matches_player4_id_fkey(full_name)
+        `)
+        .eq('club_id', id)
+        .order('date', { ascending: false })
+        .order('created_at', { ascending: false });
       
       // Process all matches using the same logic
       const processedAllMatches = allMatchesData?.map((match: any) => {
@@ -224,16 +212,16 @@ export default function ClubDetailScreen() {
         const winner = player1Sets > player2Sets ? 1 : 2;
         
         // Format player names for doubles
-        let player1DisplayName = match.player1_name || 'Unknown Player';
-        let player2DisplayName = match.player2_name || match.opponent2_name || 'Unknown Opponent';
+        let player1DisplayName = match.player1?.full_name || 'Unknown Player';
+        let player2DisplayName = match.player2?.full_name || match.opponent2_name || 'Unknown Opponent';
         
         if (match.match_type === 'doubles') {
           // For doubles, combine player names
-          if (match.player3_name || match.partner3_name) {
-            player1DisplayName = `${player1DisplayName} & ${match.player3_name || match.partner3_name || 'Unknown Partner'}`;
+          if (match.player3?.full_name || match.partner3_name) {
+            player1DisplayName = `${player1DisplayName} & ${match.player3?.full_name || match.partner3_name || 'Unknown Partner'}`;
           }
-          if (match.player4_name || match.partner4_name) {
-            player2DisplayName = `${player2DisplayName} & ${match.player4_name || match.partner4_name || 'Unknown Partner'}`;
+          if (match.player4?.full_name || match.partner4_name) {
+            player2DisplayName = `${player2DisplayName} & ${match.player4?.full_name || match.partner4_name || 'Unknown Partner'}`;
           }
         }
         
@@ -249,26 +237,24 @@ export default function ClubDetailScreen() {
       setAllMatches(processedAllMatches);
       
       // Load club members
-      const members = await db.getAllAsync(
-        `SELECT u.*, cm.joined_at,
-                COALESCE(
-                  (SELECT COUNT(*) FROM matches 
-                   WHERE (player1_id = u.id OR player2_id = u.id OR player3_id = u.id OR player4_id = u.id) 
-                   AND club_id = ?), 0
-                ) as match_count,
-                COALESCE(
-                  (SELECT COUNT(*) FROM matches 
-                   WHERE ((player1_id = u.id AND scores LIKE '%won%') OR (player2_id = u.id AND scores NOT LIKE '%won%'))
-                   AND club_id = ?), 0
-                ) as wins
-         FROM users u
-         INNER JOIN club_members cm ON u.id = cm.user_id
-         WHERE cm.club_id = ?
-         ORDER BY cm.joined_at DESC`,
-        [id, id, id]
-      );
+      const { data: membersData } = await supabase
+        .from('club_members')
+        .select(`
+          joined_at,
+          users (*)
+        `)
+        .eq('club_id', id)
+        .order('joined_at', { ascending: false });
+
+      // Process members data
+      const processedMembers = (membersData || []).map((member: any) => ({
+        ...member.users,
+        joined_at: member.joined_at,
+        match_count: 0, // TODO: Calculate match count if needed
+        wins: 0 // TODO: Calculate wins if needed
+      }));
       
-      setClubMembers(members || []);
+      setClubMembers(processedMembers);
       
     } catch (err) {
       console.error('Failed to load club details:', err);

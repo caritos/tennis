@@ -1,11 +1,10 @@
-import { initializeDatabase } from '../database/database';
-import { supabase, User } from '../lib/supabase';
-import { syncService } from './sync';
+import { supabase } from '../lib/supabase';
+import { User } from '@supabase/supabase-js';
 
-export interface SignUpData {
+export interface CreateUserData {
   email: string;
   password: string;
-  full_name: string;
+  fullName: string;
   phone?: string;
 }
 
@@ -15,349 +14,276 @@ export interface SignInData {
 }
 
 export interface UpdateProfileData {
-  full_name?: string;
+  fullName?: string;
   phone?: string;
 }
 
-export interface AuthUser {
-  id: string;
-  email: string;
-  full_name: string;
-  phone?: string;
-  role: 'player' | 'admin';
-  created_at: string;
-}
-
+/**
+ * AuthService - Direct Supabase integration without local SQLite
+ */
 export class AuthService {
-  private db: any = null;
 
-  private async getDatabase() {
-    if (!this.db) {
-      this.db = await initializeDatabase();
-    }
-    return this.db;
-  }
-
-  async signUp(userData: SignUpData): Promise<AuthUser> {
-    // Validate input
-    if (!userData.full_name || userData.full_name.trim() === '') {
-      throw new Error('Full name is required');
-    }
-
-    if (!this.isValidEmail(userData.email)) {
-      throw new Error('Invalid email format');
-    }
-
-    if (userData.password.length < 6) {
-      throw new Error('Password must be at least 6 characters');
-    }
-
+  async signUp(userData: CreateUserData): Promise<{ user: User | null; error: string | null }> {
+    console.log('🔐 Creating user directly in Supabase...');
+    
     try {
-      // Create auth user in Supabase
+      // Create auth user
       const { data: authData, error: authError } = await supabase.auth.signUp({
         email: userData.email,
         password: userData.password,
+        options: {
+          data: {
+            full_name: userData.fullName,
+            phone: userData.phone || null,
+          }
+        }
       });
 
-      if (authError || !authData.user) {
-        throw new Error(authError?.message || 'Failed to create account');
+      if (authError) {
+        console.error('❌ Auth signup failed:', authError);
+        return { user: null, error: authError.message };
       }
 
-      const userId = authData.user.id;
-      const db = await this.getDatabase();
-
-      // Create user profile in local database
-      await db.runAsync(
-        `INSERT INTO users (id, full_name, email, phone, role) 
-         VALUES (?, ?, ?, ?, ?)`,
-        [
-          userId,
-          userData.full_name.trim(),
-          userData.email.toLowerCase(),
-          userData.phone || null,
-          'player',
-        ]
-      );
-
-      // Queue user profile creation using offline queue
-      try {
-        await syncService.queueProfileUpdate(userId, {
-          full_name: userData.full_name.trim(),
-          email: userData.email.toLowerCase(),
-          phone: userData.phone,
-          role: 'player',
-        });
-        console.log('Successfully queued user profile creation for sync:', userId);
-      } catch (error) {
-        console.warn('Failed to queue user profile creation, falling back to direct sync:', error);
-        // Fallback to direct sync
-        await this.syncUserToSupabase({
-          id: userId,
-          full_name: userData.full_name.trim(),
-          email: userData.email.toLowerCase(),
-          phone: userData.phone,
-          role: 'player',
-        });
+      if (!authData.user) {
+        return { user: null, error: 'Failed to create user account' };
       }
 
-      // Get the created user
-      const user = await db.getFirstAsync(
-        `SELECT * FROM users WHERE id = ?`,
-        [userId]
-      );
+      // Create user profile in database
+      const { error: profileError } = await supabase
+        .from('users')
+        .insert({
+          id: authData.user.id,
+          email: userData.email,
+          full_name: userData.fullName,
+          phone: userData.phone || null,
+          role: 'player',
+          contact_preference: 'whatsapp',
+          created_at: new Date().toISOString()
+        });
 
-      return user;
+      if (profileError) {
+        console.error('❌ Profile creation failed:', profileError);
+        // Auth user was created but profile failed - this is still a partial success
+        // The user can complete their profile later
+        console.warn('⚠️ User authenticated but profile creation failed - user can complete profile later');
+      } else {
+        console.log('✅ User profile created successfully');
+      }
+
+      console.log('✅ User signup completed:', authData.user.email);
+      return { user: authData.user, error: null };
+
     } catch (error) {
-      console.error('Sign up failed:', error);
-      throw error;
+      console.error('❌ Signup failed:', error);
+      return { user: null, error: 'An unexpected error occurred during signup' };
     }
   }
 
-  async signIn(credentials: SignInData): Promise<AuthUser> {
+  async signIn(credentials: SignInData): Promise<{ user: User | null; error: string | null }> {
+    console.log('🔐 Signing in user:', credentials.email);
+
     try {
       const { data, error } = await supabase.auth.signInWithPassword({
         email: credentials.email,
         password: credentials.password,
       });
 
-      if (error || !data.user) {
-        throw new Error(error?.message || 'Sign in failed');
+      if (error) {
+        console.error('❌ Signin failed:', error);
+        return { user: null, error: error.message };
       }
 
-      // Get user profile from local database
-      const db = await this.getDatabase();
-      const user = await db.getFirstAsync(
-        `SELECT * FROM users WHERE id = ?`,
-        [data.user.id]
-      );
-
-      if (!user) {
-        throw new Error('User profile not found. Please contact support.');
+      if (!data.user) {
+        return { user: null, error: 'Failed to sign in' };
       }
 
-      return user;
+      // Check if user profile exists, create if missing
+      const { data: profile, error: profileError } = await supabase
+        .from('users')
+        .select('*')
+        .eq('id', data.user.id)
+        .single();
+
+      if (profileError && profileError.code === 'PGRST116') {
+        // Profile doesn't exist, create it
+        console.log('🔄 Creating missing user profile...');
+        const { error: createProfileError } = await supabase
+          .from('users')
+          .insert({
+            id: data.user.id,
+            email: data.user.email || credentials.email,
+            full_name: data.user.user_metadata?.full_name || 'Tennis Player',
+            phone: data.user.user_metadata?.phone || null,
+            role: 'player',
+            contact_preference: 'whatsapp',
+            created_at: new Date().toISOString()
+          });
+
+        if (createProfileError) {
+          console.error('❌ Failed to create missing profile:', createProfileError);
+        } else {
+          console.log('✅ Missing profile created');
+        }
+      } else if (profileError) {
+        console.error('❌ Profile check failed:', profileError);
+      }
+
+      console.log('✅ User signin completed:', data.user.email);
+      return { user: data.user, error: null };
+
     } catch (error) {
-      console.error('Sign in failed:', error);
-      throw error;
+      console.error('❌ Signin failed:', error);
+      return { user: null, error: 'An unexpected error occurred during signin' };
     }
   }
 
-  async signOut(): Promise<void> {
+  async signOut(): Promise<{ error: string | null }> {
+    console.log('🚪 Signing out user...');
+
     try {
       const { error } = await supabase.auth.signOut();
       
       if (error) {
-        throw new Error(error.message);
+        console.error('❌ Signout failed:', error);
+        return { error: error.message };
       }
+
+      console.log('✅ User signed out successfully');
+      return { error: null };
+
     } catch (error) {
-      console.error('Sign out failed:', error);
-      throw error;
+      console.error('❌ Signout failed:', error);
+      return { error: 'An unexpected error occurred during signout' };
     }
   }
 
-  async getCurrentUser(): Promise<AuthUser | null> {
+  async getCurrentSession() {
     try {
-      const { data, error } = await supabase.auth.getUser();
-
-      if (error || !data.user) {
+      const { data: { session }, error } = await supabase.auth.getSession();
+      
+      if (error) {
+        console.error('❌ Get session failed:', error);
         return null;
       }
 
-      // Get user profile from local database
-      const db = await this.getDatabase();
-      const user = await db.getFirstAsync(
-        `SELECT * FROM users WHERE id = ?`,
-        [data.user.id]
-      );
+      return session;
 
-      return user || null;
     } catch (error) {
-      console.error('Get current user failed:', error);
+      console.error('❌ Get session failed:', error);
       return null;
     }
   }
 
-  async updateProfile(userId: string, updateData: UpdateProfileData): Promise<AuthUser> {
-    try {
-      const db = await this.getDatabase();
-
-      // Build dynamic update query
-      const updateFields = [];
-      const updateValues = [];
-
-      if (updateData.full_name !== undefined) {
-        updateFields.push('full_name = ?');
-        updateValues.push(updateData.full_name.trim());
-      }
-
-      if (updateData.phone !== undefined) {
-        updateFields.push('phone = ?');
-        updateValues.push(updateData.phone);
-      }
-
-      if (updateFields.length === 0) {
-        throw new Error('No fields to update');
-      }
-
-      updateValues.push(userId);
-
-      // Update local database
-      await db.runAsync(
-        `UPDATE users SET ${updateFields.join(', ')} WHERE id = ?`,
-        updateValues
-      );
-
-      // Queue profile update using offline queue
-      try {
-        await syncService.queueProfileUpdate(userId, updateData);
-        console.log('Successfully queued profile update for sync:', userId);
-      } catch (error) {
-        console.warn('Failed to queue profile update, falling back to direct sync:', error);
-        // Fallback to direct sync
-        this.syncUserProfileToSupabase(userId, updateData).catch(error => {
-          console.warn('Failed to sync profile update to Supabase:', error);
-        });
-      }
-
-      // Return updated user
-      const user = await db.getFirstAsync(
-        `SELECT * FROM users WHERE id = ?`,
-        [userId]
-      );
-
-      return user;
-    } catch (error) {
-      console.error('Update profile failed:', error);
-      throw error;
-    }
-  }
-
-  async getUserById(userId: string): Promise<AuthUser | null> {
-    try {
-      const db = await this.getDatabase();
-      const user = await db.getFirstAsync(
-        `SELECT * FROM users WHERE id = ?`,
-        [userId]
-      );
-
-      return user || null;
-    } catch (error) {
-      console.error('Get user by ID failed:', error);
-      return null;
-    }
-  }
-
-  async getUsersByIds(userIds: string[]): Promise<AuthUser[]> {
-    if (userIds.length === 0) return [];
+  async updateProfile(userId: string, updates: UpdateProfileData): Promise<{ error: string | null }> {
+    console.log('📝 Updating user profile:', userId);
 
     try {
-      const db = await this.getDatabase();
-      const placeholders = userIds.map(() => '?').join(',');
-      const users = await db.getAllAsync(
-        `SELECT * FROM users WHERE id IN (${placeholders})`,
-        userIds
-      );
-
-      return users || [];
-    } catch (error) {
-      console.error('Get users by IDs failed:', error);
-      return [];
-    }
-  }
-
-  async searchUsersByName(query: string, clubId?: string): Promise<AuthUser[]> {
-    try {
-      const db = await this.getDatabase();
+      const updateData: any = {};
       
-      let sql = `
-        SELECT DISTINCT u.* FROM users u
-      `;
-      const params = [`%${query.toLowerCase()}%`];
-
-      if (clubId) {
-        sql += `
-          INNER JOIN club_members cm ON u.id = cm.user_id
-          WHERE cm.club_id = ? AND LOWER(u.full_name) LIKE ?
-        `;
-        params.unshift(clubId);
-      } else {
-        sql += ` WHERE LOWER(u.full_name) LIKE ?`;
-      }
-
-      sql += ` ORDER BY u.full_name LIMIT 20`;
-
-      const users = await db.getAllAsync(sql, params);
-      return users || [];
-    } catch (error) {
-      console.error('Search users failed:', error);
-      return [];
-    }
-  }
-
-  private async syncUserToSupabase(user: Partial<User>): Promise<void> {
-    try {
-      const { error } = await supabase.from('users').insert(user);
+      if (updates.fullName) updateData.full_name = updates.fullName;
+      if (updates.phone !== undefined) updateData.phone = updates.phone;
       
-      if (error) {
-        throw error;
-      }
-    } catch (error) {
-      console.error('Supabase user sync failed:', error);
-      throw error;
-    }
-  }
-
-  private async syncUserProfileToSupabase(userId: string, updateData: UpdateProfileData): Promise<void> {
-    try {
-      const { error } = await supabase
+      // Update in users table
+      const { error: profileError } = await supabase
         .from('users')
         .update(updateData)
         .eq('id', userId);
 
-      if (error) {
-        throw error;
+      if (profileError) {
+        console.error('❌ Profile update failed:', profileError);
+        return { error: profileError.message };
       }
+
+      // Update auth metadata
+      if (updates.fullName) {
+        const { error: authError } = await supabase.auth.updateUser({
+          data: { full_name: updates.fullName }
+        });
+
+        if (authError) {
+          console.warn('⚠️ Auth metadata update failed:', authError);
+          // Don't fail the entire operation for metadata update
+        }
+      }
+
+      console.log('✅ Profile updated successfully');
+      return { error: null };
+
     } catch (error) {
-      console.error('Supabase profile update sync failed:', error);
-      throw error;
+      console.error('❌ Profile update failed:', error);
+      return { error: 'An unexpected error occurred during profile update' };
     }
   }
 
-  private isValidEmail(email: string): boolean {
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    return emailRegex.test(email);
+  async getUserProfile(userId: string) {
+    try {
+      const { data, error } = await supabase
+        .from('users')
+        .select('*')
+        .eq('id', userId)
+        .single();
+
+      if (error) {
+        console.error('❌ Get user profile failed:', error);
+        return null;
+      }
+
+      return data;
+
+    } catch (error) {
+      console.error('❌ Get user profile failed:', error);
+      return null;
+    }
   }
 
-  // Auth state change listener setup
-  onAuthStateChange(callback: (user: AuthUser | null) => void): () => void {
-    const { data: subscription } = supabase.auth.onAuthStateChange(
-      async (event, session) => {
-        if (event === 'SIGNED_IN' && session?.user) {
-          const user = await this.getUserById(session.user.id);
-          callback(user);
-        } else if (event === 'SIGNED_OUT') {
-          callback(null);
-        }
-      }
-    );
+  async searchUsers(query: string, clubId?: string): Promise<any[]> {
+    try {
+      let queryBuilder = supabase
+        .from('users')
+        .select('id, full_name, email')
+        .ilike('full_name', `%${query}%`)
+        .limit(20);
 
-    // Return unsubscribe function
-    return () => subscription.subscription.unsubscribe();
+      if (clubId) {
+        // Filter by club members if clubId provided
+        queryBuilder = supabase
+          .from('users')
+          .select(`
+            id, full_name, email,
+            club_members!inner (club_id)
+          `)
+          .eq('club_members.club_id', clubId)
+          .ilike('full_name', `%${query}%`)
+          .limit(20);
+      }
+
+      const { data, error } = await queryBuilder;
+
+      if (error) {
+        console.error('❌ User search failed:', error);
+        return [];
+      }
+
+      return data || [];
+
+    } catch (error) {
+      console.error('❌ User search failed:', error);
+      return [];
+    }
   }
 }
 
-// Export singleton instance and individual functions for backward compatibility
+// Create singleton instance
 const authService = new AuthService();
 
-export const signUp = (userData: SignUpData) => authService.signUp(userData);
+// Export service functions
+export const signUp = (userData: CreateUserData) => authService.signUp(userData);
 export const signIn = (credentials: SignInData) => authService.signIn(credentials);
 export const signOut = () => authService.signOut();
-export const getCurrentUser = () => authService.getCurrentUser();
-export const updateProfile = (userId: string, updateData: UpdateProfileData) => 
-  authService.updateProfile(userId, updateData);
-export const getUserById = (userId: string) => authService.getUserById(userId);
-export const getUsersByIds = (userIds: string[]) => authService.getUsersByIds(userIds);
-export const searchUsersByName = (query: string, clubId?: string) => 
-  authService.searchUsersByName(query, clubId);
+export const getCurrentSession = () => authService.getCurrentSession();
+export const updateProfile = (userId: string, updates: UpdateProfileData) => 
+  authService.updateProfile(userId, updates);
+export const getUserProfile = (userId: string) => authService.getUserProfile(userId);
+export const searchUsers = (query: string, clubId?: string) => authService.searchUsers(query, clubId);
 
 export default authService;

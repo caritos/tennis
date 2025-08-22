@@ -40,37 +40,28 @@ export const MatchHistoryView = React.memo<MatchHistoryViewProps>(({ playerId, c
       if (!isRefreshing) setLoading(true);
       setError(null);
       
-      // Import the database
-      const { initializeDatabase } = await import('@/database/database');
-      const db = await initializeDatabase();
+      // Use direct Supabase service
+      const matchData = await getMatchHistory(playerId, clubId);
       
-      // Get matches with player names
-      let query = `
-        SELECT m.*, 
-               c.name as club_name,
-               p1.full_name as player1_name,
-               p2.full_name as player2_name,
-               p3.full_name as player3_name,
-               p4.full_name as player4_name
-        FROM matches m
-        LEFT JOIN clubs c ON m.club_id = c.id
-        LEFT JOIN users p1 ON m.player1_id = p1.id
-        LEFT JOIN users p2 ON m.player2_id = p2.id
-        LEFT JOIN users p3 ON m.player3_id = p3.id
-        LEFT JOIN users p4 ON m.player4_id = p4.id
-        WHERE (m.player1_id = ? OR m.player2_id = ? OR m.player3_id = ? OR m.player4_id = ?)
-      `;
-      const params = [playerId, playerId, playerId, playerId];
+      // Process matches to add player names (from Supabase joins)
+      const processedMatches = (matchData || []).map((match: any) => {
+        // Extract player names from Supabase join results
+        const player1_name = match.player1?.full_name || 'Unknown Player';
+        const player2_name = match.player2?.full_name || match.opponent2_name || 'Unknown Opponent';
+        const player3_name = match.player3?.full_name || match.partner3_name || null;
+        const player4_name = match.player4?.full_name || match.partner4_name || null;
+        
+        return {
+          ...match,
+          player1_name,
+          player2_name,
+          player3_name,
+          player4_name,
+          club_name: 'Tennis Club' // TODO: Add club name from join if needed
+        };
+      });
       
-      if (clubId) {
-        query += ` AND m.club_id = ?`;
-        params.push(clubId);
-      }
-      
-      query += ` ORDER BY m.date DESC, m.created_at DESC`;
-      
-      const matchHistory = await db.getAllAsync(query, params);
-      setMatches(matchHistory || []);
+      setMatches(processedMatches);
     } catch (err) {
       logError('MatchHistoryView.loadMatches', err, playerId);
       setError('Failed to load match history');

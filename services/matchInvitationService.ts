@@ -1,6 +1,7 @@
 import { initializeDatabase } from '@/database/database';
 import { syncService } from './sync';
 import { NotificationService } from './NotificationService';
+import { generateUUID } from '../utils/uuid';
 
 export interface MatchInvitation {
   id: string;
@@ -58,7 +59,7 @@ export class MatchInvitationService {
    */
   public async createInvitation(invitationData: CreateInvitationData): Promise<MatchInvitation> {
     const db = await initializeDatabase();
-    const invitationId = `inv_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+    const invitationId = generateUUID();
     
     const invitation: MatchInvitation = {
       id: invitationId,
@@ -172,7 +173,7 @@ export class MatchInvitationService {
     message?: string
   ): Promise<InvitationResponse> {
     const db = await initializeDatabase();
-    const responseId = `resp_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+    const responseId = generateUUID();
     
     const response: InvitationResponse = {
       id: responseId,

@@ -1,6 +1,7 @@
 import { initializeDatabase, Database } from '@/database/database';
 import { syncService } from './sync';
 import { NotificationService } from './NotificationService';
+import { generateUUID } from '../utils/uuid';
 
 export interface Challenge {
   id: string;
@@ -80,7 +81,7 @@ class ChallengeService {
     const db = await initializeDatabase();
     
     // Generate unique challenge ID
-    const challengeId = `challenge_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+    const challengeId = generateUUID();
     
     // Set expiration to 7 days from now if not provided
     const expiresAt = challengeData.expires_at || new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString();
@@ -370,7 +371,7 @@ class ChallengeService {
   public async createCounterChallenge(counterData: CreateCounterChallengeData): Promise<string> {
     const db = await initializeDatabase();
     
-    const counterId = `counter_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+    const counterId = generateUUID();
     
     try {
       // Start transaction

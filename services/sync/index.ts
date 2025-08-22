@@ -4,6 +4,7 @@ import { NetworkManager } from '../offlineQueue/NetworkManager';
 import { getAllSyncStrategies } from '../offlineQueue/SyncStrategies';
 import { SyncStatus, QueueOperation } from '../offlineQueue/types';
 import { CreateMatchData } from '../matchService';
+import { generateUUID } from '../../utils/uuid';
 
 /**
  * Universal sync service that provides a simple interface for all app operations
@@ -268,7 +269,7 @@ export class SyncService {
       'invitation',
       'create_invitation',
       {
-        id: `inv_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+        id: generateUUID(),
         club_id: clubId,
         creator_id: creatorId,
         match_type: matchType,
@@ -293,7 +294,7 @@ export class SyncService {
       'invitation',
       'respond_invitation',
       {
-        id: `resp_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+        id: generateUUID(),
         invitation_id: invitationId,
         user_id: userId,
         message,

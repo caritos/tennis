@@ -20,7 +20,7 @@ import { Colors } from '@/constants/Colors';
 import { useLocation } from '@/hooks/useLocation';
 import { useAuth } from '@/contexts/AuthContext';
 import { useOnboarding } from '@/contexts/OnboardingContext';
-import clubService, { joinClub, getJoinedClubIds } from '@/services/clubService';
+import { getUserClubs, getClubsByLocation, joinClub, isClubMember, calculateDistance } from '@/services/clubService';
 
 export default function ClubScreen() {
   const colorScheme = useColorScheme();
@@ -76,7 +76,7 @@ export default function ClubScreen() {
         console.log('Using fallback location (NYC) with limited radius:', userLat, userLng, 'radius:', radius);
       }
       
-      const nearbyClubs = await clubService.getNearbyClubs(userLat, userLng, radius);
+      const nearbyClubs = await getClubsByLocation(userLat, userLng, radius);
       console.log('Nearby clubs received:', nearbyClubs.length);
       setClubs(nearbyClubs);
 
@@ -84,7 +84,7 @@ export default function ClubScreen() {
       if (location) {
         const newDistances = new Map<string, number>();
         nearbyClubs.forEach(club => {
-          const distance = clubService.calculateDistance(
+          const distance = calculateDistance(
             userLat,
             userLng,
             club.lat,
@@ -98,11 +98,12 @@ export default function ClubScreen() {
       // Load user's clubs and joined club IDs
       if (user?.id) {
         try {
-          const userJoinedIds = await getJoinedClubIds(user.id);
-          setJoinedClubIds(userJoinedIds);
-
-          const userClubs = await clubService.getUserClubs(user.id);
+          const userClubs = await getUserClubs(user.id);
           setMyClubs(userClubs);
+          
+          // Extract club IDs for the joinedClubIds state
+          const userJoinedIds = userClubs.map(club => club.id);
+          setJoinedClubIds(userJoinedIds);
         } catch (error) {
           console.warn('Failed to load user clubs:', error);
           setMyClubs([]);

@@ -1,6 +1,5 @@
-import { initializeDatabase } from '../database/database';
 import { supabase, Club } from '../lib/supabase';
-import { syncService } from './sync';
+import { generateUUID } from '../utils/uuid';
 
 export interface CreateClubData {
   name: string;
@@ -17,504 +16,241 @@ export interface ClubWithDistance extends Club {
   member_count?: number;
 }
 
+/**
+ * ClubService - Direct Supabase integration without local SQLite
+ */
 export class ClubService {
-  private db: any = null;
-
-  private async getDatabase() {
-    if (!this.db) {
-      this.db = await initializeDatabase();
-    }
-    return this.db;
-  }
-
-  // Helper method to ensure user exists in local database
-  private async ensureUserExists(userId: string, userEmail?: string, userFullName?: string): Promise<void> {
-    const db = await this.getDatabase();
-    
-    const userExists = await db.getFirstAsync(
-      'SELECT id FROM users WHERE id = ?',
-      [userId]
-    );
-    
-    if (!userExists) {
-      console.log('ClubService: User not found in local database, creating user:', userId);
-      
-      // Create the user in local database with basic information
-      try {
-        await db.runAsync(
-          `INSERT INTO users (id, email, full_name, created_at) VALUES (?, ?, ?, datetime('now'))`,
-          [userId, userEmail || '', userFullName || '']
-        );
-        console.log('ClubService: Successfully created user in local database:', userId);
-      } catch (error) {
-        console.error('ClubService: Failed to create user in local database:', error);
-        throw new Error('Failed to initialize user account. Please try again.');
-      }
-    }
-  }
-
+  
   async createClub(clubData: CreateClubData): Promise<Club> {
+    console.log('🏆 Creating club directly in Supabase...');
+    
+    // Validate input
     if (!clubData.name || !clubData.location || !clubData.description) {
       throw new Error('Club name, description, and location are required');
     }
 
-    const db = await this.getDatabase();
-    const clubId = `club_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+    const clubId = generateUUID();
+    
+    const newClub = {
+      id: clubId,
+      name: clubData.name.trim(),
+      description: clubData.description.trim(),
+      location: clubData.location.trim(),
+      lat: clubData.lat,
+      lng: clubData.lng,
+      creator_id: clubData.creator_id,
+      created_at: new Date().toISOString()
+    };
 
     try {
-      // Insert into local SQLite database first (offline-first)
-      await db.runAsync(
-        `INSERT INTO clubs (id, name, description, location, lat, lng, creator_id) 
-         VALUES (?, ?, ?, ?, ?, ?, ?)`,
-        [
-          clubId,
-          clubData.name,
-          clubData.description,
-          clubData.location,
-          clubData.lat,
-          clubData.lng,
-          clubData.creator_id,
-        ]
-      );
+      // Create club in Supabase
+      const { data: club, error: clubError } = await supabase
+        .from('clubs')
+        .insert(newClub)
+        .select()
+        .single();
 
-      // Auto-join creator to the club
-      await db.runAsync(
-        `INSERT INTO club_members (club_id, user_id) VALUES (?, ?)`,
-        [clubId, clubData.creator_id]
-      );
-
-      // Get the created club
-      const club = await db.getFirstAsync(
-        `SELECT * FROM clubs WHERE id = ?`,
-        [clubId]
-      );
-
-      // Queue club creation for sync using offline queue
-      try {
-        await syncService.queueClubCreation({
-          id: clubId,
-          name: clubData.name,
-          description: clubData.description,
-          location: clubData.location,
-          lat: clubData.lat,
-          lng: clubData.lng,
-          creator_id: clubData.creator_id,
-        });
-        console.log('Successfully queued club creation for sync:', clubId);
-      } catch (error) {
-        console.warn('Failed to queue club creation, falling back to direct sync:', error);
-        this.syncClubToSupabase(club).catch(error => {
-          console.warn('Failed to sync club to Supabase:', error);
-        });
+      if (clubError) {
+        console.error('❌ Failed to create club:', clubError);
+        throw new Error(`Failed to create club: ${clubError.message}`);
       }
 
-      // Queue club membership using offline queue
-      try {
-        await syncService.queueClubJoin(clubId, clubData.creator_id);
-        console.log('Successfully queued club membership for sync:', clubId, clubData.creator_id);
-      } catch (error) {
-        console.warn('Failed to queue club membership, falling back to direct sync:', error);
-        this.syncClubMemberToSupabase(clubId, clubData.creator_id).catch(error => {
-          console.warn('Failed to sync club membership to Supabase:', error);
+      console.log('✅ Club created successfully:', club.name);
+
+      // Add creator as club member
+      const { error: memberError } = await supabase
+        .from('club_members')
+        .insert({
+          club_id: clubId,
+          user_id: clubData.creator_id,
+          joined_at: new Date().toISOString()
         });
+
+      if (memberError) {
+        console.error('⚠️ Failed to add creator as member:', memberError);
+        // Don't throw here - club was created successfully
+      } else {
+        console.log('✅ Creator added as club member');
       }
 
       return club;
+
     } catch (error) {
-      console.error('Failed to create club:', error);
+      console.error('❌ Club creation failed:', error);
+      throw error;
+    }
+  }
+
+  async joinClub(clubId: string, userId: string): Promise<void> {
+    console.log('🏃‍♂️ Joining club:', clubId);
+
+    try {
+      const { error } = await supabase
+        .from('club_members')
+        .insert({
+          club_id: clubId,
+          user_id: userId,
+          joined_at: new Date().toISOString()
+        });
+
+      if (error) {
+        if (error.code === '23505') { // Unique constraint violation
+          throw new Error('Already a member of this club');
+        }
+        console.error('❌ Failed to join club:', error);
+        throw new Error(`Failed to join club: ${error.message}`);
+      }
+
+      console.log('✅ Successfully joined club');
+
+    } catch (error) {
+      console.error('❌ Join club failed:', error);
       throw error;
     }
   }
 
   async leaveClub(clubId: string, userId: string): Promise<void> {
-    // Input validation
-    if (!clubId || typeof clubId !== 'string' || clubId.trim() === '') {
-      throw new Error('Valid club ID is required');
-    }
-    if (!userId || typeof userId !== 'string' || userId.trim() === '') {
-      throw new Error('Valid user ID is required');
-    }
-
-    console.log(`leaveClub: Attempting to leave club ${clubId} for user ${userId}`);
-    const db = await this.getDatabase();
+    console.log('🚶‍♂️ Leaving club:', clubId);
 
     try {
-      // Remove from local database first (offline-first)
-      await db.runAsync(
-        `DELETE FROM club_members WHERE club_id = ? AND user_id = ?`,
-        [clubId, userId]
-      );
+      const { error } = await supabase
+        .from('club_members')
+        .delete()
+        .eq('club_id', clubId)
+        .eq('user_id', userId);
 
-      console.log('leaveClub: Successfully left club locally');
-
-      // Queue club leave using offline queue
-      try {
-        await syncService.queueClubLeave(clubId, userId);
-        console.log('Successfully queued club leave for sync:', clubId, userId);
-      } catch (error) {
-        console.warn('Failed to queue club leave, data may be out of sync:', error);
+      if (error) {
+        console.error('❌ Failed to leave club:', error);
+        throw new Error(`Failed to leave club: ${error.message}`);
       }
+
+      console.log('✅ Successfully left club');
+
     } catch (error) {
-      console.error('leaveClub: Database error:', error);
-      throw new Error('Failed to leave club');
-    }
-  }
-
-  async joinClub(clubId: string, userId: string, userEmail?: string, userFullName?: string): Promise<void> {
-    // Input validation
-    if (!clubId || typeof clubId !== 'string' || clubId.trim() === '') {
-      console.error('joinClub: Invalid club ID:', clubId);
-      throw new Error('Valid club ID is required');
-    }
-    if (!userId || typeof userId !== 'string' || userId.trim() === '') {
-      console.error('joinClub: Invalid user ID:', userId);
-      throw new Error('Valid user ID is required');
-    }
-
-    console.log(`joinClub: Attempting to join club ${clubId} with user ${userId}`);
-    const db = await this.getDatabase();
-
-    try {
-      // Ensure user exists in local database
-      await this.ensureUserExists(userId, userEmail, userFullName);
-
-      // Check if club exists
-      const clubExists = await db.getFirstAsync(
-        'SELECT id FROM clubs WHERE id = ?',
-        [clubId]
-      );
-      
-      if (!clubExists) {
-        console.error('joinClub: Club not found in local database:', clubId);
-        
-        // Debug: List all clubs in database
-        const allClubs = await db.getAllAsync('SELECT id, name FROM clubs');
-        console.log('joinClub: All clubs in database:', allClubs);
-        
-        throw new Error('Club not found in local database.');
-      }
-
-      // Insert into local database first (offline-first)
-      console.log('joinClub: Inserting membership into local database');
-      await db.runAsync(
-        `INSERT INTO club_members (club_id, user_id) VALUES (?, ?)`,
-        [clubId, userId]
-      );
-
-      console.log('joinClub: Successfully joined club locally');
-
-      // Queue club membership using offline queue
-      try {
-        await syncService.queueClubJoin(clubId, userId);
-        console.log('Successfully queued club join for sync:', clubId, userId);
-      } catch (error) {
-        console.warn('Failed to queue club join, falling back to direct sync:', error);
-        this.syncClubMemberToSupabase(clubId, userId).catch(error => {
-          console.warn('Failed to sync club membership to Supabase:', error);
-        });
-      }
-    } catch (error: any) {
-      console.error('joinClub: Database error:', error);
-      if (error.code === 'SQLITE_CONSTRAINT') {
-        throw new Error('Already a member of this club');
-      }
+      console.error('❌ Leave club failed:', error);
       throw error;
-    }
-  }
-
-  async getJoinedClubIds(userId: string): Promise<string[]> {
-    if (!userId || typeof userId !== 'string' || userId.trim() === '') {
-      return [];
-    }
-
-    const db = await this.getDatabase();
-
-    try {
-      const memberships = await db.getAllAsync(
-        `SELECT club_id FROM club_members WHERE user_id = ?`,
-        [userId]
-      );
-
-      return memberships?.map((m: any) => m.club_id) || [];
-    } catch (error) {
-      console.error('Failed to get joined club IDs:', error);
-      return [];
     }
   }
 
   async getUserClubs(userId: string): Promise<Club[]> {
-    if (!userId || typeof userId !== 'string' || userId.trim() === '') {
-      return [];
-    }
-
-    const db = await this.getDatabase();
-
     try {
-      console.log('getUserClubs: Looking up clubs for user:', userId);
-      
-      // Check club memberships
-      const memberships = await db.getAllAsync(
-        `SELECT club_id FROM club_members WHERE user_id = ?`,
-        [userId]
-      );
-      console.log('getUserClubs: Found memberships:', memberships);
-      
-      // Check matches
-      const matches = await db.getAllAsync(
-        `SELECT DISTINCT club_id FROM matches WHERE player1_id = ? OR player2_id = ? OR player3_id = ? OR player4_id = ?`,
-        [userId, userId, userId, userId]
-      );
-      console.log('getUserClubs: Found matches in clubs:', matches);
-      
-      const clubs = await db.getAllAsync(
-        `SELECT c.*, 
-                COALESCE(member_counts.memberCount, 0) as memberCount
-         FROM clubs c 
-         INNER JOIN club_members cm ON c.id = cm.club_id 
-         LEFT JOIN (
-           SELECT club_id, COUNT(DISTINCT user_id) as memberCount 
-           FROM club_members 
-           GROUP BY club_id
-         ) member_counts ON c.id = member_counts.club_id
-         WHERE cm.user_id = ?
-         ORDER BY cm.joined_at DESC`,
-        [userId]
-      );
+      const { data: clubs, error } = await supabase
+        .from('club_members')
+        .select(`
+          clubs (
+            id,
+            name,
+            description,
+            location,
+            lat,
+            lng,
+            creator_id,
+            created_at
+          )
+        `)
+        .eq('user_id', userId);
 
-      console.log('getUserClubs: User clubs with counts:', clubs);
-      return clubs || [];
+      if (error) {
+        console.error('❌ Failed to fetch user clubs:', error);
+        throw new Error(`Failed to fetch clubs: ${error.message}`);
+      }
+
+      // Extract clubs from the join result
+      return clubs?.map((item: any) => item.clubs).filter(Boolean) || [];
+
     } catch (error) {
-      console.error('Failed to get user clubs:', error);
-      return [];
+      console.error('❌ Get user clubs failed:', error);
+      throw error;
+    }
+  }
+
+  async getClubsByLocation(userLat: number, userLng: number, radiusKm: number = 25): Promise<ClubWithDistance[]> {
+    try {
+      // For now, get all clubs and calculate distance client-side
+      // Later we can implement PostGIS for server-side distance calculations
+      const { data: clubs, error } = await supabase
+        .from('clubs')
+        .select('*');
+
+      if (error) {
+        console.error('❌ Failed to fetch clubs by location:', error);
+        throw new Error(`Failed to fetch clubs: ${error.message}`);
+      }
+
+      if (!clubs) return [];
+
+      // Calculate distances and filter by radius
+      const clubsWithDistance: ClubWithDistance[] = clubs
+        .map(club => ({
+          ...club,
+          distance: this.calculateDistance(userLat, userLng, club.lat, club.lng)
+        }))
+        .filter(club => club.distance! <= radiusKm)
+        .sort((a, b) => a.distance! - b.distance!);
+
+      return clubsWithDistance;
+
+    } catch (error) {
+      console.error('❌ Get clubs by location failed:', error);
+      throw error;
     }
   }
 
   async isClubMember(clubId: string, userId: string): Promise<boolean> {
-    if (!clubId || !userId) {
+    try {
+      const { data, error } = await supabase
+        .from('club_members')
+        .select('club_id')
+        .eq('club_id', clubId)
+        .eq('user_id', userId)
+        .single();
+
+      if (error && error.code !== 'PGRST116') { // PGRST116 = no rows returned
+        console.error('❌ Failed to check club membership:', error);
+        return false;
+      }
+
+      return !!data;
+
+    } catch (error) {
+      console.error('❌ Check club membership failed:', error);
       return false;
     }
-
-    const db = await this.getDatabase();
-
-    try {
-      const membership = await db.getFirstAsync(
-        `SELECT 1 FROM club_members WHERE club_id = ? AND user_id = ?`,
-        [clubId, userId]
-      );
-
-      return membership !== null;
-    } catch (error) {
-      console.error('Failed to check club membership:', error);
-      return false;
-    }
   }
 
-  async getClubsByLocation(
-    userLat: number,
-    userLng: number,
-    radiusKm: number = 25
-  ): Promise<ClubWithDistance[]> {
-    const db = await this.getDatabase();
-
-    try {
-      // Use Haversine formula to calculate distance
-      const clubs = await db.getAllAsync(
-        `SELECT *,
-          (
-            6371 * acos(
-              cos(radians(?)) * cos(radians(lat)) * cos(radians(lng) - radians(?)) + 
-              sin(radians(?)) * sin(radians(lat))
-            )
-          ) AS distance
-         FROM clubs 
-         WHERE lat IS NOT NULL AND lng IS NOT NULL
-         HAVING distance <= ?
-         ORDER BY distance ASC`,
-        [userLat, userLng, userLat, radiusKm]
-      );
-
-      return clubs || [];
-    } catch (error) {
-      console.error('Failed to get clubs by location:', error);
-      // Return empty array instead of throwing to prevent UI crash
-      return [];
-    }
-  }
-
-  async getNearbyClubs(
-    userLat: number,
-    userLng: number,
-    radiusKm: number = 25
-  ): Promise<Club[]> {
-    try {
-      // Validate input parameters
-      if (!this.isValidCoordinate(userLat, userLng)) {
-        console.warn('getNearbyClubs: Invalid coordinates provided:', userLat, userLng);
-        throw new Error('Invalid location coordinates provided');
-      }
-
-      if (radiusKm <= 0 || radiusKm > 10000) {
-        console.warn('getNearbyClubs: Invalid radius:', radiusKm);
-        radiusKm = 25; // Default to 25km
-      }
-
-      console.log('getNearbyClubs: Starting with location:', userLat, userLng, 'radius:', radiusKm);
-      const db = await this.getDatabase();
-      
-      // Get all clubs with member counts
-      // Note: SQLite requires all non-aggregated columns in GROUP BY
-      const clubs = await db.getAllAsync(`
-        SELECT c.id, c.name, c.description, c.location, c.lat, c.lng, c.creator_id, c.created_at,
-               COUNT(DISTINCT cm.user_id) as memberCount
-        FROM clubs c 
-        LEFT JOIN club_members cm ON c.id = cm.club_id 
-        GROUP BY c.id, c.name, c.description, c.location, c.lat, c.lng, c.creator_id, c.created_at
-      `);
-      console.log('getNearbyClubs: Found clubs in database:', clubs?.length || 0);
-      
-      if (!clubs || clubs.length === 0) {
-        console.log('getNearbyClubs: No clubs found in database');
-        return [];
-      }
-
-      // Calculate distances and filter with improved error handling
-      const clubsWithDistance = [];
-      let invalidCoordinatesCount = 0;
-
-      for (const club of clubs) {
-        try {
-          // Validate club coordinates
-          if (!this.isValidCoordinate(club.lat, club.lng)) {
-            console.warn('getNearbyClubs: Club has invalid coordinates:', club.id, club.name, club.lat, club.lng);
-            invalidCoordinatesCount++;
-            continue;
-          }
-          
-          const distance = this.calculateDistance(userLat, userLng, club.lat, club.lng);
-          
-          // Only include clubs within radius
-          if (distance <= radiusKm) {
-            const clubWithDistance = {
-              ...club,
-              distance,
-              memberCount: club.memberCount || 0,
-            };
-            clubsWithDistance.push(clubWithDistance);
-          }
-        } catch (error) {
-          console.warn('getNearbyClubs: Error processing club:', club.id, error);
-          continue;
-        }
-      }
-
-      // Log statistics
-      if (invalidCoordinatesCount > 0) {
-        console.warn(`getNearbyClubs: Skipped ${invalidCoordinatesCount} clubs with invalid coordinates`);
-      }
-
-      // Sort by distance (closest first)
-      clubsWithDistance.sort((a, b) => a.distance - b.distance);
-
-      console.log('getNearbyClubs: Returning', clubsWithDistance.length, 'clubs within', radiusKm, 'km radius');
-      return clubsWithDistance;
-    } catch (error) {
-      console.error('getNearbyClubs: Failed with error:', error);
-      
-      // If it's a validation error, throw it so the UI can show appropriate message
-      if (error instanceof Error && error.message.includes('Invalid location coordinates')) {
-        throw error;
-      }
-      
-      // For other errors, return empty array to prevent UI crash
-      return [];
-    }
-  }
-
-  /**
-   * Validates if the provided coordinates are valid
-   */
-  private isValidCoordinate(lat: number, lng: number): boolean {
-    return (
-      typeof lat === 'number' && 
-      typeof lng === 'number' && 
-      !isNaN(lat) && 
-      !isNaN(lng) && 
-      lat >= -90 && 
-      lat <= 90 && 
-      lng >= -180 && 
-      lng <= 180
-    );
-  }
-
-  calculateDistance(lat1: number, lon1: number, lat2: number, lon2: number): number {
+  calculateDistance(lat1: number, lng1: number, lat2: number, lng2: number): number {
     const R = 6371; // Earth's radius in kilometers
     const dLat = this.deg2rad(lat2 - lat1);
-    const dLon = this.deg2rad(lon2 - lon1);
-    const a =
-      Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-      Math.cos(this.deg2rad(lat1)) * Math.cos(this.deg2rad(lat2)) *
-      Math.sin(dLon / 2) * Math.sin(dLon / 2);
-    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-    const distance = R * c;
-    return Math.round(distance * 10) / 10; // Round to 1 decimal place
+    const dLng = this.deg2rad(lng2 - lng1);
+    const a = 
+      Math.sin(dLat/2) * Math.sin(dLat/2) +
+      Math.cos(this.deg2rad(lat1)) * Math.cos(this.deg2rad(lat2)) * 
+      Math.sin(dLng/2) * Math.sin(dLng/2);
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+    return R * c;
   }
 
   private deg2rad(deg: number): number {
-    return deg * (Math.PI / 180);
-  }
-
-  private async syncClubToSupabase(club: Club): Promise<void> {
-    try {
-      const { error } = await supabase.from('clubs').insert({
-        id: club.id,
-        name: club.name,
-        description: club.description,
-        location: club.location,
-        lat: club.lat,
-        lng: club.lng,
-        creator_id: club.creator_id,
-      });
-
-      if (error) {
-        throw error;
-      }
-    } catch (error) {
-      console.error('Supabase sync failed:', error);
-      throw error;
-    }
-  }
-
-  private async syncClubMemberToSupabase(clubId: string, userId: string): Promise<void> {
-    try {
-      const { error } = await supabase.from('club_members').insert({
-        club_id: clubId,
-        user_id: userId,
-      });
-
-      if (error) {
-        throw error;
-      }
-    } catch (error) {
-      console.error('Supabase club member sync failed:', error);
-      throw error;
-    }
+    return deg * (Math.PI/180);
   }
 }
 
-// Export singleton instance and individual functions for backward compatibility
+// Create singleton instance
 const clubService = new ClubService();
 
+// Export service functions
 export const createClub = (clubData: CreateClubData) => clubService.createClub(clubData);
-export const joinClub = (clubId: string, userId: string, userEmail?: string, userFullName?: string) => clubService.joinClub(clubId, userId, userEmail, userFullName);
+export const joinClub = (clubId: string, userId: string) => clubService.joinClub(clubId, userId);
 export const leaveClub = (clubId: string, userId: string) => clubService.leaveClub(clubId, userId);
-export const getJoinedClubIds = (userId: string) => clubService.getJoinedClubIds(userId);
 export const getUserClubs = (userId: string) => clubService.getUserClubs(userId);
-export const isClubMember = (clubId: string, userId: string) => clubService.isClubMember(clubId, userId);
-export const getClubsByLocation = (userLat: number, userLng: number, radiusKm?: number) =>
+export const getClubsByLocation = (userLat: number, userLng: number, radiusKm?: number) => 
   clubService.getClubsByLocation(userLat, userLng, radiusKm);
-export const getNearbyClubs = (userLat: number, userLng: number, radiusKm?: number) =>
-  clubService.getNearbyClubs(userLat, userLng, radiusKm);
-export const calculateDistance = (lat1: number, lon1: number, lat2: number, lon2: number) =>
-  clubService.calculateDistance(lat1, lon1, lat2, lon2);
+export const isClubMember = (clubId: string, userId: string) => clubService.isClubMember(clubId, userId);
+export const calculateDistance = (lat1: number, lng1: number, lat2: number, lng2: number) => 
+  clubService.calculateDistance(lat1, lng1, lat2, lng2);
+
+// Alias exports for backward compatibility
+export const getNearbyClubs = (userLat: number, userLng: number, radiusKm?: number) => 
+  clubService.getClubsByLocation(userLat, userLng, radiusKm);
 
 export default clubService;
