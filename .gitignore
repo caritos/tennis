@@ -58,3 +58,7 @@ logs/
 # Credentials and sensitive files
 credentials.json
 credentials/
+
+# eas managed workflow
+android/
+ios/
