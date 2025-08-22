@@ -405,7 +405,6 @@ export const clubSyncStrategies: SyncStrategy[] = [
             club_id,
             user_id,
             joined_at: new Date().toISOString(),
-            role: 'member',
           })
           .select()
           .single();
