@@ -71,6 +71,11 @@ export function MatchRecordingForm(componentProps: MatchRecordingFormProps) {
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [activeSearchField, setActiveSearchField] = useState<'opponent' | 'partner' | 'opponentPartner' | null>(null);
   const [matchDate, setMatchDate] = useState(initialData?.date || new Date().toISOString().split('T')[0]);
+  
+  // Handle date changes from calendar
+  const handleDateChange = (newDate: string) => {
+    setMatchDate(newDate);
+  };
   const [tennisSets, setTennisSets] = useState<TennisSet[]>([]);
   const [validationErrors, setValidationErrors] = useState<string[]>([]);
   const [clubMembers, setClubMembers] = useState<Player[]>([]);
@@ -911,21 +916,10 @@ export function MatchRecordingForm(componentProps: MatchRecordingFormProps) {
         <View style={styles.section}>
           <CalendarDatePicker
             selectedDate={matchDate}
-            onDateChange={setMatchDate}
+            onDateChange={handleDateChange}
             label="Match Date"
             placeholder="Select match date"
-            maxDate={(() => {
-              try {
-                return new Date().toISOString().split('T')[0];
-              } catch (error) {
-                console.warn('Failed to get current date, using fallback');
-                const now = new Date();
-                const year = now.getFullYear();
-                const month = String(now.getMonth() + 1).padStart(2, '0');
-                const day = String(now.getDate()).padStart(2, '0');
-                return `${year}-${month}-${day}`;
-              }
-            })()} // Can't select future dates
+            maxDate={new Date().toISOString().split('T')[0]} // Can't select future dates
           />
         </View>
 

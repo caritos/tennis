@@ -25,8 +25,24 @@ export const config = {
   supabase: getSupabaseConfig(),
 };
 
-// Log current environment (only in development)
-if (__DEV__) {
-  console.log('Current environment:', ENV);
-  console.log('Supabase URL:', config.supabase.url);
+// Log current environment and database info
+console.log('=================================');
+console.log('🔧 DATABASE CONNECTION INFO:');
+console.log('=================================');
+console.log('Environment:', ENV);
+console.log('Supabase URL:', config.supabase.url);
+
+// Extract and log project ID
+const projectId = config.supabase.url?.split('.')[0]?.split('//')[1] || 'unknown';
+console.log('Project ID:', projectId);
+
+// Check which database we're connected to
+if (projectId === 'dgkdbqloehxruoijylzw') {
+  console.log('✅ Connected to PRODUCTION DATABASE');
+} else if (projectId === 'lbfoobwxjnyymnxdajxh') {
+  console.log('⚠️  Connected to DEVELOPMENT DATABASE');
+} else {
+  console.log('❓ Connected to UNKNOWN DATABASE');
 }
+
+console.log('=================================');

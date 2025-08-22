@@ -201,7 +201,6 @@ const styles = StyleSheet.create({
   },
   rankingsList: {
     borderRadius: 8,
-    borderWidth: 1,
     overflow: 'hidden',
   },
   rankingItem: {

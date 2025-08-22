@@ -43,59 +43,8 @@ export default function ClubOverview({
       style={[styles.scrollView, { backgroundColor: colors.background }]}
       showsVerticalScrollIndicator={false}
     >
-      {/* Quick Stats */}
-      <ThemedView style={[styles.sectionCard, { backgroundColor: colors.card }]}>
-        <View style={styles.statsContainer}>
-          <View style={styles.statItem}>
-            <ThemedText style={styles.statNumber}>{memberCount}</ThemedText>
-            <ThemedText style={[styles.statLabel, { color: colors.textSecondary }]}>
-              Members
-            </ThemedText>
-          </View>
-          <View style={styles.statDivider} />
-          <View style={styles.statItem}>
-            <ThemedText style={styles.statNumber}>{recentMatches.length}</ThemedText>
-            <ThemedText style={[styles.statLabel, { color: colors.textSecondary }]}>
-              Recent Matches
-            </ThemedText>
-          </View>
-          <View style={styles.statDivider} />
-          <View style={styles.statItem}>
-            <ThemedText style={styles.statNumber}>{rankings.length}</ThemedText>
-            <ThemedText style={[styles.statLabel, { color: colors.textSecondary }]}>
-              Active Players
-            </ThemedText>
-          </View>
-        </View>
-      </ThemedView>
-
-      {/* Club Info */}
-      <ThemedView style={[styles.sectionCard, { backgroundColor: colors.card }]}>
-        <View style={styles.sectionHeaderWithIcon}>
-          <Ionicons name="location-outline" size={20} color={colors.tint} style={styles.sectionIcon} />
-          <ThemedText style={[styles.sectionTitle, { color: colors.text }]}>Location</ThemedText>
-        </View>
-        <ThemedText style={[styles.locationText, { color: colors.textSecondary }]}>
-          {club.location}
-        </ThemedText>
-        {club.description && (
-          <>
-            <View style={styles.sectionHeaderWithIcon}>
-              <Ionicons name="information-circle-outline" size={20} color={colors.tint} style={styles.sectionIcon} />
-              <ThemedText style={[styles.sectionTitle, { color: colors.text }]}>About</ThemedText>
-            </View>
-            <ThemedText style={[styles.descriptionText, { color: colors.textSecondary }]}>
-              {club.description}
-            </ThemedText>
-          </>
-        )}
-      </ThemedView>
-
       {/* Quick Actions */}
       <ThemedView style={[styles.sectionCard, { backgroundColor: colors.card }]}>
-        <ThemedText style={[styles.sectionLabel, { color: colors.textSecondary }]}>
-          QUICK ACTIONS
-        </ThemedText>
         <View style={styles.actionGrid}>
           <TouchableOpacity
             style={[styles.actionButton, { backgroundColor: colors.tint }]}
@@ -113,11 +62,13 @@ export default function ClubOverview({
           >
             <Ionicons name="people-outline" size={20} color={colors.tint} />
             <ThemedText style={[styles.actionButtonText, { color: colors.tint }]}>
-              Invite Players
+              Looking to Play
             </ThemedText>
           </TouchableOpacity>
         </View>
       </ThemedView>
+
+
 
       {/* Rankings */}
       <ThemedView style={[styles.sectionCard, { backgroundColor: colors.card }]}>
@@ -210,6 +161,62 @@ export default function ClubOverview({
       <ClubChallenges clubId={club.id} />
       <LookingToPlaySection clubId={club.id} />
 
+      {/* Information */}
+      <ThemedView style={[styles.sectionCard, { backgroundColor: colors.card }]}>
+        <View style={styles.sectionHeaderWithIcon}>
+          <Ionicons name="information-circle-outline" size={20} color={colors.tint} style={styles.sectionIcon} />
+          <ThemedText style={[styles.sectionTitle, { color: colors.text }]}>Information</ThemedText>
+        </View>
+        
+        {/* Quick Stats */}
+        <View style={styles.statsContainer}>
+          <View style={styles.statItem}>
+            <ThemedText style={styles.statNumber}>{memberCount}</ThemedText>
+            <ThemedText style={[styles.statLabel, { color: colors.textSecondary }]}>
+              Members
+            </ThemedText>
+          </View>
+          <View style={styles.statDivider} />
+          <View style={styles.statItem}>
+            <ThemedText style={styles.statNumber}>{recentMatches.length}</ThemedText>
+            <ThemedText style={[styles.statLabel, { color: colors.textSecondary }]}>
+              Recent Matches
+            </ThemedText>
+          </View>
+          <View style={styles.statDivider} />
+          <View style={styles.statItem}>
+            <ThemedText style={styles.statNumber}>{rankings.length}</ThemedText>
+            <ThemedText style={[styles.statLabel, { color: colors.textSecondary }]}>
+              Active Players
+            </ThemedText>
+          </View>
+        </View>
+
+        {/* Location */}
+        <View style={styles.infoSubsection}>
+          <View style={styles.sectionHeaderWithIcon}>
+            <Ionicons name="location-outline" size={18} color={colors.tint} style={styles.sectionIcon} />
+            <ThemedText style={[styles.subsectionTitle, { color: colors.text }]}>Location</ThemedText>
+          </View>
+          <ThemedText style={[styles.locationText, { color: colors.textSecondary }]}>
+            {club.location}
+          </ThemedText>
+        </View>
+        
+        {/* About */}
+        {club.description && (
+          <View style={styles.infoSubsection}>
+            <View style={styles.sectionHeaderWithIcon}>
+              <Ionicons name="document-text-outline" size={18} color={colors.tint} style={styles.sectionIcon} />
+              <ThemedText style={[styles.subsectionTitle, { color: colors.text }]}>About</ThemedText>
+            </View>
+            <ThemedText style={[styles.descriptionText, { color: colors.textSecondary }]}>
+              {club.description}
+            </ThemedText>
+          </View>
+        )}
+      </ThemedView>
+
       {/* Bottom padding */}
       <View style={{ height: 20 }} />
     </ScrollView>
@@ -233,7 +240,7 @@ const styles = StyleSheet.create({
   sectionHeaderWithIcon: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 12,
+    marginBottom: 8,
   },
   sectionIcon: {
     fontSize: 20,
@@ -286,6 +293,14 @@ const styles = StyleSheet.create({
   locationText: {
     fontSize: 14,
     lineHeight: 20,
+    marginBottom: 4,
+  },
+  infoSubsection: {
+    marginTop: 20,
+  },
+  subsectionTitle: {
+    fontSize: 14,
+    fontWeight: '600',
   },
   descriptionText: {
     fontSize: 14,
@@ -314,10 +329,13 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     padding: 20,
     alignItems: 'center',
+    minHeight: 140, // Ensure enough space for emoji and text
   },
   placeholderEmoji: {
     fontSize: 32,
     marginBottom: 8,
+    lineHeight: 40, // Ensure proper line height for emoji
+    textAlign: 'center',
   },
   placeholderText: {
     fontSize: 14,

@@ -37,12 +37,12 @@ export function CalendarDatePicker({
   });
 
   const today = new Date();
-  const selectedDateObj = selectedDate ? new Date(selectedDate) : null;
+  const selectedDateObj = selectedDate ? new Date(selectedDate + 'T00:00:00') : null;
 
   // Format date for display
   const formatDisplayDate = (dateString: string): string => {
     if (!dateString) return '';
-    const date = new Date(dateString);
+    const date = new Date(dateString + 'T00:00:00');
     return date.toLocaleDateString('en-US', {
       weekday: 'short',
       month: 'short',
@@ -84,8 +84,14 @@ export function CalendarDatePicker({
   const isDateDisabled = (date: Date): boolean => {
     const dateStr = date.toISOString().split('T')[0];
     
-    if (maxDate && dateStr > maxDate) return true;
-    if (minDate && dateStr < minDate) return true;
+    if (maxDate && dateStr > maxDate) {
+      console.log('📅 Date disabled: after maxDate', { dateStr, maxDate });
+      return true;
+    }
+    if (minDate && dateStr < minDate) {
+      console.log('📅 Date disabled: before minDate', { dateStr, minDate });
+      return true;
+    }
     
     return false;
   };
@@ -209,14 +215,15 @@ export function CalendarDatePicker({
       aspectRatio: 1,
       alignItems: 'center',
       justifyContent: 'center',
-      margin: 1,
     },
     dayButton: {
-      width: '90%',
-      height: '90%',
+      width: '100%',
+      height: '100%',
       borderRadius: 6,
       alignItems: 'center',
       justifyContent: 'center',
+      margin: 0,
+      padding: 0,
     },
     dayText: {
       fontSize: 16,

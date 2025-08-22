@@ -5,7 +5,6 @@ import {
   TouchableOpacity, 
   TextInput, 
   ScrollView, 
-  KeyboardAvoidingView,
   Platform 
 } from 'react-native';
 import { router } from 'expo-router';
@@ -244,7 +243,7 @@ export default function SignUpPage() {
           {/* App Title and Message */}
           <View style={styles.titleSection}>
             <ThemedText type="title" style={styles.appTitle}>
-              🎾 Tennis Club
+              🎾 Play Serve
             </ThemedText>
             <ThemedText type="default" style={[styles.subtitle, { color: colors.tabIconDefault }]}>
               Join the tennis community!
@@ -252,11 +251,13 @@ export default function SignUpPage() {
           </View>
 
           {/* Sign Up Form */}
-          <KeyboardAvoidingView 
-            behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+          <ScrollView 
             style={styles.formContainer}
+            showsVerticalScrollIndicator={false}
+            contentContainerStyle={styles.scrollContent}
+            keyboardShouldPersistTaps="handled"
+            automaticallyAdjustKeyboardInsets={true}
           >
-            <ScrollView showsVerticalScrollIndicator={false}>
               <View style={styles.inputContainer}>
                 <ThemedText style={[styles.inputLabel, { color: colors.text }]}>Full Name</ThemedText>
                 <TextInput
@@ -345,11 +346,18 @@ export default function SignUpPage() {
                     autoCorrect={false}
                     editable={!isLoading}
                     testID="password-input"
+                    autoFocus={false}
+                    blurOnSubmit={false}
+                    textContentType="none"
+                    autoComplete="off"
+                    passwordRules=""
                   />
                   <TouchableOpacity
                     style={styles.eyeButton}
                     onPress={() => setShowPassword(!showPassword)}
                     disabled={isLoading}
+                    activeOpacity={0.7}
+                    hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
                   >
                     <Ionicons 
                       name={showPassword ? 'eye-off' : 'eye'} 
@@ -381,6 +389,9 @@ export default function SignUpPage() {
                     autoCorrect={false}
                     editable={!isLoading}
                     testID="confirm-password-input"
+                    textContentType="none"
+                    autoComplete="off"
+                    passwordRules=""
                   />
                   <TouchableOpacity
                     style={styles.eyeButton}
@@ -455,7 +466,6 @@ export default function SignUpPage() {
                 </TouchableOpacity>
               </View>
             </ScrollView>
-          </KeyboardAvoidingView>
         </ThemedView>
       </SafeAreaView>
     </ThemedView>
@@ -526,6 +536,11 @@ const styles = StyleSheet.create({
   formContainer: {
     flex: 1,
   },
+  scrollContent: {
+    flexGrow: 1,
+    paddingBottom: 100, // Extra padding at bottom to prevent clipping
+    minHeight: '100%', // Ensure content fills available space
+  },
   inputContainer: {
     marginBottom: 16,
   },
@@ -543,8 +558,11 @@ const styles = StyleSheet.create({
   },
   passwordContainer: {
     position: 'relative',
+    flexDirection: 'row',
+    alignItems: 'center',
   },
   passwordInput: {
+    flex: 1,
     borderWidth: 1,
     borderRadius: 8,
     paddingHorizontal: 12,
@@ -554,9 +572,9 @@ const styles = StyleSheet.create({
   },
   eyeButton: {
     position: 'absolute',
-    right: 12,
-    top: 12,
-    padding: 4,
+    right: 8,
+    padding: 8,
+    zIndex: 1,
   },
   checkboxContainer: {
     flexDirection: 'row',
@@ -582,7 +600,8 @@ const styles = StyleSheet.create({
     paddingVertical: 16,
     paddingHorizontal: 24,
     borderRadius: 12,
-    marginBottom: 24,
+    marginBottom: 40, // Increased bottom margin
+    marginTop: 16,    // Added top margin
     alignItems: 'center',
   },
   disabledButton: {

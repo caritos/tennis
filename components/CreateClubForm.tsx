@@ -12,7 +12,6 @@ import { Ionicons } from '@expo/vector-icons';
 import { useColorScheme } from '@/hooks/useColorScheme';
 import { Colors } from '@/constants/Colors';
 import { CompactStyles } from '@/constants/CompactStyles';
-import { useLocation } from '@/hooks/useLocation';
 import { useAuth } from '@/contexts/AuthContext';
 import { ClubService } from '@/services/clubService';
 import { Club } from '@/lib/supabase';
@@ -40,7 +39,6 @@ interface FormErrors {
 export function CreateClubForm({ onSuccess, onCancel }: CreateClubFormProps) {
   const colorScheme = useColorScheme();
   const colors = Colors[colorScheme ?? 'light'];
-  const { location, hasLocationPermission, loading: locationLoading } = useLocation(true); // Auto-request enabled
   const { user } = useAuth();
   const clubService = new ClubService();
 
@@ -100,145 +98,6 @@ export function CreateClubForm({ onSuccess, onCancel }: CreateClubFormProps) {
     clearError(field);
   };
 
-  const estimateLocationFromCoordinates = (lat: number, lng: number) => {
-    // Enhanced location estimation based on coordinates
-    // This provides better coverage of major tennis-playing areas
-    
-    // San Francisco Bay Area
-    if (lat >= 37.4 && lat <= 37.9 && lng >= -122.6 && lng <= -122.1) {
-      return {
-        area: 'San Francisco Bay Area',
-        zipCode: '94102',
-      };
-    }
-    
-    // Los Angeles Area
-    if (lat >= 33.7 && lat <= 34.3 && lng >= -118.7 && lng <= -117.6) {
-      return {
-        area: 'Los Angeles Area',
-        zipCode: '90210',
-      };
-    }
-    
-    // New York City Area
-    if (lat >= 40.4 && lat <= 40.9 && lng >= -74.3 && lng <= -73.7) {
-      return {
-        area: 'New York City Area',
-        zipCode: '10001',
-      };
-    }
-    
-    // Miami Area
-    if (lat >= 25.6 && lat <= 26.0 && lng >= -80.4 && lng <= -80.1) {
-      return {
-        area: 'Miami Area',
-        zipCode: '33101',
-      };
-    }
-    
-    // Chicago Area
-    if (lat >= 41.6 && lat <= 42.1 && lng >= -88.0 && lng <= -87.5) {
-      return {
-        area: 'Chicago Area',
-        zipCode: '60601',
-      };
-    }
-    
-    // Austin Area
-    if (lat >= 30.1 && lat <= 30.5 && lng >= -97.9 && lng <= -97.6) {
-      return {
-        area: 'Austin Area',
-        zipCode: '78701',
-      };
-    }
-    
-    // Seattle Area
-    if (lat >= 47.4 && lat <= 47.8 && lng >= -122.5 && lng <= -122.2) {
-      return {
-        area: 'Seattle Area',
-        zipCode: '98101',
-      };
-    }
-    
-    // Boston Area
-    if (lat >= 42.2 && lat <= 42.5 && lng >= -71.3 && lng <= -70.9) {
-      return {
-        area: 'Boston Area',
-        zipCode: '02101',
-      };
-    }
-    
-    // Atlanta Area
-    if (lat >= 33.6 && lat <= 33.9 && lng >= -84.6 && lng <= -84.2) {
-      return {
-        area: 'Atlanta Area',
-        zipCode: '30301',
-      };
-    }
-    
-    // Phoenix Area
-    if (lat >= 33.3 && lat <= 33.7 && lng >= -112.4 && lng <= -111.8) {
-      return {
-        area: 'Phoenix Area',
-        zipCode: '85001',
-      };
-    }
-    
-    // General regional estimation based on coordinates
-    if (lat >= 25 && lat <= 49 && lng >= -125 && lng <= -66) {
-      // Continental US
-      const state = estimateUSState(lat, lng);
-      return {
-        area: `${state} Area`,
-        zipCode: getStateDefaultZip(state),
-      };
-    }
-    
-    // International or unrecognized location
-    return {
-      area: 'Your Area',
-      zipCode: '',
-    };
-  };
-
-  const estimateUSState = (lat: number, lng: number): string => {
-    // Simplified state estimation
-    if (lat >= 32 && lat <= 37 && lng >= -106 && lng <= -93) return 'Texas';
-    if (lat >= 25 && lat <= 31 && lng >= -87 && lng <= -80) return 'Florida';
-    if (lat >= 32 && lat <= 42 && lng >= -124 && lng <= -114) return 'California';
-    if (lat >= 40 && lat <= 45 && lng >= -74 && lng <= -71) return 'New York';
-    if (lat >= 39 && lat <= 42 && lng >= -88 && lng <= -84) return 'Illinois';
-    return 'United States';
-  };
-
-  const getStateDefaultZip = (state: string): string => {
-    const stateZips: { [key: string]: string } = {
-      'Texas': '75201',
-      'Florida': '33101',
-      'California': '90210',
-      'New York': '10001',
-      'Illinois': '60601',
-      'United States': '10001',
-    };
-    return stateZips[state] || '10001';
-  };
-
-  const handleUseCurrentLocation = () => {
-    if (!location) {
-      setErrors(prev => ({ ...prev, general: 'Unable to get current location' }));
-      return;
-    }
-
-    const estimated = estimateLocationFromCoordinates(location.latitude, location.longitude);
-    setFormData(prev => ({
-      ...prev,
-      area: estimated.area,
-      zipCode: estimated.zipCode,
-    }));
-    clearError('area');
-    clearError('zipCode');
-    clearError('general');
-  };
 
   const handleSubmit = async () => {
     if (!validateForm() || !user?.id) {
@@ -257,8 +116,8 @@ export function CreateClubForm({ onSuccess, onCancel }: CreateClubFormProps) {
         description: formData.description.trim(),
         location: formData.area.trim(),
         zipCode: formData.zipCode.trim(),
-        lat: location?.latitude || 37.7749, // Default to SF
-        lng: location?.longitude || -122.4194,
+        lat: 37.7749, // Default coordinates (will be updated later with geocoding)
+        lng: -122.4194,
         creator_id: user.id,
       };
 
@@ -333,22 +192,6 @@ export function CreateClubForm({ onSuccess, onCancel }: CreateClubFormProps) {
       color: '#ff4444',
       fontSize: CompactStyles.errorText.fontSize,
       marginTop: CompactStyles.errorText.marginTop,
-    },
-    locationButton: {
-      backgroundColor: colors.tint,
-      paddingHorizontal: CompactStyles.button.paddingHorizontal - 8,
-      paddingVertical: CompactStyles.smallMargin,
-      borderRadius: 6,
-      marginTop: CompactStyles.smallMargin,
-      alignSelf: 'flex-end',
-    },
-    locationButtonDisabled: {
-      backgroundColor: colors.tabIconDefault,
-    },
-    locationButtonText: {
-      color: '#ffffff',
-      fontSize: CompactStyles.link.fontSize,
-      fontWeight: '500',
     },
     buttonContainer: {
       flexDirection: 'row',
@@ -467,19 +310,6 @@ export function CreateClubForm({ onSuccess, onCancel }: CreateClubFormProps) {
               accessibilityLabel="Zip Code"
             />
             {errors.zipCode && <Text style={styles.errorText}>{errors.zipCode}</Text>}
-            
-            <TouchableOpacity
-              style={[
-                styles.locationButton,
-                locationLoading && styles.locationButtonDisabled
-              ]}
-              onPress={handleUseCurrentLocation}
-              disabled={locationLoading}
-            >
-              <Text style={styles.locationButtonText}>
-                {locationLoading ? 'Getting Location...' : 'Use Current Location'}
-              </Text>
-            </TouchableOpacity>
           </View>
         </View>
       </ScrollView>

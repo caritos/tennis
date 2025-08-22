@@ -43,9 +43,8 @@ function RootLayoutNav() {
 
   return (
     <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
-      <View style={{ flex: 1 }}>
-        <StatusBar style="auto" />
-        <Stack screenOptions={{ headerShown: false }}>
+      <StatusBar style="auto" />
+      <Stack screenOptions={{ headerShown: false }}>
           {user ? (
             <>
               <Stack.Screen name="index" options={{ headerShown: false }} />
@@ -71,7 +70,6 @@ function RootLayoutNav() {
           )}
           <Stack.Screen name="+not-found" options={{ title: 'Oops!' }} />
         </Stack>
-      </View>
     </ThemeProvider>
   );
 }

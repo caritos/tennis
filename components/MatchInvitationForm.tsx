@@ -28,7 +28,10 @@ const MatchInvitationForm: React.FC<MatchInvitationFormProps> = ({
   const { showSuccess, showError } = useNotification();
 
   const [matchType, setMatchType] = useState<'singles' | 'doubles'>('singles');
-  const [selectedDate, setSelectedDate] = useState<Date>(new Date());
+  // Default to tomorrow's date in YYYY-MM-DD format
+  const tomorrow = new Date();
+  tomorrow.setDate(tomorrow.getDate() + 1);
+  const [selectedDate, setSelectedDate] = useState<string>(tomorrow.toISOString().split('T')[0]);
   const [time, setTime] = useState('');
   const [location, setLocation] = useState('Location TBD');
   const [notes, setNotes] = useState('');
@@ -46,8 +49,8 @@ const MatchInvitationForm: React.FC<MatchInvitationFormProps> = ({
     try {
       setIsSubmitting(true);
 
-      // Ensure selectedDate is a valid Date object
-      const validDate = selectedDate instanceof Date ? selectedDate : new Date(selectedDate);
+      // Validate date format (selectedDate is already a string in YYYY-MM-DD format)
+      const validDate = new Date(selectedDate + 'T00:00:00');
       if (isNaN(validDate.getTime())) {
         showError('Invalid Date', 'Please select a valid date for your match invitation.');
         return;
@@ -57,7 +60,7 @@ const MatchInvitationForm: React.FC<MatchInvitationFormProps> = ({
         club_id: clubId,
         creator_id: creatorId,
         match_type: matchType,
-        date: validDate.toISOString().split('T')[0], // YYYY-MM-DD format
+        date: selectedDate, // Already in YYYY-MM-DD format
         time: time || undefined,
         location: location.trim() || undefined,
         notes: notes.trim() || undefined,
@@ -86,7 +89,10 @@ const MatchInvitationForm: React.FC<MatchInvitationFormProps> = ({
     }
   };
 
-  const formatDate = (date: Date) => {
+  const formatDate = (dateString: string) => {
+    if (!dateString) return '';
+    
+    const date = new Date(dateString + 'T00:00:00');
     const today = new Date();
     const tomorrow = new Date(today);
     tomorrow.setDate(tomorrow.getDate() + 1);
@@ -184,7 +190,6 @@ const MatchInvitationForm: React.FC<MatchInvitationFormProps> = ({
                       setSelectedDate(date);
                     }
                   }}
-                  displayFormat={formatDate}
                 />
               </View>
 

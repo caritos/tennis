@@ -159,14 +159,6 @@ export default function ClubMatches({
           <ThemedText style={[styles.sectionTitle, { color: colors.text }]}>
             Match History ({filteredMatches.length})
           </ThemedText>
-          {onRecordMatch && (
-            <TouchableOpacity
-              style={[styles.recordButton, { backgroundColor: colors.tint }]}
-              onPress={onRecordMatch}
-            >
-              <ThemedText style={styles.recordButtonText}>Record Match</ThemedText>
-            </TouchableOpacity>
-          )}
         </View>
 
         {filteredMatches.length > 0 ? (
@@ -296,16 +288,6 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '600',
   },
-  recordButton: {
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 16,
-  },
-  recordButtonText: {
-    fontSize: 12,
-    fontWeight: '600',
-    color: '#fff',
-  },
   matchesList: {
     gap: 0,
   },
@@ -330,10 +312,13 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     padding: 20,
     alignItems: 'center',
+    minHeight: 140, // Ensure enough space for emoji and text
   },
   placeholderEmoji: {
     fontSize: 32,
     marginBottom: 8,
+    lineHeight: 40, // Ensure proper line height for emoji
+    textAlign: 'center',
   },
   placeholderText: {
     fontSize: 14,

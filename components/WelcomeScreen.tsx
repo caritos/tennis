@@ -78,7 +78,7 @@ export function WelcomeScreen({
         {/* Header with Tennis Emoji and App Title */}
         <View style={styles.header}>
           <ThemedText type="title" style={styles.appTitle}>
-            🎾 Tennis Club
+            🎾 Play Serve
           </ThemedText>
         </View>
 
