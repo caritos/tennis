@@ -342,6 +342,8 @@ const ClubChallenges = React.memo<ClubChallengesProps>(({
   );
 });
 
+ClubChallenges.displayName = 'ClubChallenges';
+
 const styles = StyleSheet.create({
   sectionHeader: {
     flexDirection: 'row',
