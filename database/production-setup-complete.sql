@@ -182,6 +182,7 @@ CREATE TABLE matches (
 CREATE TABLE club_members (
   club_id UUID NOT NULL REFERENCES clubs(id) ON DELETE CASCADE,
   user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  role TEXT DEFAULT 'member' CHECK (role IN ('member', 'admin', 'moderator')),
   joined_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
   PRIMARY KEY (club_id, user_id)
 );
