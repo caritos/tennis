@@ -51,7 +51,7 @@ const LookingToPlaySection: React.FC<LookingToPlaySectionProps> = ({
       console.log('🔄 LookingToPlaySection: Loading invitations for club:', clubId);
       setIsLoading(true);
       const clubInvitations = await matchInvitationService.getClubInvitations(clubId);
-      console.log('📋 LookingToPlaySection: Loaded', clubInvitations.length, 'invitations');
+      console.log('📋 LookingToPlaySection: Loaded', clubInvitations.length, 'invitations:', clubInvitations);
       
       // Load responses for each invitation
       const invitationsWithResponses = await Promise.all(
@@ -68,7 +68,7 @@ const LookingToPlaySection: React.FC<LookingToPlaySectionProps> = ({
         })
       );
 
-      console.log('✅ LookingToPlaySection: Successfully processed all invitations with responses');
+      console.log('✅ LookingToPlaySection: Successfully processed', invitationsWithResponses.length, 'invitations with responses:', invitationsWithResponses);
       setInvitations(invitationsWithResponses);
       onInvitationsChange?.(invitationsWithResponses.length > 0);
     } catch (error) {
@@ -255,23 +255,27 @@ const LookingToPlaySection: React.FC<LookingToPlaySectionProps> = ({
     );
   };
 
-  // Only show content if there are invitations
-  if (invitations.length === 0 && !showInviteForm) {
-    return null;
-  }
-
   return (
     <>
-      {invitations.length > 0 && (
-        <ThemedView style={styles.sectionCard}>
-          <View style={styles.sectionHeader}>
-            <ThemedText style={styles.sectionLabel}>Looking to Play</ThemedText>
-          </View>
+      <ThemedView style={styles.sectionCard}>
+        <View style={styles.sectionHeader}>
+          <ThemedText style={styles.sectionLabel}>Looking to Play</ThemedText>
+        </View>
+        {invitations.length > 0 ? (
           <View style={styles.invitationsContainer}>
             {invitations.map(renderInvitation)}
           </View>
-        </ThemedView>
-      )}
+        ) : (
+          <View style={styles.placeholder}>
+            <ThemedText style={styles.placeholderText}>
+              🎾 No active invitations
+            </ThemedText>
+            <ThemedText style={[styles.placeholderSubtext, { color: colors.textSecondary }]}>
+              Create an invitation to find players
+            </ThemedText>
+          </View>
+        )}
+      </ThemedView>
 
       {/* Match Invitation Form Modal */}
       <Modal
@@ -449,9 +453,16 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     padding: 20,
     alignItems: 'center',
+    opacity: 0.7,
   },
   placeholderText: {
     fontSize: 14,
     textAlign: 'center',
+    fontWeight: '600',
+  },
+  placeholderSubtext: {
+    fontSize: 12,
+    textAlign: 'center',
+    marginTop: 4,
   },
 });

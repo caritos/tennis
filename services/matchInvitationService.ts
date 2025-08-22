@@ -1,6 +1,4 @@
-import { initializeDatabase } from '@/database/database';
-import { syncService } from './sync';
-import { NotificationService } from './NotificationService';
+import { supabase } from '../lib/supabase';
 import { generateUUID } from '../utils/uuid';
 
 export interface MatchInvitation {
@@ -58,7 +56,6 @@ export class MatchInvitationService {
    * Create a new match invitation
    */
   public async createInvitation(invitationData: CreateInvitationData): Promise<MatchInvitation> {
-    const db = await initializeDatabase();
     const invitationId = generateUUID();
     
     const invitation: MatchInvitation = {
@@ -69,46 +66,19 @@ export class MatchInvitationService {
     };
 
     try {
-      // Store locally first
-      await db.runAsync(
-        `INSERT INTO match_invitations (
-          id, club_id, creator_id, match_type, date, time, location, notes, status, created_at, expires_at
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-        [
-          invitation.id,
-          invitation.club_id,
-          invitation.creator_id,
-          invitation.match_type,
-          invitation.date,
-          invitation.time || null,
-          invitation.location || null,
-          invitation.notes || null,
-          invitation.status,
-          invitation.created_at,
-          invitation.expires_at || null,
-        ]
-      );
+      const { data, error } = await supabase
+        .from('match_invitations')
+        .insert(invitation)
+        .select()
+        .single();
 
-      // Queue for sync (don't let sync failures block the UI)
-      try {
-        await syncService.queueInvitationCreation(
-          invitation.club_id,
-          invitation.creator_id,
-          invitation.match_type,
-          invitation.date,
-          invitation.time,
-          invitation.location,
-          invitation.notes,
-          invitation.expires_at
-        );
-        console.log('✅ Match invitation queued for sync:', invitation.id);
-      } catch (syncError) {
-        console.warn('⚠️ Failed to queue invitation for sync (invitation still created locally):', syncError);
-        // Don't throw - invitation was created locally successfully
+      if (error) {
+        console.error('❌ Failed to create invitation:', error);
+        throw new Error('Failed to create match invitation');
       }
 
       console.log('✅ Match invitation created:', invitation.id);
-      return invitation;
+      return data as MatchInvitation;
     } catch (error) {
       console.error('❌ Failed to create invitation:', error);
       throw new Error('Failed to create match invitation');
@@ -119,22 +89,30 @@ export class MatchInvitationService {
    * Get active invitations for a club
    */
   public async getClubInvitations(clubId: string): Promise<MatchInvitation[]> {
-    const db = await initializeDatabase();
-    
     try {
       // Clean up expired invitations before fetching
       await this.cleanupExpiredInvitations(clubId);
       
-      const invitations = await db.getAllAsync(
-        `SELECT mi.*, u.full_name as creator_name
-         FROM match_invitations mi
-         LEFT JOIN users u ON mi.creator_id = u.id
-         WHERE mi.club_id = ? AND mi.status = 'active'
-         ORDER BY mi.created_at DESC`,
-        [clubId]
-      );
+      const { data: invitations, error } = await supabase
+        .from('match_invitations')
+        .select(`
+          *,
+          creator:users!match_invitations_creator_id_fkey(full_name)
+        `)
+        .eq('club_id', clubId)
+        .eq('status', 'active')
+        .order('created_at', { ascending: false });
 
-      return invitations as MatchInvitation[];
+      if (error) {
+        console.error('❌ Failed to get club invitations:', error);
+        return [];
+      }
+
+      // Map joined data to expected format
+      return (invitations || []).map((invitation: any) => ({
+        ...invitation,
+        creator_name: invitation.creator?.full_name
+      }));
     } catch (error) {
       console.error('❌ Failed to get club invitations:', error);
       return [];
@@ -145,19 +123,26 @@ export class MatchInvitationService {
    * Get responses for an invitation
    */
   public async getInvitationResponses(invitationId: string): Promise<InvitationResponse[]> {
-    const db = await initializeDatabase();
-    
     try {
-      const responses = await db.getAllAsync(
-        `SELECT ir.*, u.full_name as user_name
-         FROM invitation_responses ir
-         LEFT JOIN users u ON ir.user_id = u.id
-         WHERE ir.invitation_id = ?
-         ORDER BY ir.created_at ASC`,
-        [invitationId]
-      );
+      const { data: responses, error } = await supabase
+        .from('invitation_responses')
+        .select(`
+          *,
+          user:users!invitation_responses_user_id_fkey(full_name)
+        `)
+        .eq('invitation_id', invitationId)
+        .order('created_at', { ascending: true });
 
-      return responses as InvitationResponse[];
+      if (error) {
+        console.error('❌ Failed to get invitation responses:', error);
+        return [];
+      }
+
+      // Map joined data to expected format
+      return (responses || []).map((response: any) => ({
+        ...response,
+        user_name: response.user?.full_name
+      }));
     } catch (error) {
       console.error('❌ Failed to get invitation responses:', error);
       return [];
@@ -172,7 +157,6 @@ export class MatchInvitationService {
     userId: string,
     message?: string
   ): Promise<InvitationResponse> {
-    const db = await initializeDatabase();
     const responseId = generateUUID();
     
     const response: InvitationResponse = {
@@ -186,58 +170,37 @@ export class MatchInvitationService {
 
     try {
       // Check if user already responded
-      const existingResponse = await db.getFirstAsync(
-        'SELECT id FROM invitation_responses WHERE invitation_id = ? AND user_id = ?',
-        [invitationId, userId]
-      );
+      const { data: existingResponse } = await supabase
+        .from('invitation_responses')
+        .select('id')
+        .eq('invitation_id', invitationId)
+        .eq('user_id', userId)
+        .single();
 
       if (existingResponse) {
         throw new Error('You have already responded to this invitation');
       }
 
-      // Store locally first
-      await db.runAsync(
-        `INSERT INTO invitation_responses (
-          id, invitation_id, user_id, message, status, created_at
-        ) VALUES (?, ?, ?, ?, ?, ?)`,
-        [
-          response.id,
-          response.invitation_id,
-          response.user_id,
-          response.message || null,
-          response.status,
-          response.created_at,
-        ]
-      );
+      // Create the response
+      const { data, error } = await supabase
+        .from('invitation_responses')
+        .insert(response)
+        .select()
+        .single();
 
-      // Create notification for invitation creator
-      const invitationDetails = await db.getFirstAsync(
-        `SELECT mi.creator_id, mi.match_type, mi.date, u.full_name as responder_name
-         FROM match_invitations mi
-         JOIN users u ON u.id = ?
-         WHERE mi.id = ?`,
-        [userId, invitationId]
-      ) as any;
-
-      if (invitationDetails) {
-        const notificationService = new NotificationService(db);
-        await notificationService.createMatchInvitationNotification(
-          invitationDetails.creator_id,
-          invitationDetails.responder_name,
-          invitationId,
-          invitationDetails.match_type,
-          invitationDetails.date
-        );
+      if (error) {
+        console.error('❌ Failed to respond to invitation:', error);
+        throw error;
       }
 
-      // Queue for sync
-      await syncService.queueInvitationResponse(invitationId, userId, message);
+      // TODO: Create notification for invitation creator
+      // This would require implementing a notification system with Supabase
 
       // Check if we should auto-match
       await this.checkAutoMatch(invitationId);
 
       console.log('✅ Invitation response created:', response.id);
-      return response;
+      return data as InvitationResponse;
     } catch (error) {
       console.error('❌ Failed to respond to invitation:', error);
       throw error;
@@ -248,27 +211,31 @@ export class MatchInvitationService {
    * Cancel an invitation
    */
   public async cancelInvitation(invitationId: string, userId: string): Promise<void> {
-    const db = await initializeDatabase();
-    
     try {
       // Verify the user owns this invitation
-      const invitation = await db.getFirstAsync(
-        'SELECT creator_id FROM match_invitations WHERE id = ?',
-        [invitationId]
-      );
+      const { data: invitation, error: fetchError } = await supabase
+        .from('match_invitations')
+        .select('creator_id')
+        .eq('id', invitationId)
+        .single();
 
-      if (!invitation || invitation.creator_id !== userId) {
+      if (fetchError || !invitation || invitation.creator_id !== userId) {
         throw new Error('You can only cancel your own invitations');
       }
 
-      // Update locally
-      await db.runAsync(
-        'UPDATE match_invitations SET status = ?, updated_at = ? WHERE id = ?',
-        ['cancelled', new Date().toISOString(), invitationId]
-      );
+      // Update the invitation status
+      const { error: updateError } = await supabase
+        .from('match_invitations')
+        .update({
+          status: 'cancelled',
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', invitationId);
 
-      // Queue for sync
-      await syncService.queueInvitationCancellation(invitationId);
+      if (updateError) {
+        console.error('❌ Failed to cancel invitation:', updateError);
+        throw updateError;
+      }
 
       console.log('✅ Invitation cancelled:', invitationId);
     } catch (error) {
@@ -281,49 +248,68 @@ export class MatchInvitationService {
    * Check if invitation should be auto-matched
    */
   private async checkAutoMatch(invitationId: string): Promise<void> {
-    const db = await initializeDatabase();
-    
     try {
       // Get invitation details
-      const invitation = await db.getFirstAsync(
-        'SELECT * FROM match_invitations WHERE id = ? AND status = "active"',
-        [invitationId]
-      ) as MatchInvitation | null;
+      const { data: invitation, error: invitationError } = await supabase
+        .from('match_invitations')
+        .select('*')
+        .eq('id', invitationId)
+        .eq('status', 'active')
+        .single();
 
-      if (!invitation) return;
+      if (invitationError || !invitation) return;
 
       // Get interested responses
-      const responses = await db.getAllAsync(
-        'SELECT * FROM invitation_responses WHERE invitation_id = ? AND status = "interested"',
-        [invitationId]
-      );
+      const { data: responses, error: responsesError } = await supabase
+        .from('invitation_responses')
+        .select('*')
+        .eq('invitation_id', invitationId)
+        .eq('status', 'interested');
+
+      if (responsesError) {
+        console.error('❌ Failed to get responses for auto-match:', responsesError);
+        return;
+      }
 
       const requiredPlayers = invitation.match_type === 'singles' ? 2 : 4;
-      const totalPlayers = responses.length + 1; // +1 for creator
+      const totalPlayers = (responses?.length || 0) + 1; // +1 for creator
 
       if (totalPlayers >= requiredPlayers) {
         // Auto-match: confirm the match
         const confirmedPlayerIds = [
           invitation.creator_id,
-          ...responses.slice(0, requiredPlayers - 1).map((r: any) => r.user_id)
+          ...(responses || []).slice(0, requiredPlayers - 1).map((r: any) => r.user_id)
         ];
 
         // Update invitation status
-        await db.runAsync(
-          'UPDATE match_invitations SET status = ?, updated_at = ? WHERE id = ?',
-          ['matched', new Date().toISOString(), invitationId]
-        );
+        const { error: updateInvitationError } = await supabase
+          .from('match_invitations')
+          .update({
+            status: 'matched',
+            updated_at: new Date().toISOString()
+          })
+          .eq('id', invitationId);
 
-        // Update response statuses
-        await db.runAsync(
-          `UPDATE invitation_responses 
-           SET status = ?, updated_at = ? 
-           WHERE invitation_id = ? AND user_id IN (${confirmedPlayerIds.slice(1).map(() => '?').join(',')})`,
-          ['confirmed', new Date().toISOString(), invitationId, ...confirmedPlayerIds.slice(1)]
-        );
+        if (updateInvitationError) {
+          console.error('❌ Failed to update invitation status:', updateInvitationError);
+          return;
+        }
 
-        // Queue match confirmation for sync
-        await syncService.queueMatchConfirmation(invitationId, confirmedPlayerIds);
+        // Update response statuses for confirmed players
+        if (confirmedPlayerIds.length > 1) {
+          const { error: updateResponsesError } = await supabase
+            .from('invitation_responses')
+            .update({
+              status: 'confirmed',
+              updated_at: new Date().toISOString()
+            })
+            .eq('invitation_id', invitationId)
+            .in('user_id', confirmedPlayerIds.slice(1));
+
+          if (updateResponsesError) {
+            console.error('❌ Failed to update response statuses:', updateResponsesError);
+          }
+        }
 
         console.log('🎾 Auto-matched invitation:', invitationId, 'with players:', confirmedPlayerIds);
       }
@@ -336,19 +322,26 @@ export class MatchInvitationService {
    * Get user's invitations (created by user)
    */
   public async getUserInvitations(userId: string): Promise<MatchInvitation[]> {
-    const db = await initializeDatabase();
-    
     try {
-      const invitations = await db.getAllAsync(
-        `SELECT mi.*, c.name as club_name
-         FROM match_invitations mi
-         LEFT JOIN clubs c ON mi.club_id = c.id
-         WHERE mi.creator_id = ?
-         ORDER BY mi.created_at DESC`,
-        [userId]
-      );
+      const { data: invitations, error } = await supabase
+        .from('match_invitations')
+        .select(`
+          *,
+          club:clubs!match_invitations_club_id_fkey(name)
+        `)
+        .eq('creator_id', userId)
+        .order('created_at', { ascending: false });
 
-      return invitations as MatchInvitation[];
+      if (error) {
+        console.error('❌ Failed to get user invitations:', error);
+        return [];
+      }
+
+      // Map joined data to expected format
+      return (invitations || []).map((invitation: any) => ({
+        ...invitation,
+        club_name: invitation.club?.name
+      }));
     } catch (error) {
       console.error('❌ Failed to get user invitations:', error);
       return [];
@@ -359,21 +352,38 @@ export class MatchInvitationService {
    * Get user's responses (invitations user responded to)
    */
   public async getUserResponses(userId: string): Promise<InvitationResponse[]> {
-    const db = await initializeDatabase();
-    
     try {
-      const responses = await db.getAllAsync(
-        `SELECT ir.*, mi.match_type, mi.date, mi.time, mi.notes, u.full_name as creator_name, c.name as club_name
-         FROM invitation_responses ir
-         LEFT JOIN match_invitations mi ON ir.invitation_id = mi.id
-         LEFT JOIN users u ON mi.creator_id = u.id
-         LEFT JOIN clubs c ON mi.club_id = c.id
-         WHERE ir.user_id = ?
-         ORDER BY ir.created_at DESC`,
-        [userId]
-      );
+      const { data: responses, error } = await supabase
+        .from('invitation_responses')
+        .select(`
+          *,
+          invitation:match_invitations!invitation_responses_invitation_id_fkey(
+            match_type,
+            date,
+            time,
+            notes,
+            creator:users!match_invitations_creator_id_fkey(full_name),
+            club:clubs!match_invitations_club_id_fkey(name)
+          )
+        `)
+        .eq('user_id', userId)
+        .order('created_at', { ascending: false });
 
-      return responses as InvitationResponse[];
+      if (error) {
+        console.error('❌ Failed to get user responses:', error);
+        return [];
+      }
+
+      // Flatten joined data to expected format
+      return (responses || []).map((response: any) => ({
+        ...response,
+        match_type: response.invitation?.match_type,
+        date: response.invitation?.date,
+        time: response.invitation?.time,
+        notes: response.invitation?.notes,
+        creator_name: response.invitation?.creator?.full_name,
+        club_name: response.invitation?.club?.name
+      }));
     } catch (error) {
       console.error('❌ Failed to get user responses:', error);
       return [];
@@ -384,49 +394,66 @@ export class MatchInvitationService {
    * Clean up expired invitations
    */
   private async cleanupExpiredInvitations(clubId?: string): Promise<void> {
-    const db = await initializeDatabase();
-    
     try {
       const now = new Date();
       const currentDateTime = now.toISOString();
+      const currentDate = now.toISOString().split('T')[0];
       
-      // Build the WHERE clause - either for a specific club or all clubs
-      let whereClause = '';
-      let params: any[] = [];
+      // Build the query for expired invitations
+      let query = supabase
+        .from('match_invitations')
+        .select('id, date, time, expires_at')
+        .eq('status', 'active');
       
       if (clubId) {
-        whereClause = 'WHERE club_id = ? AND';
-        params.push(clubId);
-      } else {
-        whereClause = 'WHERE';
+        query = query.eq('club_id', clubId);
       }
       
-      // Find invitations that have passed their date/time
-      const expiredInvitations = await db.getAllAsync(
-        `SELECT id, date, time, expires_at
-         FROM match_invitations 
-         ${whereClause} status = 'active' AND (
-           -- Check if expires_at is set and passed
-           (expires_at IS NOT NULL AND expires_at < ?) OR
-           -- Check if date/time combination has passed (fallback if no expires_at)
-           (expires_at IS NULL AND date < ? AND (time IS NULL OR datetime(date || ' ' || time) < datetime('now')))
-         )`,
-        [...params, currentDateTime, now.toISOString().split('T')[0]]
-      );
+      const { data: allInvitations, error: fetchError } = await query;
+      
+      if (fetchError) {
+        console.error('❌ Failed to fetch invitations for cleanup:', fetchError);
+        return;
+      }
+      
+      // Filter expired invitations in JavaScript since Supabase doesn't support complex date comparisons
+      const expiredInvitations = (allInvitations || []).filter((invitation: any) => {
+        // Check if expires_at is set and passed
+        if (invitation.expires_at && invitation.expires_at < currentDateTime) {
+          return true;
+        }
+        
+        // Check if date/time combination has passed (fallback if no expires_at)
+        if (!invitation.expires_at && invitation.date < currentDate) {
+          // If no time specified, consider it expired if the date has passed
+          if (!invitation.time) {
+            return true;
+          }
+          
+          // If time is specified, check if the datetime combination has passed
+          const invitationDateTime = new Date(`${invitation.date}T${invitation.time}`);
+          return invitationDateTime < now;
+        }
+        
+        return false;
+      });
       
       if (expiredInvitations.length > 0) {
         console.log(`🗑️ Found ${expiredInvitations.length} expired invitations, removing...`);
         
-        // Delete expired invitations (this will cascade to responses)
+        // Delete expired invitations
         const expiredIds = expiredInvitations.map((inv: any) => inv.id);
-        const placeholders = expiredIds.map(() => '?').join(',');
         
-        await db.runAsync(
-          `DELETE FROM match_invitations WHERE id IN (${placeholders})`,
-          expiredIds
-        );
+        const { error: deleteError } = await supabase
+          .from('match_invitations')
+          .delete()
+          .in('id', expiredIds);
         
-        console.log(`✅ Removed ${expiredInvitations.length} expired invitations`);
+        if (deleteError) {
+          console.error('❌ Failed to delete expired invitations:', deleteError);
+        } else {
+          console.log(`✅ Removed ${expiredInvitations.length} expired invitations`);
+        }
       }
     } catch (error) {
       console.error('❌ Failed to cleanup expired invitations:', error);

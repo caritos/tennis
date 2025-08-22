@@ -333,19 +333,25 @@ export default function ClubDetailScreen() {
     if (!user?.id) return;
     
     try {
-      const db = await initializeDatabase();
-      
       // Update the match to replace the unregistered player name with the current user's ID
       const updateColumn = playerPosition + '_id';
       const nameColumn = playerPosition === 'player2' ? 'opponent2_name' : 
                          playerPosition === 'player3' ? 'partner3_name' : 'partner4_name';
       
-      await db.runAsync(
-        `UPDATE matches 
-         SET ${updateColumn} = ?, ${nameColumn} = NULL 
-         WHERE id = ?`,
-        [user.id, matchId]
-      );
+      const updateData: any = {
+        [updateColumn]: user.id,
+        [nameColumn]: null
+      };
+      
+      const { error } = await supabase
+        .from('matches')
+        .update(updateData)
+        .eq('id', matchId);
+      
+      if (error) {
+        console.error('Failed to claim match:', error);
+        return;
+      }
       
       // Reload matches to reflect the change
       loadClubDetails();
@@ -391,14 +397,7 @@ export default function ClubDetailScreen() {
         <ThemedText style={styles.headerTitle} numberOfLines={1}>
           {club.name}
         </ThemedText>
-        {isCreator ? (
-          <TouchableOpacity style={styles.editButton}>
-            <Ionicons name="settings-outline" size={20} color={colors.text} />
-            <ThemedText style={styles.editText}>Edit</ThemedText>
-          </TouchableOpacity>
-        ) : (
-          <View style={styles.headerSpacer} />
-        )}
+        <View style={styles.headerSpacer} />
       </View>
 
       {/* Tabs */}
