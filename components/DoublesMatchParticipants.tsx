@@ -72,17 +72,6 @@ export const DoublesMatchParticipants: React.FC<DoublesMatchParticipantsProps> =
             ))}
           </View>
 
-          {/* Match Formation Info - moved inside players section */}
-          {!isMatched && currentPlayers >= 2 && (
-            <View style={[styles.infoBox, { backgroundColor: colors.tint + '10', borderColor: colors.tint + '30' }]}>
-              <ThemedText style={[styles.infoText, { color: colors.tint }]}>
-                {currentPlayers < 4 
-                  ? `💡 Need ${requiredPlayers - currentPlayers} more player${requiredPlayers - currentPlayers !== 1 ? 's' : ''} for doubles match`
-                  : '🎾 Ready for doubles!'
-                }
-              </ThemedText>
-            </View>
-          )}
         </View>
 
         {/* Additional Interested Players */}
@@ -290,18 +279,5 @@ const styles = StyleSheet.create({
   },
   waitingPlayerName: {
     fontSize: 12,
-  },
-  infoBox: {
-    borderWidth: 1,
-    borderRadius: 6,
-    padding: 12,
-    marginTop: 16, // Increased margin to ensure separation
-    marginBottom: 8,
-    backgroundColor: 'transparent', // Ensure no background color conflicts
-  },
-  infoText: {
-    fontSize: 12,
-    textAlign: 'center',
-    fontWeight: '500',
   },
 });
