@@ -11,6 +11,7 @@ interface ClubMember {
   match_count: number;
   wins: number;
   ranking?: number;
+  winRate?: number;
 }
 
 interface ClubMembersProps {
@@ -54,11 +55,11 @@ export default function ClubMembers({
   const sortedMembers = [...filteredMembers].sort((a, b) => {
     switch (sortBy) {
       case 'ranking':
-        // Lower ranking number = better rank (1st place = 1, 2nd place = 2, etc.)
-        // Put unranked members at the end
-        const rankA = a.ranking ?? Number.MAX_SAFE_INTEGER;
-        const rankB = b.ranking ?? Number.MAX_SAFE_INTEGER;
-        return rankA - rankB;
+        // Sort by win rate (higher is better)
+        // Put unranked members (0% or undefined) at the end
+        const winRateA = a.winRate ?? -1;
+        const winRateB = b.winRate ?? -1;
+        return winRateB - winRateA;
       case 'wins':
         return (b.wins || 0) - (a.wins || 0);
       case 'matches':
@@ -179,9 +180,9 @@ export default function ClubMembers({
                       <View style={styles.memberNameRow}>
                         <View style={styles.nameWithBadge}>
                           <ThemedText style={styles.memberName}>
-                            {member.ranking && (
-                              <ThemedText style={[styles.rankNumber, { color: colors.tint }]}>
-                                #{member.ranking}{' '}
+                            {member.winRate !== undefined && member.winRate > 0 && (
+                              <ThemedText style={[styles.rankScore, { color: colors.tint }]}>
+                                {member.winRate}%{' '}
                               </ThemedText>
                             )}
                             {member.full_name || 'Unknown Member'}
@@ -377,7 +378,7 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '600',
   },
-  rankNumber: {
+  rankScore: {
     fontSize: 16,
     fontWeight: '700',
   },

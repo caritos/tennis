@@ -257,6 +257,7 @@ export default function ClubDetailScreen() {
           match_count: rankedPlayer?.stats.totalMatches || 0,
           wins: rankedPlayer?.stats.wins || 0,
           ranking: rankedPlayer?.ranking || undefined, // Use the ranking from the rankedPlayer object if it exists
+          winRate: rankedPlayer?.stats.winRate || 0, // Add win rate percentage as the ranking score
         };
       });
       
