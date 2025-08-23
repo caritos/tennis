@@ -48,29 +48,55 @@ export const UpcomingMatchesNotification: React.FC<UpcomingMatchesNotificationPr
     
     setIsLoading(true);
     try {
-      // Get all matched invitations where user is involved
+      // Get all matched invitations where user is the creator
       const { data: matchedInvitations, error } = await supabase
         .from('match_invitations')
         .select(`
           *,
-          creator:users!match_invitations_creator_id_fkey(id, full_name, phone),
+          creator:users!creator_id(id, full_name, phone),
           responses:invitation_responses(
             *,
-            user:users!invitation_responses_user_id_fkey(id, full_name, phone)
+            user:users!user_id(id, full_name, phone)
           )
         `)
         .eq('club_id', clubId)
         .eq('status', 'matched')
-        .or(`creator_id.eq.${userId},responses.user_id.eq.${userId}`)
+        .eq('creator_id', userId)
         .order('date', { ascending: true });
 
-      if (error) {
-        console.error('❌ Failed to load upcoming matches:', error);
+      // Also get invitations where user has responded
+      const { data: respondedInvitations, error: respondedError } = await supabase
+        .from('match_invitations')
+        .select(`
+          *,
+          creator:users!creator_id(id, full_name, phone),
+          responses:invitation_responses(
+            *,
+            user:users!user_id(id, full_name, phone)
+          )
+        `)
+        .eq('club_id', clubId)
+        .eq('status', 'matched')
+        .neq('creator_id', userId)
+        .order('date', { ascending: true });
+
+      if (error || respondedError) {
+        console.error('❌ Failed to load upcoming matches:', error || respondedError);
         return;
       }
 
+      // Filter responded invitations to only those where the user has confirmed
+      const userRespondedInvitations = (respondedInvitations || []).filter((invitation: any) => {
+        return invitation.responses && invitation.responses.some((response: any) => 
+          response.user_id === userId && response.status === 'confirmed'
+        );
+      });
+
+      // Combine both sets of invitations
+      const allMatchedInvitations = [...(matchedInvitations || []), ...userRespondedInvitations];
+
       // Process the matched invitations to get confirmed players
-      const matches: UpcomingMatch[] = (matchedInvitations || []).map((invitation: any) => {
+      const matches: UpcomingMatch[] = allMatchedInvitations.map((invitation: any) => {
         const confirmedPlayers: ConfirmedPlayer[] = [];
         
         // Add creator
