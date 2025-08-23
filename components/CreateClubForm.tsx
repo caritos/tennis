@@ -244,19 +244,6 @@ export function CreateClubForm({ onSuccess, onCancel }: CreateClubFormProps) {
       fontSize: 14,
       textAlign: 'center',
     },
-    locationIndicator: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      padding: 12,
-      borderRadius: 8,
-      borderWidth: 1,
-      marginBottom: 16,
-    },
-    locationText: {
-      fontSize: 13,
-      marginLeft: 8,
-      flex: 1,
-    },
   });
 
   return (
@@ -331,15 +318,6 @@ export function CreateClubForm({ onSuccess, onCancel }: CreateClubFormProps) {
             {errors.zipCode && <Text style={styles.errorText}>{errors.zipCode}</Text>}
           </View>
 
-          {/* Location indicator */}
-          <View style={[styles.locationIndicator, { backgroundColor: colors.tint + '10', borderColor: colors.tint }]}>
-            <Ionicons name="location" size={16} color={colors.tint} />
-            <Text style={[styles.locationText, { color: colors.text }]}>
-              {location 
-                ? `Club will be created at your current location`
-                : `Club will be created in New York (default location)`}
-            </Text>
-          </View>
 
           <View style={styles.buttonContainer}>
         <TouchableOpacity style={[styles.button, styles.cancelButton]} onPress={onCancel}>
