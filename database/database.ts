@@ -39,34 +39,15 @@ async function initializeDatabaseInternal(): Promise<Database> {
     // Temporarily disable foreign key constraints during initialization
     await db.execAsync('PRAGMA foreign_keys = OFF;');
     
-    // For development: Only drop tables if explicitly requested via environment variable
-    // This preserves user data during normal development
-    if (process.env.EXPO_PUBLIC_RESET_DATABASE === 'true') {
-      try {
-        console.log('⚠️ RESETTING DATABASE - All data will be lost!');
-        // Drop tables in reverse dependency order
-        await db.execAsync('DROP TABLE IF EXISTS notifications;');
-        await db.execAsync('DROP TABLE IF EXISTS challenge_counters;');
-        await db.execAsync('DROP TABLE IF EXISTS challenges;');
-        await db.execAsync('DROP TABLE IF EXISTS invitation_responses;');
-        await db.execAsync('DROP TABLE IF EXISTS match_invitations;');
-        await db.execAsync('DROP TABLE IF EXISTS club_members;');
-        await db.execAsync('DROP TABLE IF EXISTS matches;');
-        await db.execAsync('DROP TABLE IF EXISTS clubs;');
-        await db.execAsync('DROP TABLE IF EXISTS users;');
-        console.log('Database tables dropped successfully');
-      } catch (dropError) {
-        console.error('Failed to drop tables:', dropError);
-        throw dropError;
-      }
-    }
+    // NOTE: Database reset functionality removed - now using Supabase directly
+    // Legacy SQLite reset logic removed since migration is complete
     
     // Create tables with latest schema
     await createTables(db);
     
-    // Only seed if database is empty or reset was requested
+    // Only seed if database is empty
     const userCount = await db.getFirstAsync('SELECT COUNT(*) as count FROM users');
-    if (!userCount || userCount.count === 0 || process.env.EXPO_PUBLIC_RESET_DATABASE === 'true') {
+    if (!userCount || userCount.count === 0) {
       await seedDatabase(db);
     } else {
       console.log(`ℹ️ Database already contains ${userCount.count} users, skipping seed data`);
