@@ -283,7 +283,8 @@ const styles = StyleSheet.create({
   },
   controlsCard: {
     marginHorizontal: 16,
-    marginVertical: 8,
+    marginTop: 8,
+    marginBottom: 4,
     padding: 16,
     borderRadius: 12,
     shadowOffset: { width: 0, height: 2 },
@@ -293,7 +294,8 @@ const styles = StyleSheet.create({
   },
   membersCard: {
     marginHorizontal: 16,
-    marginVertical: 8,
+    marginTop: 4,
+    marginBottom: 8,
     padding: 16,
     borderRadius: 12,
     shadowOffset: { width: 0, height: 2 },
@@ -302,7 +304,7 @@ const styles = StyleSheet.create({
     elevation: 3,
   },
   controlSection: {
-    marginBottom: 16,
+    marginBottom: 12,
   },
   controlLabel: {
     fontSize: 12,
