@@ -25,7 +25,6 @@ import { CalendarDatePicker } from './CalendarDatePicker';
 import { TennisScoreEntry } from './TennisScoreEntry';
 import { TennisSet } from '@/types/tennis';
 import { formatScoreString } from '../utils/tennisUtils';
-import { initializeDatabase } from '../database/database';
 
 interface MatchRecordingFormProps {
   onSave: (matchData: CreateMatchData) => void;
@@ -321,24 +320,37 @@ export function MatchRecordingForm(componentProps: MatchRecordingFormProps) {
     }
     
     try {
-      const db = await initializeDatabase();
-      
       console.log('📋 Loading club members for club:', clubId, 'excluding user:', user?.id);
       
+      // Import supabase
+      const { supabase } = await import('@/lib/supabase');
+      
       // Get all club members except current user
-      const members = await db.getAllAsync(`
-        SELECT u.id, u.full_name 
-        FROM club_members cm 
-        JOIN users u ON cm.user_id = u.id 
-        WHERE cm.club_id = ? AND u.id != ?
-      `, [clubId, user?.id || '']);
+      const { data: members, error } = await supabase
+        .from('club_members')
+        .select(`
+          users (
+            id,
+            full_name
+          )
+        `)
+        .eq('club_id', clubId)
+        .neq('user_id', user?.id || '');
       
-      const playerList: Player[] = members?.map((member: any) => ({
-        id: member.id,
-        name: member.full_name
-      })) || [];
+      if (error) {
+        console.error('Failed to load club members from Supabase:', error);
+        setClubMembers([]);
+        return;
+      }
       
-      console.log('📋 Loaded club members:', playerList);
+      const playerList: Player[] = (members || [])
+        .filter(m => m.users)
+        .map((member: any) => ({
+          id: member.users.id,
+          name: member.users.full_name || 'Unknown'
+        }));
+      
+      console.log('📋 Loaded club members from Supabase:', playerList);
       setClubMembers(playerList);
     } catch (error) {
       console.error('Failed to load club members:', error);
