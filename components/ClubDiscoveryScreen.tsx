@@ -61,21 +61,20 @@ export const ClubDiscoveryScreen: React.FC<ClubDiscoveryScreenProps> = ({
     setLoading(true);
     try {
       let userLat, userLng;
-      let radius = 25;
 
       if (location?.latitude && location?.longitude) {
         userLat = location.latitude; 
         userLng = location.longitude;
         console.log('Using user location for club discovery:', userLat, userLng);
       } else {
-        // Fallback to NYC with wide radius
+        // Fallback to NYC when no location
         userLat = 40.7128;
         userLng = -74.0060;
-        radius = 10000; // Wide radius when no location
         console.log('Using fallback location for club discovery');
       }
 
-      const nearbyClubs = await getNearbyClubs(userLat, userLng, radius);
+      // Get the 10 nearest clubs regardless of distance
+      const nearbyClubs = await getNearbyClubs(userLat, userLng, 10);
       setClubs(nearbyClubs);
 
       // Calculate distances

@@ -164,7 +164,7 @@ export class ClubService {
     }
   }
 
-  async getClubsByLocation(userLat: number, userLng: number, radiusKm: number = 25): Promise<ClubWithDistance[]> {
+  async getClubsByLocation(userLat: number, userLng: number, maxClubs: number = 10): Promise<ClubWithDistance[]> {
     try {
       // Check current user authentication
       const { data: { user }, error: authError } = await supabase.auth.getUser();
@@ -185,8 +185,8 @@ export class ClubService {
 
       if (!clubs) return [];
 
-      // Calculate distances and filter by radius
-      console.log('🔍 getClubsByLocation - User location:', { userLat, userLng }, 'Radius:', radiusKm);
+      // Calculate distances and sort by nearest
+      console.log('🔍 getClubsByLocation - User location:', { userLat, userLng });
       
       const clubsWithDistance: ClubWithDistance[] = clubs
         .map(club => {
@@ -197,16 +197,10 @@ export class ClubService {
             distance
           };
         })
-        .filter(club => {
-          const isWithinRadius = club.distance! <= radiusKm;
-          if (!isWithinRadius) {
-            console.log('🚫 Club filtered out (too far):', club.name, 'Distance:', club.distance?.toFixed(2), 'km > Radius:', radiusKm);
-          }
-          return isWithinRadius;
-        })
-        .sort((a, b) => a.distance! - b.distance!);
+        .sort((a, b) => a.distance! - b.distance!)
+        .slice(0, maxClubs); // Return only the nearest clubs
 
-      console.log('🔍 getClubsByLocation - Returning', clubsWithDistance.length, 'clubs within', radiusKm, 'km');
+      console.log('🔍 getClubsByLocation - Returning', clubsWithDistance.length, 'nearest clubs');
       return clubsWithDistance;
 
     } catch (error) {
@@ -262,14 +256,14 @@ export const createClub = (clubData: CreateClubData) => clubService.createClub(c
 export const joinClub = (clubId: string, userId: string) => clubService.joinClub(clubId, userId);
 export const leaveClub = (clubId: string, userId: string) => clubService.leaveClub(clubId, userId);
 export const getUserClubs = (userId: string) => clubService.getUserClubs(userId);
-export const getClubsByLocation = (userLat: number, userLng: number, radiusKm?: number) => 
-  clubService.getClubsByLocation(userLat, userLng, radiusKm);
+export const getClubsByLocation = (userLat: number, userLng: number, maxClubs?: number) => 
+  clubService.getClubsByLocation(userLat, userLng, maxClubs);
 export const isClubMember = (clubId: string, userId: string) => clubService.isClubMember(clubId, userId);
 export const calculateDistance = (lat1: number, lng1: number, lat2: number, lng2: number) => 
   clubService.calculateDistance(lat1, lng1, lat2, lng2);
 
 // Alias exports for backward compatibility
-export const getNearbyClubs = (userLat: number, userLng: number, radiusKm?: number) => 
-  clubService.getClubsByLocation(userLat, userLng, radiusKm);
+export const getNearbyClubs = (userLat: number, userLng: number, maxClubs?: number) => 
+  clubService.getClubsByLocation(userLat, userLng, maxClubs);
 
 export default clubService;

@@ -62,21 +62,20 @@ export default function ClubScreen() {
 
       // Get nearby clubs with improved location handling
       let userLat, userLng;
-      let radius = 25; // Default 25km radius
       
       if (location?.latitude && location?.longitude) {
         userLat = location.latitude;
         userLng = location.longitude;
         console.log('Using actual user location:', userLat, userLng);
       } else {
-        // Fallback to default location (NYC) with reasonable radius when no location available
+        // Fallback to default location (NYC) when no location available
         userLat = 40.7128;
         userLng = -74.0060;
-        radius = 100; // 100km radius around NYC when location is unknown
-        console.log('Using fallback location (NYC) with limited radius:', userLat, userLng, 'radius:', radius);
+        console.log('Using fallback location (NYC):', userLat, userLng);
       }
       
-      const nearbyClubs = await getClubsByLocation(userLat, userLng, radius);
+      // Get the 10 nearest clubs regardless of distance
+      const nearbyClubs = await getClubsByLocation(userLat, userLng, 10);
       console.log('Nearby clubs received:', nearbyClubs.length);
       setClubs(nearbyClubs);
 
