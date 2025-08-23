@@ -65,19 +65,23 @@
       "questions": [
         {
           "question": "How do rankings work?",
-          "answer": "Rankings are calculated based on:\n• Match wins (100 points per win)\n• Win streaks (up to 200 bonus points)\n• Consistency (100 bonus points for 60%+ win rate)\n• Activity (up to 150 points based on matches played)\n• Small penalties for losses to encourage competitive play\n\nRankings are updated immediately after each match and are specific to each club."
+          "answer": "Play Serve uses an ELO rating system similar to chess and professional tennis:\n\n**Starting Rating**: Everyone begins at 1200 points\n\n**How Points Work**:\n• **Beat a stronger player**: Gain more points (up to +40)\n• **Beat a similar player**: Gain moderate points (+20)\n• **Beat a weaker player**: Gain fewer points (+5 minimum)\n• **Lose to a stronger player**: Lose few points (-5 minimum)\n• **Lose to a weaker player**: Lose more points (up to -40)\n\n**Example**: If you (1200) beat someone rated 1400, you might gain +35 points while they lose -35. This rewards taking on stronger opponents!\n\nRankings update immediately after each match and are specific to each club."
+        },
+        {
+          "question": "Why does beating stronger players give more points?",
+          "answer": "The ELO system rewards competitive challenges:\n• It encourages players to challenge those above their level\n• Prevents 'farming' easy wins against weaker players\n• Creates accurate skill-based rankings\n• Makes upsets exciting and rewarding\n\nThe bigger the rating gap, the more points at stake!"
         },
         {
           "question": "What happens to my ranking if I don't play for a while?",
-          "answer": "Rankings are based on your recent match history. If you're inactive for an extended period, your ranking points may decrease, encouraging active participation in the community."
+          "answer": "Your ELO rating stays the same when inactive - you don't lose points for not playing. However:\n• Active players may pass you in the rankings\n• Your first few games back use a higher 'K-factor' for bigger adjustments\n• This helps your rating quickly adjust if your skill has changed"
         },
         {
           "question": "Are singles and doubles ranked separately?",
-          "answer": "Currently, rankings combine both singles and doubles results. Your overall performance across all match types determines your club ranking."
+          "answer": "Currently, both singles and doubles affect your overall ELO rating:\n• Singles matches have full impact on your rating\n• Doubles matches have 50% impact (since wins are shared)\n• This gives you one unified club ranking across all play"
         },
         {
-          "question": "What are provisional rankings?",
-          "answer": "Provisional rankings are for players with fewer than 5 matches in a club. They're indicated by a '*' symbol and appear at the bottom of the rankings list. This includes:\n• New club members with 0 matches\n• Players with 1-4 matches\n\nOnce you play 5 matches, you'll establish a non-provisional ranking and compete for top positions. Provisional players may see larger ranking changes as the system learns their skill level."
+          "question": "What do the rating tiers mean?",
+          "answer": "Players are grouped into skill tiers based on ELO rating:\n\n• **Elite** (1600+): Top competitive players 🏆\n• **Advanced** (1400-1599): Strong club players 🥈\n• **Intermediate** (1200-1399): Average club players 🥉\n• **Beginner** (1000-1199): Developing players 🌱\n• **New Player** (<1000): Just starting out 🎾\n\nNew players with fewer than 10 matches see larger rating changes as the system learns their skill level."
         }
       ]
     },
