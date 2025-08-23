@@ -5,7 +5,6 @@ import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
 import { TennisScoreDisplay } from '@/components/TennisScoreDisplay';
 import { ClubRankings, RankedPlayer } from '@/components/ClubRankings';
-import LookingToPlaySection from '@/components/LookingToPlaySection';
 import { Club } from '@/lib/supabase';
 
 interface ClubOverviewProps {
@@ -66,8 +65,6 @@ export default function ClubOverview({
           </TouchableOpacity>
         </View>
       </ThemedView>
-
-      <LookingToPlaySection clubId={club.id} />
 
       {/* Rankings */}
       <ThemedView style={[styles.sectionCard, { backgroundColor: colors.card }]}>

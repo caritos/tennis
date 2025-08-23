@@ -3,6 +3,7 @@ import { View, TouchableOpacity, StyleSheet, ScrollView } from 'react-native';
 import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
 import { TennisScoreDisplay } from '@/components/TennisScoreDisplay';
+import LookingToPlaySection from '@/components/LookingToPlaySection';
 
 interface Match {
   id: string;
@@ -152,6 +153,9 @@ export default function ClubMatches({
           </View>
         </View>
       </ThemedView>
+
+      {/* Upcoming Section - Looking to Play */}
+      {club?.id && <LookingToPlaySection clubId={club.id} />}
 
       {/* Matches List */}
       <ThemedView style={[styles.matchesCard, { backgroundColor: colors.card }]}>
