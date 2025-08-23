@@ -47,7 +47,7 @@ export const DoublesMatchParticipants: React.FC<DoublesMatchParticipantsProps> =
         )}
 
         {/* Players List */}
-        <View>
+        <View style={styles.playersSection}>
           <View style={styles.playersContainer}>
             {allPlayers.slice(0, 4).map((player, index) => (
               <View key={index} style={[styles.playerSlot, { borderColor: colors.tabIconDefault + '20' }]}>
@@ -72,6 +72,17 @@ export const DoublesMatchParticipants: React.FC<DoublesMatchParticipantsProps> =
             ))}
           </View>
 
+          {/* Match Formation Info - moved inside players section */}
+          {!isMatched && currentPlayers >= 2 && (
+            <View style={[styles.infoBox, { backgroundColor: colors.tint + '10', borderColor: colors.tint + '30' }]}>
+              <ThemedText style={[styles.infoText, { color: colors.tint }]}>
+                {currentPlayers < 4 
+                  ? `💡 Need ${requiredPlayers - currentPlayers} more player${requiredPlayers - currentPlayers !== 1 ? 's' : ''} for doubles match`
+                  : '🎾 Ready for doubles!'
+                }
+              </ThemedText>
+            </View>
+          )}
         </View>
 
         {/* Additional Interested Players */}
@@ -87,18 +98,6 @@ export const DoublesMatchParticipants: React.FC<DoublesMatchParticipantsProps> =
                 </ThemedText>
               ))}
             </View>
-          </View>
-        )}
-
-        {/* Match Formation Info */}
-        {!isMatched && currentPlayers >= 2 && (
-          <View style={[styles.infoBox, { backgroundColor: colors.tint + '10', borderColor: colors.tint + '30' }]}>
-            <ThemedText style={[styles.infoText, { color: colors.tint }]}>
-              {currentPlayers < 4 
-                ? `💡 Need ${requiredPlayers - currentPlayers} more player${requiredPlayers - currentPlayers !== 1 ? 's' : ''} for doubles match`
-                : '🎾 Ready for doubles!'
-              }
-            </ThemedText>
           </View>
         )}
       </View>
@@ -207,6 +206,9 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     marginBottom: 8,
   },
+  playersSection: {
+    marginBottom: 8,
+  },
   playersContainer: {
     flexDirection: 'row',
     flexWrap: 'wrap',
@@ -292,7 +294,8 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderRadius: 6,
     padding: 8,
-    marginTop: 8,
+    marginTop: 12,
+    marginBottom: 4,
   },
   infoText: {
     fontSize: 12,
