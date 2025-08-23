@@ -341,11 +341,169 @@ export const getMatchStats = (playerId: string, clubId?: string) => matchService
 
 // Alias exports for backward compatibility
 export const getMatchHistory = (playerId: string, clubId?: string) => matchService.getUserMatches(playerId, clubId);
-export const getClubLeaderboard = async (clubId: string) => {
-  // TODO: Implement direct Supabase ranking calculation
-  // For now, return empty array to avoid SQLite errors
-  console.log('⚠️ Club rankings not yet implemented for direct Supabase');
-  return [];
+export const getClubLeaderboard = async (clubId: string): Promise<RankedPlayer[]> => {
+  try {
+    // Get all matches for the club
+    const { data: matches, error } = await supabase
+      .from('matches')
+      .select(`
+        *,
+        player1:users!player1_id(id, full_name),
+        player2:users!player2_id(id, full_name),
+        player3:users!player3_id(id, full_name),
+        player4:users!player4_id(id, full_name)
+      `)
+      .eq('club_id', clubId)
+      .order('date', { ascending: false });
+
+    if (error) {
+      console.error('Failed to fetch matches for leaderboard:', error);
+      return [];
+    }
+
+    if (!matches || matches.length === 0) {
+      return [];
+    }
+
+    // Get all club members
+    const { data: members, error: membersError } = await supabase
+      .from('club_members')
+      .select(`
+        users (id, full_name)
+      `)
+      .eq('club_id', clubId);
+
+    if (membersError) {
+      console.error('Failed to fetch members for leaderboard:', membersError);
+      return [];
+    }
+
+    // Create a map to track player statistics
+    const playerStats = new Map<string, {
+      id: string;
+      name: string;
+      wins: number;
+      losses: number;
+      totalMatches: number;
+      winRate: number;
+    }>();
+
+    // Initialize all members in the stats map
+    (members || []).forEach((member: any) => {
+      if (member.users) {
+        playerStats.set(member.users.id, {
+          id: member.users.id,
+          name: member.users.full_name,
+          wins: 0,
+          losses: 0,
+          totalMatches: 0,
+          winRate: 0,
+        });
+      }
+    });
+
+    // Process each match to calculate wins and losses
+    matches.forEach((match: any) => {
+      // Determine winner based on scores
+      const scores = match.scores.split(',');
+      let player1Sets = 0;
+      let player2Sets = 0;
+      
+      scores.forEach((set: string) => {
+        const cleanSet = set.replace(/\([^)]*\)/g, '').trim();
+        const [p1Score, p2Score] = cleanSet.split('-').map(s => parseInt(s));
+        if (p1Score > p2Score) {
+          player1Sets++;
+        } else if (p2Score > p1Score) {
+          player2Sets++;
+        }
+      });
+      
+      const player1Won = player1Sets > player2Sets;
+
+      // Update stats for singles matches
+      if (match.match_type === 'singles') {
+        // Player 1
+        if (match.player1_id && playerStats.has(match.player1_id)) {
+          const stats = playerStats.get(match.player1_id)!;
+          stats.totalMatches++;
+          if (player1Won) {
+            stats.wins++;
+          } else {
+            stats.losses++;
+          }
+          stats.winRate = stats.wins / stats.totalMatches;
+        }
+
+        // Player 2 (if registered user)
+        if (match.player2_id && playerStats.has(match.player2_id)) {
+          const stats = playerStats.get(match.player2_id)!;
+          stats.totalMatches++;
+          if (!player1Won) {
+            stats.wins++;
+          } else {
+            stats.losses++;
+          }
+          stats.winRate = stats.wins / stats.totalMatches;
+        }
+      } else if (match.match_type === 'doubles') {
+        // Update stats for all 4 players in doubles
+        const winningPlayers = player1Won 
+          ? [match.player1_id, match.player3_id]
+          : [match.player2_id, match.player4_id];
+        const losingPlayers = player1Won
+          ? [match.player2_id, match.player4_id]
+          : [match.player1_id, match.player3_id];
+
+        winningPlayers.forEach(playerId => {
+          if (playerId && playerStats.has(playerId)) {
+            const stats = playerStats.get(playerId)!;
+            stats.totalMatches++;
+            stats.wins++;
+            stats.winRate = stats.wins / stats.totalMatches;
+          }
+        });
+
+        losingPlayers.forEach(playerId => {
+          if (playerId && playerStats.has(playerId)) {
+            const stats = playerStats.get(playerId)!;
+            stats.totalMatches++;
+            stats.losses++;
+            stats.winRate = stats.wins / stats.totalMatches;
+          }
+        });
+      }
+    });
+
+    // Convert to array and sort by win rate, then by total matches
+    const rankedPlayers: RankedPlayer[] = Array.from(playerStats.values())
+      .filter(player => player.totalMatches > 0) // Only include players who have played
+      .sort((a, b) => {
+        // First sort by win rate
+        if (b.winRate !== a.winRate) {
+          return b.winRate - a.winRate;
+        }
+        // If win rates are equal, sort by total matches (more matches = higher rank)
+        return b.totalMatches - a.totalMatches;
+      })
+      .map((player, index) => ({
+        id: player.id,
+        name: player.name,
+        ranking: index + 1,
+        stats: {
+          wins: player.wins,
+          losses: player.losses,
+          totalMatches: player.totalMatches,
+          winRate: Math.round(player.winRate * 100),
+        },
+      }));
+
+    console.log(`✅ Generated leaderboard for club ${clubId} with ${rankedPlayers.length} ranked players`);
+    return rankedPlayers;
+  } catch (error) {
+    console.error('Failed to generate club leaderboard:', error);
+    return [];
+  }
 };
 export const recordMatch = (matchData: CreateMatchData) => matchService.createMatch(matchData);
 
