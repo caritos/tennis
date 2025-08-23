@@ -213,7 +213,7 @@ CREATE TABLE invitation_responses (
 );
 
 -- Challenges table (for direct player challenges)
-CREATE TABLE challenges (
+CREATE TABLE IF NOT EXISTS challenges (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
   club_id UUID NOT NULL REFERENCES clubs(id) ON DELETE CASCADE,
   challenger_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
@@ -230,7 +230,7 @@ CREATE TABLE challenges (
 );
 
 -- Challenge counter-offers table
-CREATE TABLE challenge_counters (
+CREATE TABLE IF NOT EXISTS challenge_counters (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
   challenge_id UUID NOT NULL REFERENCES challenges(id) ON DELETE CASCADE,
   counter_by UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
