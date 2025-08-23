@@ -27,11 +27,14 @@ interface ClubMatchesProps {
   club: { id: string; name: string } | null;
   colors: any;
   filterType: 'all' | 'singles' | 'doubles';
-  filterDate: 'all' | 'week' | 'month';
+  filterDate: 'all' | 'upcoming' | 'week' | 'month';
+  filterInvolvement: 'all' | 'my';
   onFilterTypeChange: (type: 'all' | 'singles' | 'doubles') => void;
-  onFilterDateChange: (date: 'all' | 'week' | 'month') => void;
+  onFilterDateChange: (date: 'all' | 'upcoming' | 'week' | 'month') => void;
+  onFilterInvolvementChange: (involvement: 'all' | 'my') => void;
   onClaimMatch?: (matchId: string, playerPosition: "player2" | "player3" | "player4") => void;
   onRecordMatch?: () => void;
+  currentUserId?: string;
 }
 
 export default function ClubMatches({
@@ -40,16 +43,29 @@ export default function ClubMatches({
   colors,
   filterType,
   filterDate,
+  filterInvolvement,
   onFilterTypeChange,
   onFilterDateChange,
+  onFilterInvolvementChange,
   onClaimMatch,
   onRecordMatch,
+  currentUserId,
 }: ClubMatchesProps) {
-  // Filter matches based on type and date
+  // Filter matches based on type, involvement, and date
   const filteredMatches = matches.filter(match => {
     // Filter by match type
     if (filterType !== 'all' && match.match_type !== filterType) {
       return false;
+    }
+    
+    // Filter by user involvement
+    if (filterInvolvement === 'my' && currentUserId) {
+      const isUserInvolved = 
+        match.player1_id === currentUserId ||
+        match.player2_id === currentUserId ||
+        match.player3_id === currentUserId ||
+        match.player4_id === currentUserId;
+      if (!isUserInvolved) return false;
     }
     
     // Filter by date
@@ -57,7 +73,10 @@ export default function ClubMatches({
       const matchDate = new Date(match.date);
       const now = new Date();
       
-      if (filterDate === 'week') {
+      if (filterDate === 'upcoming') {
+        // Show only future matches
+        if (matchDate <= now) return false;
+      } else if (filterDate === 'week') {
         const weekAgo = new Date(now);
         weekAgo.setDate(weekAgo.getDate() - 7);
         if (matchDate < weekAgo) return false;
@@ -123,11 +142,40 @@ export default function ClubMatches({
 
         <View style={styles.filterSection}>
           <ThemedText style={[styles.filterLabel, { color: colors.textSecondary }]}>
+            INVOLVEMENT
+          </ThemedText>
+          <View style={styles.filterButtons}>
+            {(['all', 'my'] as const).map((involvement) => (
+              <TouchableOpacity
+                key={involvement}
+                style={[
+                  styles.filterButton,
+                  filterInvolvement === involvement && { backgroundColor: colors.tint },
+                  filterInvolvement !== involvement && { borderColor: colors.border, borderWidth: 1 }
+                ]}
+                onPress={() => onFilterInvolvementChange(involvement)}
+              >
+                <ThemedText
+                  style={[
+                    styles.filterButtonText,
+                    { color: filterInvolvement === involvement ? '#fff' : colors.text }
+                  ]}
+                >
+                  {involvement === 'all' ? 'All Matches' : 'My Matches'}
+                </ThemedText>
+              </TouchableOpacity>
+            ))}
+          </View>
+        </View>
+
+        <View style={styles.filterSection}>
+          <ThemedText style={[styles.filterLabel, { color: colors.textSecondary }]}>
             TIME PERIOD
           </ThemedText>
           <View style={styles.filterButtons}>
             {([
               { key: 'all', label: 'All Time' },
+              { key: 'upcoming', label: 'Upcoming' },
               { key: 'week', label: 'This Week' },
               { key: 'month', label: 'This Month' }
             ] as const).map(({ key, label }) => (
@@ -161,7 +209,7 @@ export default function ClubMatches({
       <ThemedView style={[styles.matchesCard, { backgroundColor: colors.card }]}>
         <View style={styles.sectionHeader}>
           <ThemedText style={[styles.sectionTitle, { color: colors.text }]}>
-            Match History ({filteredMatches.length})
+            {filterDate === 'upcoming' ? 'Upcoming Matches' : 'Match History'} ({filteredMatches.length})
           </ThemedText>
         </View>
 
@@ -212,15 +260,29 @@ export default function ClubMatches({
           </View>
         ) : (
           <View style={[styles.placeholder, { borderColor: colors.border }]}>
-            <ThemedText style={styles.placeholderEmoji}>🎾</ThemedText>
+            <ThemedText style={styles.placeholderEmoji}>
+              {filterDate === 'upcoming' ? '📅' : '🎾'}
+            </ThemedText>
             <ThemedText style={[styles.placeholderText, { color: colors.text }]}>
-              {filterType === 'all' && filterDate === 'all' 
+              {filterInvolvement === 'my' && filterDate === 'upcoming'
+                ? 'No upcoming matches for you'
+                : filterInvolvement === 'my'
+                ? 'You haven\'t played any matches yet'
+                : filterDate === 'upcoming'
+                ? 'No upcoming matches scheduled'
+                : filterType === 'all' && filterDate === 'all' && filterInvolvement === 'all'
                 ? 'No matches yet • Be the first to play!'
                 : 'No matches found for your filters'
               }
             </ThemedText>
             <ThemedText style={[styles.placeholderSubtext, { color: colors.textSecondary }]}>
-              {filterType === 'all' && filterDate === 'all'
+              {filterInvolvement === 'my' && filterDate === 'upcoming'
+                ? 'Accept match invitations to schedule games'
+                : filterInvolvement === 'my'
+                ? 'Record a match or join a game to start playing'
+                : filterDate === 'upcoming'
+                ? 'Create match invitations to schedule future games'
+                : filterType === 'all' && filterDate === 'all' && filterInvolvement === 'all'
                 ? 'Record your match to start building history'
                 : 'Try adjusting your filters to see more matches'
               }
