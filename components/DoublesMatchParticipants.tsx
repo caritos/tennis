@@ -207,23 +207,24 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   playersSection: {
-    marginBottom: 8,
+    marginBottom: 12, // Increased margin for better separation
   },
   playersContainer: {
     flexDirection: 'row',
     flexWrap: 'wrap',
     gap: 8,
     justifyContent: 'space-between',
-    marginBottom: 8,
+    marginBottom: 16, // Increased margin to prevent overlap
+    minHeight: 64, // Ensure minimum height for 2 rows of cards
   },
   playerSlot: {
     flex: 1,
     minWidth: '45%',
     borderWidth: 1,
     borderRadius: 6,
-    padding: 4,
+    padding: 8, // Increased padding
     alignItems: 'center',
-    minHeight: 28,
+    minHeight: 36, // Increased minimum height
     justifyContent: 'center',
   },
   playerName: {
@@ -241,9 +242,9 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderStyle: 'dashed',
     borderRadius: 6,
-    padding: 4,
+    padding: 8, // Increased padding to match playerSlot
     alignItems: 'center',
-    minHeight: 28,
+    minHeight: 36, // Increased minimum height to match playerSlot
     justifyContent: 'center',
   },
   emptySlotText: {
@@ -293,9 +294,10 @@ const styles = StyleSheet.create({
   infoBox: {
     borderWidth: 1,
     borderRadius: 6,
-    padding: 8,
-    marginTop: 12,
-    marginBottom: 4,
+    padding: 12,
+    marginTop: 16, // Increased margin to ensure separation
+    marginBottom: 8,
+    backgroundColor: 'transparent', // Ensure no background color conflicts
   },
   infoText: {
     fontSize: 12,
