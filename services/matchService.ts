@@ -1,5 +1,6 @@
 import { supabase, Match } from '../lib/supabase';
 import { generateUUID } from '../utils/uuid';
+import { calculateEloRatings, calculateDoublesEloRatings } from '../utils/eloRating';
 
 export interface CreateMatchData {
   club_id: string;
@@ -47,10 +48,79 @@ export interface PlayerStats {
 /**
  * MatchService - Direct Supabase integration without local SQLite
  */
+/**
+ * Helper function to determine match winner from scores
+ * @param scores Match scores like "6-4,7-5" 
+ * @returns 1 if player1/team1 won, 2 if player2/team2 won
+ */
+function determineMatchWinner(scores: string): number {
+  const sets = scores.split(',');
+  let player1Sets = 0;
+  let player2Sets = 0;
+  
+  sets.forEach(set => {
+    const cleanSet = set.replace(/\([^)]*\)/g, '').trim(); // Remove tiebreak notation
+    const [p1Score, p2Score] = cleanSet.split('-').map(s => parseInt(s));
+    if (p1Score > p2Score) {
+      player1Sets++;
+    } else if (p2Score > p1Score) {
+      player2Sets++;
+    }
+  });
+  
+  return player1Sets > player2Sets ? 1 : 2;
+}
+
+/**
+ * Update player ELO ratings after a match
+ */
+async function updatePlayerRatings(
+  winnerId: string,
+  loserId: string,
+  winnerRatingChange: number,
+  loserRatingChange: number,
+  winnerNewRating: number,
+  loserNewRating: number,
+  winnerGamesPlayed: number = 0,
+  loserGamesPlayed: number = 0
+): Promise<void> {
+  // Update both players' ratings and increment games played
+  const updates = [
+    supabase
+      .from('users')
+      .update({
+        elo_rating: winnerNewRating,
+        games_played: winnerGamesPlayed + 1
+      })
+      .eq('id', winnerId),
+    
+    supabase
+      .from('users')
+      .update({
+        elo_rating: loserNewRating,
+        games_played: loserGamesPlayed + 1
+      })
+      .eq('id', loserId)
+  ];
+
+  const results = await Promise.all(updates);
+  
+  // Check for errors
+  results.forEach((result, index) => {
+    if (result.error) {
+      const playerId = index === 0 ? winnerId : loserId;
+      console.error(`❌ Failed to update rating for player ${playerId}:`, result.error);
+      throw new Error(`Failed to update player rating: ${result.error.message}`);
+    }
+  });
+
+  console.log(`✅ Updated ratings: Winner ${winnerId} (${winnerRatingChange > 0 ? '+' : ''}${winnerRatingChange}), Loser ${loserId} (${loserRatingChange})`);
+}
+
 export class MatchService {
 
   async createMatch(matchData: CreateMatchData): Promise<Match> {
-    console.log('🎾 Creating match directly in Supabase...');
+    console.log('🎾 Creating match with ELO rating updates...');
     
     const matchId = generateUUID();
     
@@ -72,6 +142,7 @@ export class MatchService {
     };
 
     try {
+      // First, create the match
       const { data: match, error } = await supabase
         .from('matches')
         .insert(newMatch)
@@ -83,13 +154,197 @@ export class MatchService {
         throw new Error(`Failed to create match: ${error.message}`);
       }
 
-      console.log('✅ Match created successfully');
+      console.log('✅ Match created, now updating ELO ratings...');
+
+      // Update ELO ratings for registered players only
+      if (matchData.scores && (matchData.player2_id || matchData.opponent2_name)) {
+        await this.updateMatchRatings(match);
+      } else {
+        console.log('⚠️ Skipping rating update: incomplete match data or missing opponent');
+      }
+
       return match;
 
     } catch (error) {
       console.error('❌ Match creation failed:', error);
       throw error;
     }
+  }
+
+  /**
+   * Update ELO ratings for players in a match
+   */
+  private async updateMatchRatings(match: Match): Promise<void> {
+    try {
+      const winner = determineMatchWinner(match.scores);
+      
+      if (match.match_type === 'singles') {
+        await this.updateSinglesRatings(match, winner);
+      } else {
+        await this.updateDoublesRatings(match, winner);
+      }
+    } catch (error) {
+      console.error('❌ Failed to update match ratings:', error);
+      // Don't throw here - match is already created, rating update failure shouldn't block
+      console.warn('⚠️ Match created but rating update failed. Ratings may be out of sync.');
+    }
+  }
+
+  /**
+   * Update ratings for singles match
+   */
+  private async updateSinglesRatings(match: Match, winner: number): Promise<void> {
+    // Only update ratings if player1 (the person recording) is a registered user
+    if (!match.player1_id) {
+      console.log('⚠️ Cannot update ratings: player1 (recorder) is not registered');
+      return;
+    }
+
+    // If opponent is unregistered, we'll use a default rating for calculation but only update player1
+    if (!match.player2_id) {
+      console.log('⚠️ Player2 is unregistered, updating only player1 rating against default opponent');
+      await this.updateSinglePlayerRating(match.player1_id, winner === 1, match.scores);
+      return;
+    }
+
+    // Get current ratings for both players
+    const { data: players, error } = await supabase
+      .from('users')
+      .select('id, elo_rating, games_played')
+      .in('id', [match.player1_id, match.player2_id]);
+
+    if (error || !players || players.length !== 2) {
+      console.error('❌ Failed to get player ratings:', error);
+      return;
+    }
+
+    const player1 = players.find(p => p.id === match.player1_id)!;
+    const player2 = players.find(p => p.id === match.player2_id)!;
+
+    // Determine winner and loser
+    const winnerData = winner === 1 ? player1 : player2;
+    const loserData = winner === 1 ? player2 : player1;
+
+    // Calculate new ratings
+    const ratingChanges = calculateEloRatings(
+      {
+        rating: winnerData.elo_rating || 1200,
+        gamesPlayed: winnerData.games_played || 0
+      },
+      {
+        rating: loserData.elo_rating || 1200,
+        gamesPlayed: loserData.games_played || 0
+      },
+      match.scores
+    );
+
+    // Update player ratings
+    await updatePlayerRatings(
+      winnerData.id,
+      loserData.id,
+      ratingChanges.winnerRatingChange,
+      ratingChanges.loserRatingChange,
+      ratingChanges.winnerNewRating,
+      ratingChanges.loserNewRating,
+      winnerData.games_played || 0,
+      loserData.games_played || 0
+    );
+
+    console.log(`✅ Singles ratings updated: ${winnerData.id} (+${ratingChanges.winnerRatingChange}), ${loserData.id} (${ratingChanges.loserRatingChange})`);
+  }
+
+  /**
+   * Update ratings for doubles match
+   */
+  private async updateDoublesRatings(match: Match, winner: number): Promise<void> {
+    // Get all registered player IDs
+    const playerIds = [match.player1_id, match.player2_id, match.player3_id, match.player4_id]
+      .filter(id => id !== null) as string[];
+
+    if (playerIds.length < 2) {
+      console.log('⚠️ Cannot update ratings: need at least 2 registered players for doubles');
+      return;
+    }
+
+    // Get current ratings for all registered players
+    const { data: players, error } = await supabase
+      .from('users')
+      .select('id, elo_rating, games_played')
+      .in('id', playerIds);
+
+    if (error || !players) {
+      console.error('❌ Failed to get player ratings:', error);
+      return;
+    }
+
+    // Organize players by teams
+    const team1Players = [];
+    const team2Players = [];
+
+    // Team 1: player1 and player3
+    if (match.player1_id) {
+      const p1 = players.find(p => p.id === match.player1_id);
+      if (p1) team1Players.push({ 
+        id: p1.id,
+        rating: p1.elo_rating || 1200, 
+        gamesPlayed: p1.games_played || 0 
+      });
+    }
+    if (match.player3_id) {
+      const p3 = players.find(p => p.id === match.player3_id);
+      if (p3) team1Players.push({ 
+        id: p3.id,
+        rating: p3.elo_rating || 1200, 
+        gamesPlayed: p3.games_played || 0 
+      });
+    }
+
+    // Team 2: player2 and player4  
+    if (match.player2_id) {
+      const p2 = players.find(p => p.id === match.player2_id);
+      if (p2) team2Players.push({ 
+        id: p2.id,
+        rating: p2.elo_rating || 1200, 
+        gamesPlayed: p2.games_played || 0 
+      });
+    }
+    if (match.player4_id) {
+      const p4 = players.find(p => p.id === match.player4_id);
+      if (p4) team2Players.push({ 
+        id: p4.id,
+        rating: p4.elo_rating || 1200, 
+        gamesPlayed: p4.games_played || 0 
+      });
+    }
+
+    if (team1Players.length === 0 || team2Players.length === 0) {
+      console.log('⚠️ Cannot update ratings: need at least one registered player on each team');
+      return;
+    }
+
+    // Calculate doubles rating changes
+    const team1Won = winner === 1;
+    const allPlayers = [...team1Players, ...team2Players];
+    const ratingResults = calculateDoublesEloRatings(team1Players, team2Players, team1Won);
+
+    // Update each registered player's rating
+    const updatePromises = allPlayers.map(async (player, index) => {
+      const result = ratingResults[index];
+      if (result) {
+        await supabase
+          .from('users')
+          .update({
+            elo_rating: result.newRating,
+            games_played: player.gamesPlayed + 1
+          })
+          .eq('id', player.id);
+
+        console.log(`✅ Doubles rating updated: ${player.id} (${result.ratingChange > 0 ? '+' : ''}${result.ratingChange})`);
+      }
+    });
+
+    await Promise.all(updatePromises);
+    console.log(`✅ Doubles ratings updated for ${allPlayers.length} players`);
   }
 
   async updateMatch(matchId: string, updateData: UpdateMatchData): Promise<Match> {
@@ -325,6 +580,60 @@ export class MatchService {
       };
     }
   }
+
+  /**
+   * Update rating for a single player (when playing against unregistered opponent)
+   */
+  private async updateSinglePlayerRating(playerId: string, playerWon: boolean, scores: TennisScore[]): Promise<void> {
+    try {
+      // Get current rating for the player
+      const { data: player, error } = await supabase
+        .from('users')
+        .select('id, elo_rating, games_played')
+        .eq('id', playerId)
+        .single();
+
+      if (error || !player) {
+        console.error('❌ Failed to get player rating:', error);
+        return;
+      }
+
+      // Use default rating (1200) for unregistered opponent
+      const DEFAULT_OPPONENT_RATING = 1200;
+      const playerRating = player.elo_rating || 1200;
+      const playerGamesPlayed = player.games_played || 0;
+
+      // Calculate new rating using ELO system
+      const ratingChanges = calculateEloRatings(
+        { rating: playerRating, gamesPlayed: playerGamesPlayed },
+        { rating: DEFAULT_OPPONENT_RATING, gamesPlayed: 10 }, // Assume opponent has some experience
+        scores
+      );
+
+      const newRating = playerWon ? 
+        playerRating + ratingChanges.winnerChange : 
+        playerRating + ratingChanges.loserChange;
+
+      // Update player's rating
+      const { error: updateError } = await supabase
+        .from('users')
+        .update({
+          elo_rating: Math.round(newRating),
+          games_played: playerGamesPlayed + 1
+        })
+        .eq('id', playerId);
+
+      if (updateError) {
+        console.error('❌ Failed to update player rating:', updateError);
+      } else {
+        const change = Math.round(newRating - playerRating);
+        console.log(`✅ Single player rating updated: ${playerId} (${change > 0 ? '+' : ''}${change})`);
+      }
+
+    } catch (error) {
+      console.error('❌ Failed to update single player rating:', error);
+    }
+  }
 }
 
 // Create singleton instance
@@ -365,11 +674,11 @@ export const getClubLeaderboard = async (clubId: string): Promise<RankedPlayer[]
       return [];
     }
 
-    // Get all club members
+    // Get all club members with their ELO ratings
     const { data: members, error: membersError } = await supabase
       .from('club_members')
       .select(`
-        users (id, full_name)
+        users (id, full_name, elo_rating, games_played)
       `)
       .eq('club_id', clubId);
 
@@ -386,6 +695,8 @@ export const getClubLeaderboard = async (clubId: string): Promise<RankedPlayer[]
       losses: number;
       totalMatches: number;
       winRate: number;
+      eloRating: number;
+      gamesPlayed: number;
     }>();
 
     // Initialize all members in the stats map
@@ -398,6 +709,8 @@ export const getClubLeaderboard = async (clubId: string): Promise<RankedPlayer[]
           losses: 0,
           totalMatches: 0,
           winRate: 0,
+          eloRating: member.users.elo_rating || 1200,
+          gamesPlayed: member.users.games_played || 0,
         });
       }
     });
@@ -475,21 +788,18 @@ export const getClubLeaderboard = async (clubId: string): Promise<RankedPlayer[]
       }
     });
 
-    // Convert to array and sort by win rate, then by total matches
+    // Convert to array and sort by ELO rating (highest first)
     const rankedPlayers: RankedPlayer[] = Array.from(playerStats.values())
       .filter(player => player.totalMatches > 0) // Only include players who have played
       .sort((a, b) => {
-        // First sort by win rate
-        if (b.winRate !== a.winRate) {
-          return b.winRate - a.winRate;
-        }
-        // If win rates are equal, sort by total matches (more matches = higher rank)
-        return b.totalMatches - a.totalMatches;
+        // Sort by ELO rating (highest first)
+        return b.eloRating - a.eloRating;
       })
       .map((player, index) => ({
         id: player.id,
         name: player.name,
         ranking: index + 1,
+        rating: player.eloRating,
         stats: {
           wins: player.wins,
           losses: player.losses,

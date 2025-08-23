@@ -45,7 +45,7 @@ const WelcomeStep: React.FC<StepScreenProps> = ({ onNext }) => {
         </View>
         
         <ThemedText type="title" style={styles.welcomeTitle}>
-          Welcome to Tennis Club!
+          Welcome to Play Serve!
         </ThemedText>
         
         <ThemedText style={styles.welcomeSubtitle}>

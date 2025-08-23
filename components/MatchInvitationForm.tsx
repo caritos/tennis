@@ -8,6 +8,7 @@ import { useColorScheme } from '@/hooks/useColorScheme';
 import { Colors } from '@/constants/Colors';
 import { CalendarDatePicker } from './CalendarDatePicker';
 import { matchInvitationService, CreateInvitationData } from '@/services/matchInvitationService';
+import { supabase } from '@/lib/supabase';
 import { useNotification } from '@/contexts/NotificationContext';
 
 interface MatchInvitationFormProps {
@@ -70,9 +71,43 @@ const MatchInvitationForm: React.FC<MatchInvitationFormProps> = ({
 
       console.log('🎾 MatchInvitationForm: Creating invitation with data:', invitationData);
 
-      await matchInvitationService.createInvitation(invitationData);
+      const createdInvitation = await matchInvitationService.createInvitation(invitationData);
 
       console.log('✅ MatchInvitationForm: Invitation created successfully');
+
+      // Create club notification for the invitation
+      try {
+        const { data: userData } = await supabase
+          .from('users')
+          .select('full_name')
+          .eq('id', creatorId)
+          .single();
+
+        const creatorName = userData?.full_name || 'A club member';
+        const dateStr = new Date(selectedDate).toLocaleDateString('en-US', {
+          weekday: 'short',
+          month: 'short',
+          day: 'numeric'
+        });
+        const timeStr = time ? ` at ${time}` : '';
+
+        await matchInvitationService.createClubNotification(clubId, {
+          type: 'invitation_created',
+          title: `New ${matchType} invitation`,
+          message: `${creatorName} is looking for a ${matchType} partner on ${dateStr}${timeStr}`,
+          invitation_id: createdInvitation.id,
+          match_type: matchType,
+          date: selectedDate,
+          time: time,
+          location: location,
+          creator_name: creatorName
+        });
+
+        console.log('✅ MatchInvitationForm: Club notification created');
+      } catch (notificationError) {
+        console.warn('⚠️ MatchInvitationForm: Failed to create club notification:', notificationError);
+        // Don't fail the whole process if notification creation fails
+      }
 
       showSuccess(
         'Looking to Play Posted!',

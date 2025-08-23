@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { NotificationService } from '@/services/NotificationService';
-import { initializeDatabase } from '@/database/database';
+// import { initializeDatabase } from '@/database/database'; // Removed - using NotificationService from Supabase
 
 export const useNotificationCount = () => {
   const [unreadCount, setUnreadCount] = useState(0);
@@ -14,8 +14,7 @@ export const useNotificationCount = () => {
 
     const initializeService = async () => {
       try {
-        const db = await initializeDatabase();
-        notificationService = new NotificationService(db);
+        notificationService = new NotificationService();
         
         // Load initial count
         await loadUnreadCount();
@@ -64,8 +63,7 @@ export const useNotificationCount = () => {
     if (!user?.id) return;
     
     try {
-      const db = await initializeDatabase();
-      const notificationService = new NotificationService(db);
+      const notificationService = new NotificationService();
       const count = await notificationService.getUnreadCount(user.id);
       setUnreadCount(count);
     } catch (error) {

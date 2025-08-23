@@ -6,7 +6,7 @@ import { ClubBadge, MultiTypeBadge } from './ClubBadge';
 import { useClubBadges } from '@/hooks/useClubBadges';
 import { useAuth } from '@/contexts/AuthContext';
 import { NotificationService } from '@/services/NotificationService';
-import { initializeDatabase } from '@/database/database';
+// import { initializeDatabase } from '@/database/database'; // Disabled - dev component
 import { ClubBadgeData, BadgeType } from '@/types/badges';
 
 /**
@@ -45,25 +45,8 @@ export const BadgeTestPanel: React.FC = () => {
   });
 
   const handleCreateTestNotification = async () => {
-    if (!user?.id) return;
-    
-    try {
-      const db = await initializeDatabase();
-      const notificationService = new NotificationService(db);
-      
-      await notificationService.createChallengeNotification(
-        user.id,
-        'Test Player',
-        'test_challenge_' + Date.now(),
-        'singles',
-        'This is a test challenge notification'
-      );
-      
-      // Refresh badges after creating notification
-      setTimeout(() => forceRefresh(), 500);
-    } catch (error) {
-      console.error('Failed to create test notification:', error);
-    }
+    console.log('Test notification creation disabled - using Supabase now');
+    // Development testing disabled since moving to Supabase
   };
 
   if (!__DEV__) {

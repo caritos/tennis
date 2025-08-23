@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { router } from 'expo-router';
 import { EditProfileScreen, ProfileData } from '@/components/EditProfileScreen';
 import { useAuth } from '@/contexts/AuthContext';
-import { initializeDatabase } from '@/database/database';
+// import { initializeDatabase } from '@/database/database'; // Removed - using Supabase
 import { supabase } from '@/lib/supabase';
 
 export default function EditProfilePage() {
@@ -21,13 +21,14 @@ export default function EditProfilePage() {
     }
 
     try {
-      const db = await initializeDatabase();
-      const userData = await db.getFirstAsync(
-        'SELECT full_name, phone FROM users WHERE id = ?',
-        [user.id]
-      ) as any;
+      // Get user data from Supabase
+      const { data: userData, error } = await supabase
+        .from('users')
+        .select('full_name, phone')
+        .eq('id', user.id)
+        .single();
 
-      if (userData) {
+      if (userData && !error) {
         setInitialData({
           full_name: userData.full_name || user.user_metadata?.full_name || '',
           phone: userData.phone || user.user_metadata?.phone || '',
@@ -64,38 +65,19 @@ export default function EditProfilePage() {
     console.log('Saving profile data:', data);
 
     try {
-      // Update local database first
-      const db = await initializeDatabase();
-      await db.runAsync(
-        `UPDATE users SET 
-          phone = ?
-        WHERE id = ?`,
-        [
-          data.phone || null,
-          user.id,
-        ]
-      );
+      // Update Supabase profile
+      const { error } = await supabase
+        .from('users')
+        .update({
+          phone: data.phone || null,
+        })
+        .eq('id', user.id);
 
-      console.log('Local database updated');
-
-      // Also update Supabase if connected
-      try {
-        const { error } = await supabase
-          .from('users')
-          .update({
-            phone: data.phone || null,
-          })
-          .eq('id', user.id);
-
-        if (error) {
-          console.error('Supabase update error:', error);
-          // Don't throw - local update was successful
-        } else {
-          console.log('Supabase profile updated');
-        }
-      } catch (supabaseError) {
-        console.error('Failed to update Supabase:', supabaseError);
-        // Continue - local update was successful
+      if (error) {
+        console.error('Supabase update error:', error);
+        throw error;
+      } else {
+        console.log('Supabase profile updated');
       }
 
       // Update auth metadata
@@ -107,7 +89,7 @@ export default function EditProfilePage() {
 
       if (authError) {
         console.error('Failed to update auth metadata:', authError);
-        // Don't throw - local update was successful
+        // Don't throw - main update was successful
       } else {
         console.log('Auth metadata updated');
       }

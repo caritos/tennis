@@ -18,7 +18,8 @@ import { useColorScheme } from '@/hooks/useColorScheme';
 import { Colors } from '@/constants/Colors';
 import { useAuth } from '@/contexts/AuthContext';
 import { useNotification } from '@/contexts/NotificationContext';
-import { initializeDatabase } from '@/database/database';
+// import { initializeDatabase } from '@/database/database'; // Removed - using Supabase
+import { supabase } from '@/lib/supabase';
 import { CompactStyles } from '@/constants/CompactStyles';
 
 interface AdvancedProfileScreenProps {
@@ -53,23 +54,30 @@ export const AdvancedProfileScreen: React.FC<AdvancedProfileScreenProps> = ({ on
 
     try {
       setIsLoading(true);
-      const db = await initializeDatabase();
       
-      const result = await db.getFirstAsync(`
-        SELECT * FROM users WHERE id = ?
-      `, [user.id]) as any;
+      const { data: result, error } = await supabase
+        .from('users')
+        .select('full_name, phone, profile_photo_uri, notification_preferences')
+        .eq('id', user.id)
+        .single();
+
+      if (error) {
+        console.error('Failed to load user profile:', error);
+        showError('Load Failed', 'Failed to load profile data');
+        return;
+      }
 
       if (result) {
         const profile: UserProfile = {
-          full_name: result.full_name as string,
-          phone: result.phone as string || '',
-          profile_photo_uri: result.profile_photo_uri as string || undefined,
+          full_name: result.full_name || '',
+          phone: result.phone || '',
+          profile_photo_uri: result.profile_photo_uri || undefined,
         };
 
         // Parse notification preferences if they exist
         if (result.notification_preferences) {
           try {
-            profile.notification_preferences = JSON.parse(result.notification_preferences as string);
+            profile.notification_preferences = JSON.parse(result.notification_preferences);
           } catch (error) {
             console.warn('Failed to parse notification preferences:', error);
           }
@@ -89,20 +97,19 @@ export const AdvancedProfileScreen: React.FC<AdvancedProfileScreenProps> = ({ on
     if (!user?.id) return;
 
     try {
-      const db = await initializeDatabase();
-      
-      await db.runAsync(`
-        UPDATE users SET
-          full_name = ?,
-          phone = ?,
-          profile_photo_uri = ?
-        WHERE id = ?
-      `, [
-        profileData.full_name,
-        profileData.phone,
-        profileData.profile_photo_uri || null,
-        user.id
-      ]);
+      const { error } = await supabase
+        .from('users')
+        .update({
+          full_name: profileData.full_name,
+          phone: profileData.phone,
+          profile_photo_uri: profileData.profile_photo_uri || null,
+        })
+        .eq('id', user.id);
+
+      if (error) {
+        console.error('Failed to save profile:', error);
+        throw new Error('Failed to save profile changes');
+      }
 
       // Update local state
       setUserProfile(prev => prev ? { 
@@ -111,8 +118,6 @@ export const AdvancedProfileScreen: React.FC<AdvancedProfileScreenProps> = ({ on
         phone: profileData.phone,
         profile_photo_uri: profileData.profile_photo_uri,
       } : null);
-      
-      // Profile is already synced to Supabase through the users table
       
     } catch (error) {
       console.error('Failed to save profile:', error);
@@ -124,16 +129,18 @@ export const AdvancedProfileScreen: React.FC<AdvancedProfileScreenProps> = ({ on
     if (!user?.id) return;
 
     try {
-      const db = await initializeDatabase();
-      
-      await db.runAsync(`
-        UPDATE users SET notification_preferences = ? WHERE id = ?
-      `, [JSON.stringify(preferences), user.id]);
+      const { error } = await supabase
+        .from('users')
+        .update({ notification_preferences: JSON.stringify(preferences) })
+        .eq('id', user.id);
+
+      if (error) {
+        console.error('Failed to save notification preferences:', error);
+        throw new Error('Failed to save notification preferences');
+      }
 
       // Update local state
       setUserProfile(prev => prev ? { ...prev, notification_preferences: preferences } : null);
-      
-      // Profile is already synced to Supabase through the users table
       
     } catch (error) {
       console.error('Failed to save notification preferences:', error);

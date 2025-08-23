@@ -9,7 +9,7 @@ import { useColorScheme } from '@/hooks/useColorScheme';
 import { Colors } from '@/constants/Colors';
 import { ClubRankings, RankedPlayer } from '@/components/ClubRankings';
 import { getClubLeaderboard } from '@/services/matchService';
-import { initializeDatabase } from '@/database/database';
+import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/contexts/AuthContext';
 import ChallengeFlowModal from '@/components/ChallengeFlowModal';
 
@@ -39,29 +39,32 @@ export default function ClubRankingsScreen() {
     }
 
     try {
-      const db = await initializeDatabase();
+      // Get club details from Supabase
+      const { data: clubData, error: clubError } = await supabase
+        .from('clubs')
+        .select('name')
+        .eq('id', id)
+        .single();
       
-      // Get club name
-      const clubData = await db.getFirstAsync(
-        'SELECT name FROM clubs WHERE id = ?',
-        [id]
-      );
-      
-      if (!clubData) {
+      if (clubError || !clubData) {
         setError('Club not found');
         setIsLoading(false);
         return;
       }
       
-      setClubName((clubData as any).name);
+      setClubName(clubData.name);
       
-      // Get member count
-      const countResult = await db.getFirstAsync(
-        'SELECT COUNT(*) as count FROM club_members WHERE club_id = ?',
-        [id]
-      );
+      // Get member count from Supabase
+      const { count: memberCount, error: countError } = await supabase
+        .from('club_members')
+        .select('*', { count: 'exact', head: true })
+        .eq('club_id', id);
       
-      setMemberCount((countResult as any)?.count || 0);
+      if (countError) {
+        console.error('Failed to get member count:', countError);
+      }
+      
+      setMemberCount(memberCount || 0);
       
       // Get full rankings
       const leaderboard = await getClubLeaderboard(id);

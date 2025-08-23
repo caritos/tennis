@@ -189,9 +189,45 @@ export default function ClubDetailScreen() {
         .eq('club_id', id)
         .order('date', { ascending: false })
         .order('created_at', { ascending: false });
+
+      // Also load active match invitations (looking to play) with responses
+      const { data: matchInvitations } = await supabase
+        .from('match_invitations')
+        .select(`
+          *,
+          creator:users!creator_id(full_name)
+        `)
+        .eq('club_id', id)
+        .eq('status', 'active')
+        .order('date', { ascending: true })
+        .order('created_at', { ascending: false });
+
+      // Fetch responses for each invitation
+      const invitationsWithResponses = await Promise.all(
+        (matchInvitations || []).map(async (invitation: any) => {
+          const { data: responses } = await supabase
+            .from('invitation_responses')
+            .select(`
+              id,
+              user_id,
+              status,
+              user:users!invitation_responses_user_id_fkey(full_name)
+            `)
+            .eq('invitation_id', invitation.id);
+
+          return {
+            ...invitation,
+            responses: (responses || []).map((response: any) => ({
+              id: response.id,
+              user_name: response.user?.full_name,
+              status: response.status
+            }))
+          };
+        })
+      );
       
-      // Process all matches using the same logic
-      const processedAllMatches = allMatchesData?.map((match: any) => {
+      // Process completed matches
+      const processedCompletedMatches = allMatchesData?.map((match: any) => {
         // Simple winner determination based on sets won
         const sets = match.scores.split(',');
         let player1Sets = 0;
@@ -233,8 +269,37 @@ export default function ClubDetailScreen() {
           processed: true
         };
       }) || [];
+
+      // Process match invitations (looking to play) as upcoming matches
+      const processedInvitations = invitationsWithResponses.map((invitation: any) => ({
+        id: invitation.id,
+        player1_name: invitation.creator?.full_name || 'Unknown Player',
+        player2_name: 'Looking for opponent',
+        opponent2_name: null,
+        partner3_name: null,
+        partner4_name: null,
+        player1_id: invitation.creator_id,
+        player2_id: null,
+        player3_id: null,
+        player4_id: null,
+        scores: '',
+        winner: null,
+        match_type: invitation.match_type,
+        date: invitation.date,
+        time: invitation.time,
+        location: invitation.location,
+        notes: invitation.notes,
+        status: invitation.status,
+        created_at: invitation.created_at,
+        responses: invitation.responses, // Include responses for grid display
+        isInvitation: true, // Flag to distinguish from completed matches
+        processed: true
+      }));
+
+      // Combine completed matches and invitations
+      const allMatchesAndInvitations = [...processedCompletedMatches, ...processedInvitations];
       
-      setAllMatches(processedAllMatches);
+      setAllMatches(allMatchesAndInvitations);
       
       // Load club members
       const { data: membersData } = await supabase
@@ -257,7 +322,7 @@ export default function ClubDetailScreen() {
           match_count: rankedPlayer?.stats.totalMatches || 0,
           wins: rankedPlayer?.stats.wins || 0,
           ranking: rankedPlayer?.ranking || undefined, // Use the ranking from the rankedPlayer object if it exists
-          winRate: rankedPlayer?.stats.winRate || 0, // Add win rate percentage as the ranking score
+          eloRating: rankedPlayer?.rating || undefined, // Add ELO rating as the ranking score
         };
       });
       
@@ -320,6 +385,7 @@ export default function ClubDetailScreen() {
   };
 
   const handleChallengePlayer = (playerId: string, playerName: string) => {
+    console.log('🎯 Challenge Player Called:', { playerId, playerName });
     setChallengeTarget({ id: playerId, name: playerName });
     setShowChallengeModal(true);
   };
@@ -334,6 +400,11 @@ export default function ClubDetailScreen() {
   const handleViewAllMatches = () => {
     // Switch to matches tab
     setActiveTab('matches');
+  };
+
+  const handleEditClub = () => {
+    // Navigate to edit club screen
+    router.push(`/edit-club/${id}`);
   };
 
   const handleClaimMatch = async (matchId: string, playerPosition: 'player2' | 'player3' | 'player4') => {
@@ -466,6 +537,7 @@ export default function ClubDetailScreen() {
             onRecordMatch={handleRecordMatch}
             onInvitePlayers={() => setShowInviteForm(true)}
             onViewAllMatches={() => setActiveTab('matches')}
+            onEditClub={handleEditClub}
           />
         )}
 
@@ -480,7 +552,7 @@ export default function ClubDetailScreen() {
             filterBy={memberFilterBy}
             onSortChange={setMemberSortBy}
             onFilterChange={setMemberFilterBy}
-            onChallengePress={(target) => handleChallengePlayer(target.id, target.name)}
+            onChallengePress={(playerId, playerName) => handleChallengePlayer(playerId, playerName)}
           />
         )}
 

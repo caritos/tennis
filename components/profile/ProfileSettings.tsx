@@ -20,7 +20,7 @@ const ProfileSettings = React.memo(function ProfileSettings({ user, colors, onSi
     console.log('📧 Contact Support button pressed');
     
     const supportEmail = 'support@caritos.com';
-    const subject = 'Tennis Club App Support Request';
+    const subject = 'Play Serve App Support Request';
     
     // Try simple mailto first
     const simpleEmailUrl = `mailto:${supportEmail}`;
@@ -34,7 +34,7 @@ const ProfileSettings = React.memo(function ProfileSettings({ user, colors, onSi
         // Try with subject and body
         const body = `Hi Support Team,
 
-I need help with the Tennis Club app.
+I need help with the Play Serve app.
 
 Issue Description:
 [Please describe your issue or question here]

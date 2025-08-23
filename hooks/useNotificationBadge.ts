@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { NotificationService } from '@/services/NotificationService';
-import { initializeDatabase } from '@/database/database';
+// import { initializeDatabase } from '@/database/database'; // Removed - using NotificationService from Supabase
 
 export function useNotificationBadge() {
   const { user } = useAuth();
@@ -16,8 +16,7 @@ export function useNotificationBadge() {
     }
 
     try {
-      const db = await initializeDatabase();
-      const notificationService = new NotificationService(db);
+      const notificationService = new NotificationService();
       const count = await notificationService.getUnreadCount(user.id);
       setBadgeCount(count);
     } catch (error) {

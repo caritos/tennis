@@ -11,7 +11,7 @@ interface ClubMember {
   match_count: number;
   wins: number;
   ranking?: number;
-  winRate?: number;
+  eloRating?: number;
 }
 
 interface ClubMembersProps {
@@ -55,11 +55,11 @@ export default function ClubMembers({
   const sortedMembers = [...filteredMembers].sort((a, b) => {
     switch (sortBy) {
       case 'ranking':
-        // Sort by win rate (higher is better)
-        // Put unranked members (0% or undefined) at the end
-        const winRateA = a.winRate ?? -1;
-        const winRateB = b.winRate ?? -1;
-        return winRateB - winRateA;
+        // Sort by ELO rating (higher is better)
+        // Put unranked members (1200 starting rating or undefined) at the end
+        const eloA = a.eloRating ?? 1200;
+        const eloB = b.eloRating ?? 1200;
+        return eloB - eloA;
       case 'wins':
         return (b.wins || 0) - (a.wins || 0);
       case 'matches':
@@ -180,11 +180,9 @@ export default function ClubMembers({
                       <View style={styles.memberNameRow}>
                         <View style={styles.nameWithBadge}>
                           <ThemedText style={styles.memberName}>
-                            {member.winRate !== undefined && member.winRate > 0 && (
-                              <ThemedText style={[styles.rankScore, { color: colors.tint }]}>
-                                {member.winRate}%{' '}
-                              </ThemedText>
-                            )}
+                            <ThemedText style={[styles.rankScore, { color: colors.tint }]}>
+                              {member.eloRating || 1200}{' '}
+                            </ThemedText>
                             {member.full_name || 'Unknown Member'}
                           </ThemedText>
                           {isNew && (

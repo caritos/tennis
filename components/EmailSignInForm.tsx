@@ -143,7 +143,7 @@ export function EmailSignInForm({
           {/* App Title */}
           <View style={styles.titleSection}>
             <ThemedText type="title" style={styles.appTitle}>
-              🎾 Tennis Club
+              🎾 Play Serve
             </ThemedText>
             <ThemedText type="default" style={[styles.subtitle, { color: colors.tabIconDefault }]}>
               Welcome back!

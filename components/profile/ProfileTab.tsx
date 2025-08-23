@@ -8,7 +8,7 @@ import { supabase } from '@/lib/supabase';
 interface User {
   id?: string;
   email?: string;
-  phone?: string;
+  phone: string;
   user_metadata?: {
     full_name?: string;
     phone?: string;
@@ -45,7 +45,7 @@ const ProfileTab = React.memo(function ProfileTab({ user, colors, onUserUpdate }
           id: user.id,
           full_name: fullName.trim(),
           email: user.email,
-          phone: phone.trim() || null,
+          phone: phone.trim(),
         });
 
       if (dbError) {
@@ -71,7 +71,7 @@ const ProfileTab = React.memo(function ProfileTab({ user, colors, onUserUpdate }
         onUserUpdate({
           ...user,
           user_metadata: { ...user.user_metadata, full_name: fullName.trim() },
-          phone: phone.trim() || null,
+          phone: phone.trim(),
         });
       }
     } catch (error) {

@@ -200,7 +200,7 @@ const FormFields = React.memo(function FormFields({
 
       {/* Phone Number */}
       <View style={styles.inputGroup}>
-        <ThemedText style={styles.label}>Phone Number (Optional)</ThemedText>
+        <ThemedText style={styles.label}>Phone Number *</ThemedText>
         <TextInput
           style={[
             styles.input,
@@ -219,11 +219,11 @@ const FormFields = React.memo(function FormFields({
           }}
           keyboardType="phone-pad"
           autoCorrect={false}
-          accessibilityLabel="Phone Number (Optional)"
+          accessibilityLabel="Phone Number (Required)"
           testID="phone-input"
         />
         <ThemedText style={[styles.helpText, { color: colors.tabIconDefault }]}>
-          For match coordination and contact sharing
+          Required for scheduling matches and coordinating with other players. Your phone number will only be shared with players you're matched with.
         </ThemedText>
         {errors.phone && (
           <ThemedText style={styles.errorText} accessibilityRole="alert" testID="phone-error">

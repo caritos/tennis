@@ -49,6 +49,15 @@ export default function SignUpPage() {
       setError('Please enter your email');
       return false;
     }
+    if (!phone.trim()) {
+      setError('Please enter your phone number');
+      return false;
+    }
+    const phoneDigits = phone.replace(/\D/g, '');
+    if (phoneDigits.length < 10) {
+      setError('Please enter a valid phone number (10+ digits)');
+      return false;
+    }
     if (!password) {
       setError('Please enter a password');
       return false;
@@ -110,12 +119,18 @@ export default function SignUpPage() {
       while (retryCount < maxRetries) {
         const { error } = await supabase
           .from('users')
-          .insert({
+          .upsert({
             id: authData.user.id,
             full_name: fullName.trim(),
             email: email.trim(),
-            phone: phone.trim() || null,
-            role: 'player'
+            phone: phone.trim(),
+            role: 'player',
+            contact_preference: 'whatsapp',
+            elo_rating: 1200,
+            games_played: 0,
+            created_at: new Date().toISOString()
+          }, {
+            onConflict: 'id'
           });
         
         profileError = error;
@@ -123,6 +138,12 @@ export default function SignUpPage() {
         if (!error) {
           console.log('User profile created successfully in Supabase');
           break;
+        }
+        
+        // If it's a duplicate key error, the user already exists (created by AuthContext)
+        if (error.code === '23505') {
+          console.log('ℹ️ Signup: User profile already exists, continuing...');
+          break; // Exit the retry loop - this is not an error
         }
         
         // If it's a foreign key constraint error, wait and retry
@@ -136,9 +157,11 @@ export default function SignUpPage() {
         }
       }
       
-      if (profileError) {
+      if (profileError && profileError.code !== '23505') {
         console.error('Final error creating user profile:', profileError);
         // Continue anyway as auth was successful
+      } else if (profileError?.code === '23505') {
+        console.log('ℹ️ Signup: User profile already exists, auth successful');
       }
       
       console.log('User created successfully:', authData.user.id);
@@ -267,7 +290,7 @@ export default function SignUpPage() {
               </View>
 
               <View style={styles.inputContainer}>
-                <ThemedText style={[styles.inputLabel, { color: colors.text }]}>Phone (Optional)</ThemedText>
+                <ThemedText style={[styles.inputLabel, { color: colors.text }]}>Phone Number *</ThemedText>
                 <TextInput
                   style={[
                     styles.input,
@@ -286,6 +309,9 @@ export default function SignUpPage() {
                   editable={!isLoading}
                   testID="phone-input"
                 />
+                <ThemedText style={[styles.helpText, { color: colors.tabIconDefault }]}>
+                  Required for scheduling matches and coordinating with other players. Your phone number will only be shared with players you're matched with.
+                </ThemedText>
               </View>
 
               <View style={styles.inputContainer}>
@@ -586,5 +612,10 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '600',
     textDecorationLine: 'underline',
+  },
+  helpText: {
+    fontSize: 12,
+    marginTop: 4,
+    lineHeight: 16,
   },
 });

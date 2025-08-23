@@ -29,6 +29,33 @@ export class ClubService {
       throw new Error('Club name, description, and location are required');
     }
 
+    // Ensure the creator exists in the users table first
+    const { data: existingUser, error: userCheckError } = await supabase
+      .from('users')
+      .select('id')
+      .eq('id', clubData.creator_id)
+      .single();
+
+    if (userCheckError && userCheckError.code === 'PGRST116') {
+      // User doesn't exist, wait a moment and try again (race condition)
+      console.log('⏳ User profile not found, waiting for user creation...');
+      await new Promise(resolve => setTimeout(resolve, 2000));
+      
+      const { data: retryUser, error: retryError } = await supabase
+        .from('users')
+        .select('id')
+        .eq('id', clubData.creator_id)
+        .single();
+        
+      if (retryError) {
+        console.error('❌ User still not found after retry:', retryError);
+        throw new Error('User profile not found. Please try again in a moment.');
+      }
+    } else if (userCheckError) {
+      console.error('❌ Error checking user existence:', userCheckError);
+      throw new Error('Failed to verify user. Please try again.');
+    }
+
     const clubId = generateUUID();
     
     const newClub = {
@@ -168,7 +195,6 @@ export class ClubService {
     try {
       // Check current user authentication
       const { data: { user }, error: authError } = await supabase.auth.getUser();
-      console.log('🔍 getClubsByLocation - Current user:', user?.id, 'Auth error:', authError);
       
       // For now, get all clubs and calculate distance client-side
       // Later we can implement PostGIS for server-side distance calculations
@@ -231,6 +257,38 @@ export class ClubService {
     }
   }
 
+  async getAllClubs(): Promise<Club[]> {
+    console.log('🔍 getAllClubs - Testing club visibility...');
+    
+    try {
+      // Check authentication state
+      const { data: { user }, error: authError } = await supabase.auth.getUser();
+      const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+      
+      console.log('🔍 getAllClubs - User ID:', user?.id);
+      console.log('🔍 getAllClubs - Session ID:', session?.user?.id);
+      console.log('🔍 getAllClubs - Auth role:', session?.user?.role);
+      console.log('🔍 getAllClubs - Errors:', { authError, sessionError });
+      
+      // Try to fetch all clubs
+      const { data: clubs, error } = await supabase
+        .from('clubs')
+        .select('*');
+        
+      console.log('🔍 getAllClubs - Result:', {
+        clubCount: clubs?.length || 0,
+        error: error?.message,
+        errorCode: error?.code,
+        clubs: clubs?.map(c => ({ id: c.id, name: c.name, creator_id: c.creator_id }))
+      });
+      
+      return clubs || [];
+    } catch (error) {
+      console.error('❌ getAllClubs failed:', error);
+      throw error;
+    }
+  }
+
   calculateDistance(lat1: number, lng1: number, lat2: number, lng2: number): number {
     const R = 6371; // Earth's radius in kilometers
     const dLat = this.deg2rad(lat2 - lat1);
@@ -258,6 +316,7 @@ export const leaveClub = (clubId: string, userId: string) => clubService.leaveCl
 export const getUserClubs = (userId: string) => clubService.getUserClubs(userId);
 export const getClubsByLocation = (userLat: number, userLng: number, maxClubs?: number) => 
   clubService.getClubsByLocation(userLat, userLng, maxClubs);
+export const getAllClubs = () => clubService.getAllClubs();
 export const isClubMember = (clubId: string, userId: string) => clubService.isClubMember(clubId, userId);
 export const calculateDistance = (lat1: number, lng1: number, lat2: number, lng2: number) => 
   clubService.calculateDistance(lat1, lng1, lat2, lng2);

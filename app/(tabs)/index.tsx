@@ -20,7 +20,7 @@ import { Colors } from '@/constants/Colors';
 import { useLocation } from '@/hooks/useLocation';
 import { useAuth } from '@/contexts/AuthContext';
 import { useOnboarding } from '@/contexts/OnboardingContext';
-import { getUserClubs, getClubsByLocation, joinClub, isClubMember, calculateDistance } from '@/services/clubService';
+import { getUserClubs, getClubsByLocation, joinClub, calculateDistance } from '@/services/clubService';
 
 export default function ClubScreen() {
   const colorScheme = useColorScheme();
@@ -52,9 +52,12 @@ export default function ClubScreen() {
   
   useEffect(() => {
     console.log('ClubScreen: User state changed:', user ? `User: ${user.id}` : 'No user');
+    console.log('ClubScreen: Current clubs count:', clubs.length);
+    console.log('ClubScreen: Triggering loadClubs due to user change');
   }, [user]);
 
   const loadClubs = async (isRefresh = false) => {
+    console.log('🔄 loadClubs called - isRefresh:', isRefresh, 'user:', user?.id);
     try {
       if (!isRefresh) setLoading(true);
       setError(null);
@@ -142,7 +145,7 @@ export default function ClubScreen() {
     setError(null);
 
     try {
-      await joinClub(club.id, user.id, user.email, user.user_metadata?.full_name);
+      await joinClub(club.id, user.id);
       
       // Update local state immediately for optimistic UI
       setJoinedClubIds(prev => [...prev, club.id]);
@@ -219,7 +222,7 @@ export default function ClubScreen() {
         {/* Welcome Message for First Time Users */}
         {showWelcomeMessage && (
           <InlineNotificationBanner
-            title="Welcome to Tennis Club!"
+            title="Welcome to Play Serve!"
             description="Find tennis partners, record matches, and climb rankings in local clubs near you."
             icon="🎾"
             variant="welcome"

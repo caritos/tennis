@@ -8,7 +8,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useColorScheme } from '@/hooks/useColorScheme';
 import { Colors } from '@/constants/Colors';
 import { supabase } from '@/lib/supabase';
-import { initializeDatabase } from '@/database/database';
+// import { initializeDatabase } from '@/database/database'; // Removed - using Supabase only
 import { getAuthErrorMessage, logError } from '@/utils/errorHandling';
 
 export default function SignInPage() {
@@ -50,55 +50,8 @@ export default function SignInPage() {
         throw new Error('Sign in failed - no user session created');
       }
       
-      // Ensure user exists in local database
-      if (authData.user) {
-        const db = await initializeDatabase();
-        
-        // Check if user exists locally
-        const existingUser = await db.getFirstAsync(
-          `SELECT * FROM users WHERE id = ?`,
-          [authData.user.id]
-        );
-        
-        // If user doesn't exist locally, sync from Supabase
-        if (!existingUser) {
-          const { data: userProfile, error: profileError } = await supabase
-            .from('users')
-            .select('*')
-            .eq('id', authData.user.id)
-            .single();
-            
-          if (userProfile && !profileError) {
-            await db.runAsync(
-              `INSERT OR REPLACE INTO users (id, full_name, email, phone, role, created_at) 
-               VALUES (?, ?, ?, ?, ?, datetime('now'))`,
-              [
-                userProfile.id,
-                userProfile.full_name,
-                userProfile.email,
-                userProfile.phone,
-                userProfile.role || 'player'
-              ]
-            );
-          } else {
-            // Fallback: use auth metadata
-            const fullName = authData.user.user_metadata?.full_name || 
-                           authData.user.email?.split('@')[0] || 'User';
-            
-            await db.runAsync(
-              `INSERT OR REPLACE INTO users (id, full_name, email, phone, role, created_at) 
-               VALUES (?, ?, ?, ?, ?, datetime('now'))`,
-              [
-                authData.user.id,
-                fullName,
-                authData.user.email,
-                authData.user.user_metadata?.phone || null,
-                'player'
-              ]
-            );
-          }
-        }
-      }
+      // User data is managed entirely through Supabase now
+      console.log('User signed in successfully:', authData.user?.email);
       
       console.log('User signed in successfully:', authData.user?.id);
       

@@ -25,14 +25,12 @@ interface CreateClubFormProps {
 interface FormData {
   name: string;
   description: string;
-  area: string;
   zipCode: string;
 }
 
 interface FormErrors {
   name?: string;
   description?: string;
-  area?: string;
   zipCode?: string;
   general?: string;
 }
@@ -47,7 +45,6 @@ export function CreateClubForm({ onSuccess, onCancel }: CreateClubFormProps) {
   const [formData, setFormData] = useState<FormData>({
     name: '',
     description: '',
-    area: '',
     zipCode: '',
   });
 
@@ -60,6 +57,62 @@ export function CreateClubForm({ onSuccess, onCancel }: CreateClubFormProps) {
     return zipPattern.test(zipCode);
   };
 
+  const getLocationFromZipCode = (zipCode: string): string => {
+    // Simple zip code to location mapping for common US zip codes
+    // In production, this could use a proper geocoding service
+    const zipToLocation: { [key: string]: string } = {
+      // California
+      '94102': 'San Francisco, CA',
+      '94103': 'San Francisco, CA', 
+      '94104': 'San Francisco, CA',
+      '90210': 'Beverly Hills, CA',
+      '90401': 'Santa Monica, CA',
+      '94301': 'Palo Alto, CA',
+      '95014': 'Cupertino, CA',
+      // New York
+      '10001': 'New York, NY',
+      '10002': 'New York, NY',
+      '10003': 'New York, NY',
+      '10013': 'New York, NY',
+      '11201': 'Brooklyn, NY',
+      // Texas
+      '78701': 'Austin, TX',
+      '75201': 'Dallas, TX',
+      '77002': 'Houston, TX',
+      // Default pattern matching for common zip code patterns
+    };
+
+    // Direct lookup first
+    if (zipToLocation[zipCode]) {
+      return zipToLocation[zipCode];
+    }
+
+    // Pattern-based matching for common areas
+    const zip5 = zipCode.substring(0, 5);
+    
+    if (zip5.startsWith('941') || zip5.startsWith('940')) {
+      return 'San Francisco Bay Area, CA';
+    }
+    if (zip5.startsWith('902') || zip5.startsWith('903') || zip5.startsWith('904')) {
+      return 'Los Angeles Area, CA';
+    }
+    if (zip5.startsWith('100') || zip5.startsWith('101') || zip5.startsWith('102')) {
+      return 'New York, NY';
+    }
+    if (zip5.startsWith('787')) {
+      return 'Austin, TX';
+    }
+    if (zip5.startsWith('752')) {
+      return 'Dallas, TX';
+    }
+    if (zip5.startsWith('770')) {
+      return 'Houston, TX';
+    }
+
+    // Fallback - just show the zip code
+    return `Zip Code ${zipCode}`;
+  };
+
   const validateForm = (): boolean => {
     const newErrors: FormErrors = {};
 
@@ -69,10 +122,6 @@ export function CreateClubForm({ onSuccess, onCancel }: CreateClubFormProps) {
 
     if (!formData.description.trim()) {
       newErrors.description = 'Description is required';
-    }
-
-    if (!formData.area.trim()) {
-      newErrors.area = 'Geographic area is required';
     }
 
     if (!formData.zipCode.trim()) {
@@ -119,10 +168,12 @@ export function CreateClubForm({ onSuccess, onCancel }: CreateClubFormProps) {
       
       console.log('🏆 Creating club with location:', { lat, lng, userLocation: location });
       
+      const derivedLocation = getLocationFromZipCode(formData.zipCode.trim());
+      
       const clubData = {
         name: formData.name.trim(),
         description: formData.description.trim(),
-        location: formData.area.trim(),
+        location: derivedLocation,
         zipCode: formData.zipCode.trim(),
         lat,
         lng,
@@ -244,6 +295,15 @@ export function CreateClubForm({ onSuccess, onCancel }: CreateClubFormProps) {
       fontSize: 14,
       textAlign: 'center',
     },
+    locationPreview: {
+      marginTop: 8,
+      padding: 12,
+      borderRadius: 8,
+    },
+    locationPreviewText: {
+      fontSize: 14,
+      textAlign: 'center',
+    },
   });
 
   return (
@@ -256,7 +316,7 @@ export function CreateClubForm({ onSuccess, onCancel }: CreateClubFormProps) {
         >
           <Ionicons name="chevron-back" size={24} color={colors.text} />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>Create Tennis Club</Text>
+        <Text style={styles.headerTitle}>Create Club</Text>
         <View style={{ width: 40 }} />
       </View>
 
@@ -294,19 +354,7 @@ export function CreateClubForm({ onSuccess, onCancel }: CreateClubFormProps) {
           </View>
 
           <View style={styles.fieldContainer}>
-            <Text style={styles.label}>Geographic Area</Text>
-            <TextInput
-              style={[styles.input, errors.area && styles.inputError]}
-              placeholder="San Francisco Bay Area"
-              value={formData.area}
-              onChangeText={(text) => handleInputChange('area', text)}
-              accessibilityLabel="Geographic Area"
-            />
-            {errors.area && <Text style={styles.errorText}>{errors.area}</Text>}
-          </View>
-
-          <View style={styles.fieldContainer}>
-            <Text style={styles.label}>Zip Code (for discovery)</Text>
+            <Text style={styles.label}>Zip Code</Text>
             <TextInput
               style={[styles.input, errors.zipCode && styles.inputError]}
               placeholder="94102"
@@ -316,6 +364,13 @@ export function CreateClubForm({ onSuccess, onCancel }: CreateClubFormProps) {
               accessibilityLabel="Zip Code"
             />
             {errors.zipCode && <Text style={styles.errorText}>{errors.zipCode}</Text>}
+            {formData.zipCode.trim() && validateZipCode(formData.zipCode.trim()) && (
+              <View style={[styles.locationPreview, { backgroundColor: colors.tabIconDefault + '10' }]}>
+                <Text style={[styles.locationPreviewText, { color: colors.tabIconDefault }]}>
+                  📍 Club will be listed as: {getLocationFromZipCode(formData.zipCode.trim())}
+                </Text>
+              </View>
+            )}
           </View>
 
 

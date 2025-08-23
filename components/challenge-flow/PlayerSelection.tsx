@@ -40,8 +40,8 @@ const PlayerSelection = React.memo(function PlayerSelection({
     <View style={styles.section}>
       <ThemedText style={styles.sectionLabel}>
         {targetPlayerId 
-          ? `Select 2 more players for doubles (${selectedPlayers.length}/3 selected)`
-          : `Select 3 players to invite for doubles (${selectedPlayers.length}/3 selected)`
+          ? `Select players for doubles (${selectedPlayers.length} selected)`
+          : `Select 1-3 players to invite for doubles (${selectedPlayers.length} selected)`
         }
       </ThemedText>
 

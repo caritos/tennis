@@ -10,7 +10,8 @@ Play Serve is a React Native tennis community app built with Expo, focusing on c
 
 - **Framework**: React Native with Expo (Managed Workflow)
 - **Navigation**: Expo Router (file-based routing)
-- **Backend**: Supabase (PostgreSQL + Auth + Real-time)
+- **Backend**: Supabase (PostgreSQL + Auth + Real-time + Notifications)
+- **Data Architecture**: Supabase-only (no local SQLite database)
 - **State Management**: React Context
 - **Testing**: Jest (unit), Maestro (E2E)
 - **Build System**: EAS Build
@@ -24,7 +25,7 @@ Play Serve is a React Native tennis community app built with Expo, focusing on c
 ├── contexts/               # React Context providers (Auth, Notifications, etc.)
 ├── hooks/                  # Custom React hooks
 ├── services/               # Business logic and external service integrations
-├── database/               # Supabase database schema and setup
+├── database/               # Legacy database schemas (deprecated - Supabase only)
 ├── data/                   # Single source of truth for content (FAQ, legal docs)
 ├── docs/                   # Comprehensive project documentation
 ├── tests/                  # Unit and integration tests
@@ -66,8 +67,22 @@ Play Serve is a React Native tennis community app built with Expo, focusing on c
 - Generated files are git-ignored to prevent drift
 - Wiki content automatically synchronized
 
+### **Supabase-Only Data Architecture**
+> "All data operations go through Supabase"
+
+- **No Local SQLite Database**: All data is stored and accessed via Supabase PostgreSQL
+- **Real-time Subscriptions**: Live updates for challenges, notifications, and matches
+- **Contact Sharing**: Phone numbers shared through Supabase notifications system
+- **Challenge System**: Singles (2 players) and doubles (4 players) contact coordination
+- **User Sync**: Authentication and user data managed entirely through Supabase
+
 ### **Root Cause Analysis**
 > "Always find the root cause rather than applying surface fixes"
+
+- **No surface-level patches** - Address the underlying architecture, data model, or system design issues
+- **Investigate thoroughly** before implementing solutions - understand why the problem exists
+- **Fix at the source** - Database schema, RLS policies, authentication flows, not just application logic
+- **Systematic approach** - Trace issues through the entire stack (UI → Service → Database → Policies)
 
 Focus on understanding and solving underlying issues rather than quick patches.
 
@@ -105,7 +120,13 @@ eas workflow:run production-release           # Manual workflow trigger
 This project uses Expo's managed workflow - no `ios/` or `android/` directories exist. All configuration is handled through `app.json` and EAS generates native projects during builds.
 
 ### **Database Management**
-Supabase provides the backend with PostgreSQL database. Schema and setup scripts are in `/database/`. Row Level Security (RLS) is enabled for all tables.
+Supabase provides the complete backend with PostgreSQL database. All data operations use Supabase directly:
+- **User Data**: Authentication and profiles stored in Supabase `users` table
+- **Challenges**: Challenge system with contact sharing via Supabase `challenges` table
+- **Notifications**: Real-time notifications stored in Supabase `notifications` table
+- **Matches & Clubs**: All tennis-related data in Supabase tables
+- **Row Level Security (RLS)**: Enabled for all tables with proper access policies
+- **Legacy SQLite**: Completely removed from architecture - Supabase only
 
 ### **Log Access**
 Development logs are available at `logs/expo.log`. Use a subagent to tail and analyze logs when debugging.

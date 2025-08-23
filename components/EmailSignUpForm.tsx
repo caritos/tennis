@@ -92,7 +92,7 @@ export function EmailSignUpForm({
   };
 
   const validatePhone = (phone: string): boolean => {
-    if (!phone) return true; // Optional field
+    if (!phone) return false; // Required field
     const phoneDigits = phone.replace(/\D/g, '');
     return phoneDigits.length >= 10;
   };
@@ -123,8 +123,10 @@ export function EmailSignUpForm({
       newErrors.confirmPassword = 'Passwords do not match';
     }
 
-    if (phone && !validatePhone(phone)) {
-      newErrors.phone = 'Please enter a valid phone number';
+    if (!phone) {
+      newErrors.phone = 'Phone number is required';
+    } else if (!validatePhone(phone)) {
+      newErrors.phone = 'Please enter a valid phone number (10+ digits)';
     }
 
     if (!agreedToTerms) {

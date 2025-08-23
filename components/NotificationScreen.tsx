@@ -17,7 +17,7 @@ import { useColorScheme } from '@/hooks/useColorScheme';
 import { Colors } from '@/constants/Colors';
 import { useAuth } from '@/contexts/AuthContext';
 import { NotificationService, Notification } from '@/services/NotificationService';
-import { initializeDatabase } from '@/database/database';
+// import { initializeDatabase } from '@/database/database'; // Removed - using NotificationService from Supabase
 
 interface NotificationItemProps {
   notification: Notification;
@@ -208,8 +208,7 @@ const handleQuickAction = async (notification: Notification, action: string) => 
     }
     
     // Mark notification as read after action
-    const db = await initializeDatabase();
-    const notificationService = new NotificationService(db);
+    const notificationService = new NotificationService();
     await notificationService.markAsRead(notification.id);
     
   } catch (error) {
@@ -232,8 +231,7 @@ export const NotificationScreen: React.FC = () => {
     if (!user?.id) return;
 
     try {
-      const db = await initializeDatabase();
-      const notificationService = new NotificationService(db);
+      const notificationService = new NotificationService();
 
       const [notificationList, count] = await Promise.all([
         notificationService.getNotifications(user.id, 50),
@@ -263,8 +261,7 @@ export const NotificationScreen: React.FC = () => {
     // Mark as read if not already read
     if (!notification.is_read && user?.id) {
       try {
-        const db = await initializeDatabase();
-        const notificationService = new NotificationService(db);
+        const notificationService = new NotificationService();
         await notificationService.markAsRead(notification.id);
         
         // Update local state
@@ -300,8 +297,7 @@ export const NotificationScreen: React.FC = () => {
     if (!user?.id) return;
 
     try {
-      const db = await initializeDatabase();
-      const notificationService = new NotificationService(db);
+      const notificationService = new NotificationService();
       await notificationService.markAsRead(notificationId);
 
       setNotifications(prev =>
@@ -326,8 +322,7 @@ export const NotificationScreen: React.FC = () => {
           style: 'destructive',
           onPress: async () => {
             try {
-              const db = await initializeDatabase();
-              const notificationService = new NotificationService(db);
+              const notificationService = new NotificationService();
               await notificationService.deleteNotification(notificationId);
 
               setNotifications(prev => prev.filter(n => n.id !== notificationId));
@@ -350,8 +345,7 @@ export const NotificationScreen: React.FC = () => {
     if (!user?.id || unreadCount === 0) return;
 
     try {
-      const db = await initializeDatabase();
-      const notificationService = new NotificationService(db);
+      const notificationService = new NotificationService();
       await notificationService.markAllAsRead(user.id);
 
       setNotifications(prev => prev.map(n => ({ ...n, is_read: true })));

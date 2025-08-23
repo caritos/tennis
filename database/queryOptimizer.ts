@@ -18,17 +18,23 @@ export class QueryOptimizer {
 
   // Create indexes for frequently queried columns
   async createPerformanceIndexes() {
-    const indexes = [
-      'CREATE INDEX IF NOT EXISTS idx_matches_player ON matches(player1_id, player2_id)',
-      'CREATE INDEX IF NOT EXISTS idx_matches_date ON matches(match_date DESC)',
-      'CREATE INDEX IF NOT EXISTS idx_matches_club ON matches(club_id)',
-      'CREATE INDEX IF NOT EXISTS idx_club_members_user ON club_members(user_id)',
-      'CREATE INDEX IF NOT EXISTS idx_club_members_club ON club_members(club_id)',
-      'CREATE INDEX IF NOT EXISTS idx_notifications_user ON notifications(user_id, read)',
-    ];
+    try {
+      const indexes = [
+        'CREATE INDEX IF NOT EXISTS idx_matches_player ON matches(player1_id, player2_id)',
+        'CREATE INDEX IF NOT EXISTS idx_matches_date ON matches(date DESC)',
+        'CREATE INDEX IF NOT EXISTS idx_matches_club ON matches(club_id)',
+        'CREATE INDEX IF NOT EXISTS idx_club_members_user ON club_members(user_id)',
+        'CREATE INDEX IF NOT EXISTS idx_club_members_club ON club_members(club_id)',
+        'CREATE INDEX IF NOT EXISTS idx_notifications_user ON notifications(user_id, is_read)',
+      ];
 
-    for (const index of indexes) {
-      await this.db.execAsync(index);
+      for (const index of indexes) {
+        await this.db.execAsync(index);
+      }
+      console.log('✅ Performance indexes created successfully');
+    } catch (error) {
+      console.warn('⚠️ Failed to create some performance indexes:', error);
+      // Don't throw - indexes are optional for functionality
     }
   }
 

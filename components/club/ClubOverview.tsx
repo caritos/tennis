@@ -4,6 +4,9 @@ import { Ionicons } from '@expo/vector-icons';
 import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
 import { UpcomingMatchesNotification } from '@/components/UpcomingMatchesNotification';
+import { MatchInvitationNotification } from '@/components/MatchInvitationNotification';
+import ChallengeNotifications from '@/components/ChallengeNotifications';
+import { ContactSharingNotification } from '@/components/ContactSharingNotification';
 import { Club } from '@/lib/supabase';
 
 interface ClubOverviewProps {
@@ -15,6 +18,7 @@ interface ClubOverviewProps {
   onRecordMatch: () => void;
   onInvitePlayers: () => void;
   onViewAllMatches: () => void;
+  onEditClub?: () => void;
 }
 
 export default function ClubOverview({
@@ -26,6 +30,7 @@ export default function ClubOverview({
   onRecordMatch,
   onInvitePlayers,
   onViewAllMatches,
+  onEditClub,
 }: ClubOverviewProps) {
   return (
     <ScrollView
@@ -57,6 +62,12 @@ export default function ClubOverview({
         </View>
       </ThemedView>
 
+      {/* Match Invitation Notification */}
+      <MatchInvitationNotification 
+        clubId={club.id}
+        onViewDetails={onViewAllMatches}
+      />
+
       {/* Upcoming Matches Notification */}
       {user?.id && (
         <UpcomingMatchesNotification 
@@ -66,13 +77,38 @@ export default function ClubOverview({
         />
       )}
 
+      {/* Challenge Notifications */}
+      {user?.id && (
+        <ChallengeNotifications 
+          userId={user.id}
+          clubId={club.id}
+        />
+      )}
 
+      {/* Contact Sharing Notifications */}
+      {user?.id && (
+        <ContactSharingNotification />
+      )}
 
       {/* Information */}
       <ThemedView style={[styles.sectionCard, { backgroundColor: colors.card }]}>
         <View style={styles.sectionHeaderWithIcon}>
-          <Ionicons name="information-circle-outline" size={20} color={colors.tint} style={styles.sectionIcon} />
-          <ThemedText style={[styles.sectionTitle, { color: colors.text }]}>Information</ThemedText>
+          <View style={styles.sectionTitleContainer}>
+            <Ionicons name="information-circle-outline" size={20} color={colors.tint} style={styles.sectionIcon} />
+            <ThemedText style={[styles.sectionTitle, { color: colors.text }]}>Information</ThemedText>
+          </View>
+          {/* Edit Club Button - only visible to club creator */}
+          {user?.id === club.creator_id && onEditClub && (
+            <TouchableOpacity
+              style={[styles.editButton, { borderColor: colors.tint }]}
+              onPress={onEditClub}
+            >
+              <Ionicons name="pencil" size={16} color={colors.tint} />
+              <ThemedText style={[styles.editButtonText, { color: colors.tint }]}>
+                Edit
+              </ThemedText>
+            </TouchableOpacity>
+          )}
         </View>
         
         {/* Quick Stats */}
@@ -133,6 +169,7 @@ const styles = StyleSheet.create({
   sectionHeaderWithIcon: {
     flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'space-between',
     marginBottom: 8,
   },
   sectionIcon: {
@@ -215,5 +252,23 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: '600',
     marginLeft: 8,
+  },
+  editButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderWidth: 1,
+    borderRadius: 16,
+    gap: 4,
+  },
+  editButtonText: {
+    fontSize: 12,
+    fontWeight: '600',
+  },
+  sectionTitleContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flex: 1,
   },
 });

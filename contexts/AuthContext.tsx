@@ -6,7 +6,7 @@ interface UserProfile {
   id: string;
   email: string;
   full_name: string;
-  phone?: string | null;
+  phone: string;
   role: string;
   contact_preference: string;
   created_at: string;
@@ -96,25 +96,71 @@ export function AuthProvider({ children }: AuthProviderProps) {
         .single();
 
       if (error && error.code === 'PGRST116') {
-        // Profile doesn't exist yet - create a temporary user object
-        // This happens right after signup before the profile is created
-        console.log('👋 AuthContext: Profile not found, creating temporary user object');
-        const tempUserProfile: UserProfile = {
-          id: authUser.id,
-          email: authUser.email || '',
-          full_name: authUser.user_metadata?.full_name || authUser.email?.split('@')[0] || 'User',
-          phone: authUser.user_metadata?.phone || null,
-          role: 'player',
-          contact_preference: 'whatsapp',
-          created_at: new Date().toISOString(),
-          user_metadata: authUser.user_metadata
-        };
-        setUser(tempUserProfile);
-        setIsFirstTimeUser(true);
-        setIsOnboardingComplete(false);
+        // Profile doesn't exist yet - create it now
+        console.log('👋 AuthContext: Profile not found, creating user profile in database');
         
-        // Try to load the actual profile again after a delay
-        setTimeout(() => loadUserProfile(authUser), 1000);
+        try {
+          // Try to upsert the user profile
+          const { data: upsertedProfile, error: upsertError } = await supabase
+            .from('users')
+            .upsert({
+              id: authUser.id,
+              email: authUser.email || '',
+              full_name: authUser.user_metadata?.full_name || authUser.email?.split('@')[0] || 'User',
+              phone: authUser.user_metadata?.phone || '',
+              role: 'player',
+              contact_preference: 'whatsapp',
+              elo_rating: 1200,
+              games_played: 0,
+              created_at: new Date().toISOString()
+            }, {
+              onConflict: 'email',
+              ignoreDuplicates: false
+            })
+            .select()
+            .single();
+
+          if (upsertError) {
+            console.error('❌ AuthContext: Failed to upsert user profile:', upsertError);
+            throw upsertError;
+          }
+
+          if (upsertedProfile) {
+            console.log('✅ AuthContext: User profile upserted successfully');
+            
+            // Create user profile from upserted data
+            const userProfile: UserProfile = {
+              ...upsertedProfile,
+              user_metadata: {
+                full_name: upsertedProfile.full_name,
+                phone: upsertedProfile.phone
+              }
+            };
+            setUser(userProfile);
+            setIsFirstTimeUser(true);
+            setIsOnboardingComplete(false);
+          } else {
+            console.error('❌ AuthContext: No profile returned from upsert');
+            throw new Error('No profile returned from upsert');
+          }
+          
+        } catch (createError) {
+          console.error('❌ AuthContext: Exception creating user profile:', createError);
+          // Fall back to temporary user object
+          const tempUserProfile: UserProfile = {
+            id: authUser.id,
+            email: authUser.email || '',
+            full_name: authUser.user_metadata?.full_name || authUser.email?.split('@')[0] || 'User',
+            phone: authUser.user_metadata?.phone || '',
+            role: 'player',
+            contact_preference: 'whatsapp',
+            created_at: new Date().toISOString(),
+            user_metadata: authUser.user_metadata
+          };
+          setUser(tempUserProfile);
+          setIsFirstTimeUser(true);
+          setIsOnboardingComplete(false);
+        }
       } else if (error) {
         console.error('❌ AuthContext: Profile load failed:', error);
         setIsFirstTimeUser(false);
@@ -128,7 +174,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
           // Add auth metadata for backward compatibility
           user_metadata: {
             full_name: profile.full_name,
-            phone: profile.phone || undefined
+            phone: profile.phone
           }
         };
         setUser(userProfile);
@@ -154,7 +200,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
         options: {
           data: {
             full_name: fullName,
-            phone: phone || null,
+            phone: phone || '',
           }
         }
       });
@@ -175,9 +221,11 @@ export function AuthProvider({ children }: AuthProviderProps) {
           id: authData.user.id,
           email,
           full_name: fullName,
-          phone: phone || null,
+          phone: phone || '',
           role: 'player',
           contact_preference: 'whatsapp',
+          elo_rating: 1200,
+          games_played: 0,
           created_at: new Date().toISOString()
         });
 

@@ -14,7 +14,7 @@ import { Colors } from '@/constants/Colors';
 import { challengeService, CreateChallengeData } from '@/services/challengeService';
 import { useNotification } from '@/contexts/NotificationContext';
 import { useAuth } from '@/contexts/AuthContext';
-import { initializeDatabase } from '@/database/database';
+import { supabase } from '@/lib/supabase';
 import MatchTypeSelection from './challenge-flow/MatchTypeSelection';
 import PlayerSelection from './challenge-flow/PlayerSelection';
 import TimingOptions from './challenge-flow/TimingOptions';
@@ -63,6 +63,7 @@ const ChallengeFlowModal: React.FC<ChallengeFlowModalProps> = ({
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
+    console.log('🎯 Challenge Modal Effect:', { isVisible, clubId, targetPlayerId, targetPlayerName });
     if (isVisible) {
       loadAvailablePlayers();
       resetForm();
@@ -70,6 +71,8 @@ const ChallengeFlowModal: React.FC<ChallengeFlowModalProps> = ({
   }, [isVisible, clubId]);
 
   const resetForm = () => {
+    console.log('🔄 Challenge Form Reset:', { targetPlayerId, targetPlayerName });
+    
     setMatchType('singles');
     setSelectedTime('tomorrow');
     setMessage('');
@@ -78,8 +81,11 @@ const ChallengeFlowModal: React.FC<ChallengeFlowModalProps> = ({
     
     // Auto-select target player if provided
     if (targetPlayerId && targetPlayerName) {
+      console.log('✅ Auto-selecting target player:', { targetPlayerId, targetPlayerName });
       setSelectedPlayers([{ id: targetPlayerId, full_name: targetPlayerName }]);
       setMessage(`Hey ${targetPlayerName}! Want to play a match?`);
+    } else {
+      console.log('❌ No target player provided for auto-selection');
     }
   };
 
@@ -88,19 +94,34 @@ const ChallengeFlowModal: React.FC<ChallengeFlowModalProps> = ({
 
     try {
       setIsLoadingPlayers(true);
-      const db = await initializeDatabase();
 
-      // Get all club members except the current user
-      const players = await db.getAllAsync(
-        `SELECT u.id, u.full_name 
-         FROM users u
-         JOIN club_members cm ON u.id = cm.user_id
-         WHERE cm.club_id = ? AND u.id != ?
-         ORDER BY u.full_name ASC`,
-        [clubId, user.id]
-      );
+      // Get all club members except the current user from Supabase
+      const { data: members, error } = await supabase
+        .from('club_members')
+        .select(`
+          users!club_members_user_id_fkey (
+            id,
+            full_name
+          )
+        `)
+        .eq('club_id', clubId)
+        .neq('user_id', user.id);
 
-      setAvailablePlayers(players as Player[]);
+      if (error) {
+        console.error('Failed to load club members:', error);
+        throw error;
+      }
+
+      // Transform the joined data to Player format
+      const players: Player[] = (members || [])
+        .filter(member => member.users) // Filter out null users
+        .map(member => ({
+          id: (member.users as any).id,
+          full_name: (member.users as any).full_name
+        }))
+        .sort((a, b) => a.full_name.localeCompare(b.full_name));
+
+      setAvailablePlayers(players);
     } catch (error) {
       console.error('Failed to load players:', error);
       showError('Error', 'Failed to load club members');
@@ -221,10 +242,18 @@ const ChallengeFlowModal: React.FC<ChallengeFlowModalProps> = ({
   };
 
   const canSubmit = () => {
-    if (matchType === 'singles') {
-      return selectedPlayers.length === 1;
-    }
-    return selectedPlayers.length === 3;
+    const result = matchType === 'singles' ? selectedPlayers.length === 1 : selectedPlayers.length === 3;
+    
+    console.log('🔍 Challenge Form Debug:', {
+      matchType,
+      selectedPlayersCount: selectedPlayers.length,
+      selectedPlayers,
+      canSubmit: result,
+      targetPlayerId,
+      targetPlayerName
+    });
+    
+    return result;
   };
 
 

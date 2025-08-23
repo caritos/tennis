@@ -40,14 +40,14 @@ export default function TermsOfServiceScreen() {
           </ThemedText>
 
           <ThemedText style={styles.paragraph}>
-            Welcome to Tennis Club! These Terms of Service (&quot;Terms&quot;) govern your use of our mobile application and services. By using Tennis Club, you agree to these Terms.
+            Welcome to Play Serve! These Terms of Service (&quot;Terms&quot;) govern your use of our mobile application and services. By using Play Serve, you agree to these Terms.
           </ThemedText>
 
           <ThemedText type="subtitle" style={styles.sectionTitle}>
-            About Tennis Club
+            About Play Serve
           </ThemedText>
           <ThemedText style={styles.paragraph}>
-            Tennis Club is a mobile application that connects tennis players within local clubs. Our service allows you to:
+            Play Serve is a mobile application that connects tennis players within local clubs. Our service allows you to:
           </ThemedText>
           <ThemedText style={styles.bulletPoint}>
             • Join tennis clubs in your area

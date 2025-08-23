@@ -112,6 +112,8 @@ BEGIN
     IF EXISTS (SELECT FROM pg_tables WHERE schemaname = 'public' AND tablename = 'notifications') THEN
         DROP POLICY IF EXISTS "Users can view own notifications" ON notifications;
         DROP POLICY IF EXISTS "System can create notifications" ON notifications;
+        DROP POLICY IF EXISTS "Users can create challenge notifications" ON notifications;
+        DROP POLICY IF EXISTS "Authenticated users can create challenge notifications" ON notifications;
         DROP POLICY IF EXISTS "Users can update own notifications" ON notifications;
         DROP POLICY IF EXISTS "Users can delete own notifications" ON notifications;
     END IF;
@@ -136,14 +138,16 @@ DROP FUNCTION IF EXISTS is_admin() CASCADE;
 -- PART 2: CREATE TABLES
 -- ============================================================================
 
--- Users table
-CREATE TABLE users (
+-- Users table 
+CREATE TABLE IF NOT EXISTS users (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
   full_name TEXT NOT NULL,
   email TEXT UNIQUE NOT NULL,
   phone TEXT,
   role TEXT DEFAULT 'player' CHECK (role IN ('player', 'admin')),
   contact_preference TEXT DEFAULT 'whatsapp' CHECK (contact_preference IN ('whatsapp', 'phone', 'text')),
+  elo_rating INTEGER DEFAULT 1200, -- ELO rating for tennis ranking (starts at 1200)
+  games_played INTEGER DEFAULT 0, -- Number of games played for K-factor calculation
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
@@ -257,6 +261,17 @@ CREATE TABLE notifications (
   expires_at TIMESTAMP WITH TIME ZONE
 );
 
+-- Club notifications table (for club-wide notifications like new invitations)
+CREATE TABLE club_notifications (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  club_id UUID NOT NULL REFERENCES clubs(id) ON DELETE CASCADE,
+  type TEXT NOT NULL, -- e.g., 'invitation_created', 'match_recorded', etc.
+  title TEXT NOT NULL,
+  message TEXT NOT NULL,
+  data JSONB, -- JSON data with notification details
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
 -- ============================================================================
 -- PART 3: CREATE INDEXES
 -- ============================================================================
@@ -283,6 +298,8 @@ CREATE INDEX idx_notifications_user ON notifications(user_id);
 CREATE INDEX idx_notifications_type ON notifications(type);
 CREATE INDEX idx_notifications_read ON notifications(is_read);
 CREATE INDEX idx_notifications_created ON notifications(created_at);
+CREATE INDEX idx_club_notifications_club ON club_notifications(club_id);
+CREATE INDEX idx_club_notifications_created ON club_notifications(created_at);
 
 -- ============================================================================
 -- PART 4: CREATE TRIGGERS AND FUNCTIONS
@@ -331,6 +348,7 @@ ALTER TABLE invitation_responses ENABLE ROW LEVEL SECURITY;
 ALTER TABLE challenges ENABLE ROW LEVEL SECURITY;
 ALTER TABLE challenge_counters ENABLE ROW LEVEL SECURITY;
 ALTER TABLE notifications ENABLE ROW LEVEL SECURITY;
+ALTER TABLE club_notifications ENABLE ROW LEVEL SECURITY;
 
 -- ============================================================================
 -- PART 6: CREATE ROW LEVEL SECURITY POLICIES
@@ -338,16 +356,17 @@ ALTER TABLE notifications ENABLE ROW LEVEL SECURITY;
 
 -- USERS TABLE POLICIES
 CREATE POLICY "Users can view own profile" ON users
-  FOR SELECT USING (auth.uid()::text = id::text);
+  FOR SELECT USING (auth.uid() = id);
 
 CREATE POLICY "Users can update own profile" ON users
-  FOR UPDATE USING (auth.uid()::text = id::text);
+  FOR UPDATE USING (auth.uid() = id);
 
--- Fixed insert policy to avoid infinite recursion
+-- Allow authenticated users to create their own profile
+-- This policy ensures users can only create a profile record for themselves
 CREATE POLICY "Users can insert own profile" ON users
   FOR INSERT WITH CHECK (
     auth.role() = 'authenticated' 
-    AND auth.uid()::text = id::text
+    AND auth.uid() = id
   );
 
 -- Allow service role insertions for admin purposes
@@ -358,8 +377,8 @@ CREATE POLICY "Users can view basic info of other users" ON users
   FOR SELECT USING (
     EXISTS (
       SELECT 1 FROM club_members cm1, club_members cm2 
-      WHERE cm1.user_id::text = auth.uid()::text 
-      AND cm2.user_id::text = users.id::text 
+      WHERE cm1.user_id = auth.uid() 
+      AND cm2.user_id = users.id 
       AND cm1.club_id = cm2.club_id
     )
   );
@@ -546,12 +565,47 @@ CREATE POLICY "Users can view own notifications" ON notifications
 
 CREATE POLICY "System can create notifications" ON notifications
   FOR INSERT WITH CHECK (auth.role() = 'service_role');
+CREATE POLICY "Authenticated users can create challenge notifications" ON notifications
+  FOR INSERT WITH CHECK (
+    auth.role() = 'authenticated' 
+    AND type = 'challenge'
+  );
 
 CREATE POLICY "Users can update own notifications" ON notifications
   FOR UPDATE USING (auth.uid()::text = user_id::text);
 
 CREATE POLICY "Users can delete own notifications" ON notifications
   FOR DELETE USING (auth.uid()::text = user_id::text);
+
+-- CLUB_NOTIFICATIONS TABLE POLICIES
+CREATE POLICY "Club members can view club notifications" ON club_notifications
+  FOR SELECT USING (
+    EXISTS (
+      SELECT 1 FROM club_members 
+      WHERE club_id = club_notifications.club_id 
+      AND user_id::text = auth.uid()::text
+    )
+  );
+
+-- Allow club members to create notifications
+CREATE POLICY "Club members can create club notifications" ON club_notifications
+  FOR INSERT WITH CHECK (
+    EXISTS (
+      SELECT 1 FROM club_members 
+      WHERE club_id = club_notifications.club_id 
+      AND user_id::text = auth.uid()::text
+    )
+    OR 
+    -- Also allow club creators to create notifications
+    EXISTS (
+      SELECT 1 FROM clubs
+      WHERE id = club_notifications.club_id
+      AND creator_id::text = auth.uid()::text  
+    )
+  );
+
+CREATE POLICY "Service role can manage club notifications" ON club_notifications
+  FOR ALL USING (auth.role() = 'service_role');
 
 -- ============================================================================
 -- PART 7: VERIFICATION AND TESTING
@@ -568,16 +622,16 @@ BEGIN
     FROM information_schema.tables
     WHERE table_schema = 'public'
     AND table_name IN ('users', 'clubs', 'matches', 'club_members', 'match_invitations', 
-                       'invitation_responses', 'challenges', 'challenge_counters', 'notifications');
+                       'invitation_responses', 'challenges', 'challenge_counters', 'notifications', 'club_notifications');
     
     -- Check policies
     SELECT COUNT(*) INTO policy_count
     FROM pg_policies
     WHERE schemaname = 'public';
     
-    IF table_count = 9 THEN
+    IF table_count = 10 THEN
         RAISE NOTICE '✅ Production database setup complete!';
-        RAISE NOTICE '✅ All 9 tables created successfully';
+        RAISE NOTICE '✅ All 10 tables created successfully';
         RAISE NOTICE '✅ % RLS policies configured', policy_count;
         RAISE NOTICE '✅ Indexes and triggers configured';
         RAISE NOTICE '✅ Fixed infinite recursion in user policies';
@@ -590,12 +644,82 @@ BEGIN
         RAISE NOTICE '🔐 Security: All tables have RLS enabled';
         RAISE NOTICE '⚡ Performance: Optimized indexes created';
     ELSE
-        RAISE EXCEPTION '❌ ERROR: Only % of 9 tables were created', table_count;
+        RAISE EXCEPTION '❌ ERROR: Only % of 10 tables were created', table_count;
     END IF;
 END $$;
 
 -- ============================================================================
--- PART 8: PRODUCTION READY - NO SAMPLE DATA
+-- PART 8: POST-CREATION MIGRATIONS AND FIXES
+-- ============================================================================
+
+-- Migration: Make phone field mandatory for existing installations
+-- Update any existing users who have null or empty phone numbers, then make field NOT NULL
+DO $$
+BEGIN
+    -- Update any existing users who have null or empty phone numbers
+    UPDATE users SET phone = '' WHERE phone IS NULL;
+    
+    -- Make phone field NOT NULL if it isn't already
+    IF EXISTS (SELECT 1 FROM information_schema.columns 
+              WHERE table_name = 'users' AND column_name = 'phone' AND is_nullable = 'YES') THEN
+        ALTER TABLE users ALTER COLUMN phone SET NOT NULL;
+        RAISE NOTICE '✅ Updated phone field to be mandatory (NOT NULL)';
+    ELSE
+        RAISE NOTICE 'ℹ️ Phone field is already NOT NULL';
+    END IF;
+END $$;
+
+-- Fix: Remove any conflicting notification policies to ensure proper contact sharing
+DO $$
+BEGIN
+    -- Drop any existing conflicting notification policies
+    DROP POLICY IF EXISTS "Users can create challenge notifications" ON notifications;
+    RAISE NOTICE '✅ Removed conflicting notification policy for contact sharing fix';
+EXCEPTION
+    WHEN OTHERS THEN
+        RAISE NOTICE 'ℹ️ No conflicting notification policy found to remove';
+END $$;
+
+-- Fix: Update all user policies to use consistent UUID handling
+DO $$
+BEGIN
+    -- Drop all user policies and recreate with consistent UUID handling
+    DROP POLICY IF EXISTS "Users can view own profile" ON users;
+    DROP POLICY IF EXISTS "Users can update own profile" ON users;
+    DROP POLICY IF EXISTS "Users can insert own profile" ON users;
+    DROP POLICY IF EXISTS "Users can view basic info of other users" ON users;
+    
+    -- Recreate user policies with consistent UUID handling (no casting)
+    CREATE POLICY "Users can view own profile" ON users
+      FOR SELECT USING (auth.uid() = id);
+      
+    CREATE POLICY "Users can update own profile" ON users
+      FOR UPDATE USING (auth.uid() = id);
+      
+    CREATE POLICY "Users can insert own profile" ON users
+      FOR INSERT WITH CHECK (
+        auth.role() = 'authenticated' 
+        AND auth.uid() = id
+      );
+      
+    CREATE POLICY "Users can view basic info of other users" ON users
+      FOR SELECT USING (
+        EXISTS (
+          SELECT 1 FROM club_members cm1, club_members cm2 
+          WHERE cm1.user_id = auth.uid() 
+          AND cm2.user_id = users.id 
+          AND cm1.club_id = cm2.club_id
+        )
+      );
+    
+    RAISE NOTICE '✅ Updated all user policies to use consistent UUID handling';
+EXCEPTION
+    WHEN OTHERS THEN
+        RAISE NOTICE 'ℹ️ User policy updates failed: %', SQLERRM;
+END $$;
+
+-- ============================================================================
+-- PART 9: PRODUCTION READY - NO SAMPLE DATA
 -- ============================================================================
 
 -- Database is now ready for production use with no sample data

@@ -3,6 +3,7 @@ import { View, TouchableOpacity, StyleSheet, ScrollView } from 'react-native';
 import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
 import { TennisScoreDisplay } from '@/components/TennisScoreDisplay';
+import { DoublesMatchParticipants } from '@/components/DoublesMatchParticipants';
 
 interface Match {
   id: string;
@@ -16,9 +17,19 @@ interface Match {
   player3_id?: string;
   player4_id?: string;
   scores: string;
-  winner: number;
+  winner: number | null;
   match_type: 'singles' | 'doubles';
   date: string;
+  time?: string;
+  location?: string;
+  notes?: string;
+  status?: string;
+  isInvitation?: boolean;
+  responses?: Array<{
+    id: string;
+    user_name?: string;
+    status: 'interested' | 'confirmed' | 'declined';
+  }>;
 }
 
 interface ClubMatchesProps {
@@ -240,30 +251,50 @@ export default function ClubMatches({
                   { borderColor: colors.border }
                 ]}
               >
-                <TennisScoreDisplay
-                  player1Name={match.player1_name}
-                  player2Name={match.player2_name || match.opponent2_name}
-                  scores={match.scores}
-                  winner={match.winner as 1 | 2}
-                  matchId={match.id}
-                  player1Id={match.player1_id}
-                  player2Id={match.player2_id}
-                  player3Id={match.player3_id}
-                  player4Id={match.player4_id}
-                  matchType={match.match_type}
-                  clubName={club?.name || ''}
-                  matchDate={match.date}
-                  isPlayer1Unregistered={false}
-                  isPlayer2Unregistered={!match.player2_id && !!match.opponent2_name}
-                  isPlayer3Unregistered={!match.player3_id && !!match.partner3_name}
-                  isPlayer4Unregistered={!match.player4_id && !!match.partner4_name}
-                  unregisteredPlayer2Name={match.opponent2_name}
-                  unregisteredPlayer3Name={match.partner3_name}
-                  unregisteredPlayer4Name={match.partner4_name}
-                  onClaimMatch={onClaimMatch}
-                  colors={colors}
-                  showMeta={true}
-                />
+                {match.isInvitation ? (
+                  // Display invitation with grid-style participant slots
+                  <View style={styles.invitationDisplay}>
+                    <View style={styles.invitationHeader}>
+                      <ThemedText style={[styles.invitationStatus, { color: colors.tint }]}>
+                        Looking to Play - {match.match_type.charAt(0).toUpperCase() + match.match_type.slice(1)}
+                      </ThemedText>
+                      {match.time && (
+                        <ThemedText style={[styles.invitationTime, { color: colors.textSecondary }]}>
+                          {match.time}
+                        </ThemedText>
+                      )}
+                    </View>
+                    
+                    {match.notes && (
+                      <ThemedText style={[styles.invitationNotes, { color: colors.textSecondary }]}>
+                        "{match.notes}"
+                      </ThemedText>
+                    )}
+
+                    {/* Grid-style participant display */}
+                    <DoublesMatchParticipants
+                      creatorName={match.player1_name}
+                      responses={match.responses || []}
+                      matchType={match.match_type}
+                      isMatched={false}
+                    />
+                  </View>
+                ) : (
+                  // Display completed match with scores
+                  <TennisScoreDisplay
+                    player1Name={match.player1_name}
+                    player2Name={match.player2_name || match.opponent2_name}
+                    scores={match.scores}
+                    winner={match.winner as 1 | 2}
+                    matchId={match.id}
+                    player1Id={match.player1_id}
+                    player2Id={match.player2_id}
+                    player3Id={match.player3_id}
+                    player4Id={match.player4_id}
+                    matchType={match.match_type}
+                    onClaimMatch={onClaimMatch}
+                  />
+                )}
                 
                 {/* Match Date */}
                 <View style={styles.matchMeta}>
@@ -408,5 +439,29 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     marginTop: 4,
     opacity: 0.7,
+  },
+  // Invitation display styles
+  invitationDisplay: {
+    padding: 8,
+  },
+  invitationHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  invitationStatus: {
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  invitationTime: {
+    fontSize: 14,
+    fontWeight: '500',
+  },
+  invitationNotes: {
+    fontSize: 12,
+    fontStyle: 'italic',
+    marginBottom: 8,
+    paddingHorizontal: 4,
   },
 });

@@ -17,11 +17,13 @@ import { useAuth } from '@/contexts/AuthContext';
 
 interface ChallengeNotificationsProps {
   userId: string;
+  clubId?: string; // Optional: if provided, only show challenges from this club
   onRefresh?: () => void;
 }
 
 const ChallengeNotifications: React.FC<ChallengeNotificationsProps> = ({
   userId,
+  clubId,
   onRefresh,
 }) => {
   const colorScheme = useColorScheme();
@@ -35,14 +37,20 @@ const ChallengeNotifications: React.FC<ChallengeNotificationsProps> = ({
 
   useEffect(() => {
     loadChallenges();
-  }, [userId]);
+  }, [userId, clubId]);
 
   const loadChallenges = async () => {
     try {
       setIsLoading(true);
       const challenges = await challengeService.getUserReceivedChallenges(userId);
       // Only show pending challenges
-      const pendingChallenges = challenges.filter(c => c.status === 'pending');
+      let pendingChallenges = challenges.filter(c => c.status === 'pending');
+      
+      // If clubId is provided, only show challenges from that club
+      if (clubId) {
+        pendingChallenges = pendingChallenges.filter(c => c.club_id === clubId);
+      }
+      
       setReceivedChallenges(pendingChallenges);
     } catch (error) {
       console.error('Failed to load challenges:', error);

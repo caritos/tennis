@@ -102,7 +102,7 @@ export class MatchInvitationService {
         .from('match_invitations')
         .select(`
           *,
-          creator:users!match_invitations_creator_id_fkey(full_name)
+          users!creator_id(full_name)
         `)
         .eq('club_id', clubId)
         .eq('status', 'active')
@@ -116,7 +116,7 @@ export class MatchInvitationService {
       // Map joined data to expected format
       return (invitations || []).map((invitation: any) => ({
         ...invitation,
-        creator_name: invitation.creator?.full_name
+        creator_name: invitation.users?.full_name
       }));
     } catch (error) {
       console.error('❌ Failed to get club invitations:', error);
@@ -462,6 +462,52 @@ export class MatchInvitationService {
       }
     } catch (error) {
       console.error('❌ Failed to cleanup expired invitations:', error);
+    }
+  }
+
+  /**
+   * Create a club notification for match invitation
+   */
+  public async createClubNotification(clubId: string, notificationData: {
+    type: string;
+    title: string;
+    message: string;
+    invitation_id: string;
+    match_type: string;
+    date: string;
+    time?: string;
+    location?: string;
+    creator_name: string;
+  }): Promise<void> {
+    try {
+      const { error } = await supabase
+        .from('club_notifications')
+        .insert({
+          id: generateUUID(),
+          club_id: clubId,
+          type: notificationData.type,
+          title: notificationData.title,
+          message: notificationData.message,
+          data: JSON.stringify({
+            invitation_id: notificationData.invitation_id,
+            match_type: notificationData.match_type,
+            date: notificationData.date,
+            time: notificationData.time,
+            location: notificationData.location,
+            creator_name: notificationData.creator_name
+          }),
+          created_at: new Date().toISOString()
+        });
+
+      if (error) {
+        console.error('❌ Failed to create club notification:', error);
+        throw error;
+      }
+
+      console.log('✅ Club notification created for invitation');
+    } catch (error) {
+      console.error('❌ Failed to create club notification:', error);
+      throw error;
     }
   }
 }

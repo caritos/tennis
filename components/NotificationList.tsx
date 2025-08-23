@@ -15,7 +15,7 @@ import { useColorScheme } from '@/hooks/useColorScheme';
 import { useNotification } from '@/contexts/NotificationContext';
 import { NotificationService, Notification } from '@/services/NotificationService';
 import { challengeService } from '@/services/challengeService';
-import { initializeDatabase } from '@/database/database';
+// import { initializeDatabase } from '@/database/database'; // Removed - using NotificationService from Supabase
 import { useAuth } from '@/contexts/AuthContext';
 import { useOptimizedState } from '@/hooks/useOptimizedState';
 
@@ -169,8 +169,7 @@ export const NotificationList: React.FC = () => {
 
   const initService = async () => {
     try {
-      const db = await initializeDatabase();
-      setNotificationService(new NotificationService(db));
+      setNotificationService(new NotificationService());
     } catch (error) {
       console.error('Failed to initialize notification service:', error);
     }
