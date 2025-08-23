@@ -11,10 +11,9 @@ import { useAuth } from '@/contexts/AuthContext';
 import { usePlayerStats } from '@/hooks/usePlayerStats';
 import ProfileTab from '@/components/profile/ProfileTab';
 import ProfileStats from '@/components/profile/ProfileStats';
-import ProfileMatches from '@/components/profile/ProfileMatches';
 import ProfileSettings from '@/components/profile/ProfileSettings';
 
-type TabType = 'profile' | 'stats' | 'matches' | 'settings';
+type TabType = 'profile' | 'stats' | 'settings';
 
 export default function ProfileScreen() {
   const colorScheme = useColorScheme();
@@ -74,20 +73,6 @@ export default function ProfileScreen() {
         </TouchableOpacity>
 
         <TouchableOpacity
-          style={[styles.tab, activeTab === 'matches' && { borderBottomColor: colors.tint }]}
-          onPress={() => setActiveTab('matches')}
-        >
-          <Ionicons 
-            name={activeTab === 'matches' ? 'tennisball' : 'tennisball-outline'} 
-            size={20} 
-            color={activeTab === 'matches' ? colors.tint : colors.tabIconDefault}
-          />
-          <ThemedText style={[styles.tabText, activeTab === 'matches' && { color: colors.tint }]}>
-            Matches
-          </ThemedText>
-        </TouchableOpacity>
-
-        <TouchableOpacity
           style={[styles.tab, activeTab === 'settings' && { borderBottomColor: colors.tint }]}
           onPress={() => setActiveTab('settings')}
         >
@@ -115,11 +100,6 @@ export default function ProfileScreen() {
             loading={statsLoading}
             error={statsError}
           />
-        )}
-
-        {/* Matches Tab */}
-        {activeTab === 'matches' && (
-          <ProfileMatches user={user} colors={colors} />
         )}
 
         {/* Settings Tab */}

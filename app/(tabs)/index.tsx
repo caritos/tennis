@@ -219,7 +219,7 @@ export default function ClubScreen() {
         {/* Welcome Message for First Time Users */}
         {showWelcomeMessage && (
           <InlineNotificationBanner
-            title="Welcome to Tennis Club! 🎾"
+            title="Welcome to Tennis Club!"
             description="Find tennis partners, record matches, and climb rankings in local clubs near you."
             icon="🎾"
             variant="welcome"

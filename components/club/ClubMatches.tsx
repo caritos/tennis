@@ -3,7 +3,6 @@ import { View, TouchableOpacity, StyleSheet, ScrollView } from 'react-native';
 import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
 import { TennisScoreDisplay } from '@/components/TennisScoreDisplay';
-import LookingToPlaySection from '@/components/LookingToPlaySection';
 
 interface Match {
   id: string;
@@ -28,10 +27,10 @@ interface ClubMatchesProps {
   colors: any;
   filterType: 'all' | 'singles' | 'doubles';
   filterDate: 'all' | 'upcoming' | 'week' | 'month';
-  filterInvolvement: 'all' | 'my';
+  filterInvolvement: 'all' | 'my' | 'incomplete';
   onFilterTypeChange: (type: 'all' | 'singles' | 'doubles') => void;
   onFilterDateChange: (date: 'all' | 'upcoming' | 'week' | 'month') => void;
-  onFilterInvolvementChange: (involvement: 'all' | 'my') => void;
+  onFilterInvolvementChange: (involvement: 'all' | 'my' | 'incomplete') => void;
   onClaimMatch?: (matchId: string, playerPosition: "player2" | "player3" | "player4") => void;
   onRecordMatch?: () => void;
   currentUserId?: string;
@@ -51,7 +50,7 @@ export default function ClubMatches({
   onRecordMatch,
   currentUserId,
 }: ClubMatchesProps) {
-  // Filter matches based on type, involvement, and date
+  // Filter and sort matches based on type, involvement, and date
   const filteredMatches = matches.filter(match => {
     // Filter by match type
     if (filterType !== 'all' && match.match_type !== filterType) {
@@ -66,6 +65,14 @@ export default function ClubMatches({
         match.player3_id === currentUserId ||
         match.player4_id === currentUserId;
       if (!isUserInvolved) return false;
+    } else if (filterInvolvement === 'incomplete') {
+      // Show matches that need more players (have empty slots)
+      const isIncomplete = match.match_type === 'singles' 
+        ? !match.player2_id && !match.opponent2_name
+        : !match.player2_id && !match.opponent2_name || 
+          !match.player3_id && !match.partner3_name || 
+          !match.player4_id && !match.partner4_name;
+      if (!isIncomplete) return false;
     }
     
     // Filter by date
@@ -88,6 +95,18 @@ export default function ClubMatches({
     }
     
     return true;
+  }).sort((a, b) => {
+    // Sort matches by date - most recent first
+    const dateA = new Date(a.date);
+    const dateB = new Date(b.date);
+    
+    if (filterDate === 'upcoming') {
+      // For upcoming matches, sort earliest first
+      return dateA.getTime() - dateB.getTime();
+    } else {
+      // For all other filters, sort most recent first
+      return dateB.getTime() - dateA.getTime();
+    }
   });
 
   const formatDate = (dateString: string) => {
@@ -145,7 +164,7 @@ export default function ClubMatches({
             INVOLVEMENT
           </ThemedText>
           <View style={styles.filterButtons}>
-            {(['all', 'my'] as const).map((involvement) => (
+            {(['all', 'my', 'incomplete'] as const).map((involvement) => (
               <TouchableOpacity
                 key={involvement}
                 style={[
@@ -161,7 +180,7 @@ export default function ClubMatches({
                     { color: filterInvolvement === involvement ? '#fff' : colors.text }
                   ]}
                 >
-                  {involvement === 'all' ? 'All Matches' : 'My Matches'}
+                  {involvement === 'all' ? 'All Matches' : involvement === 'my' ? 'My Matches' : 'Need Players'}
                 </ThemedText>
               </TouchableOpacity>
             ))}
@@ -202,14 +221,11 @@ export default function ClubMatches({
         </View>
       </ThemedView>
 
-      {/* Upcoming Section - Looking to Play */}
-      {club?.id && <LookingToPlaySection clubId={club.id} />}
-
       {/* Matches List */}
       <ThemedView style={[styles.matchesCard, { backgroundColor: colors.card }]}>
         <View style={styles.sectionHeader}>
           <ThemedText style={[styles.sectionTitle, { color: colors.text }]}>
-            {filterDate === 'upcoming' ? 'Upcoming Matches' : 'Match History'} ({filteredMatches.length})
+            Matches ({filteredMatches.length})
           </ThemedText>
         </View>
 
@@ -261,27 +277,23 @@ export default function ClubMatches({
         ) : (
           <View style={[styles.placeholder, { borderColor: colors.border }]}>
             <ThemedText style={styles.placeholderEmoji}>
-              {filterDate === 'upcoming' ? '📅' : '🎾'}
+              🎾
             </ThemedText>
             <ThemedText style={[styles.placeholderText, { color: colors.text }]}>
-              {filterInvolvement === 'my' && filterDate === 'upcoming'
-                ? 'No upcoming matches for you'
-                : filterInvolvement === 'my'
-                ? 'You haven\'t played any matches yet'
-                : filterDate === 'upcoming'
-                ? 'No upcoming matches scheduled'
+              {filterInvolvement === 'my'
+                ? 'No matches found for you'
+                : filterInvolvement === 'incomplete'
+                ? 'No matches need additional players'
                 : filterType === 'all' && filterDate === 'all' && filterInvolvement === 'all'
                 ? 'No matches yet • Be the first to play!'
                 : 'No matches found for your filters'
               }
             </ThemedText>
             <ThemedText style={[styles.placeholderSubtext, { color: colors.textSecondary }]}>
-              {filterInvolvement === 'my' && filterDate === 'upcoming'
-                ? 'Accept match invitations to schedule games'
-                : filterInvolvement === 'my'
+              {filterInvolvement === 'my'
                 ? 'Record a match or join a game to start playing'
-                : filterDate === 'upcoming'
-                ? 'Create match invitations to schedule future games'
+                : filterInvolvement === 'incomplete'
+                ? 'All matches have full rosters • Check back later'
                 : filterType === 'all' && filterDate === 'all' && filterInvolvement === 'all'
                 ? 'Record your match to start building history'
                 : 'Try adjusting your filters to see more matches'

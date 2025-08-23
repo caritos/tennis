@@ -14,7 +14,6 @@ import ChallengeFlowModal from '@/components/ChallengeFlowModal';
 import ClubOverview from '@/components/club/ClubOverview';
 import ClubMembers from '@/components/club/ClubMembers';
 import ClubMatches from '@/components/club/ClubMatches';
-import LookingToPlaySection from '@/components/LookingToPlaySection';
 import MatchInvitationForm from '@/components/MatchInvitationForm';
 import { getClubLeaderboard } from '@/services/matchService';
 import { challengeService } from '@/services/challengeService';
@@ -45,7 +44,8 @@ export default function ClubDetailScreen() {
   const [memberSortBy, setMemberSortBy] = useState<'name' | 'wins' | 'matches' | 'joined' | 'ranking'>('name');
   const [memberFilterBy, setMemberFilterBy] = useState<'all' | 'active' | 'new'>('all');
   const [matchFilterType, setMatchFilterType] = useState<'all' | 'singles' | 'doubles'>('all');
-  const [matchFilterDate, setMatchFilterDate] = useState<'all' | 'week' | 'month'>('all');
+  const [matchFilterDate, setMatchFilterDate] = useState<'all' | 'upcoming' | 'week' | 'month'>('all');
+  const [matchFilterInvolvement, setMatchFilterInvolvement] = useState<'all' | 'my' | 'incomplete'>('all');
 
   useEffect(() => {
     loadClubDetails();
@@ -246,13 +246,20 @@ export default function ClubDetailScreen() {
         .eq('club_id', id)
         .order('joined_at', { ascending: false });
 
-      // Process members data
-      const processedMembers = (membersData || []).map((member: any) => ({
-        ...member.users,
-        joined_at: member.joined_at,
-        match_count: 0, // TODO: Calculate match count if needed
-        wins: 0 // TODO: Calculate wins if needed
-      }));
+      // Process members data and add ranking information
+      const processedMembers = (membersData || []).map((member: any) => {
+        // Find ranking for this member
+        const ranking = rankings.findIndex(rankedPlayer => rankedPlayer.id === member.users.id);
+        const rankedPlayer = rankings.find(rankedPlayer => rankedPlayer.id === member.users.id);
+        
+        return {
+          ...member.users,
+          joined_at: member.joined_at,
+          match_count: rankedPlayer?.stats.totalMatches || 0,
+          wins: rankedPlayer?.stats.wins || 0,
+          ranking: ranking >= 0 ? ranking + 1 : undefined, // Convert 0-based index to 1-based ranking
+        };
+      });
       
       setClubMembers(processedMembers);
       
@@ -489,10 +496,13 @@ export default function ClubDetailScreen() {
             colors={colors}
             filterType={matchFilterType}
             filterDate={matchFilterDate}
+            filterInvolvement={matchFilterInvolvement}
             onFilterTypeChange={setMatchFilterType}
             onFilterDateChange={setMatchFilterDate}
+            onFilterInvolvementChange={setMatchFilterInvolvement}
             onClaimMatch={handleClaimMatch}
             onRecordMatch={handleRecordMatch}
+            currentUserId={user?.id}
           />
         )}
         </ScrollView>

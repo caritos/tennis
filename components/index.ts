@@ -22,7 +22,6 @@ export { InvitationCard } from './InvitationCard';
 // Club & Social Components
 export { ClubList } from './ClubList';
 export { ClubRankings } from './ClubRankings';
-export { LookingToPlaySection } from './LookingToPlaySection';
 export { MatchHistoryView } from './MatchHistoryView';
 export { PlayerStatsDisplay } from './PlayerStatsDisplay';
 

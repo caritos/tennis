@@ -1,6 +1,4 @@
-import { initializeDatabase, Database } from '@/database/database';
-import { syncService } from './sync';
-import { NotificationService } from './NotificationService';
+import { supabase } from '@/lib/supabase';
 import { generateUUID } from '../utils/uuid';
 
 export interface Challenge {
@@ -78,8 +76,6 @@ class ChallengeService {
    * Create a new challenge
    */
   public async createChallenge(challengeData: CreateChallengeData): Promise<string> {
-    const db = await initializeDatabase();
-    
     // Generate unique challenge ID
     const challengeId = generateUUID();
     
@@ -87,64 +83,50 @@ class ChallengeService {
     const expiresAt = challengeData.expires_at || new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString();
     
     try {
-      // Get challenger name for notification
-      const challenger = await db.getFirstAsync(
-        'SELECT full_name FROM users WHERE id = ?',
-        [challengeData.challenger_id]
-      ) as { full_name: string } | null;
+      // Get challenger name for potential notifications
+      const { data: challenger, error: challengerError } = await supabase
+        .from('users')
+        .select('full_name')
+        .eq('id', challengeData.challenger_id)
+        .single();
 
-      if (!challenger) {
+      if (challengerError || !challenger) {
+        console.error('❌ Challenger not found:', challengerError);
         throw new Error('Challenger not found');
       }
 
-      // Insert challenge into local database
-      await db.runAsync(
-        `INSERT INTO challenges (
-          id, club_id, challenger_id, challenged_id, match_type,
-          proposed_date, proposed_time, message, expires_at
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-        [
-          challengeId,
-          challengeData.club_id,
-          challengeData.challenger_id,
-          challengeData.challenged_id,
-          challengeData.match_type,
-          challengeData.proposed_date || null,
-          challengeData.proposed_time || null,
-          challengeData.message || null,
-          expiresAt,
-        ]
-      );
+      // Insert challenge into Supabase
+      const challenge: Challenge = {
+        id: challengeId,
+        club_id: challengeData.club_id,
+        challenger_id: challengeData.challenger_id,
+        challenged_id: challengeData.challenged_id,
+        match_type: challengeData.match_type,
+        proposed_date: challengeData.proposed_date,
+        proposed_time: challengeData.proposed_time,
+        message: challengeData.message,
+        status: 'pending',
+        expires_at: expiresAt,
+        contacts_shared: false,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+      };
 
-      // Create notification for the challenged user
-      const notificationService = new NotificationService(db);
-      await notificationService.createChallengeNotification(
-        challengeData.challenged_id,
-        challenger.full_name,
-        challengeId,
-        challengeData.match_type,
-        challengeData.message
-      );
+      const { data, error } = await supabase
+        .from('challenges')
+        .insert(challenge)
+        .select()
+        .single();
 
-      // Queue for sync to Supabase
-      await syncService.queueChallengeCreation(
-        challengeData.challenger_id,
-        challengeData.challenged_id,
-        challengeData.club_id,
-        {
-          id: challengeId,
-          match_type: challengeData.match_type,
-          proposed_date: challengeData.proposed_date,
-          proposed_time: challengeData.proposed_time,
-          message: challengeData.message,
-          expires_at: expiresAt,
-        }
-      );
+      if (error) {
+        console.error('❌ Failed to create challenge:', error);
+        throw new Error('Failed to create challenge');
+      }
 
-      console.log('Challenge created locally and queued for sync:', challengeId);
+      console.log('✅ Challenge created:', challengeId);
       return challengeId;
     } catch (error) {
-      console.error('Failed to create challenge:', error);
+      console.error('❌ Failed to create challenge:', error);
       throw new Error('Failed to create challenge');
     }
   }
@@ -153,30 +135,36 @@ class ChallengeService {
    * Get all challenges for a club
    */
   public async getClubChallenges(clubId: string): Promise<ChallengeWithUsers[]> {
-    const db = await initializeDatabase();
-    
     try {
-      const challenges = await db.getAllAsync(
-        `SELECT 
-          c.*,
-          challenger.full_name as challenger_name,
-          challenger.phone as challenger_phone,
-          challenger.contact_preference as challenger_contact_preference,
-          challenged.full_name as challenged_name,
-          challenged.phone as challenged_phone,
-          challenged.contact_preference as challenged_contact_preference
-        FROM challenges c
-        JOIN users challenger ON c.challenger_id = challenger.id
-        JOIN users challenged ON c.challenged_id = challenged.id
-        WHERE c.club_id = ? AND c.status != 'expired'
-        ORDER BY c.created_at DESC`,
-        [clubId]
-      );
+      const { data: challenges, error } = await supabase
+        .from('challenges')
+        .select(`
+          *,
+          challenger:users!challenges_challenger_id_fkey(full_name, phone, contact_preference),
+          challenged:users!challenges_challenged_id_fkey(full_name, phone, contact_preference)
+        `)
+        .eq('club_id', clubId)
+        .neq('status', 'expired')
+        .order('created_at', { ascending: false });
 
-      return challenges as ChallengeWithUsers[];
+      if (error) {
+        console.error('❌ Failed to get club challenges:', error);
+        return [];
+      }
+
+      // Map joined data to expected format
+      return (challenges || []).map((challenge: any) => ({
+        ...challenge,
+        challenger_name: challenge.challenger?.full_name,
+        challenger_phone: challenge.challenger?.phone,
+        challenger_contact_preference: challenge.challenger?.contact_preference,
+        challenged_name: challenge.challenged?.full_name,
+        challenged_phone: challenge.challenged?.phone,
+        challenged_contact_preference: challenge.challenged?.contact_preference,
+      }));
     } catch (error) {
-      console.error('Failed to get club challenges:', error);
-      throw new Error('Failed to load challenges');
+      console.error('❌ Failed to get club challenges:', error);
+      return [];
     }
   }
 
@@ -184,30 +172,36 @@ class ChallengeService {
    * Get challenges sent by a user
    */
   public async getUserSentChallenges(userId: string): Promise<ChallengeWithUsers[]> {
-    const db = await initializeDatabase();
-    
     try {
-      const challenges = await db.getAllAsync(
-        `SELECT 
-          c.*,
-          challenger.full_name as challenger_name,
-          challenger.phone as challenger_phone,
-          challenger.contact_preference as challenger_contact_preference,
-          challenged.full_name as challenged_name,
-          challenged.phone as challenged_phone,
-          challenged.contact_preference as challenged_contact_preference
-        FROM challenges c
-        JOIN users challenger ON c.challenger_id = challenger.id
-        JOIN users challenged ON c.challenged_id = challenged.id
-        WHERE c.challenger_id = ? AND c.status != 'expired'
-        ORDER BY c.created_at DESC`,
-        [userId]
-      );
+      const { data: challenges, error } = await supabase
+        .from('challenges')
+        .select(`
+          *,
+          challenger:users!challenges_challenger_id_fkey(full_name, phone, contact_preference),
+          challenged:users!challenges_challenged_id_fkey(full_name, phone, contact_preference)
+        `)
+        .eq('challenger_id', userId)
+        .neq('status', 'expired')
+        .order('created_at', { ascending: false });
 
-      return challenges as ChallengeWithUsers[];
+      if (error) {
+        console.error('❌ Failed to get user sent challenges:', error);
+        return [];
+      }
+
+      // Map joined data to expected format
+      return (challenges || []).map((challenge: any) => ({
+        ...challenge,
+        challenger_name: challenge.challenger?.full_name,
+        challenger_phone: challenge.challenger?.phone,
+        challenger_contact_preference: challenge.challenger?.contact_preference,
+        challenged_name: challenge.challenged?.full_name,
+        challenged_phone: challenge.challenged?.phone,
+        challenged_contact_preference: challenge.challenged?.contact_preference,
+      }));
     } catch (error) {
-      console.error('Failed to get user sent challenges:', error);
-      throw new Error('Failed to load sent challenges');
+      console.error('❌ Failed to get user sent challenges:', error);
+      return [];
     }
   }
 
@@ -215,30 +209,36 @@ class ChallengeService {
    * Get challenges received by a user
    */
   public async getUserReceivedChallenges(userId: string): Promise<ChallengeWithUsers[]> {
-    const db = await initializeDatabase();
-    
     try {
-      const challenges = await db.getAllAsync(
-        `SELECT 
-          c.*,
-          challenger.full_name as challenger_name,
-          challenger.phone as challenger_phone,
-          challenger.contact_preference as challenger_contact_preference,
-          challenged.full_name as challenged_name,
-          challenged.phone as challenged_phone,
-          challenged.contact_preference as challenged_contact_preference
-        FROM challenges c
-        JOIN users challenger ON c.challenger_id = challenger.id
-        JOIN users challenged ON c.challenged_id = challenged.id
-        WHERE c.challenged_id = ? AND c.status != 'expired'
-        ORDER BY c.created_at DESC`,
-        [userId]
-      );
+      const { data: challenges, error } = await supabase
+        .from('challenges')
+        .select(`
+          *,
+          challenger:users!challenges_challenger_id_fkey(full_name, phone, contact_preference),
+          challenged:users!challenges_challenged_id_fkey(full_name, phone, contact_preference)
+        `)
+        .eq('challenged_id', userId)
+        .neq('status', 'expired')
+        .order('created_at', { ascending: false });
 
-      return challenges as ChallengeWithUsers[];
+      if (error) {
+        console.error('❌ Failed to get user received challenges:', error);
+        return [];
+      }
+
+      // Map joined data to expected format
+      return (challenges || []).map((challenge: any) => ({
+        ...challenge,
+        challenger_name: challenge.challenger?.full_name,
+        challenger_phone: challenge.challenger?.phone,
+        challenger_contact_preference: challenge.challenger?.contact_preference,
+        challenged_name: challenge.challenged?.full_name,
+        challenged_phone: challenge.challenged?.phone,
+        challenged_contact_preference: challenge.challenged?.contact_preference,
+      }));
     } catch (error) {
-      console.error('Failed to get user received challenges:', error);
-      throw new Error('Failed to load received challenges');
+      console.error('❌ Failed to get user received challenges:', error);
+      return [];
     }
   }
 
@@ -246,29 +246,35 @@ class ChallengeService {
    * Get a specific challenge with user details
    */
   public async getChallenge(challengeId: string): Promise<ChallengeWithUsers | null> {
-    const db = await initializeDatabase();
-    
     try {
-      const challenge = await db.getFirstAsync(
-        `SELECT 
-          c.*,
-          challenger.full_name as challenger_name,
-          challenger.phone as challenger_phone,
-          challenger.contact_preference as challenger_contact_preference,
-          challenged.full_name as challenged_name,
-          challenged.phone as challenged_phone,
-          challenged.contact_preference as challenged_contact_preference
-        FROM challenges c
-        JOIN users challenger ON c.challenger_id = challenger.id
-        JOIN users challenged ON c.challenged_id = challenged.id
-        WHERE c.id = ?`,
-        [challengeId]
-      );
+      const { data: challenge, error } = await supabase
+        .from('challenges')
+        .select(`
+          *,
+          challenger:users!challenges_challenger_id_fkey(full_name, phone, contact_preference),
+          challenged:users!challenges_challenged_id_fkey(full_name, phone, contact_preference)
+        `)
+        .eq('id', challengeId)
+        .single();
 
-      return challenge as ChallengeWithUsers | null;
+      if (error) {
+        console.error('❌ Failed to get challenge:', error);
+        return null;
+      }
+
+      // Map joined data to expected format
+      return {
+        ...challenge,
+        challenger_name: challenge.challenger?.full_name,
+        challenger_phone: challenge.challenger?.phone,
+        challenger_contact_preference: challenge.challenger?.contact_preference,
+        challenged_name: challenge.challenged?.full_name,
+        challenged_phone: challenge.challenged?.phone,
+        challenged_contact_preference: challenge.challenged?.contact_preference,
+      };
     } catch (error) {
-      console.error('Failed to get challenge:', error);
-      throw new Error('Failed to load challenge');
+      console.error('❌ Failed to get challenge:', error);
+      return null;
     }
   }
 
@@ -276,46 +282,44 @@ class ChallengeService {
    * Accept a challenge
    */
   public async acceptChallenge(challengeId: string, userId: string): Promise<void> {
-    const db = await initializeDatabase();
-    
     try {
-      // Get challenge details and challenger info for notification
-      const challenge = await db.getFirstAsync(
-        `SELECT c.challenger_id, c.match_type, u.full_name as challenged_name
-         FROM challenges c
-         JOIN users u ON c.challenged_id = u.id
-         WHERE c.id = ? AND c.challenged_id = ?`,
-        [challengeId, userId]
-      ) as { challenger_id: string; match_type: string; challenged_name: string } | null;
+      // Get challenge details to verify authorization
+      const { data: challenge, error: challengeError } = await supabase
+        .from('challenges')
+        .select(`
+          challenger_id, 
+          match_type,
+          challenged:users!challenges_challenged_id_fkey(full_name)
+        `)
+        .eq('id', challengeId)
+        .eq('challenged_id', userId)
+        .single();
 
-      if (!challenge) {
+      if (challengeError || !challenge) {
+        console.error('❌ Challenge not found or not authorized:', challengeError);
         throw new Error('Challenge not found or not authorized');
       }
 
-      // Update challenge status locally
-      await db.runAsync(
-        'UPDATE challenges SET status = ?, contacts_shared = 1, updated_at = CURRENT_TIMESTAMP WHERE id = ? AND challenged_id = ?',
-        ['accepted', challengeId, userId]
-      );
+      // Update challenge status
+      const { error: updateError } = await supabase
+        .from('challenges')
+        .update({
+          status: 'accepted',
+          contacts_shared: true,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', challengeId)
+        .eq('challenged_id', userId);
 
-      // Create notification for the challenger
-      const notificationService = new NotificationService(db);
-      await notificationService.createNotification({
-        user_id: challenge.challenger_id,
-        type: 'challenge',
-        title: 'Challenge accepted!',
-        message: `${challenge.challenged_name} accepted your ${challenge.match_type} challenge`,
-        action_type: 'view_match',
-        related_id: challengeId,
-      });
+      if (updateError) {
+        console.error('❌ Failed to accept challenge:', updateError);
+        throw new Error('Failed to accept challenge');
+      }
 
-      // Queue for sync to Supabase
-      await syncService.queueChallengeResponse(challengeId, 'accepted');
-
-      console.log('Challenge accepted locally and queued for sync:', challengeId);
+      console.log('✅ Challenge accepted:', challengeId);
     } catch (error) {
-      console.error('Failed to accept challenge:', error);
-      throw new Error('Failed to accept challenge');
+      console.error('❌ Failed to accept challenge:', error);
+      throw error;
     }
   }
 
@@ -323,45 +327,43 @@ class ChallengeService {
    * Decline a challenge
    */
   public async declineChallenge(challengeId: string, userId: string): Promise<void> {
-    const db = await initializeDatabase();
-    
     try {
-      // Get challenge details and challenger info for notification
-      const challenge = await db.getFirstAsync(
-        `SELECT c.challenger_id, c.match_type, u.full_name as challenged_name
-         FROM challenges c
-         JOIN users u ON c.challenged_id = u.id
-         WHERE c.id = ? AND c.challenged_id = ?`,
-        [challengeId, userId]
-      ) as { challenger_id: string; match_type: string; challenged_name: string } | null;
+      // Get challenge details to verify authorization
+      const { data: challenge, error: challengeError } = await supabase
+        .from('challenges')
+        .select(`
+          challenger_id, 
+          match_type,
+          challenged:users!challenges_challenged_id_fkey(full_name)
+        `)
+        .eq('id', challengeId)
+        .eq('challenged_id', userId)
+        .single();
 
-      if (!challenge) {
+      if (challengeError || !challenge) {
+        console.error('❌ Challenge not found or not authorized:', challengeError);
         throw new Error('Challenge not found or not authorized');
       }
 
-      // Update challenge status locally
-      await db.runAsync(
-        'UPDATE challenges SET status = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ? AND challenged_id = ?',
-        ['declined', challengeId, userId]
-      );
+      // Update challenge status
+      const { error: updateError } = await supabase
+        .from('challenges')
+        .update({
+          status: 'declined',
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', challengeId)
+        .eq('challenged_id', userId);
 
-      // Create notification for the challenger
-      const notificationService = new NotificationService(db);
-      await notificationService.createNotification({
-        user_id: challenge.challenger_id,
-        type: 'challenge',
-        title: 'Challenge declined',
-        message: `${challenge.challenged_name} declined your ${challenge.match_type} challenge`,
-        related_id: challengeId,
-      });
+      if (updateError) {
+        console.error('❌ Failed to decline challenge:', updateError);
+        throw new Error('Failed to decline challenge');
+      }
 
-      // Queue for sync to Supabase
-      await syncService.queueChallengeResponse(challengeId, 'declined');
-
-      console.log('Challenge declined locally and queued for sync:', challengeId);
+      console.log('✅ Challenge declined:', challengeId);
     } catch (error) {
-      console.error('Failed to decline challenge:', error);
-      throw new Error('Failed to decline challenge');
+      console.error('❌ Failed to decline challenge:', error);
+      throw error;
     }
   }
 
@@ -369,46 +371,50 @@ class ChallengeService {
    * Create a counter-challenge
    */
   public async createCounterChallenge(counterData: CreateCounterChallengeData): Promise<string> {
-    const db = await initializeDatabase();
-    
     const counterId = generateUUID();
     
     try {
-      // Start transaction
-      await db.execAsync('BEGIN TRANSACTION');
-
       // Insert counter-challenge
-      await db.runAsync(
-        `INSERT INTO challenge_counters (
-          id, challenge_id, counter_by, match_type,
-          proposed_date, proposed_time, message
-        ) VALUES (?, ?, ?, ?, ?, ?, ?)`,
-        [
-          counterId,
-          counterData.challenge_id,
-          counterData.counter_by,
-          counterData.match_type,
-          counterData.proposed_date || null,
-          counterData.proposed_time || null,
-          counterData.message || null,
-        ]
-      );
+      const counter: ChallengeCounter = {
+        id: counterId,
+        challenge_id: counterData.challenge_id,
+        counter_by: counterData.counter_by,
+        match_type: counterData.match_type,
+        proposed_date: counterData.proposed_date,
+        proposed_time: counterData.proposed_time,
+        message: counterData.message,
+        status: 'pending',
+        created_at: new Date().toISOString(),
+      };
+
+      const { error: insertError } = await supabase
+        .from('challenge_counters')
+        .insert(counter);
+
+      if (insertError) {
+        console.error('❌ Failed to create counter-challenge:', insertError);
+        throw new Error('Failed to create counter-challenge');
+      }
 
       // Update original challenge status
-      await db.runAsync(
-        'UPDATE challenges SET status = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?',
-        ['countered', counterData.challenge_id]
-      );
+      const { error: updateError } = await supabase
+        .from('challenges')
+        .update({
+          status: 'countered',
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', counterData.challenge_id);
 
-      await db.execAsync('COMMIT');
+      if (updateError) {
+        console.error('❌ Failed to update challenge status:', updateError);
+        throw new Error('Failed to update challenge status');
+      }
 
-      // Queue for sync to Supabase (this would need to be added to sync service)
-      console.log('Counter-challenge created locally:', counterId);
+      console.log('✅ Counter-challenge created:', counterId);
       return counterId;
     } catch (error) {
-      await db.execAsync('ROLLBACK');
-      console.error('Failed to create counter-challenge:', error);
-      throw new Error('Failed to create counter-challenge');
+      console.error('❌ Failed to create counter-challenge:', error);
+      throw error;
     }
   }
 
@@ -416,24 +422,29 @@ class ChallengeService {
    * Get counter-challenges for a challenge
    */
   public async getChallengeCounters(challengeId: string): Promise<ChallengeCounterWithUser[]> {
-    const db = await initializeDatabase();
-    
     try {
-      const counters = await db.getAllAsync(
-        `SELECT 
-          cc.*,
-          u.full_name as counter_by_name
-        FROM challenge_counters cc
-        JOIN users u ON cc.counter_by = u.id
-        WHERE cc.challenge_id = ?
-        ORDER BY cc.created_at DESC`,
-        [challengeId]
-      );
+      const { data: counters, error } = await supabase
+        .from('challenge_counters')
+        .select(`
+          *,
+          counter_by_user:users!challenge_counters_counter_by_fkey(full_name)
+        `)
+        .eq('challenge_id', challengeId)
+        .order('created_at', { ascending: false });
 
-      return counters as ChallengeCounterWithUser[];
+      if (error) {
+        console.error('❌ Failed to get challenge counters:', error);
+        return [];
+      }
+
+      // Map joined data to expected format
+      return (counters || []).map((counter: any) => ({
+        ...counter,
+        counter_by_name: counter.counter_by_user?.full_name,
+      }));
     } catch (error) {
-      console.error('Failed to get challenge counters:', error);
-      throw new Error('Failed to load counter-challenges');
+      console.error('❌ Failed to get challenge counters:', error);
+      return [];
     }
   }
 
@@ -441,29 +452,39 @@ class ChallengeService {
    * Accept a counter-challenge
    */
   public async acceptCounterChallenge(counterId: string, challengeId: string): Promise<void> {
-    const db = await initializeDatabase();
-    
     try {
-      await db.execAsync('BEGIN TRANSACTION');
-
       // Update counter status
-      await db.runAsync(
-        'UPDATE challenge_counters SET status = ? WHERE id = ?',
-        ['accepted', counterId]
-      );
+      const { error: counterError } = await supabase
+        .from('challenge_counters')
+        .update({
+          status: 'accepted'
+        })
+        .eq('id', counterId);
+
+      if (counterError) {
+        console.error('❌ Failed to accept counter-challenge:', counterError);
+        throw new Error('Failed to accept counter-challenge');
+      }
 
       // Update main challenge status and mark contacts as shared
-      await db.runAsync(
-        'UPDATE challenges SET status = ?, contacts_shared = 1, updated_at = CURRENT_TIMESTAMP WHERE id = ?',
-        ['accepted', challengeId]
-      );
+      const { error: challengeError } = await supabase
+        .from('challenges')
+        .update({
+          status: 'accepted',
+          contacts_shared: true,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', challengeId);
 
-      await db.execAsync('COMMIT');
-      console.log('Counter-challenge accepted locally:', counterId);
+      if (challengeError) {
+        console.error('❌ Failed to update challenge status:', challengeError);
+        throw new Error('Failed to update challenge status');
+      }
+
+      console.log('✅ Counter-challenge accepted:', counterId);
     } catch (error) {
-      await db.execAsync('ROLLBACK');
-      console.error('Failed to accept counter-challenge:', error);
-      throw new Error('Failed to accept counter-challenge');
+      console.error('❌ Failed to accept counter-challenge:', error);
+      throw error;
     }
   }
 
@@ -471,16 +492,24 @@ class ChallengeService {
    * Expire old challenges
    */
   public async expireOldChallenges(): Promise<void> {
-    const db = await initializeDatabase();
-    
     try {
       const now = new Date().toISOString();
-      await db.runAsync(
-        'UPDATE challenges SET status = ? WHERE expires_at < ? AND status = ?',
-        ['expired', now, 'pending']
-      );
+      const { error } = await supabase
+        .from('challenges')
+        .update({
+          status: 'expired',
+          updated_at: now
+        })
+        .lt('expires_at', now)
+        .eq('status', 'pending');
+
+      if (error) {
+        console.error('❌ Failed to expire old challenges:', error);
+      } else {
+        console.log('✅ Expired old challenges');
+      }
     } catch (error) {
-      console.error('Failed to expire old challenges:', error);
+      console.error('❌ Failed to expire old challenges:', error);
     }
   }
 

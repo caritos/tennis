@@ -10,6 +10,7 @@ interface ClubMember {
   joined_at: string;
   match_count: number;
   wins: number;
+  ranking?: number;
 }
 
 interface ClubMembersProps {
@@ -52,6 +53,12 @@ export default function ClubMembers({
   // Sort members
   const sortedMembers = [...filteredMembers].sort((a, b) => {
     switch (sortBy) {
+      case 'ranking':
+        // Lower ranking number = better rank (1st place = 1, 2nd place = 2, etc.)
+        // Put unranked members at the end
+        const rankA = a.ranking ?? Number.MAX_SAFE_INTEGER;
+        const rankB = b.ranking ?? Number.MAX_SAFE_INTEGER;
+        return rankA - rankB;
       case 'wins':
         return (b.wins || 0) - (a.wins || 0);
       case 'matches':
@@ -105,6 +112,7 @@ export default function ClubMembers({
           <View style={styles.sortButtons}>
             {([
               { key: 'name', label: 'Name' },
+              { key: 'ranking', label: 'Rank' },
               { key: 'wins', label: 'Wins' },
               { key: 'matches', label: 'Matches' },
               { key: 'joined', label: 'Joined' }
@@ -134,11 +142,6 @@ export default function ClubMembers({
 
       {/* Members List */}
       <ThemedView style={[styles.membersCard, { backgroundColor: colors.card }]}>
-        <View style={styles.sectionHeader}>
-          <ThemedText style={[styles.sectionTitle, { color: colors.text }]}>
-            Club Members ({sortedMembers.length})
-          </ThemedText>
-        </View>
 
         {sortedMembers.length === 0 ? (
           <View style={[styles.placeholder, { borderColor: colors.border }]}>
@@ -176,6 +179,11 @@ export default function ClubMembers({
                       <View style={styles.memberNameRow}>
                         <View style={styles.nameWithBadge}>
                           <ThemedText style={styles.memberName}>
+                            {member.ranking && (
+                              <ThemedText style={[styles.rankNumber, { color: colors.tint }]}>
+                                #{member.ranking}{' '}
+                              </ThemedText>
+                            )}
                             {member.full_name || 'Unknown Member'}
                           </ThemedText>
                           {isNew && (
@@ -366,6 +374,10 @@ const styles = StyleSheet.create({
   memberName: {
     fontSize: 16,
     fontWeight: '600',
+  },
+  rankNumber: {
+    fontSize: 16,
+    fontWeight: '700',
   },
   memberBadge: {
     paddingHorizontal: 6,
