@@ -15,6 +15,7 @@ import { CompactStyles } from '@/constants/CompactStyles';
 import { useAuth } from '@/contexts/AuthContext';
 import { ClubService } from '@/services/clubService';
 import { Club } from '@/lib/supabase';
+import { useLocation } from '@/hooks/useLocation';
 
 interface CreateClubFormProps {
   onSuccess: (club: Club) => void;
@@ -40,6 +41,7 @@ export function CreateClubForm({ onSuccess, onCancel }: CreateClubFormProps) {
   const colorScheme = useColorScheme();
   const colors = Colors[colorScheme ?? 'light'];
   const { user } = useAuth();
+  const { location } = useLocation();
   const clubService = new ClubService();
 
   const [formData, setFormData] = useState<FormData>({
@@ -111,13 +113,19 @@ export function CreateClubForm({ onSuccess, onCancel }: CreateClubFormProps) {
     setErrors({});
 
     try {
+      // Use actual user location if available, otherwise use NYC as default
+      const lat = location?.latitude || 40.7128;
+      const lng = location?.longitude || -74.0060;
+      
+      console.log('🏆 Creating club with location:', { lat, lng, userLocation: location });
+      
       const clubData = {
         name: formData.name.trim(),
         description: formData.description.trim(),
         location: formData.area.trim(),
         zipCode: formData.zipCode.trim(),
-        lat: 37.7749, // Default coordinates (will be updated later with geocoding)
-        lng: -122.4194,
+        lat,
+        lng,
         creator_id: user.id,
       };
 
@@ -236,6 +244,19 @@ export function CreateClubForm({ onSuccess, onCancel }: CreateClubFormProps) {
       fontSize: 14,
       textAlign: 'center',
     },
+    locationIndicator: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      padding: 12,
+      borderRadius: 8,
+      borderWidth: 1,
+      marginBottom: 16,
+    },
+    locationText: {
+      fontSize: 13,
+      marginLeft: 8,
+      flex: 1,
+    },
   });
 
   return (
@@ -308,6 +329,16 @@ export function CreateClubForm({ onSuccess, onCancel }: CreateClubFormProps) {
               accessibilityLabel="Zip Code"
             />
             {errors.zipCode && <Text style={styles.errorText}>{errors.zipCode}</Text>}
+          </View>
+
+          {/* Location indicator */}
+          <View style={[styles.locationIndicator, { backgroundColor: colors.tint + '10', borderColor: colors.tint }]}>
+            <Ionicons name="location" size={16} color={colors.tint} />
+            <Text style={[styles.locationText, { color: colors.text }]}>
+              {location 
+                ? `Club will be created at your current location`
+                : `Club will be created in New York (default location)`}
+            </Text>
           </View>
 
           <View style={styles.buttonContainer}>

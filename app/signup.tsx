@@ -16,7 +16,6 @@ import { ThemedView } from '@/components/ThemedView';
 import { useColorScheme } from '@/hooks/useColorScheme';
 import { Colors } from '@/constants/Colors';
 import { supabase } from '@/lib/supabase';
-import { initializeDatabase } from '@/database/database';
 import { getAuthErrorMessage, logError } from '@/utils/errorHandling';
 
 export default function SignUpPage() {
@@ -142,60 +141,15 @@ export default function SignUpPage() {
         // Continue anyway as auth was successful
       }
       
-      // Also store in local SQLite for offline support with complete field set
-      const db = await initializeDatabase();
-      
-      // Temporarily disable foreign key constraints for user insertion
-      await db.execAsync('PRAGMA foreign_keys = OFF;');
-      
-      try {
-        await db.runAsync(
-          `INSERT OR REPLACE INTO users (
-            id, full_name, email, phone, role, 
-            contact_preference, skill_level, playing_style,
-            profile_visibility, match_history_visibility, allow_challenges,
-            created_at
-          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, datetime('now'))`,
-          [
-            authData.user.id,
-            fullName.trim(),
-            email.trim(),
-            phone.trim() || null,
-            'player',
-            'whatsapp', // default contact_preference
-            null, // skill_level (nullable)
-            null, // playing_style (nullable)
-            'public', // default profile_visibility
-            'public', // default match_history_visibility
-            'everyone', // default allow_challenges
-          ]
-        );
-      } finally {
-        // Re-enable foreign key constraints
-        await db.execAsync('PRAGMA foreign_keys = ON;');
-      }
-      
       console.log('User created successfully:', authData.user.id);
-      console.log('=== WAITING FOR AUTH STATE UPDATE ===');
+      console.log('=== NAVIGATING DIRECTLY TO CLUBS ===');
       
-      // Wait for auth state to update in the context before navigating
-      await new Promise(resolve => {
-        const checkAuthUpdate = () => {
-          supabase.auth.getSession().then(({ data: { session } }) => {
-            if (session?.user?.id === authData.user?.id) {
-              console.log('=== AUTH STATE CONFIRMED - NAVIGATING TO INDEX ===');
-              resolve(true);
-            } else {
-              console.log('Auth state not updated yet, checking again...');
-              setTimeout(checkAuthUpdate, 100);
-            }
-          });
-        };
-        checkAuthUpdate();
-      });
+      // Small delay to ensure auth state propagates
+      await new Promise(resolve => setTimeout(resolve, 500));
       
-      // Navigate to index route, which will handle routing to tabs after auth is ready
-      router.replace('/');
+      // Navigate directly to clubs page since we know the user is authenticated
+      // The AuthContext will catch up and load the user profile
+      router.replace('/(tabs)');
       setIsLoading(false);
       
     } catch (error: any) {

@@ -96,11 +96,25 @@ export function AuthProvider({ children }: AuthProviderProps) {
         .single();
 
       if (error && error.code === 'PGRST116') {
-        // Profile doesn't exist - first time user
-        console.log('👋 AuthContext: First time user detected');
+        // Profile doesn't exist yet - create a temporary user object
+        // This happens right after signup before the profile is created
+        console.log('👋 AuthContext: Profile not found, creating temporary user object');
+        const tempUserProfile: UserProfile = {
+          id: authUser.id,
+          email: authUser.email || '',
+          full_name: authUser.user_metadata?.full_name || authUser.email?.split('@')[0] || 'User',
+          phone: authUser.user_metadata?.phone || null,
+          role: 'player',
+          contact_preference: 'whatsapp',
+          created_at: new Date().toISOString(),
+          user_metadata: authUser.user_metadata
+        };
+        setUser(tempUserProfile);
         setIsFirstTimeUser(true);
         setIsOnboardingComplete(false);
-        setUser(null);
+        
+        // Try to load the actual profile again after a delay
+        setTimeout(() => loadUserProfile(authUser), 1000);
       } else if (error) {
         console.error('❌ AuthContext: Profile load failed:', error);
         setIsFirstTimeUser(false);

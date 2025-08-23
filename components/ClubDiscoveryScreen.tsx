@@ -21,7 +21,7 @@ import { useLocation } from '@/hooks/useLocation';
 import { useAuth } from '@/contexts/AuthContext';
 import { useOnboarding } from '@/contexts/OnboardingContext';
 import { useNotification } from '@/contexts/NotificationContext';
-import clubService, { joinClub } from '@/services/clubService';
+import clubService, { joinClub, getNearbyClubs, calculateDistance } from '@/services/clubService';
 import { Club } from '@/lib/supabase';
 
 interface ClubDiscoveryScreenProps {
@@ -75,14 +75,14 @@ export const ClubDiscoveryScreen: React.FC<ClubDiscoveryScreenProps> = ({
         console.log('Using fallback location for club discovery');
       }
 
-      const nearbyClubs = await clubService.getNearbyClubs(userLat, userLng, radius);
+      const nearbyClubs = await getNearbyClubs(userLat, userLng, radius);
       setClubs(nearbyClubs);
 
       // Calculate distances
       if (location) {
         const newDistances = new Map<string, number>();
         nearbyClubs.forEach(club => {
-          const distance = clubService.calculateDistance(
+          const distance = calculateDistance(
             userLat,
             userLng,
             club.lat,

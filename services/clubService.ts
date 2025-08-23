@@ -166,12 +166,18 @@ export class ClubService {
 
   async getClubsByLocation(userLat: number, userLng: number, radiusKm: number = 25): Promise<ClubWithDistance[]> {
     try {
+      // Check current user authentication
+      const { data: { user }, error: authError } = await supabase.auth.getUser();
+      console.log('🔍 getClubsByLocation - Current user:', user?.id, 'Auth error:', authError);
+      
       // For now, get all clubs and calculate distance client-side
       // Later we can implement PostGIS for server-side distance calculations
       const { data: clubs, error } = await supabase
         .from('clubs')
         .select('*');
 
+      console.log('🔍 getClubsByLocation - Fetched clubs:', clubs?.length || 0, 'Error:', error);
+      
       if (error) {
         console.error('❌ Failed to fetch clubs by location:', error);
         throw new Error(`Failed to fetch clubs: ${error.message}`);
@@ -180,14 +186,27 @@ export class ClubService {
       if (!clubs) return [];
 
       // Calculate distances and filter by radius
+      console.log('🔍 getClubsByLocation - User location:', { userLat, userLng }, 'Radius:', radiusKm);
+      
       const clubsWithDistance: ClubWithDistance[] = clubs
-        .map(club => ({
-          ...club,
-          distance: this.calculateDistance(userLat, userLng, club.lat, club.lng)
-        }))
-        .filter(club => club.distance! <= radiusKm)
+        .map(club => {
+          const distance = this.calculateDistance(userLat, userLng, club.lat, club.lng);
+          console.log('🔍 Club:', club.name, 'Location:', { lat: club.lat, lng: club.lng }, 'Distance:', distance.toFixed(2), 'km');
+          return {
+            ...club,
+            distance
+          };
+        })
+        .filter(club => {
+          const isWithinRadius = club.distance! <= radiusKm;
+          if (!isWithinRadius) {
+            console.log('🚫 Club filtered out (too far):', club.name, 'Distance:', club.distance?.toFixed(2), 'km > Radius:', radiusKm);
+          }
+          return isWithinRadius;
+        })
         .sort((a, b) => a.distance! - b.distance!);
 
+      console.log('🔍 getClubsByLocation - Returning', clubsWithDistance.length, 'clubs within', radiusKm, 'km');
       return clubsWithDistance;
 
     } catch (error) {
