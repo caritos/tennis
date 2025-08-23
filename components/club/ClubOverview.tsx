@@ -5,6 +5,7 @@ import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
 import { TennisScoreDisplay } from '@/components/TennisScoreDisplay';
 import { ClubRankings, RankedPlayer } from '@/components/ClubRankings';
+import { UpcomingMatchesNotification } from '@/components/UpcomingMatchesNotification';
 import { Club } from '@/lib/supabase';
 
 interface ClubOverviewProps {
@@ -65,6 +66,15 @@ export default function ClubOverview({
           </TouchableOpacity>
         </View>
       </ThemedView>
+
+      {/* Upcoming Matches Notification */}
+      {user?.id && (
+        <UpcomingMatchesNotification 
+          clubId={club.id} 
+          userId={user.id}
+          onViewDetails={onViewAllMatches}
+        />
+      )}
 
       {/* Rankings */}
       <ThemedView style={[styles.sectionCard, { backgroundColor: colors.card }]}>
