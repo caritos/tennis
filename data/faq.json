@@ -65,7 +65,7 @@
       "questions": [
         {
           "question": "How do rankings work?",
-          "answer": "Play Serve uses an ELO rating system similar to chess and professional tennis:\n\n**Starting Rating**: Everyone begins at 1200 points\n\n**How Points Work**:\n• **Beat a stronger player**: Gain more points (up to +40)\n• **Beat a similar player**: Gain moderate points (+20)\n• **Beat a weaker player**: Gain fewer points (+5 minimum)\n• **Lose to a stronger player**: Lose few points (-5 minimum)\n• **Lose to a weaker player**: Lose more points (up to -40)\n\n**Example**: If you (1200) beat someone rated 1400, you might gain +35 points while they lose -35. This rewards taking on stronger opponents!\n\nRankings update immediately after each match and are specific to each club."
+          "answer": "Play Serve uses an advanced ELO rating system that considers both WHO you beat and HOW you beat them:\n\n**Starting Rating**: Everyone begins at 1200 points\n\n**Opponent Strength Matters**:\n• **Beat a stronger player**: Gain more points (up to +40)\n• **Beat a similar player**: Gain moderate points (+20)\n• **Beat a weaker player**: Gain fewer points (+5 minimum)\n\n**Match Scores Matter Too**:\n• **Dominant win (6-0, 6-1)**: Get 150% of normal points\n• **Strong win (6-2, 6-3)**: Get 125% of normal points\n• **Solid win (6-4, 6-4)**: Get 110% of normal points\n• **Close win (7-6, 7-6)**: Get only 75% of normal points\n\n**Example**: Beat a stronger player 6-0, 6-1? You might gain +52 points! Win the same match 7-6, 7-6? You'd only gain +26 points.\n\nThis rewards not just winning, but winning convincingly!"
         },
         {
           "question": "Why does beating stronger players give more points?",

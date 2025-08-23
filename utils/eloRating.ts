@@ -3,6 +3,14 @@
  * 
  * This system rewards players for beating stronger opponents and penalizes
  * losses to weaker opponents. It creates a self-balancing competitive environment.
+ * 
+ * SCORE DIFFERENTIAL EXAMPLES:
+ * - Win 6-0, 6-0: Get 150% of normal points (dominant victory)
+ * - Win 6-2, 6-3: Get 125% of normal points (strong victory)  
+ * - Win 6-4, 6-4: Get 110% of normal points (solid victory)
+ * - Win 7-6, 7-6: Get 75% of normal points (close match)
+ * 
+ * This encourages not just winning, but winning convincingly!
  */
 
 export interface EloRating {
@@ -53,14 +61,74 @@ function getKFactor(gamesPlayed: number): number {
 }
 
 /**
- * Calculate new ratings after a match
+ * Calculate score differential multiplier based on match scores
+ * This rewards dominant victories and reduces points for close matches
+ * @param scores - Match scores in format "6-4,7-5" or "6-0,6-1"
+ * @returns Multiplier between 0.5 and 1.5
+ */
+export function getScoreDifferentialMultiplier(scores: string): number {
+  try {
+    const sets = scores.split(',').map(s => s.trim());
+    let totalWinnerGames = 0;
+    let totalLoserGames = 0;
+    let tiebreaks = 0;
+    
+    sets.forEach(set => {
+      // Remove tiebreak notation to get base scores
+      const hasTiebreak = set.includes('(');
+      if (hasTiebreak) {
+        tiebreaks++;
+        set = set.replace(/\([^)]*\)/g, ''); // Remove (7-5) type notation
+      }
+      
+      const [winnerGames, loserGames] = set.split('-').map(s => parseInt(s));
+      totalWinnerGames += winnerGames;
+      totalLoserGames += loserGames;
+    });
+    
+    // Calculate game differential
+    const totalGames = totalWinnerGames + totalLoserGames;
+    const gameDifferential = totalWinnerGames - totalLoserGames;
+    const differentialRatio = gameDifferential / totalGames;
+    
+    // Calculate multiplier based on dominance
+    let multiplier = 1.0;
+    
+    // Dominant victories (6-0, 6-1 type scores)
+    if (differentialRatio > 0.6) {
+      multiplier = 1.5; // 50% bonus for dominant wins
+    }
+    // Strong victories (6-2, 6-3 type scores)
+    else if (differentialRatio > 0.4) {
+      multiplier = 1.25; // 25% bonus
+    }
+    // Normal victories (6-4, 6-4 type scores)
+    else if (differentialRatio > 0.2) {
+      multiplier = 1.1; // 10% bonus
+    }
+    // Close victories (7-6, 6-4 or matches with tiebreaks)
+    else if (tiebreaks > 0 || differentialRatio < 0.15) {
+      multiplier = 0.75; // Reduced points for very close matches
+    }
+    
+    return multiplier;
+  } catch (error) {
+    // If score parsing fails, return neutral multiplier
+    return 1.0;
+  }
+}
+
+/**
+ * Calculate new ratings after a match with score consideration
  * @param winner - Winner's current rating info
  * @param loser - Loser's current rating info
+ * @param matchScores - Match scores in format "6-4,7-5"
  * @returns New ratings and changes for both players
  */
 export function calculateEloRatings(
   winner: { rating: number; gamesPlayed: number },
-  loser: { rating: number; gamesPlayed: number }
+  loser: { rating: number; gamesPlayed: number },
+  matchScores?: string
 ): RatingChange {
   // Calculate expected scores
   const winnerExpected = getExpectedScore(winner.rating, loser.rating);
@@ -70,15 +138,22 @@ export function calculateEloRatings(
   const winnerK = getKFactor(winner.gamesPlayed);
   const loserK = getKFactor(loser.gamesPlayed);
   
-  // Calculate rating changes
-  // Winner gets: K * (1 - expectedScore)
-  // Loser gets: K * (0 - expectedScore)
-  const winnerChange = Math.round(winnerK * (1 - winnerExpected));
-  const loserChange = Math.round(loserK * (0 - loserExpected));
+  // Get score differential multiplier if scores provided
+  const scoreMultiplier = matchScores ? getScoreDifferentialMultiplier(matchScores) : 1.0;
+  
+  // Calculate rating changes with score multiplier
+  // Winner gets: K * (1 - expectedScore) * scoreMultiplier
+  // Loser gets: K * (0 - expectedScore) * scoreMultiplier
+  const winnerChange = Math.round(winnerK * (1 - winnerExpected) * scoreMultiplier);
+  const loserChange = Math.round(loserK * (0 - loserExpected) * scoreMultiplier);
   
   // Ensure minimum changes to prevent stagnation
-  const adjustedWinnerChange = Math.max(5, winnerChange);
-  const adjustedLoserChange = Math.min(-5, loserChange);
+  // But allow score multiplier to reduce minimum for close matches
+  const minWinnerChange = matchScores && scoreMultiplier < 1 ? 3 : 5;
+  const maxLoserChange = matchScores && scoreMultiplier < 1 ? -3 : -5;
+  
+  const adjustedWinnerChange = Math.max(minWinnerChange, winnerChange);
+  const adjustedLoserChange = Math.min(maxLoserChange, loserChange);
   
   return {
     winnerId: '',
