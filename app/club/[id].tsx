@@ -248,8 +248,7 @@ export default function ClubDetailScreen() {
 
       // Process members data and add ranking information
       const processedMembers = (membersData || []).map((member: any) => {
-        // Find ranking for this member
-        const ranking = rankings.findIndex(rankedPlayer => rankedPlayer.id === member.users.id);
+        // Find ranking for this member - only players in the rankings array have played matches
         const rankedPlayer = rankings.find(rankedPlayer => rankedPlayer.id === member.users.id);
         
         return {
@@ -257,7 +256,7 @@ export default function ClubDetailScreen() {
           joined_at: member.joined_at,
           match_count: rankedPlayer?.stats.totalMatches || 0,
           wins: rankedPlayer?.stats.wins || 0,
-          ranking: ranking >= 0 ? ranking + 1 : undefined, // Convert 0-based index to 1-based ranking
+          ranking: rankedPlayer?.ranking || undefined, // Use the ranking from the rankedPlayer object if it exists
         };
       });
       
