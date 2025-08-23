@@ -5,7 +5,6 @@ import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
 import { TennisScoreDisplay } from '@/components/TennisScoreDisplay';
 import { ClubRankings, RankedPlayer } from '@/components/ClubRankings';
-import ClubChallenges from '@/components/ClubChallenges';
 import LookingToPlaySection from '@/components/LookingToPlaySection';
 import { Club } from '@/lib/supabase';
 
@@ -68,11 +67,6 @@ export default function ClubOverview({
         </View>
       </ThemedView>
 
-      {/* Challenges & Looking to Play */}
-      <ThemedView style={[styles.sectionCard, styles.playingOpportunitiesCard, { backgroundColor: colors.card }]}>
-        <ClubChallenges clubId={club.id} userId={user?.id} />
-      </ThemedView>
-      
       <LookingToPlaySection clubId={club.id} />
 
       {/* Rankings */}
@@ -237,9 +231,6 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.08,
     shadowRadius: 4,
     elevation: 3,
-  },
-  playingOpportunitiesCard: {
-    marginTop: 4, // Reduce spacing between Quick Actions and Playing Opportunities
   },
   sectionHeaderWithIcon: {
     flexDirection: 'row',
