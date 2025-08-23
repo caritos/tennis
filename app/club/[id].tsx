@@ -465,6 +465,7 @@ export default function ClubDetailScreen() {
             onViewAllMembers={() => setActiveTab('members')}
             onRecordMatch={handleRecordMatch}
             onInvitePlayers={() => setShowInviteForm(true)}
+            onViewAllMatches={() => setActiveTab('matches')}
           />
         )}
 

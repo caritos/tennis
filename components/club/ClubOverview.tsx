@@ -14,6 +14,7 @@ interface ClubOverviewProps {
   onViewAllMembers: () => void;
   onRecordMatch: () => void;
   onInvitePlayers: () => void;
+  onViewAllMatches: () => void;
 }
 
 export default function ClubOverview({
@@ -24,6 +25,7 @@ export default function ClubOverview({
   onViewAllMembers,
   onRecordMatch,
   onInvitePlayers,
+  onViewAllMatches,
 }: ClubOverviewProps) {
   return (
     <ScrollView
