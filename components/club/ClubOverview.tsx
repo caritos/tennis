@@ -3,21 +3,14 @@ import { View, TouchableOpacity, StyleSheet, ScrollView } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
-import { TennisScoreDisplay } from '@/components/TennisScoreDisplay';
-import { ClubRankings, RankedPlayer } from '@/components/ClubRankings';
 import { UpcomingMatchesNotification } from '@/components/UpcomingMatchesNotification';
 import { Club } from '@/lib/supabase';
 
 interface ClubOverviewProps {
   club: Club;
   memberCount: number;
-  rankings: RankedPlayer[];
-  recentMatches: any[];
   colors: any;
   user: any;
-  pendingChallenges: Set<string>;
-  onChallengePress: (playerId: string, playerName: string) => void;
-  onViewAllMatches: () => void;
   onViewAllMembers: () => void;
   onRecordMatch: () => void;
   onInvitePlayers: () => void;
@@ -26,13 +19,8 @@ interface ClubOverviewProps {
 export default function ClubOverview({
   club,
   memberCount,
-  rankings,
-  recentMatches,
   colors,
   user,
-  pendingChallenges,
-  onChallengePress,
-  onViewAllMatches,
   onViewAllMembers,
   onRecordMatch,
   onInvitePlayers,
@@ -76,92 +64,7 @@ export default function ClubOverview({
         />
       )}
 
-      {/* Rankings */}
-      <ThemedView style={[styles.sectionCard, { backgroundColor: colors.card }]}>
-        <View style={styles.sectionHeader}>
-          <View style={styles.sectionHeaderWithIcon}>
-            <Ionicons name="trophy-outline" size={20} color={colors.tint} style={styles.sectionIcon} />
-            <ThemedText style={[styles.sectionTitle, { color: colors.text }]}>Rankings</ThemedText>
-          </View>
-          <TouchableOpacity onPress={onViewAllMembers}>
-            <ThemedText style={[styles.viewAllLink, { color: colors.tint }]}>View All</ThemedText>
-          </TouchableOpacity>
-        </View>
-        
-        {rankings.length > 0 ? (
-          <ClubRankings
-            rankings={rankings.slice(0, 5)}
-            colors={colors}
-            currentUserId={user?.id}
-            showChallengeButtons={true}
-            pendingChallenges={pendingChallenges}
-            onChallengePress={(target) => onChallengePress(target.id, target.name)}
-            compact={true}
-          />
-        ) : (
-          <View style={[styles.placeholder, { borderColor: colors.border }]}>
-            <ThemedText style={styles.placeholderEmoji}>🏆</ThemedText>
-            <ThemedText style={[styles.placeholderText, { color: colors.text }]}>
-              No rankings yet
-            </ThemedText>
-            <ThemedText style={[styles.placeholderSubtext, { color: colors.textSecondary }]}>
-              Rankings will appear after matches are played
-            </ThemedText>
-          </View>
-        )}
-      </ThemedView>
 
-      {/* Recent Matches */}
-      <ThemedView style={[styles.sectionCard, { backgroundColor: colors.card }]}>
-        <View style={styles.sectionHeader}>
-          <View style={styles.sectionHeaderWithIcon}>
-            <Ionicons name="tennisball-outline" size={20} color={colors.tint} style={styles.sectionIcon} />
-            <ThemedText style={[styles.sectionTitle, { color: colors.text }]}>Recent Matches</ThemedText>
-          </View>
-          <TouchableOpacity onPress={onViewAllMatches}>
-            <ThemedText style={[styles.viewAllLink, { color: colors.tint }]}>View All</ThemedText>
-          </TouchableOpacity>
-        </View>
-        
-        {recentMatches.length > 0 ? (
-          <View style={styles.matchesList}>
-            {recentMatches.slice(0, 3).map((match, index) => (
-              <View key={match.id} style={styles.matchItem}>
-                <TennisScoreDisplay
-                  player1Name={match.player1_name}
-                  player2Name={match.player2_name}
-                  scores={match.scores}
-                  winner={match.winner as 1 | 2}
-                  matchId={match.id}
-                  player1Id={match.player1_id}
-                  player2Id={match.player2_id}
-                  player3Id={match.player3_id}
-                  player4Id={match.player4_id}
-                  matchType={match.match_type}
-                  clubName={club?.name || ''}
-                  matchDate={match.date}
-                  colors={colors}
-                  showMeta={true}
-                  compact={true}
-                />
-                {index < recentMatches.slice(0, 3).length - 1 && (
-                  <View style={[styles.matchItemBorder, { borderBottomColor: colors.border }]} />
-                )}
-              </View>
-            ))}
-          </View>
-        ) : (
-          <View style={[styles.placeholder, { borderColor: colors.border }]}>
-            <ThemedText style={styles.placeholderEmoji}>🎾</ThemedText>
-            <ThemedText style={[styles.placeholderText, { color: colors.text }]}>
-              No matches yet
-            </ThemedText>
-            <ThemedText style={[styles.placeholderSubtext, { color: colors.textSecondary }]}>
-              Record your first match to see it here
-            </ThemedText>
-          </View>
-        )}
-      </ThemedView>
 
       {/* Information */}
       <ThemedView style={[styles.sectionCard, { backgroundColor: colors.card }]}>
@@ -176,20 +79,6 @@ export default function ClubOverview({
             <ThemedText style={styles.statNumber}>{memberCount}</ThemedText>
             <ThemedText style={[styles.statLabel, { color: colors.textSecondary }]}>
               Members
-            </ThemedText>
-          </View>
-          <View style={styles.statDivider} />
-          <View style={styles.statItem}>
-            <ThemedText style={styles.statNumber}>{recentMatches.length}</ThemedText>
-            <ThemedText style={[styles.statLabel, { color: colors.textSecondary }]}>
-              Recent Matches
-            </ThemedText>
-          </View>
-          <View style={styles.statDivider} />
-          <View style={styles.statItem}>
-            <ThemedText style={styles.statNumber}>{rankings.length}</ThemedText>
-            <ThemedText style={[styles.statLabel, { color: colors.textSecondary }]}>
-              Active Players
             </ThemedText>
           </View>
         </View>
@@ -324,40 +213,5 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: '600',
     marginLeft: 8,
-  },
-  placeholder: {
-    borderWidth: 1,
-    borderStyle: 'dashed',
-    borderRadius: 8,
-    padding: 20,
-    alignItems: 'center',
-    minHeight: 140, // Ensure enough space for emoji and text
-  },
-  placeholderEmoji: {
-    fontSize: 32,
-    marginBottom: 8,
-    lineHeight: 40, // Ensure proper line height for emoji
-    textAlign: 'center',
-  },
-  placeholderText: {
-    fontSize: 14,
-    textAlign: 'center',
-    fontWeight: '600',
-  },
-  placeholderSubtext: {
-    fontSize: 12,
-    textAlign: 'center',
-    marginTop: 4,
-    opacity: 0.7,
-  },
-  matchesList: {
-    gap: 16,
-  },
-  matchItem: {
-    marginBottom: 6,
-  },
-  matchItemBorder: {
-    borderBottomWidth: 1,
-    marginTop: 16,
   },
 });

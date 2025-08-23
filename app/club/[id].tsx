@@ -460,13 +460,8 @@ export default function ClubDetailScreen() {
           <ClubOverview
             club={club!}
             memberCount={memberCount}
-            rankings={rankings}
-            recentMatches={recentMatches}
             colors={colors}
             user={user}
-            pendingChallenges={pendingChallenges}
-            onChallengePress={(target) => handleChallengePlayer(target.id, target.name)}
-            onViewAllMatches={() => setActiveTab('matches')}
             onViewAllMembers={() => setActiveTab('members')}
             onRecordMatch={handleRecordMatch}
             onInvitePlayers={() => setShowInviteForm(true)}
