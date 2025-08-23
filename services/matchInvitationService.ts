@@ -74,14 +74,19 @@ export class MatchInvitationService {
 
       if (error) {
         console.error('❌ Failed to create invitation:', error);
-        throw new Error('Failed to create match invitation');
+        console.error('❌ Invitation data being sent:', invitation);
+        throw new Error(`Failed to create match invitation: ${error.message || JSON.stringify(error)}`);
       }
 
       console.log('✅ Match invitation created:', invitation.id);
       return data as MatchInvitation;
     } catch (error) {
-      console.error('❌ Failed to create invitation:', error);
-      throw new Error('Failed to create match invitation');
+      console.error('❌ Failed to create invitation (catch block):', error);
+      if (error instanceof Error) {
+        throw error;
+      } else {
+        throw new Error('Failed to create match invitation: Unknown error');
+      }
     }
   }
 

@@ -53,10 +53,10 @@ export const UpcomingMatchesNotification: React.FC<UpcomingMatchesNotificationPr
         .from('match_invitations')
         .select(`
           *,
-          creator:users!creator_id(id, full_name, phone),
+          creator:users!match_invitations_creator_id_fkey(id, full_name, phone),
           responses:invitation_responses(
             *,
-            user:users!user_id(id, full_name, phone)
+            user:users!invitation_responses_user_id_fkey(id, full_name, phone)
           )
         `)
         .eq('club_id', clubId)
@@ -69,10 +69,10 @@ export const UpcomingMatchesNotification: React.FC<UpcomingMatchesNotificationPr
         .from('match_invitations')
         .select(`
           *,
-          creator:users!creator_id(id, full_name, phone),
+          creator:users!match_invitations_creator_id_fkey(id, full_name, phone),
           responses:invitation_responses(
             *,
-            user:users!user_id(id, full_name, phone)
+            user:users!invitation_responses_user_id_fkey(id, full_name, phone)
           )
         `)
         .eq('club_id', clubId)
