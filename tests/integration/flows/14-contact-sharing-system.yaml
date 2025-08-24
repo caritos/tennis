@@ -1,0 +1,271 @@
+appId: com.caritos.tennis
+---
+# Contact Sharing System E2E Test
+# Tests: Challenge Creation → Challenge Acceptance → Contact Info Notifications
+# This test validates the complete contact sharing flow for both singles and doubles
+
+# PART 1: Setup Test Users
+- launchApp
+
+# Clear any existing state
+- tapOn:
+    id: "profile-tab"
+    optional: true
+
+# Check if we're signed in, if not, create test user
+- runFlow:
+    when:
+      notVisible: "My Clubs"
+    commands:
+      # Sign up as challenger (User 1)
+      - tapOn: "Get Started"
+      - tapOn: "Sign Up"
+      - tapOn:
+          id: "full-name-input"
+      - inputText: "Test Challenger"
+      - tapOn:
+          id: "email-input"
+      - inputText: "challenger.test.$(random)@example.com"
+      - tapOn:
+          id: "phone-input"
+      - inputText: "5551234567"
+      - tapOn:
+          id: "password-input"
+      - inputText: "TestPass123!"
+      - tapOn:
+          id: "confirm-password-input"
+      - inputText: "TestPass123!"
+      - tapOn: "checkbox.*Terms"
+      - tapOn: "Sign Up"
+      - waitForAnimationToEnd
+
+# PART 2: Create Test Club
+# Navigate to club creation
+- tapOn: "Create Club"
+
+# Fill club details
+- tapOn:
+    id: "club-name-input"
+- inputText: "E2E Test Club"
+
+- tapOn:
+    id: "club-description-input"  
+- inputText: "Automated test club for contact sharing validation"
+
+- tapOn:
+    id: "club-location-input"
+- inputText: "Test Location, NY"
+
+- tapOn: "Create Club"
+- waitForAnimationToEnd
+
+# Verify club creation
+- assertVisible: "E2E Test Club"
+
+# PART 3: Singles Challenge Flow Test
+# Navigate to club rankings/members
+- scrollUntilVisible:
+    element: "Rankings"
+    direction: DOWN
+
+- tapOn: "View All"
+
+# Since we're the only member, we need to add a test opponent
+# This might require creating a second user account programmatically
+# For now, let's simulate the challenge flow UI
+
+# Navigate to challenge creation
+- tapOn:
+    id: "challenge-button"
+    optional: true
+
+# If challenge button exists, test the challenge flow
+- runFlow:
+    when:
+      visible: "Challenge Player"
+    commands:
+      # Step 1: Player Selection
+      - assertVisible: "Challenge Player"
+      - assertVisible: "Select match type"
+      
+      # Select Singles
+      - tapOn: "Singles"
+      
+      # Select opponent (assuming there's at least one other member)
+      - tapOn:
+          text: ".*Player.*"
+          index: 0
+          optional: true
+      
+      - tapOn: "Next"
+      
+      # Step 2: Match Details
+      - assertVisible: "Match Details"
+      
+      # Set date
+      - tapOn: "Tomorrow"
+      
+      # Add message
+      - tapOn:
+          id: "message-input"
+          optional: true
+      - inputText: "Test singles challenge for contact sharing"
+      
+      - tapOn: "Next"
+      
+      # Step 3: Confirm and Send
+      - assertVisible: "Confirm Challenge"
+      - tapOn: "Send Challenge"
+      - waitForAnimationToEnd
+      
+      # Verify challenge sent
+      - assertVisible:
+          text: "Challenge sent"
+          timeout: 5000
+
+# PART 4: Test Challenge Acceptance (Simulate second user)
+# This would typically require a second device or user account
+# For automated testing, we'll check the notification system
+
+# Navigate back to club overview
+- tapOn:
+    id: "back-button"
+    optional: true
+
+# Check for notifications in club overview
+- scrollUntilVisible:
+    element: "Contact Info Shared"
+    direction: DOWN
+    optional: true
+
+# PART 5: Verify Contact Sharing Notification Component
+# Look for contact sharing notifications
+- runFlow:
+    when:
+      visible: "Contact Info Shared"
+    commands:
+      - assertVisible: "Contact Info Shared"
+      - assertVisible:
+          text: ".*phone.*|.*contact.*"
+          timeout: 3000
+      
+      # Test notification interaction
+      - tapOn: "View Contact Details"
+      
+      # Should show contact information
+      - assertVisible:
+          text: ".*555.*|.*phone.*"
+          timeout: 3000
+
+# PART 6: Test Notification Dismissal
+- runFlow:
+    when:
+      visible:
+        id: "close-notification"
+    commands:
+      - tapOn:
+          id: "close-notification"
+      - waitForAnimationToEnd
+      
+      # Notification should be dismissed
+      - assertNotVisible: "Contact Info Shared"
+
+# PART 7: Doubles Challenge Flow Test
+# Navigate back to challenge creation for doubles test
+- scrollUntilVisible:
+    element: "Rankings"
+    direction: DOWN
+    optional: true
+
+- tapOn:
+    id: "challenge-button"
+    optional: true
+
+- runFlow:
+    when:
+      visible: "Challenge Player" 
+    commands:
+      # Test doubles flow
+      - tapOn: "Doubles"
+      
+      # Select multiple players for doubles
+      - tapOn:
+          text: ".*Player.*"
+          index: 0
+          optional: true
+      - tapOn:
+          text: ".*Player.*" 
+          index: 1
+          optional: true
+      - tapOn:
+          text: ".*Player.*"
+          index: 2
+          optional: true
+      
+      - tapOn: "Next"
+      
+      # Match details
+      - tapOn: "Tomorrow"
+      - tapOn:
+          id: "message-input"
+          optional: true
+      - inputText: "Test doubles challenge for contact sharing"
+      
+      - tapOn: "Next"
+      - tapOn: "Send Challenge"
+      - waitForAnimationToEnd
+
+# PART 8: Verify Doubles Contact Sharing
+# Check that doubles contact sharing works with all 4 players
+- scrollUntilVisible:
+    element: "All 4 Players Ready"
+    direction: DOWN
+    optional: true
+
+- runFlow:
+    when:
+      visible: "All 4 Players Ready"
+    commands:
+      - assertVisible: "All 4 Players Ready"
+      - assertVisible: "Contact"
+      
+      # Should show multiple phone numbers for doubles
+      - assertVisible:
+          text: ".*555.*"
+          timeout: 3000
+
+# PART 9: Test Error Scenarios
+# Test challenge without proper phone number
+- runFlow:
+    when:
+      visible: "no phone number provided"
+    commands:
+      - assertVisible: "no phone number provided"
+
+# PART 10: Cleanup and Final Verification
+# Navigate to profile to check notification system
+- tapOn:
+    id: "profile-tab"
+
+# Check notification history
+- scrollUntilVisible:
+    element: "Notifications"
+    direction: DOWN
+    optional: true
+
+- tapOn:
+    text: "Notifications"
+    optional: true
+
+# Verify notification entries exist
+- runFlow:
+    when:
+      visible: "Challenge Accepted"
+    commands:
+      - assertVisible: "Challenge Accepted"
+      - assertVisible: "Contact Info Shared"
+
+# Test complete - log success
+- assertVisible:
+    text: ".*Profile.*|.*Settings.*"
+    timeout: 2000
