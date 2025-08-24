@@ -72,7 +72,8 @@ function determineMatchWinner(scores: string): number {
 }
 
 /**
- * Update player ELO ratings after a match
+ * Update player ELO ratings after a match using secure database function
+ * This bypasses RLS policies that prevent updating other users' ratings
  */
 async function updatePlayerRatings(
   winnerId: string,
@@ -84,37 +85,31 @@ async function updatePlayerRatings(
   winnerGamesPlayed: number = 0,
   loserGamesPlayed: number = 0
 ): Promise<void> {
-  // Update both players' ratings and increment games played
-  const updates = [
-    supabase
-      .from('users')
-      .update({
-        elo_rating: winnerNewRating,
-        games_played: winnerGamesPlayed + 1
-      })
-      .eq('id', winnerId),
-    
-    supabase
-      .from('users')
-      .update({
-        elo_rating: loserNewRating,
-        games_played: loserGamesPlayed + 1
-      })
-      .eq('id', loserId)
-  ];
+  console.log('🔧 Updating player ratings using secure database function...');
+  console.log(`Winner ${winnerId}: ${winnerNewRating} (${winnerRatingChange > 0 ? '+' : ''}${winnerRatingChange})`);
+  console.log(`Loser ${loserId}: ${loserNewRating} (${loserRatingChange})`);
 
-  const results = await Promise.all(updates);
-  
-  // Check for errors
-  results.forEach((result, index) => {
-    if (result.error) {
-      const playerId = index === 0 ? winnerId : loserId;
-      console.error(`❌ Failed to update rating for player ${playerId}:`, result.error);
-      throw new Error(`Failed to update player rating: ${result.error.message}`);
+  try {
+    // Use the secure database function to update ratings
+    const { error } = await supabase.rpc('update_player_ratings', {
+      p_winner_id: winnerId,
+      p_loser_id: loserId,
+      p_winner_new_rating: winnerNewRating,
+      p_loser_new_rating: loserNewRating,
+      p_winner_games_played: winnerGamesPlayed,
+      p_loser_games_played: loserGamesPlayed
+    });
+
+    if (error) {
+      console.error('❌ Failed to update ratings via database function:', error);
+      throw new Error(`Failed to update player ratings: ${error.message}`);
     }
-  });
 
-  console.log(`✅ Updated ratings: Winner ${winnerId} (${winnerRatingChange > 0 ? '+' : ''}${winnerRatingChange}), Loser ${loserId} (${loserRatingChange})`);
+    console.log(`✅ Updated ratings via secure function: Winner ${winnerId} (${winnerRatingChange > 0 ? '+' : ''}${winnerRatingChange}), Loser ${loserId} (${loserRatingChange})`);
+  } catch (error) {
+    console.error('❌ Rating update failed:', error);
+    throw error;
+  }
 }
 
 export class MatchService {
@@ -584,7 +579,7 @@ export class MatchService {
   /**
    * Update rating for a single player (when playing against unregistered opponent)
    */
-  private async updateSinglePlayerRating(playerId: string, playerWon: boolean, scores: TennisScore[]): Promise<void> {
+  private async updateSinglePlayerRating(playerId: string, playerWon: boolean, scores: string): Promise<void> {
     try {
       // Get current rating for the player
       const { data: player, error } = await supabase
@@ -604,17 +599,24 @@ export class MatchService {
       const playerGamesPlayed = player.games_played || 0;
 
       // Calculate new rating using ELO system
-      const ratingChanges = calculateEloRatings(
-        { rating: playerRating, gamesPlayed: playerGamesPlayed },
-        { rating: DEFAULT_OPPONENT_RATING, gamesPlayed: 10 }, // Assume opponent has some experience
-        scores
-      );
+      const ratingChanges = playerWon ?
+        calculateEloRatings(
+          { rating: playerRating, gamesPlayed: playerGamesPlayed }, // Winner (player)
+          { rating: DEFAULT_OPPONENT_RATING, gamesPlayed: 10 }, // Loser (guest)
+          scores
+        ) :
+        calculateEloRatings(
+          { rating: DEFAULT_OPPONENT_RATING, gamesPlayed: 10 }, // Winner (guest)
+          { rating: playerRating, gamesPlayed: playerGamesPlayed }, // Loser (player)
+          scores
+        );
 
       const newRating = playerWon ? 
-        playerRating + ratingChanges.winnerChange : 
-        playerRating + ratingChanges.loserChange;
+        ratingChanges.winnerNewRating : 
+        ratingChanges.loserNewRating;
 
-      // Update player's rating
+      // Update player's rating - user can update their own profile via RLS
+      const change = Math.round(newRating - playerRating);
       const { error: updateError } = await supabase
         .from('users')
         .update({
@@ -625,8 +627,8 @@ export class MatchService {
 
       if (updateError) {
         console.error('❌ Failed to update player rating:', updateError);
+        console.error('❌ This suggests an RLS policy issue or authentication problem');
       } else {
-        const change = Math.round(newRating - playerRating);
         console.log(`✅ Single player rating updated: ${playerId} (${change > 0 ? '+' : ''}${change})`);
       }
 
@@ -736,7 +738,7 @@ export const getClubLeaderboard = async (clubId: string): Promise<RankedPlayer[]
 
       // Update stats for singles matches
       if (match.match_type === 'singles') {
-        // Player 1
+        // Player 1 - always count if they're a registered user
         if (match.player1_id && playerStats.has(match.player1_id)) {
           const stats = playerStats.get(match.player1_id)!;
           stats.totalMatches++;
@@ -748,7 +750,7 @@ export const getClubLeaderboard = async (clubId: string): Promise<RankedPlayer[]
           stats.winRate = stats.wins / stats.totalMatches;
         }
 
-        // Player 2 (if registered user)
+        // Player 2 - only count if they're a registered user (not a guest)
         if (match.player2_id && playerStats.has(match.player2_id)) {
           const stats = playerStats.get(match.player2_id)!;
           stats.totalMatches++;
@@ -759,6 +761,8 @@ export const getClubLeaderboard = async (clubId: string): Promise<RankedPlayer[]
           }
           stats.winRate = stats.wins / stats.totalMatches;
         }
+        // Note: Matches against guests (where player2_id is null but opponent2_name exists) 
+        // are now properly counted for player1 above
       } else if (match.match_type === 'doubles') {
         // Update stats for all 4 players in doubles
         const winningPlayers = player1Won 
