@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, StyleSheet } from 'react-native';
+import { View, StyleSheet, TouchableOpacity } from 'react-native';
 import { ThemedText } from './ThemedText';
 import { ThemedView } from './ThemedView';
 import { useColorScheme } from '@/hooks/useColorScheme';
@@ -11,13 +11,19 @@ interface DoublesMatchParticipantsProps {
   responses: InvitationResponse[];
   matchType: 'singles' | 'doubles';
   isMatched: boolean;
+  onJoinMatch?: () => void;
+  currentUserId?: string;
+  creatorId?: string;
 }
 
 export const DoublesMatchParticipants: React.FC<DoublesMatchParticipantsProps> = ({
   creatorName,
   responses,
   matchType,
-  isMatched
+  isMatched,
+  onJoinMatch,
+  currentUserId,
+  creatorId
 }) => {
   const colorScheme = useColorScheme();
   const colors = Colors[colorScheme ?? 'light'];
@@ -25,6 +31,11 @@ export const DoublesMatchParticipants: React.FC<DoublesMatchParticipantsProps> =
   const requiredPlayers = matchType === 'singles' ? 2 : 4;
   const currentPlayers = responses.length + 1; // +1 for creator
   const confirmedResponses = responses.filter(r => r.status === 'confirmed' || r.status === 'interested');
+  
+  // Check if current user has already responded or is the creator
+  const hasUserResponded = currentUserId && responses.some(r => r.user_id === currentUserId);
+  const isUserCreator = currentUserId && currentUserId === creatorId;
+  const canJoin = currentUserId && !hasUserResponded && !isUserCreator && onJoinMatch && !isMatched;
   
   // For doubles, show all players without team assignments
   if (matchType === 'doubles') {
@@ -63,13 +74,30 @@ export const DoublesMatchParticipants: React.FC<DoublesMatchParticipantsProps> =
             ))}
             
             {/* Empty slots for remaining players */}
-            {Array.from({ length: Math.max(0, 4 - allPlayers.length) }).map((_, index) => (
-              <View key={`empty-${index}`} style={[styles.emptySlot, { borderColor: colors.tabIconDefault + '50' }]}>
-                <ThemedText style={[styles.emptySlotText, { color: colors.tabIconDefault }]}>
-                  Waiting for player...
-                </ThemedText>
-              </View>
-            ))}
+            {Array.from({ length: Math.max(0, 4 - allPlayers.length) }).map((_, index) => {
+              if (canJoin) {
+                return (
+                  <TouchableOpacity 
+                    key={`empty-${index}`} 
+                    style={[styles.emptySlot, styles.clickableSlot, { borderColor: colors.tint }]}
+                    onPress={onJoinMatch}
+                    activeOpacity={0.7}
+                  >
+                    <ThemedText style={[styles.emptySlotText, { color: colors.tint }]}>
+                      + Join Match
+                    </ThemedText>
+                  </TouchableOpacity>
+                );
+              } else {
+                return (
+                  <View key={`empty-${index}`} style={[styles.emptySlot, { borderColor: colors.tabIconDefault + '50' }]}>
+                    <ThemedText style={[styles.emptySlotText, { color: colors.tabIconDefault }]}>
+                      Waiting for player...
+                    </ThemedText>
+                  </View>
+                );
+              }
+            })}
           </View>
 
         </View>
@@ -126,6 +154,16 @@ export const DoublesMatchParticipants: React.FC<DoublesMatchParticipantsProps> =
               {confirmedResponses[0].user_name || 'Unknown Player'}
             </ThemedText>
           </View>
+        ) : canJoin ? (
+          <TouchableOpacity 
+            style={[styles.emptySlot, styles.clickableSlot, { borderColor: colors.tint }]}
+            onPress={onJoinMatch}
+            activeOpacity={0.7}
+          >
+            <ThemedText style={[styles.emptySlotText, { color: colors.tint }]}>
+              + Join Match
+            </ThemedText>
+          </TouchableOpacity>
         ) : (
           <View style={[styles.emptySlot, { borderColor: colors.tabIconDefault + '50' }]}>
             <ThemedText style={[styles.emptySlotText, { color: colors.tabIconDefault }]}>
@@ -235,6 +273,10 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     minHeight: 36, // Increased minimum height to match playerSlot
     justifyContent: 'center',
+  },
+  clickableSlot: {
+    borderStyle: 'solid',
+    borderWidth: 2,
   },
   emptySlotText: {
     fontSize: 12,

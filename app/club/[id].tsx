@@ -17,6 +17,7 @@ import ClubMatches from '@/components/club/ClubMatches';
 import MatchInvitationForm from '@/components/MatchInvitationForm';
 import { getClubLeaderboard } from '@/services/matchService';
 import { challengeService } from '@/services/challengeService';
+import { matchInvitationService } from '@/services/matchInvitationService';
 
 type TabType = 'overview' | 'members' | 'matches';
 
@@ -456,6 +457,31 @@ export default function ClubDetailScreen() {
     }
   };
 
+  const handleJoinInvitation = async (invitationId: string) => {
+    if (!user?.id) return;
+    
+    try {
+      console.log('🎾 Joining invitation:', invitationId);
+      await matchInvitationService.respondToInvitation(invitationId, user.id);
+      
+      // Reload matches to reflect the change
+      loadClubDetails();
+      
+      console.log('✅ Successfully joined match invitation');
+    } catch (error) {
+      console.error('❌ Failed to join match invitation:', error);
+      
+      // Show user-friendly error message
+      let errorMessage = 'Failed to join match. Please try again.';
+      if (error instanceof Error && error.message.includes('already responded')) {
+        errorMessage = 'You have already responded to this invitation.';
+      }
+      
+      // You might want to show a toast/alert here
+      console.log('Error message for user:', errorMessage);
+    }
+  };
+
   if (isLoading) {
     return (
       <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
@@ -585,6 +611,7 @@ export default function ClubDetailScreen() {
             onFilterInvolvementChange={setMatchFilterInvolvement}
             onClaimMatch={handleClaimMatch}
             onRecordMatch={handleRecordMatch}
+            onJoinInvitation={handleJoinInvitation}
             currentUserId={user?.id}
           />
         )}

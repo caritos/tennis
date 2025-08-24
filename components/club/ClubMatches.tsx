@@ -44,6 +44,7 @@ interface ClubMatchesProps {
   onFilterInvolvementChange: (involvement: 'all' | 'my' | 'incomplete') => void;
   onClaimMatch?: (matchId: string, playerPosition: "player2" | "player3" | "player4") => void;
   onRecordMatch?: () => void;
+  onJoinInvitation?: (invitationId: string) => void;
   currentUserId?: string;
 }
 
@@ -59,6 +60,7 @@ export default function ClubMatches({
   onFilterInvolvementChange,
   onClaimMatch,
   onRecordMatch,
+  onJoinInvitation,
   currentUserId,
 }: ClubMatchesProps) {
   // Filter and sort matches based on type, involvement, and date
@@ -277,13 +279,24 @@ export default function ClubMatches({
                       responses={match.responses || []}
                       matchType={match.match_type}
                       isMatched={false}
+                      onJoinMatch={onJoinInvitation ? () => onJoinInvitation(match.id) : undefined}
+                      currentUserId={currentUserId}
+                      creatorId={match.player1_id}
                     />
                   </View>
                 ) : (
                   // Display completed match with scores
                   <TennisScoreDisplay
-                    player1Name={match.player1_name}
-                    player2Name={match.player2_name || match.opponent2_name}
+                    player1Name={
+                      match.match_type === 'doubles' 
+                        ? `${match.player1_name} & ${match.partner3_name || 'Unknown Partner'}`
+                        : match.player1_name
+                    }
+                    player2Name={
+                      match.match_type === 'doubles'
+                        ? `${match.player2_name || match.opponent2_name || 'Unknown'} & ${match.partner4_name || 'Unknown Partner'}`
+                        : match.player2_name || match.opponent2_name || 'Unknown'
+                    }
                     scores={match.scores}
                     winner={match.winner as 1 | 2}
                     matchId={match.id}
@@ -292,6 +305,12 @@ export default function ClubMatches({
                     player3Id={match.player3_id}
                     player4Id={match.player4_id}
                     matchType={match.match_type}
+                    isPlayer2Unregistered={!match.player2_id && !!match.opponent2_name}
+                    isPlayer3Unregistered={!match.player3_id && !!match.partner3_name}
+                    isPlayer4Unregistered={!match.player4_id && !!match.partner4_name}
+                    unregisteredPlayer2Name={match.opponent2_name}
+                    unregisteredPlayer3Name={match.partner3_name}
+                    unregisteredPlayer4Name={match.partner4_name}
                     onClaimMatch={onClaimMatch}
                   />
                 )}
