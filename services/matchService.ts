@@ -88,10 +88,20 @@ async function updatePlayerRatings(
   console.log('🔧 Updating player ratings using secure database function...');
   console.log(`Winner ${winnerId}: ${winnerNewRating} (${winnerRatingChange > 0 ? '+' : ''}${winnerRatingChange})`);
   console.log(`Loser ${loserId}: ${loserNewRating} (${loserRatingChange})`);
+  
+  console.log('🔧 RPC parameters:', {
+    p_winner_id: winnerId,
+    p_loser_id: loserId,
+    p_winner_new_rating: winnerNewRating,
+    p_loser_new_rating: loserNewRating,
+    p_winner_games_played: winnerGamesPlayed,
+    p_loser_games_played: loserGamesPlayed
+  });
 
   try {
     // Use the secure database function to update ratings
-    const { error } = await supabase.rpc('update_player_ratings', {
+    console.log('🔧 Calling supabase.rpc("update_player_ratings", ...)');
+    const { data, error } = await supabase.rpc('update_player_ratings', {
       p_winner_id: winnerId,
       p_loser_id: loserId,
       p_winner_new_rating: winnerNewRating,
@@ -100,14 +110,18 @@ async function updatePlayerRatings(
       p_loser_games_played: loserGamesPlayed
     });
 
+    console.log('🔧 RPC response - data:', data, 'error:', error);
+
     if (error) {
       console.error('❌ Failed to update ratings via database function:', error);
+      console.error('❌ RPC error details:', JSON.stringify(error, null, 2));
       throw new Error(`Failed to update player ratings: ${error.message}`);
     }
 
     console.log(`✅ Updated ratings via secure function: Winner ${winnerId} (${winnerRatingChange > 0 ? '+' : ''}${winnerRatingChange}), Loser ${loserId} (${loserRatingChange})`);
   } catch (error) {
     console.error('❌ Rating update failed:', error);
+    console.error('❌ Catch block error details:', JSON.stringify(error, null, 2));
     throw error;
   }
 }
@@ -116,6 +130,7 @@ export class MatchService {
 
   async createMatch(matchData: CreateMatchData): Promise<Match> {
     console.log('🎾 Creating match with ELO rating updates...');
+    console.log('🎾 Match data:', JSON.stringify(matchData, null, 2));
     
     const matchId = generateUUID();
     
@@ -149,13 +164,23 @@ export class MatchService {
         throw new Error(`Failed to create match: ${error.message}`);
       }
 
-      console.log('✅ Match created, now updating ELO ratings...');
+      console.log('✅ Match created successfully:', match);
+      console.log('🎾 Now checking if we should update ELO ratings...');
+      
+      console.log('🎾 Rating update conditions:');
+      console.log('  - Has scores:', !!matchData.scores);
+      console.log('  - Has player2_id:', !!matchData.player2_id);
+      console.log('  - Has opponent2_name:', !!matchData.opponent2_name);
+      console.log('  - Match type:', matchData.match_type);
 
       // Update ELO ratings for registered players only
       if (matchData.scores && (matchData.player2_id || matchData.opponent2_name)) {
+        console.log('✅ Conditions met - proceeding with rating updates...');
         await this.updateMatchRatings(match);
       } else {
         console.log('⚠️ Skipping rating update: incomplete match data or missing opponent');
+        console.log('  - Scores present:', !!matchData.scores);
+        console.log('  - Opponent present:', !!(matchData.player2_id || matchData.opponent2_name));
       }
 
       return match;
@@ -170,16 +195,33 @@ export class MatchService {
    * Update ELO ratings for players in a match
    */
   private async updateMatchRatings(match: Match): Promise<void> {
+    console.log('🎾 Starting updateMatchRatings for match:', match.id);
+    console.log('🎾 Match details:', {
+      match_type: match.match_type,
+      scores: match.scores,
+      player1_id: match.player1_id,
+      player2_id: match.player2_id,
+      opponent2_name: match.opponent2_name,
+      player3_id: match.player3_id,
+      player4_id: match.player4_id
+    });
+    
     try {
       const winner = determineMatchWinner(match.scores);
+      console.log('🎾 Match winner determined:', winner === 1 ? 'Player 1/Team 1' : 'Player 2/Team 2');
       
       if (match.match_type === 'singles') {
+        console.log('🎾 Processing singles match ratings...');
         await this.updateSinglesRatings(match, winner);
       } else {
+        console.log('🎾 Processing doubles match ratings...');
         await this.updateDoublesRatings(match, winner);
       }
+      
+      console.log('✅ Match ratings update completed successfully');
     } catch (error) {
       console.error('❌ Failed to update match ratings:', error);
+      console.error('❌ Error details:', error);
       // Don't throw here - match is already created, rating update failure shouldn't block
       console.warn('⚠️ Match created but rating update failed. Ratings may be out of sync.');
     }
@@ -189,6 +231,11 @@ export class MatchService {
    * Update ratings for singles match
    */
   private async updateSinglesRatings(match: Match, winner: number): Promise<void> {
+    console.log('🎾 updateSinglesRatings called with winner:', winner);
+    console.log('🎾 Player1 ID (recorder):', match.player1_id);
+    console.log('🎾 Player2 ID (opponent):', match.player2_id);
+    console.log('🎾 Opponent2 name:', match.opponent2_name);
+    
     // Only update ratings if player1 (the person recording) is a registered user
     if (!match.player1_id) {
       console.log('⚠️ Cannot update ratings: player1 (recorder) is not registered');
@@ -198,6 +245,7 @@ export class MatchService {
     // If opponent is unregistered, we'll use a default rating for calculation but only update player1
     if (!match.player2_id) {
       console.log('⚠️ Player2 is unregistered, updating only player1 rating against default opponent');
+      console.log('🎾 Calling updateSinglePlayerRating for player:', match.player1_id, 'won:', winner === 1);
       await this.updateSinglePlayerRating(match.player1_id, winner === 1, match.scores);
       return;
     }
@@ -580,8 +628,14 @@ export class MatchService {
    * Update rating for a single player (when playing against unregistered opponent)
    */
   private async updateSinglePlayerRating(playerId: string, playerWon: boolean, scores: string): Promise<void> {
+    console.log('🎾 updateSinglePlayerRating called:');
+    console.log('  - Player ID:', playerId);
+    console.log('  - Player won:', playerWon);
+    console.log('  - Scores:', scores);
+    
     try {
       // Get current rating for the player
+      console.log('🎾 Fetching current player data from database...');
       const { data: player, error } = await supabase
         .from('users')
         .select('id, elo_rating, games_played')
@@ -593,10 +647,17 @@ export class MatchService {
         return;
       }
 
+      console.log('🎾 Current player data:', player);
+
       // Use default rating (1200) for unregistered opponent
       const DEFAULT_OPPONENT_RATING = 1200;
       const playerRating = player.elo_rating || 1200;
       const playerGamesPlayed = player.games_played || 0;
+
+      console.log('🎾 Rating calculation inputs:');
+      console.log('  - Player rating:', playerRating);
+      console.log('  - Player games played:', playerGamesPlayed);
+      console.log('  - Opponent rating (default):', DEFAULT_OPPONENT_RATING);
 
       // Calculate new rating using ELO system
       const ratingChanges = playerWon ?
@@ -611,12 +672,22 @@ export class MatchService {
           scores
         );
 
+      console.log('🎾 ELO calculation results:', ratingChanges);
+
       const newRating = playerWon ? 
         ratingChanges.winnerNewRating : 
         ratingChanges.loserNewRating;
+        
+      console.log('🎾 New rating calculated:', newRating, '(change:', Math.round(newRating - playerRating), ')');
 
       // Update player's rating - user can update their own profile via RLS
       const change = Math.round(newRating - playerRating);
+      console.log('🎾 Attempting database update:');
+      console.log('  - Player ID:', playerId);
+      console.log('  - New ELO rating:', Math.round(newRating));
+      console.log('  - New games played:', playerGamesPlayed + 1);
+      console.log('  - Rating change:', change);
+      
       const { error: updateError } = await supabase
         .from('users')
         .update({
@@ -627,9 +698,11 @@ export class MatchService {
 
       if (updateError) {
         console.error('❌ Failed to update player rating:', updateError);
+        console.error('❌ Update error details:', JSON.stringify(updateError, null, 2));
         console.error('❌ This suggests an RLS policy issue or authentication problem');
       } else {
-        console.log(`✅ Single player rating updated: ${playerId} (${change > 0 ? '+' : ''}${change})`);
+        console.log(`✅ Single player rating updated successfully: ${playerId} (${change > 0 ? '+' : ''}${change})`);
+        console.log('🎾 Database update completed - rating should now be:', Math.round(newRating));
       }
 
     } catch (error) {
