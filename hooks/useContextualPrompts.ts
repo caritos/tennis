@@ -243,21 +243,31 @@ export function useContextualPrompts(
 
   // Mark prompt as shown (for analytics and cooldown)
   const markPromptShown = useCallback(async (type: ContextualPromptType) => {
-    const now = new Date();
-    const newStorage = {
-      ...promptStorage,
-      lastShown: {
-        ...promptStorage.lastShown,
-        [type]: now.toISOString()
-      },
-      showCount: {
-        ...promptStorage.showCount,
-        [type]: (promptStorage.showCount[type] || 0) + 1
-      }
-    };
+    try {
+      // Load fresh storage to avoid stale state
+      const currentStorage = await loadPromptStorage();
+      const now = new Date();
+      const newStorage = {
+        ...currentStorage,
+        lastShown: {
+          ...currentStorage.lastShown,
+          [type]: now.toISOString()
+        },
+        showCount: {
+          ...currentStorage.showCount,
+          [type]: (currentStorage.showCount[type] || 0) + 1
+        }
+      };
 
-    await savePromptStorage(newStorage);
-  }, [promptStorage, savePromptStorage]);
+      // Save directly to AsyncStorage without triggering state updates
+      await AsyncStorage.setItem(PROMPT_STORAGE_KEY, JSON.stringify(newStorage));
+      
+      // Update local state last to prevent loops
+      setPromptStorage(newStorage);
+    } catch (error) {
+      console.error('Failed to mark prompt as shown:', error);
+    }
+  }, [loadPromptStorage]);
 
   // Refresh prompts
   const refreshPrompts = useCallback(async () => {
@@ -266,10 +276,17 @@ export function useContextualPrompts(
       const prompts = await generatePrompts();
       const highestPriorityPrompt = getHighestPriorityPrompt(prompts);
       
-      if (highestPriorityPrompt && currentPrompt?.id !== highestPriorityPrompt.id) {
-        setCurrentPrompt(highestPriorityPrompt);
-        await markPromptShown(highestPriorityPrompt.type);
-      } else if (!highestPriorityPrompt) {
+      if (highestPriorityPrompt) {
+        setCurrentPrompt(prevPrompt => {
+          // Only update if it's a different prompt
+          if (prevPrompt?.id !== highestPriorityPrompt.id) {
+            // Mark as shown without depending on the callback
+            markPromptShown(highestPriorityPrompt.type).catch(console.error);
+            return highestPriorityPrompt;
+          }
+          return prevPrompt;
+        });
+      } else {
         setCurrentPrompt(null);
       }
     } catch (error) {
@@ -277,7 +294,7 @@ export function useContextualPrompts(
     } finally {
       setLoading(false);
     }
-  }, [generatePrompts, currentPrompt, markPromptShown]);
+  }, [generatePrompts, markPromptShown]);
 
   // Initialize and refresh on dependency changes
   useEffect(() => {
