@@ -541,15 +541,10 @@ export function MatchRecordingForm(componentProps: MatchRecordingFormProps) {
   };
 
   const handleSave = () => {
-    alert('Step 1: handleSave started');
-    
     const isValidForm = validateForm();
     if (!isValidForm) {
-      alert(`Step 2: Form validation FAILED! Errors: ${validationErrors.join(', ')}`);
       return;
     }
-    
-    alert('Step 3: Form validation PASSED, preparing match data...');
 
     if (!user?.id) {
       setValidationErrors(['Please sign in to record a match']);
@@ -575,9 +570,7 @@ export function MatchRecordingForm(componentProps: MatchRecordingFormProps) {
       notes: notes.trim() || undefined,
     };
 
-    alert('Step 4: Match data prepared, calling onSave callback...');
     onSave(matchData);
-    alert('Step 5: onSave callback completed');
   };
 
   const styles = StyleSheet.create({
@@ -1176,13 +1169,9 @@ export function MatchRecordingForm(componentProps: MatchRecordingFormProps) {
 
         {/* Save Match Button - Inside ScrollView */}
         <View style={styles.saveButtonSection}>
-          {console.log('🎾 RENDERING SAVE BUTTON - this should appear in logs immediately')}
           <Button
             title="Save Match"
-            onPress={() => {
-              alert('Save button pressed!');
-              handleSave();
-            }}
+            onPress={handleSave}
             variant="primary"
             size="large"
             fullWidth={true}

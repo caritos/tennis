@@ -50,8 +50,11 @@ export default function RecordMatchScreen() {
       const savedMatch = await recordMatch(matchData);
       console.log('🎾 Match saved successfully:', savedMatch);
       
-      // Show success notification
-      showNotification('success', `Match recorded! Score: ${savedMatch.scores}`);
+      // Add a small delay to ensure database transaction is fully committed
+      // before showing success notification and navigating back
+      setTimeout(() => {
+        showNotification('success', `Match recorded! Score: ${savedMatch.scores}`);
+      }, 500);
     } catch (error) {
       console.error('🎾 Match save failed:', error);
       logError('RecordMatch.handleSave', error);
