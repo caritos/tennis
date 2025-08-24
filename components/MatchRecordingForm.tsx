@@ -4,10 +4,13 @@ import {
   Text,
   StyleSheet,
   ScrollView,
-  Button,
   TextInput,
   TouchableOpacity,
+  KeyboardAvoidingView,
+  Platform,
+  Keyboard,
 } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import RadioGroup from 'react-native-radio-buttons-group';
 import { Colors } from '@/constants/Colors';
 import { useColorScheme } from '@/hooks/useColorScheme';
@@ -20,11 +23,11 @@ import PlayerSearchField from './match-recording/PlayerSearchField';
 import MatchDateSection from './match-recording/MatchDateSection';
 import ScoreSection from './match-recording/ScoreSection';
 import NotesSection from './match-recording/NotesSection';
-import FormActions from './match-recording/FormActions';
 import { CalendarDatePicker } from './CalendarDatePicker';
 import { TennisScoreEntry } from './TennisScoreEntry';
 import { TennisSet } from '@/types/tennis';
 import { formatScoreString } from '../utils/tennisUtils';
+import { Button } from './ui/Button';
 
 interface MatchRecordingFormProps {
   onSave: (matchData: CreateMatchData) => void;
@@ -46,6 +49,7 @@ export function MatchRecordingForm(componentProps: MatchRecordingFormProps) {
   const colorScheme = useColorScheme();
   const colors = Colors[colorScheme ?? 'light'];
   const { user } = useAuth();
+  const [keyboardVisible, setKeyboardVisible] = useState(false);
   
   // Get props with fallback for hook safety
   const props = componentProps || {};
@@ -85,6 +89,23 @@ export function MatchRecordingForm(componentProps: MatchRecordingFormProps) {
   useEffect(() => {
     console.log('🎾 tennisSets state changed:', tennisSets);
   }, [tennisSets]);
+
+  // Keyboard visibility tracking
+  useEffect(() => {
+    const keyboardDidShowListener = Keyboard.addListener(
+      Platform.OS === 'ios' ? 'keyboardWillShow' : 'keyboardDidShow',
+      () => setKeyboardVisible(true)
+    );
+    const keyboardDidHideListener = Keyboard.addListener(
+      Platform.OS === 'ios' ? 'keyboardWillHide' : 'keyboardDidHide',
+      () => setKeyboardVisible(false)
+    );
+
+    return () => {
+      keyboardDidShowListener.remove();
+      keyboardDidHideListener.remove();
+    };
+  }, []);
 
   // Initialize tennis sets with existing scores when editing
   useEffect(() => {
@@ -382,26 +403,66 @@ export function MatchRecordingForm(componentProps: MatchRecordingFormProps) {
   };
 
   const handleAddNewPlayer = (field: 'opponent' | 'partner' | 'opponentPartner') => {
+    console.log('🎾 handleAddNewPlayer called with field:', field);
+    
     let searchText = '';
     if (field === 'opponent') searchText = opponentSearchText;
     else if (field === 'partner') searchText = partnerSearchText;
     else if (field === 'opponentPartner') searchText = opponentPartnerSearchText;
 
+    console.log('🎾 searchText for field', field, ':', searchText);
+
     const newPlayer = {
-      id: `new-player-${field}`,
+      id: `new-player-${field}-${Date.now()}`, // Make ID unique
       name: searchText.trim()
     };
 
+    console.log('🎾 Creating new player:', newPlayer);
+
     if (field === 'opponent') {
       setSelectedOpponent(newPlayer);
+      setOpponentSearchText(newPlayer.name);
     } else if (field === 'partner') {
       setSelectedPartner(newPlayer);
+      setPartnerSearchText(newPlayer.name);
     } else if (field === 'opponentPartner') {
       setSelectedOpponentPartner(newPlayer);
+      setOpponentPartnerSearchText(newPlayer.name);
     }
     
+    // Hide current suggestions immediately
     setShowSuggestions(false);
     setActiveSearchField(null);
+    
+    console.log('🎾 Current matchType:', matchType, 'field:', field);
+    
+    // Automatic field progression with more robust state management
+    if (matchType === 'doubles') {
+      // Use React's state batching with multiple setStates in sequence
+      setTimeout(() => {
+        if (field === 'opponent') {
+          console.log('🎾 Moving from opponent to partner');
+          setPartnerSearchText(''); // Clear partner field first
+          setActiveSearchField('partner');
+          setShowSuggestions(true);
+        } else if (field === 'partner') {
+          console.log('🎾 Moving from partner to opponent partner');
+          setOpponentPartnerSearchText(''); // Clear opponent partner field first
+          setActiveSearchField('opponentPartner');
+          setShowSuggestions(true);
+        } else if (field === 'opponentPartner') {
+          console.log('🎾 All players selected, dismissing keyboard');
+          Keyboard.dismiss();
+        }
+      }, 250); // Longer delay to ensure all state updates complete
+    } else {
+      // For singles, dismiss keyboard after short delay
+      setTimeout(() => {
+        console.log('🎾 Singles opponent selected, dismissing keyboard');
+        Keyboard.dismiss();
+      }, 250);
+    }
+    
     // Clear validation errors
     if (validationErrors.length > 0) {
       setValidationErrors([]);
@@ -526,6 +587,7 @@ export function MatchRecordingForm(componentProps: MatchRecordingFormProps) {
     },
     scrollContent: {
       padding: CompactStyles.scrollContent.paddingHorizontal,
+      paddingBottom: 20, // Normal bottom padding for scroll content
     },
     title: {
       fontSize: CompactStyles.title.fontSize,
@@ -559,6 +621,22 @@ export function MatchRecordingForm(componentProps: MatchRecordingFormProps) {
     searchInputFocused: {
       borderColor: colors.tint,
       borderWidth: 2,
+    },
+    searchInputSelected: {
+      borderColor: '#4CAF50', // Green border for confirmation
+      backgroundColor: '#4CAF50' + '15', // Light green background
+      borderWidth: 2,
+      fontWeight: '600', // Bold text
+      color: '#2E7D32', // Dark green text
+    },
+    inputContainer: {
+      position: 'relative',
+    },
+    successIcon: {
+      position: 'absolute',
+      right: 12,
+      top: '50%',
+      marginTop: -10,
     },
     dateInput: {
       borderWidth: 1,
@@ -620,6 +698,28 @@ export function MatchRecordingForm(componentProps: MatchRecordingFormProps) {
     },
     buttonContainer: {
       marginTop: 24,
+    },
+    keyboardToolbar: {
+      position: 'absolute',
+      bottom: 0,
+      right: 0,
+      paddingVertical: 10,
+      paddingHorizontal: 20,
+      borderTopLeftRadius: 12,
+      shadowColor: '#000',
+      shadowOffset: { width: 0, height: -2 },
+      shadowOpacity: 0.1,
+      shadowRadius: 3,
+      elevation: 5,
+      zIndex: 1000,
+    },
+    keyboardToolbarText: {
+      fontSize: 16,
+      fontWeight: '600',
+    },
+    saveButtonSection: {
+      marginTop: 30,
+      marginBottom: 20,
     },
     suggestionsContainer: {
       backgroundColor: colors.background,
@@ -723,8 +823,16 @@ export function MatchRecordingForm(componentProps: MatchRecordingFormProps) {
   });
 
   return (
-    <View style={styles.container}>
-      <ScrollView style={styles.scrollContent}>
+    <KeyboardAvoidingView 
+      style={styles.container}
+      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+      keyboardVerticalOffset={Platform.OS === 'ios' ? 100 : 0}
+    >
+      <ScrollView 
+        style={styles.scrollContent}
+        keyboardShouldPersistTaps="handled"
+        showsVerticalScrollIndicator={false}
+      >
         {/* Validation Errors */}
         {validationErrors.length > 0 && (
           <View style={styles.errorContainer}>
@@ -747,22 +855,33 @@ export function MatchRecordingForm(componentProps: MatchRecordingFormProps) {
         {matchType === 'doubles' && (
           <View style={styles.section}>
             <Text style={styles.sectionTitle}>Your Partner</Text>
-            <TextInput
-              style={[
-                styles.searchInput,
-                showSuggestions && activeSearchField === 'partner' && styles.searchInputFocused
-              ]}
-              value={partnerSearchText}
-              onChangeText={(text) => handleSearchTextChange(text, 'partner')}
-              placeholder="🔍 Search or add partner..."
-              testID="partner-search-input"
-              onFocus={() => {
-                setActiveSearchField('partner');
-                if (partnerSearchText.trim()) {
-                  setShowSuggestions(true);
-                }
-              }}
-            />
+            <View style={styles.inputContainer}>
+              <TextInput
+                style={[
+                  styles.searchInput,
+                  selectedPartner && styles.searchInputSelected, // Green confirmation when selected
+                  showSuggestions && activeSearchField === 'partner' && styles.searchInputFocused
+                ]}
+                value={partnerSearchText}
+                onChangeText={(text) => handleSearchTextChange(text, 'partner')}
+                placeholder="🔍 Search or add partner..."
+                testID="partner-search-input"
+                onFocus={() => {
+                  setActiveSearchField('partner');
+                  if (partnerSearchText.trim()) {
+                    setShowSuggestions(true);
+                  }
+                }}
+              />
+              {selectedPartner && (
+                <Ionicons
+                  name="checkmark-circle"
+                  size={20}
+                  color="#4CAF50"
+                  style={styles.successIcon}
+                />
+              )}
+            </View>
 
             {/* Search Suggestions for Partner */}
             {showSuggestions && activeSearchField === 'partner' && (
@@ -807,22 +926,33 @@ export function MatchRecordingForm(componentProps: MatchRecordingFormProps) {
         {/* Opponent Selection */}
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>{matchType === 'doubles' ? 'Opponent 1' : 'Opponent'}</Text>
-          <TextInput
-            style={[
-              styles.searchInput,
-              showSuggestions && styles.searchInputFocused
-            ]}
-            value={opponentSearchText}
-            onChangeText={(text) => handleSearchTextChange(text, 'opponent')}
-            placeholder="🔍 Search or add opponent..."
-            testID="opponent-search-input"
-            onFocus={() => {
-              setActiveSearchField('opponent');
-              if (opponentSearchText.trim()) {
-                setShowSuggestions(true);
-              }
-            }}
-          />
+          <View style={styles.inputContainer}>
+            <TextInput
+              style={[
+                styles.searchInput,
+                selectedOpponent && styles.searchInputSelected, // Green confirmation when selected
+                showSuggestions && styles.searchInputFocused
+              ]}
+              value={opponentSearchText}
+              onChangeText={(text) => handleSearchTextChange(text, 'opponent')}
+              placeholder="🔍 Search or add opponent..."
+              testID="opponent-search-input"
+              onFocus={() => {
+                setActiveSearchField('opponent');
+                if (opponentSearchText.trim()) {
+                  setShowSuggestions(true);
+                }
+              }}
+            />
+            {selectedOpponent && (
+              <Ionicons
+                name="checkmark-circle"
+                size={20}
+                color="#4CAF50"
+                style={styles.successIcon}
+              />
+            )}
+          </View>
 
           {/* Search Suggestions */}
           {showSuggestions && (
@@ -867,9 +997,11 @@ export function MatchRecordingForm(componentProps: MatchRecordingFormProps) {
         {matchType === 'doubles' && (
           <View style={styles.section}>
             <Text style={styles.sectionTitle}>Opponent 2</Text>
-            <TextInput
+            <View style={styles.inputContainer}>
+              <TextInput
                 style={[
                   styles.searchInput,
+                  selectedOpponentPartner && styles.searchInputSelected, // Green confirmation when selected
                   showSuggestions && activeSearchField === 'opponentPartner' && styles.searchInputFocused
                 ]}
                 value={opponentPartnerSearchText}
@@ -883,6 +1015,15 @@ export function MatchRecordingForm(componentProps: MatchRecordingFormProps) {
                   }
                 }}
               />
+              {selectedOpponentPartner && (
+                <Ionicons
+                  name="checkmark-circle"
+                  size={20}
+                  color="#4CAF50"
+                  style={styles.successIcon}
+                />
+              )}
+            </View>
 
               {/* Search Suggestions for Opponent's Partner */}
               {showSuggestions && activeSearchField === 'opponentPartner' && (
@@ -1021,16 +1162,29 @@ export function MatchRecordingForm(componentProps: MatchRecordingFormProps) {
           />
         </View>
 
-        {/* Action Button */}
-        <View style={styles.buttonContainer}>
+        {/* Save Match Button - Inside ScrollView */}
+        <View style={styles.saveButtonSection}>
           <Button
             title="Save Match"
             onPress={handleSave}
-            color={colors.tint}
+            variant="primary"
+            size="large"
+            fullWidth={true}
             testID="save-match-button"
           />
         </View>
       </ScrollView>
-    </View>
+      
+      {/* Keyboard Toolbar - Only show when keyboard is visible */}
+      {keyboardVisible && (
+        <TouchableOpacity 
+          style={[styles.keyboardToolbar, { backgroundColor: colors.background }]}
+          onPress={() => Keyboard.dismiss()}
+          activeOpacity={0.9}
+        >
+          <Text style={[styles.keyboardToolbarText, { color: colors.tint }]}>Done</Text>
+        </TouchableOpacity>
+      )}
+    </KeyboardAvoidingView>
   );
 }
