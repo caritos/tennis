@@ -541,21 +541,15 @@ export function MatchRecordingForm(componentProps: MatchRecordingFormProps) {
   };
 
   const handleSave = () => {
-    console.log('🎾🎾🎾 HANDLESAVE FUNCTION START 🎾🎾🎾');
-    console.log('🎾 MatchRecordingForm handleSave called!');
-    console.log('🎾 handleSave called with tennisSets:', tennisSets);
-    console.log('🎾 formatScoreString result:', formatScoreString(tennisSets));
+    alert('Step 1: handleSave started');
     
     const isValidForm = validateForm();
-    console.log('🎾 validateForm result:', isValidForm);
-    
     if (!isValidForm) {
-      console.log('🎾 Form validation failed, not saving');
-      console.log('🎾 Validation errors:', validationErrors);
+      alert(`Step 2: Form validation FAILED! Errors: ${validationErrors.join(', ')}`);
       return;
     }
     
-    console.log('🎾 Form is valid, preparing match data...');
+    alert('Step 3: Form validation PASSED, preparing match data...');
 
     if (!user?.id) {
       setValidationErrors(['Please sign in to record a match']);
@@ -581,9 +575,9 @@ export function MatchRecordingForm(componentProps: MatchRecordingFormProps) {
       notes: notes.trim() || undefined,
     };
 
-    console.log('🎾 Match data prepared:', JSON.stringify(matchData, null, 2));
-    console.log('🎾 Calling onSave callback...');
+    alert('Step 4: Match data prepared, calling onSave callback...');
     onSave(matchData);
+    alert('Step 5: onSave callback completed');
   };
 
   const styles = StyleSheet.create({
@@ -1186,15 +1180,8 @@ export function MatchRecordingForm(componentProps: MatchRecordingFormProps) {
           <Button
             title="Save Match"
             onPress={() => {
-              console.log('🎾 SAVE BUTTON PRESSED WITH CUSTOM BUTTON!!!');
-              console.log('🎾 About to call handleSave...');
-              alert('Button pressed - check console for 🎾 logs');
-              try {
-                handleSave();
-                console.log('🎾 handleSave completed');
-              } catch (error) {
-                console.error('🎾 Error in handleSave:', error);
-              }
+              alert('Save button pressed!');
+              handleSave();
             }}
             variant="primary"
             size="large"
