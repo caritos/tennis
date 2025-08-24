@@ -726,6 +726,18 @@ export function MatchRecordingForm(componentProps: MatchRecordingFormProps) {
       marginTop: 30,
       marginBottom: 20,
     },
+    saveButton: {
+      borderRadius: 12,
+      paddingVertical: 16,
+      paddingHorizontal: 32,
+      alignItems: 'center',
+      justifyContent: 'center',
+      minHeight: 56,
+    },
+    saveButtonText: {
+      fontSize: 18,
+      fontWeight: '600',
+    },
     suggestionsContainer: {
       backgroundColor: colors.background,
       borderWidth: 1,
@@ -1169,17 +1181,17 @@ export function MatchRecordingForm(componentProps: MatchRecordingFormProps) {
 
         {/* Save Match Button - Inside ScrollView */}
         <View style={styles.saveButtonSection}>
-          <Button
-            title="Save Match"
+          <TouchableOpacity
+            style={[styles.saveButton, { backgroundColor: colors.tint }]}
             onPress={() => {
-              console.log('🎾 SAVE BUTTON PRESSED!!!');
+              console.log('🎾 SAVE BUTTON PRESSED WITH TOUCHABLE OPACITY!!!');
               handleSave();
             }}
-            variant="primary"
-            size="large"
-            fullWidth={true}
+            activeOpacity={0.8}
             testID="save-match-button"
-          />
+          >
+            <Text style={[styles.saveButtonText, { color: '#ffffff' }]}>Save Match</Text>
+          </TouchableOpacity>
         </View>
       </ScrollView>
       
