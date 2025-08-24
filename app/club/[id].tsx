@@ -141,7 +141,7 @@ export default function ClubDetailScreen() {
         .order('created_at', { ascending: false })
         .limit(5);
       console.log('ClubDetails: Found matches:', matches?.length || 0, matches);
-      console.log('ClubDetails: Processing matches...', matches?.map((m: any) => ({ id: m.id, scores: m.scores, player1_name: m.player1?.full_name, player2_name: m.player2?.full_name })));
+      console.log('ClubDetails: Processing matches...', matches?.map((m: any) => ({ id: m.id, scores: m.scores, player1_name: m.player1?.full_name || 'Unknown', player2_name: m.player2?.full_name || 'Unknown' })));
       
       // Process matches to determine winners and format for display
       const processedMatches = (matches || [])?.map((match: any) => {
@@ -233,7 +233,7 @@ export default function ClubDetailScreen() {
             ...invitation,
             responses: (responses || []).map((response: any) => ({
               id: response.id,
-              user_name: response.user?.full_name,
+              user_name: response.user?.full_name || 'Unknown Player',
               status: response.status
             }))
           };
@@ -327,20 +327,22 @@ export default function ClubDetailScreen() {
 
       // Process members data and add ranking information
       // Use the fresh leaderboard data instead of relying on state
-      const processedMembers = (membersData || []).map((member: any) => {
-        // Find ranking for this member - only players in the leaderboard array have played matches
-        const rankedPlayer = leaderboard.find(rankedPlayer => rankedPlayer.id === member.users.id);
-        console.log(`🎾 ClubDetails: Processing member ${member.users.full_name}, found ranking:`, rankedPlayer?.rating || 'unranked');
-        
-        return {
-          ...member.users,
-          joined_at: member.joined_at,
-          match_count: rankedPlayer?.stats.totalMatches || 0,
-          wins: rankedPlayer?.stats.wins || 0,
-          ranking: rankedPlayer?.ranking || undefined, // Use the ranking from the rankedPlayer object if it exists
-          eloRating: rankedPlayer?.rating || undefined, // Add ELO rating as the ranking score
-        };
-      });
+      const processedMembers = (membersData || [])
+        .filter((member: any) => member.users != null) // Filter out members with deleted user accounts
+        .map((member: any) => {
+          // Find ranking for this member - only players in the leaderboard array have played matches
+          const rankedPlayer = leaderboard.find(rankedPlayer => rankedPlayer.id === member.users.id);
+          console.log(`🎾 ClubDetails: Processing member ${member.users?.full_name || 'Unknown User'}, found ranking:`, rankedPlayer?.rating || 'unranked');
+          
+          return {
+            ...member.users,
+            joined_at: member.joined_at,
+            match_count: rankedPlayer?.stats.totalMatches || 0,
+            wins: rankedPlayer?.stats.wins || 0,
+            ranking: rankedPlayer?.ranking || undefined, // Use the ranking from the rankedPlayer object if it exists
+            eloRating: rankedPlayer?.rating || undefined, // Add ELO rating as the ranking score
+          };
+        });
       
       setClubMembers(processedMembers);
       
