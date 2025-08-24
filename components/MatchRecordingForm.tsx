@@ -1182,11 +1182,13 @@ export function MatchRecordingForm(componentProps: MatchRecordingFormProps) {
 
         {/* Save Match Button - Inside ScrollView */}
         <View style={styles.saveButtonSection}>
+          {console.log('🎾 RENDERING SAVE BUTTON - this should appear in logs immediately')}
           <Button
             title="Save Match"
             onPress={() => {
               console.log('🎾 SAVE BUTTON PRESSED WITH CUSTOM BUTTON!!!');
               console.log('🎾 About to call handleSave...');
+              alert('Button pressed - check console for 🎾 logs');
               try {
                 handleSave();
                 console.log('🎾 handleSave completed');
