@@ -542,7 +542,6 @@ export function MatchRecordingForm(componentProps: MatchRecordingFormProps) {
 
   const handleSave = () => {
     console.log('🎾🎾🎾 HANDLESAVE FUNCTION START 🎾🎾🎾');
-    alert('HandleSave called - you should see this alert!');
     console.log('🎾 MatchRecordingForm handleSave called!');
     console.log('🎾 handleSave called with tennisSets:', tennisSets);
     console.log('🎾 formatScoreString result:', formatScoreString(tennisSets));
