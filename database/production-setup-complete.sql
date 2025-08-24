@@ -288,6 +288,7 @@ CREATE INDEX idx_club_members_club ON club_members(club_id);
 CREATE INDEX idx_club_members_user ON club_members(user_id);
 CREATE INDEX idx_match_invitations_club ON match_invitations(club_id);
 CREATE INDEX idx_match_invitations_creator ON match_invitations(creator_id);
+CREATE INDEX idx_match_invitations_status ON match_invitations(status);
 CREATE INDEX idx_match_invitations_date ON match_invitations(date);
 CREATE INDEX idx_invitation_responses_invitation ON invitation_responses(invitation_id);
 CREATE INDEX idx_invitation_responses_user ON invitation_responses(user_id);
