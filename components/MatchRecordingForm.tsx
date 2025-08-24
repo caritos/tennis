@@ -1171,7 +1171,10 @@ export function MatchRecordingForm(componentProps: MatchRecordingFormProps) {
         <View style={styles.saveButtonSection}>
           <Button
             title="Save Match"
-            onPress={handleSave}
+            onPress={() => {
+              console.log('🎾 SAVE BUTTON PRESSED!!!');
+              handleSave();
+            }}
             variant="primary"
             size="large"
             fullWidth={true}
