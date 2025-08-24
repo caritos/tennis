@@ -51,11 +51,22 @@ export default function ClubDetailScreen() {
     loadClubDetails();
   }, [id]);
 
-  // Refresh data when screen comes into focus (e.g., returning from edit)
+  // Refresh data when screen comes into focus (e.g., returning from match recording)
   useFocusEffect(
     useCallback(() => {
-      console.log('Club details screen focused, refreshing data...');
-      loadClubDetails();
+      console.log('🎾 ClubDetails: Screen focused, clearing cache and refreshing data...');
+      // Clear cached data to force fresh load
+      setRankings([]);
+      setClubMembers([]);
+      setRecentMatches([]);
+      setAllMatches([]);
+      
+      // Small delay to ensure state is cleared before loading fresh data
+      const refreshTimer = setTimeout(() => {
+        loadClubDetails();
+      }, 100);
+      
+      return () => clearTimeout(refreshTimer);
     }, [id])
   );
 
@@ -103,8 +114,10 @@ export default function ClubDetailScreen() {
       setMemberCount(memberCount || 0);
       
       // Get club rankings using the match service
+      let leaderboard: RankedPlayer[] = [];
       try {
-        const leaderboard = await getClubLeaderboard(id);
+        leaderboard = await getClubLeaderboard(id);
+        console.log('🎾 ClubDetails: Fresh rankings loaded:', leaderboard.length, leaderboard.map(r => ({ id: r.id, rating: r.rating })));
         setRankings(leaderboard);
       } catch (error) {
         console.error('Failed to load rankings:', error);
@@ -312,9 +325,11 @@ export default function ClubDetailScreen() {
         .order('joined_at', { ascending: false });
 
       // Process members data and add ranking information
+      // Use the fresh leaderboard data instead of relying on state
       const processedMembers = (membersData || []).map((member: any) => {
-        // Find ranking for this member - only players in the rankings array have played matches
-        const rankedPlayer = rankings.find(rankedPlayer => rankedPlayer.id === member.users.id);
+        // Find ranking for this member - only players in the leaderboard array have played matches
+        const rankedPlayer = leaderboard.find(rankedPlayer => rankedPlayer.id === member.users.id);
+        console.log(`🎾 ClubDetails: Processing member ${member.users.full_name}, found ranking:`, rankedPlayer?.rating || 'unranked');
         
         return {
           ...member.users,
