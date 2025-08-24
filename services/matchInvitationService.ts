@@ -232,7 +232,8 @@ export class MatchInvitationService {
       const { error: updateError } = await supabase
         .from('match_invitations')
         .update({
-          status: 'cancelled'
+          status: 'cancelled',
+          updated_at: new Date().toISOString()
         })
         .eq('id', invitationId);
 
@@ -289,7 +290,8 @@ export class MatchInvitationService {
         const { error: updateInvitationError } = await supabase
           .from('match_invitations')
           .update({
-            status: 'matched'
+            status: 'matched',
+            updated_at: new Date().toISOString()
           })
           .eq('id', invitationId);
 
@@ -303,7 +305,8 @@ export class MatchInvitationService {
           const { error: updateResponsesError } = await supabase
             .from('invitation_responses')
             .update({
-              status: 'confirmed'
+              status: 'confirmed',
+              updated_at: new Date().toISOString()
             })
             .eq('invitation_id', invitationId)
             .in('user_id', confirmedPlayerIds.slice(1));

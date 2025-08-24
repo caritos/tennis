@@ -202,6 +202,7 @@ CREATE TABLE match_invitations (
   notes TEXT,
   status TEXT DEFAULT 'active' CHECK (status IN ('active', 'matched', 'cancelled')),
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
   expires_at TIMESTAMP WITH TIME ZONE
 );
 
@@ -213,6 +214,7 @@ CREATE TABLE invitation_responses (
   message TEXT,
   status TEXT DEFAULT 'interested' CHECK (status IN ('interested', 'confirmed', 'declined')),
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
   UNIQUE(invitation_id, user_id)
 );
 
@@ -334,6 +336,43 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
 
+-- ELO Rating Update Function
+-- This function allows secure updating of player ratings after matches
+CREATE OR REPLACE FUNCTION update_player_ratings(
+  p_winner_id UUID,
+  p_loser_id UUID,
+  p_winner_new_rating INTEGER,
+  p_loser_new_rating INTEGER,
+  p_winner_games_played INTEGER,
+  p_loser_games_played INTEGER
+)
+RETURNS void
+LANGUAGE plpgsql
+SECURITY DEFINER -- This runs with the privileges of the function owner (superuser)
+AS $$
+BEGIN
+  -- Update winner's rating
+  UPDATE users 
+  SET 
+    elo_rating = p_winner_new_rating,
+    games_played = p_winner_games_played + 1
+  WHERE id = p_winner_id;
+  
+  -- Update loser's rating
+  UPDATE users 
+  SET 
+    elo_rating = p_loser_new_rating,
+    games_played = p_loser_games_played + 1
+  WHERE id = p_loser_id;
+END;
+$$;
+
+-- Grant execute permission to authenticated users
+GRANT EXECUTE ON FUNCTION update_player_ratings TO authenticated;
+
+-- Add a comment explaining the function
+COMMENT ON FUNCTION update_player_ratings IS 'Securely updates player ELO ratings after a match. This function runs with elevated privileges to bypass RLS policies.';
+
 -- ============================================================================
 -- PART 5: ENABLE ROW LEVEL SECURITY
 -- ============================================================================
@@ -358,8 +397,12 @@ ALTER TABLE club_notifications ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "Users can view own profile" ON users
   FOR SELECT USING (auth.uid() = id);
 
+-- Users can update their own profile
+-- Note: We'll use the update_player_ratings function for ELO updates instead of policies
 CREATE POLICY "Users can update own profile" ON users
-  FOR UPDATE USING (auth.uid() = id);
+  FOR UPDATE 
+  USING (auth.uid() = id)
+  WITH CHECK (auth.uid() = id);
 
 -- Allow authenticated users to create their own profile
 -- This policy ensures users can only create a profile record for themselves
