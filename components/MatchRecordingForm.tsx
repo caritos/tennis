@@ -541,6 +541,8 @@ export function MatchRecordingForm(componentProps: MatchRecordingFormProps) {
   };
 
   const handleSave = () => {
+    console.log('🎾🎾🎾 HANDLESAVE FUNCTION START 🎾🎾🎾');
+    alert('HandleSave called - you should see this alert!');
     console.log('🎾 MatchRecordingForm handleSave called!');
     console.log('🎾 handleSave called with tennisSets:', tennisSets);
     console.log('🎾 formatScoreString result:', formatScoreString(tennisSets));
@@ -1181,17 +1183,23 @@ export function MatchRecordingForm(componentProps: MatchRecordingFormProps) {
 
         {/* Save Match Button - Inside ScrollView */}
         <View style={styles.saveButtonSection}>
-          <TouchableOpacity
-            style={[styles.saveButton, { backgroundColor: colors.tint }]}
+          <Button
+            title="Save Match"
             onPress={() => {
-              console.log('🎾 SAVE BUTTON PRESSED WITH TOUCHABLE OPACITY!!!');
-              handleSave();
+              console.log('🎾 SAVE BUTTON PRESSED WITH CUSTOM BUTTON!!!');
+              console.log('🎾 About to call handleSave...');
+              try {
+                handleSave();
+                console.log('🎾 handleSave completed');
+              } catch (error) {
+                console.error('🎾 Error in handleSave:', error);
+              }
             }}
-            activeOpacity={0.8}
+            variant="primary"
+            size="large"
+            fullWidth={true}
             testID="save-match-button"
-          >
-            <Text style={[styles.saveButtonText, { color: '#ffffff' }]}>Save Match</Text>
-          </TouchableOpacity>
+          />
         </View>
       </ScrollView>
       
