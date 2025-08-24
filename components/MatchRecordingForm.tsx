@@ -550,8 +550,11 @@ export function MatchRecordingForm(componentProps: MatchRecordingFormProps) {
     
     if (!isValidForm) {
       console.log('🎾 Form validation failed, not saving');
+      console.log('🎾 Validation errors:', validationErrors);
       return;
     }
+    
+    console.log('🎾 Form is valid, preparing match data...');
 
     if (!user?.id) {
       setValidationErrors(['Please sign in to record a match']);
@@ -577,6 +580,8 @@ export function MatchRecordingForm(componentProps: MatchRecordingFormProps) {
       notes: notes.trim() || undefined,
     };
 
+    console.log('🎾 Match data prepared:', JSON.stringify(matchData, null, 2));
+    console.log('🎾 Calling onSave callback...');
     onSave(matchData);
   };
 

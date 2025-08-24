@@ -42,12 +42,18 @@ export default function RecordMatchScreen() {
   };
 
   const handleSave = async (matchData: CreateMatchData) => {
+    console.log('🎾 RecordMatch.handleSave called!');
+    console.log('🎾 Received matchData:', JSON.stringify(matchData, null, 2));
+    
     try {
+      console.log('🎾 Calling recordMatch...');
       const savedMatch = await recordMatch(matchData);
+      console.log('🎾 Match saved successfully:', savedMatch);
       
       // Show success notification
       showNotification('success', `Match recorded! Score: ${savedMatch.scores}`);
     } catch (error) {
+      console.error('🎾 Match save failed:', error);
       logError('RecordMatch.handleSave', error);
       
       let errorMessage = 'Failed to save match. Please try again.';

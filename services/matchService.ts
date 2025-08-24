@@ -892,6 +892,10 @@ export const getClubLeaderboard = async (clubId: string): Promise<RankedPlayer[]
     return [];
   }
 };
-export const recordMatch = (matchData: CreateMatchData) => matchService.createMatch(matchData);
+export const recordMatch = (matchData: CreateMatchData) => {
+  console.log('🎾 recordMatch called with data:', JSON.stringify(matchData, null, 2));
+  console.log('🎾 Calling matchService.createMatch...');
+  return matchService.createMatch(matchData);
+};
 
 export default matchService;
