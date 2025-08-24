@@ -117,6 +117,14 @@ export function TennisScoreDisplay({
     user.id === player4Id
   );
 
+  // Check if current user is already a participant in this match
+  const isUserParticipant = user?.id && (
+    user.id === player1Id ||
+    user.id === player2Id ||
+    user.id === player3Id ||
+    user.id === player4Id
+  );
+
   const handleEditMatch = () => {
     console.log('🎾 handleEditMatch called with matchId:', matchId);
     if (matchId) {
@@ -224,17 +232,20 @@ export function TennisScoreDisplay({
               >
                 {player1Name}
               </ThemedText>
-              {(isPlayer1Unregistered || isPlayer3Unregistered) && matchId && onClaimMatch && (
+              {(isPlayer1Unregistered || isPlayer3Unregistered) && matchId && onClaimMatch && !isUserParticipant && (
                 <TouchableOpacity
                   style={[styles.claimButton, { backgroundColor: colors.tint }]}
                   onPress={() => {
-                    if (isPlayer3Unregistered && unregisteredPlayer3Name) {
+                    if (isPlayer1Unregistered && player1Name) {
+                      // For singles: claim player1 position (shouldn't happen as player1 is always the recorder)
+                      console.warn('Player1 is unregistered - this should not happen');
+                    } else if (isPlayer3Unregistered && unregisteredPlayer3Name) {
                       handleClaimConfirmation(unregisteredPlayer3Name, 'player3');
                     }
                   }}
                 >
                   <ThemedText style={styles.claimButtonText}>
-                    unregistered
+                    {isPlayer3Unregistered ? 'claim partner' : 'unregistered'}
                   </ThemedText>
                 </TouchableOpacity>
               )}
@@ -274,7 +285,7 @@ export function TennisScoreDisplay({
               >
                 {player2Name}
               </ThemedText>
-              {(isPlayer2Unregistered || isPlayer4Unregistered) && matchId && onClaimMatch && (
+              {(isPlayer2Unregistered || isPlayer4Unregistered) && matchId && onClaimMatch && !isUserParticipant && (
                 <TouchableOpacity
                   style={[styles.claimButton, { backgroundColor: colors.tint }]}
                   onPress={() => {
@@ -286,7 +297,7 @@ export function TennisScoreDisplay({
                   }}
                 >
                   <ThemedText style={styles.claimButtonText}>
-                    unregistered
+                    {isPlayer2Unregistered ? 'claim opponent' : isPlayer4Unregistered ? 'claim partner' : 'unregistered'}
                   </ThemedText>
                 </TouchableOpacity>
               )}

@@ -919,7 +919,7 @@ export function MatchRecordingForm(componentProps: MatchRecordingFormProps) {
                     activeOpacity={0.7}
                   >
                     <Text style={styles.addNewPlayerText}>
-                      + Add &quot;{partnerSearchText.trim()}&quot; as new player
+                      + Add {partnerSearchText.trim()} as unregistered player
                     </Text>
                   </TouchableOpacity>
                 )}
@@ -990,7 +990,7 @@ export function MatchRecordingForm(componentProps: MatchRecordingFormProps) {
                   activeOpacity={0.7}
                 >
                   <Text style={styles.addNewPlayerText}>
-                    + Add &quot;{opponentSearchText.trim()}&quot; as new player
+                    + Add {opponentSearchText.trim()} as unregistered player
                   </Text>
                 </TouchableOpacity>
               )}
@@ -1061,7 +1061,7 @@ export function MatchRecordingForm(componentProps: MatchRecordingFormProps) {
                       activeOpacity={0.7}
                     >
                       <Text style={styles.addNewPlayerText}>
-                        + Add &quot;{opponentPartnerSearchText.trim()}&quot; as new player
+                        + Add {opponentPartnerSearchText.trim()} as unregistered player
                       </Text>
                     </TouchableOpacity>
                   )}
