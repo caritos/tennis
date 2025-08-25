@@ -19,7 +19,7 @@ import {
 const QUICK_ACTIONS_STORAGE_KEY = 'quick_actions_state_v1';
 const COLLAPSED_STATE_KEY = 'quick_actions_collapsed';
 
-export function useQuickActions(userClubs: any[] = []) {
+export function useQuickActions(userClubs: any[] = [], clubId?: string) {
   const { user } = useAuth();
   const { clubBadges, refreshBadges } = useClubBadges();
   
@@ -68,6 +68,23 @@ export function useQuickActions(userClubs: any[] = []) {
 
       // Process each notification type
       for (const notification of unreadNotifications) {
+        // Filter club-specific notifications based on context
+        if (notification.type === 'match_invitation') {
+          const notificationClubId = notification.action_data?.clubId;
+          
+          // If we're on the main clubs page (no clubId), skip club-specific notifications
+          if (!clubId && notificationClubId) {
+            console.log('🔍 Skipping club-specific match_invitation notification on main clubs page:', notification.id);
+            continue;
+          }
+          
+          // If we're on a specific club page, only show notifications for that club
+          if (clubId && notificationClubId && notificationClubId !== clubId) {
+            console.log('🔍 Skipping match_invitation notification for different club:', notification.id);
+            continue;
+          }
+        }
+
         const rule = QUICK_ACTION_RULES.find(r => 
           (notification.type === 'challenge' && r.type === 'challenge_received') ||
           (notification.type === 'match_invitation' && r.type === 'match_invitation') ||
@@ -336,7 +353,7 @@ export function useQuickActions(userClubs: any[] = []) {
   // Refresh on user or club changes
   useEffect(() => {
     refreshQuickActions();
-  }, [user?.id, userClubs.length, refreshQuickActions]);
+  }, [user?.id, userClubs.length, clubId, refreshQuickActions]);
 
   // Get summary for external use
   const getSummary = useCallback((): QuickActionsSummary => {
