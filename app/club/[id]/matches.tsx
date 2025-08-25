@@ -257,7 +257,7 @@ export default function ClubMatchesScreen() {
                         
                         {item.notes && (
                           <ThemedText style={[styles.invitationNotes, { color: colors.tabIconDefault }]}>
-                            "{item.notes}"
+                            &quot;{item.notes}&quot;
                           </ThemedText>
                         )}
                       </View>

@@ -223,7 +223,7 @@ const FormFields = React.memo(function FormFields({
           testID="phone-input"
         />
         <ThemedText style={[styles.helpText, { color: colors.tabIconDefault }]}>
-          Required for scheduling matches and coordinating with other players. Your phone number will only be shared with players you're matched with.
+          Required for scheduling matches and coordinating with other players. Your phone number will only be shared with players you&apos;re matched with.
         </ThemedText>
         {errors.phone && (
           <ThemedText style={styles.errorText} accessibilityRole="alert" testID="phone-error">

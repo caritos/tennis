@@ -310,7 +310,7 @@ export default function SignUpPage() {
                   testID="phone-input"
                 />
                 <ThemedText style={[styles.helpText, { color: colors.tabIconDefault }]}>
-                  Required for scheduling matches and coordinating with other players. Your phone number will only be shared with players you're matched with.
+                  Required for scheduling matches and coordinating with other players. Your phone number will only be shared with players you&apos;re matched with.
                 </ThemedText>
               </View>
 

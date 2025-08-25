@@ -352,7 +352,7 @@ export function EditClubForm({ club, onClose, onSuccess }: EditClubFormProps) {
             </View>
             <Text style={styles.sectionTitle}>Edit Club Details</Text>
             <Text style={styles.sectionSubtitle}>
-              Update your club's name and description
+              Update your club&apos;s name and description
             </Text>
           </View>
 

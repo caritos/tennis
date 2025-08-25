@@ -25,11 +25,11 @@ interface Match {
   notes?: string;
   status?: string;
   isInvitation?: boolean;
-  responses?: Array<{
+  responses?: {
     id: string;
     user_name?: string;
     status: 'interested' | 'confirmed' | 'declined';
-  }>;
+  }[];
 }
 
 interface ClubMatchesProps {
@@ -269,7 +269,7 @@ export default function ClubMatches({
                     
                     {match.notes && (
                       <ThemedText style={[styles.invitationNotes, { color: colors.textSecondary }]}>
-                        "{match.notes}"
+                        &quot;{match.notes}&quot;
                       </ThemedText>
                     )}
 

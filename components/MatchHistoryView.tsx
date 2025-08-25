@@ -22,9 +22,10 @@ import { useOptimizedState } from '@/hooks/useOptimizedState';
 interface MatchHistoryViewProps {
   playerId: string;
   clubId?: string;
+  onClaimMatch?: (matchId: string, playerPosition: 'player2' | 'player3' | 'player4') => void;
 }
 
-export const MatchHistoryView = React.memo<MatchHistoryViewProps>(({ playerId, clubId }) => {
+const MatchHistoryViewComponent: React.FC<MatchHistoryViewProps> = ({ playerId, clubId, onClaimMatch }) => {
   const colorScheme = useColorScheme();
   const colors = Colors[colorScheme ?? 'light'];
   const [matches, setMatches] = useOptimizedState<any[]>([], {
@@ -123,8 +124,10 @@ export const MatchHistoryView = React.memo<MatchHistoryViewProps>(({ playerId, c
         // Determine which side the current player is on
         const isPlayer1Side = match.player1_id === playerId || match.player3_id === playerId;
         
-        // Build player names for doubles matches
+        // Build player names and detect unregistered players
         let player1DisplayName, player2DisplayName;
+        let isPlayer1Unregistered = false, isPlayer2Unregistered = false;
+        let isPlayer3Unregistered = false, isPlayer4Unregistered = false;
         
         if (match.match_type === 'doubles') {
           // Player 1 side (player1 & player3)
@@ -132,19 +135,31 @@ export const MatchHistoryView = React.memo<MatchHistoryViewProps>(({ playerId, c
           const p3Name = match.player3_name || match.partner3_name || 'Unknown';
           player1DisplayName = `${p1Name} & ${p3Name}`;
           
-          // Player 2 side (player2 & player4)
+          // Check if player3 is unregistered (has partner3_name but no player3_id)
+          isPlayer3Unregistered = !match.player3_id && !!match.partner3_name;
+          
+          // Player 2 side (player2 & player4)  
           const p2Name = match.player2_name || match.opponent2_name || 'Unknown';
           const p4Name = match.player4_name || match.partner4_name || 'Unknown';
           player2DisplayName = `${p2Name} & ${p4Name}`;
+          
+          // Check if players are unregistered
+          isPlayer2Unregistered = !match.player2_id && !!match.opponent2_name;
+          isPlayer4Unregistered = !match.player4_id && !!match.partner4_name;
         } else {
           // Singles match
           player1DisplayName = match.player1_name || 'Unknown';
           player2DisplayName = match.player2_name || match.opponent2_name || 'Unknown';
+          
+          // Check if player2 is unregistered (has opponent2_name but no player2_id)
+          isPlayer2Unregistered = !match.player2_id && !!match.opponent2_name;
         }
         
-        // Swap names if current player is on player 2 side (to always show "You" perspective first)
+        // Swap names and unregistered flags if current player is on player 2 side (to always show "You" perspective first)
         if (!isPlayer1Side) {
           [player1DisplayName, player2DisplayName] = [player2DisplayName, player1DisplayName];
+          [isPlayer1Unregistered, isPlayer2Unregistered] = [isPlayer2Unregistered, isPlayer1Unregistered];
+          [isPlayer3Unregistered, isPlayer4Unregistered] = [isPlayer4Unregistered, isPlayer3Unregistered];
         }
 
         // Proper winner determination using TennisScore utility
@@ -180,13 +195,21 @@ export const MatchHistoryView = React.memo<MatchHistoryViewProps>(({ playerId, c
               player2Id={match.player2_id}
               player3Id={match.player3_id}
               player4Id={match.player4_id}
+              isPlayer1Unregistered={isPlayer1Unregistered}
+              isPlayer2Unregistered={isPlayer2Unregistered}
+              isPlayer3Unregistered={isPlayer3Unregistered}
+              isPlayer4Unregistered={isPlayer4Unregistered}
+              unregisteredPlayer2Name={match.opponent2_name}
+              unregisteredPlayer3Name={match.partner3_name}
+              unregisteredPlayer4Name={match.partner4_name}
+              onClaimMatch={onClaimMatch}
             />
           </View>
         );
       })}
     </View>
   );
-});
+};
 
 const styles = StyleSheet.create({
   container: {
@@ -218,3 +241,7 @@ const styles = StyleSheet.create({
     fontSize: 14,
   },
 });
+
+MatchHistoryViewComponent.displayName = 'MatchHistoryView';
+
+export const MatchHistoryView = React.memo(MatchHistoryViewComponent);
