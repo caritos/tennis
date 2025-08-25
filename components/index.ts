@@ -5,7 +5,6 @@ export { ThemedView } from './ThemedView';
 // Form Components
 export { default as FormHeader } from './FormHeader';
 export { EmailSignInForm } from './EmailSignInForm';
-export { EmailSignUpForm } from './EmailSignUpForm';
 export { default as AppleSignInButton } from './AppleSignInButton';
 
 // Tennis Components
@@ -36,7 +35,6 @@ export { InlineNotificationBanner } from './InlineNotificationBanner';
 export { NotificationProvider, useNotification } from '../contexts/NotificationContext';
 
 // Utility Components
-export { SyncStatusIndicator } from './SyncStatusIndicator';
 export { CreateClubButton } from './CreateClubButton';
 export { CreateClubForm } from './CreateClubForm';
 export { default as MatchContactInfo } from './MatchContactInfo';

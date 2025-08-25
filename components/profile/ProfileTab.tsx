@@ -8,7 +8,7 @@ import { supabase } from '@/lib/supabase';
 interface User {
   id?: string;
   email?: string;
-  phone: string;
+  phone?: string;
   user_metadata?: {
     full_name?: string;
     phone?: string;
@@ -22,15 +22,22 @@ interface ProfileTabProps {
 }
 
 const ProfileTab = React.memo(function ProfileTab({ user, colors, onUserUpdate }: ProfileTabProps) {
-  const [fullName, setFullName] = useState(user?.user_metadata?.full_name || '');
-  const [phone, setPhone] = useState(user?.phone || user?.user_metadata?.phone || '');
+  // Initialize with empty strings to avoid timing issues
+  const [fullName, setFullName] = useState('');
+  const [phone, setPhone] = useState('');
   const [isSaving, setIsSaving] = useState(false);
   const [hasChanges, setHasChanges] = useState(false);
 
+  // Always update state when user data changes, including initial load
   useEffect(() => {
-    setFullName(user?.user_metadata?.full_name || '');
-    setPhone(user?.phone || user?.user_metadata?.phone || '');
-    setHasChanges(false);
+    if (user) {
+      const newFullName = user.user_metadata?.full_name || user.full_name || '';
+      const newPhone = user.phone || user.user_metadata?.phone || '';
+      
+      setFullName(newFullName);
+      setPhone(newPhone);
+      setHasChanges(false);
+    }
   }, [user]);
 
   const handleSave = async () => {
@@ -92,6 +99,15 @@ const ProfileTab = React.memo(function ProfileTab({ user, colors, onUserUpdate }
     const originalPhone = user?.phone || user?.user_metadata?.phone || '';
     setHasChanges(text.trim() !== originalPhone);
   };
+
+  // Don't render form until user data is loaded
+  if (!user) {
+    return (
+      <ThemedView style={styles.section}>
+        <ThemedText style={styles.loadingText}>Loading profile...</ThemedText>
+      </ThemedView>
+    );
+  }
 
   return (
     <ThemedView style={styles.section}>
@@ -202,5 +218,10 @@ const styles = StyleSheet.create({
     color: 'white',
     fontSize: 16,
     fontWeight: '600',
+  },
+  loadingText: {
+    textAlign: 'center',
+    fontSize: 16,
+    padding: 20,
   },
 });

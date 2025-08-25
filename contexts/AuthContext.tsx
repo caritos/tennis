@@ -128,42 +128,44 @@ export function AuthProvider({ children }: AuthProviderProps) {
       if (error && error.code === 'PGRST116') {
         // Profile doesn't exist yet - create it now
         console.log('👋 AuthContext: Profile not found, creating user profile in database');
+        console.log('🔍 AuthContext: authUser.user_metadata:', authUser.user_metadata);
+        console.log('🔍 AuthContext: phone from metadata:', authUser.user_metadata?.phone);
         
         try {
-          // Try to upsert the user profile
-          const { data: upsertedProfile, error: upsertError } = await supabase
+          const profileData = {
+            id: authUser.id,
+            email: authUser.email || '',
+            full_name: authUser.user_metadata?.full_name || authUser.email?.split('@')[0] || 'User',
+            phone: authUser.user_metadata?.phone || '',
+            role: 'player',
+            contact_preference: 'whatsapp',
+            elo_rating: 1200,
+            games_played: 0
+          };
+          
+          console.log('🔍 AuthContext: Creating profile with data:', profileData);
+          
+          // Try to insert the user profile (we know it doesn't exist)
+          const { data: insertedProfile, error: insertError } = await supabase
             .from('users')
-            .upsert({
-              id: authUser.id,
-              email: authUser.email || '',
-              full_name: authUser.user_metadata?.full_name || authUser.email?.split('@')[0] || 'User',
-              phone: authUser.user_metadata?.phone || '',
-              role: 'player',
-              contact_preference: 'whatsapp',
-              elo_rating: 1200,
-              games_played: 0,
-              created_at: new Date().toISOString()
-            }, {
-              onConflict: 'email',
-              ignoreDuplicates: false
-            })
+            .insert(profileData)
             .select()
             .single();
 
-          if (upsertError) {
-            console.error('❌ AuthContext: Failed to upsert user profile:', upsertError);
-            throw upsertError;
+          if (insertError) {
+            console.error('❌ AuthContext: Failed to insert user profile:', insertError);
+            throw insertError;
           }
 
-          if (upsertedProfile) {
-            console.log('✅ AuthContext: User profile upserted successfully');
+          if (insertedProfile) {
+            console.log('✅ AuthContext: User profile inserted successfully');
             
-            // Create user profile from upserted data
+            // Create user profile from inserted data
             const userProfile: UserProfile = {
-              ...upsertedProfile,
+              ...insertedProfile,
               user_metadata: {
-                full_name: upsertedProfile.full_name,
-                phone: upsertedProfile.phone
+                full_name: insertedProfile.full_name,
+                phone: insertedProfile.phone
               }
             };
             setUser(userProfile);
@@ -223,15 +225,23 @@ export function AuthProvider({ children }: AuthProviderProps) {
     console.log('📝 AuthContext: Signing up user:', email);
     
     try {
-      // Create auth user
+      // Create auth user with optional phone field
+      const userData: any = {
+        full_name: fullName,
+      };
+      
+      // Only include phone if it has a value
+      if (phone && phone.trim()) {
+        userData.phone = phone.trim();
+      }
+      
+      console.log('🔍 AuthContext: Signing up with userData:', userData);
+      
       const { data: authData, error: authError } = await supabase.auth.signUp({
         email,
         password,
         options: {
-          data: {
-            full_name: fullName,
-            phone: phone || '',
-          }
+          data: userData
         }
       });
 

@@ -88,18 +88,20 @@ export default function SignUpPage() {
     
     try {
       // Sign up with Supabase
+      console.log('🔍 Signup: Including phone in user_metadata:', phone.trim());
       const { data: authData, error: signUpError } = await supabase.auth.signUp({
         email: email.trim(),
         password: password,
         options: {
           data: {
             full_name: fullName.trim(),
+            phone: phone.trim()
           }
         }
       });
       
       if (signUpError) {
-        logError('email-signup', signUpError);
+        logError('signup', signUpError);
         throw new Error(getAuthErrorMessage(signUpError));
       }
       

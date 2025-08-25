@@ -163,6 +163,37 @@ CREATE TABLE clubs (
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
+-- Challenges table (must come before matches table due to foreign key reference)
+CREATE TABLE IF NOT EXISTS challenges (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  club_id UUID NOT NULL REFERENCES clubs(id) ON DELETE CASCADE,
+  challenger_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  challenged_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  match_type TEXT NOT NULL CHECK (match_type IN ('singles', 'doubles')),
+  proposed_date DATE,
+  proposed_time TIME,
+  message TEXT,
+  status TEXT DEFAULT 'pending' CHECK (status IN ('pending', 'accepted', 'declined', 'countered', 'expired', 'completed')),
+  expires_at TIMESTAMP WITH TIME ZONE,
+  contacts_shared BOOLEAN DEFAULT FALSE,
+  match_id UUID, -- Will add foreign key constraint after matches table is created
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- Challenge counter-offers table
+CREATE TABLE IF NOT EXISTS challenge_counters (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  challenge_id UUID NOT NULL REFERENCES challenges(id) ON DELETE CASCADE,
+  counter_by UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  match_type TEXT NOT NULL CHECK (match_type IN ('singles', 'doubles')),
+  proposed_date DATE,
+  proposed_time TIME,
+  message TEXT,
+  status TEXT DEFAULT 'pending' CHECK (status IN ('pending', 'accepted', 'declined')),
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
 -- Matches table
 CREATE TABLE matches (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
@@ -178,7 +209,8 @@ CREATE TABLE matches (
   match_type TEXT NOT NULL CHECK (match_type IN ('singles', 'doubles')),
   date DATE NOT NULL,
   notes TEXT,
-  invitation_id UUID REFERENCES match_invitations(id) ON DELETE SET NULL,
+  invitation_id UUID,
+  challenge_id UUID REFERENCES challenges(id) ON DELETE SET NULL,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
@@ -219,36 +251,6 @@ CREATE TABLE invitation_responses (
   UNIQUE(invitation_id, user_id)
 );
 
--- Challenges table (for direct player challenges)
-CREATE TABLE IF NOT EXISTS challenges (
-  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-  club_id UUID NOT NULL REFERENCES clubs(id) ON DELETE CASCADE,
-  challenger_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-  challenged_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-  match_type TEXT NOT NULL CHECK (match_type IN ('singles', 'doubles')),
-  proposed_date DATE,
-  proposed_time TIME,
-  message TEXT,
-  status TEXT DEFAULT 'pending' CHECK (status IN ('pending', 'accepted', 'declined', 'countered', 'expired')),
-  expires_at TIMESTAMP WITH TIME ZONE,
-  contacts_shared BOOLEAN DEFAULT FALSE,
-  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-  updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
-);
-
--- Challenge counter-offers table
-CREATE TABLE IF NOT EXISTS challenge_counters (
-  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-  challenge_id UUID NOT NULL REFERENCES challenges(id) ON DELETE CASCADE,
-  counter_by UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-  match_type TEXT NOT NULL CHECK (match_type IN ('singles', 'doubles')),
-  proposed_date DATE,
-  proposed_time TIME,
-  message TEXT,
-  status TEXT DEFAULT 'pending' CHECK (status IN ('pending', 'accepted', 'declined')),
-  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
-);
-
 -- Notifications table (for in-app notification system)
 CREATE TABLE notifications (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
@@ -284,6 +286,7 @@ CREATE TABLE reports (
   description TEXT NOT NULL,
   match_id UUID REFERENCES matches(id) ON DELETE SET NULL,
   invitation_id UUID REFERENCES match_invitations(id) ON DELETE SET NULL,
+  challenge_id UUID REFERENCES challenges(id) ON DELETE SET NULL,
   status TEXT NOT NULL DEFAULT 'pending' CHECK (status IN ('pending', 'reviewed', 'resolved', 'dismissed')),
   reviewed_at TIMESTAMP WITH TIME ZONE,
   reviewed_by UUID REFERENCES users(id),
@@ -303,7 +306,23 @@ CREATE TABLE blocked_users (
 );
 
 -- ============================================================================
--- PART 3: CREATE INDEXES
+-- PART 2.5: ADD FOREIGN KEY CONSTRAINTS
+-- ============================================================================
+
+-- Add foreign key constraint for matches.invitation_id now that match_invitations table exists
+ALTER TABLE matches ADD CONSTRAINT fk_matches_invitation_id 
+FOREIGN KEY (invitation_id) REFERENCES match_invitations(id) ON DELETE SET NULL;
+
+-- ============================================================================
+-- PART 3: ADD FOREIGN KEY CONSTRAINTS (after all tables are created)
+-- ============================================================================
+
+-- Add the foreign key constraint for challenges.match_id now that matches table exists
+ALTER TABLE challenges ADD CONSTRAINT fk_challenges_match_id 
+  FOREIGN KEY (match_id) REFERENCES matches(id) ON DELETE SET NULL;
+
+-- ============================================================================
+-- PART 4: CREATE INDEXES
 -- ============================================================================
 
 -- Create indexes for better performance
@@ -337,6 +356,7 @@ CREATE INDEX idx_reports_reported ON reports(reported_user_id);
 CREATE INDEX idx_reports_status ON reports(status);
 CREATE INDEX idx_reports_match ON reports(match_id);
 CREATE INDEX idx_reports_invitation ON reports(invitation_id);
+CREATE INDEX idx_reports_challenge ON reports(challenge_id);
 CREATE INDEX idx_blocked_users_blocker ON blocked_users(blocker_id);
 CREATE INDEX idx_blocked_users_blocked ON blocked_users(blocked_user_id);
 
@@ -432,21 +452,21 @@ ALTER TABLE club_notifications ENABLE ROW LEVEL SECURITY;
 
 -- USERS TABLE POLICIES
 CREATE POLICY "Users can view own profile" ON users
-  FOR SELECT USING (auth.uid() = id);
+  FOR SELECT USING (auth.uid()::text = id::text);
 
 -- Users can update their own profile
 -- Note: We'll use the update_player_ratings function for ELO updates instead of policies
 CREATE POLICY "Users can update own profile" ON users
   FOR UPDATE 
-  USING (auth.uid() = id)
-  WITH CHECK (auth.uid() = id);
+  USING (auth.uid()::text = id::text)
+  WITH CHECK (auth.uid()::text = id::text);
 
 -- Allow authenticated users to create their own profile
 -- This policy ensures users can only create a profile record for themselves
 CREATE POLICY "Users can insert own profile" ON users
   FOR INSERT WITH CHECK (
     auth.role() = 'authenticated' 
-    AND auth.uid() = id
+    AND auth.uid()::text = id::text
   );
 
 -- Allow service role insertions for admin purposes
@@ -769,17 +789,17 @@ BEGIN
     DROP POLICY IF EXISTS "Users can insert own profile" ON users;
     DROP POLICY IF EXISTS "Users can view basic info of other users" ON users;
     
-    -- Recreate user policies with consistent UUID handling (no casting)
+    -- Recreate user policies with consistent UUID handling (with string casting)
     CREATE POLICY "Users can view own profile" ON users
-      FOR SELECT USING (auth.uid() = id);
+      FOR SELECT USING (auth.uid()::text = id::text);
       
     CREATE POLICY "Users can update own profile" ON users
-      FOR UPDATE USING (auth.uid() = id);
+      FOR UPDATE USING (auth.uid()::text = id::text);
       
     CREATE POLICY "Users can insert own profile" ON users
       FOR INSERT WITH CHECK (
         auth.role() = 'authenticated' 
-        AND auth.uid() = id
+        AND auth.uid()::text = id::text
       );
       
     CREATE POLICY "Users can view basic info of other users" ON users
