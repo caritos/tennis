@@ -669,6 +669,20 @@ CREATE POLICY "Authenticated users can create challenge notifications" ON notifi
   FOR INSERT WITH CHECK (
     auth.role() = 'authenticated' 
     AND type = 'challenge'
+    AND (
+      -- Users can create notifications for themselves
+      auth.uid()::text = user_id::text
+      OR 
+      -- Users can create notifications for other participants in their challenges
+      EXISTS (
+        SELECT 1 FROM challenges c 
+        WHERE c.id::text = (action_data->>'challengeId')::text
+        AND (
+          (c.challenger_id::text = auth.uid()::text AND c.challenged_id::text = user_id::text) OR
+          (c.challenged_id::text = auth.uid()::text AND c.challenger_id::text = user_id::text)
+        )
+      )
+    )
   );
 
 CREATE POLICY "Users can update own notifications" ON notifications
