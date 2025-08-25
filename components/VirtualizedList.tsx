@@ -1,6 +1,5 @@
 import React, { useMemo, useCallback } from 'react';
 import { FlatList, FlatListProps, Platform } from 'react-native';
-import { useDeviceOptimization } from '@/hooks/useDeviceOptimization';
 
 interface VirtualizedListProps<T> extends Omit<FlatListProps<T>, 'getItemLayout'> {
   itemHeight?: number;
@@ -15,7 +14,8 @@ export function VirtualizedList<T>({
   optimizeForIPad = true,
   ...props
 }: VirtualizedListProps<T>) {
-  const { isIPad, chunkSize } = useDeviceOptimization();
+  const isIPad = Platform.OS === 'ios' && Platform.isPad;
+  const chunkSize = isIPad ? 20 : 10;
   
   // Optimize initial/max render batch sizes for iPad
   const optimizedProps = useMemo(() => {

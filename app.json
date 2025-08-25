@@ -68,7 +68,6 @@
           "locationAlwaysAndWhenInUsePermission": "Play Serve uses location to help you discover nearby tennis clubs and find players in your area."
         }
       ],
-      "expo-sqlite",
       [
         "expo-notifications",
         {
