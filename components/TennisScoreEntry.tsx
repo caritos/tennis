@@ -6,6 +6,8 @@ import {
   TextInput,
   TouchableOpacity,
   Modal,
+  Keyboard,
+  Platform,
 } from 'react-native';
 import { Colors } from '@/constants/Colors';
 import { useColorScheme } from '@/hooks/useColorScheme';
@@ -69,10 +71,13 @@ export function TennisScoreEntry({
       
       console.log('🎾 Generated inputs:', inputs);
       
-      // Add empty set for next entry if match not complete
-      if (initialSets.length < 5 && !isMatchComplete(initialSets)) {
-        inputs.push({ playerScore: '', opponentScore: '' });
-      }
+      // Always add empty set for next entry to allow continuous play
+      inputs.push({ 
+        playerScore: '', 
+        opponentScore: '', 
+        tiebreakPlayerScore: '', 
+        tiebreakOpponentScore: '' 
+      });
       
       setSetInputs(inputs);
       setValidSets(initialSets);
@@ -190,14 +195,13 @@ export function TennisScoreEntry({
     setValidationErrors(errors);
     onScoreChange(newValidSets);
 
-    // Auto-add new set if current set is complete and match not finished
-    if (newValidSets.length === inputs.length && 
-        newValidSets.length < 5 && 
-        !isMatchComplete(newValidSets)) {
-      const lastInput = inputs[inputs.length - 1];
-      if (lastInput.playerScore && lastInput.opponentScore) {
-        setSetInputs([...inputs, { playerScore: '', opponentScore: '' }]);
-      }
+    // Auto-add new set input if all current inputs are complete
+    // Allow users to continue adding sets even after match is technically "won"
+    const hasEmptyInput = inputs.some(input => !input.playerScore || !input.opponentScore);
+    
+    if (!hasEmptyInput && newValidSets.length > 0) {
+      console.log('🎾 Adding new set input - current valid sets:', newValidSets.length);
+      setSetInputs([...inputs, { playerScore: '', opponentScore: '' }]);
     }
   };
 
@@ -427,10 +431,16 @@ export function TennisScoreEntry({
                   value={setInput.playerScore}
                   onChangeText={(value) => updateSetScore(index, 'playerScore', value)}
                   onBlur={() => validateAndUpdateSet(index)}
-                  keyboardType="numeric"
+                  keyboardType="number-pad"
+                  returnKeyType="next"
                   maxLength={2}
                   placeholder="0"
                   testID={`set-${index + 1}-player-score`}
+                  onSubmitEditing={() => {
+                    // Focus next input (opponent score)
+                    const nextInput = `set-${index + 1}-opponent-score`;
+                    // Note: Would need refs to properly focus next input
+                  }}
                 />
                 <Text style={styles.vsText}>-</Text>
                 <TextInput
@@ -438,10 +448,16 @@ export function TennisScoreEntry({
                   value={setInput.opponentScore}
                   onChangeText={(value) => updateSetScore(index, 'opponentScore', value)}
                   onBlur={() => validateAndUpdateSet(index)}
-                  keyboardType="numeric"
+                  keyboardType="number-pad"
+                  returnKeyType={index === setInputs.length - 1 ? "done" : "next"}
                   maxLength={2}
                   placeholder="0"
                   testID={`set-${index + 1}-opponent-score`}
+                  onSubmitEditing={() => {
+                    if (index === setInputs.length - 1) {
+                      Keyboard.dismiss();
+                    }
+                  }}
                 />
                 <Text style={styles.playerLabel}>{player2Name}</Text>
               </View>
