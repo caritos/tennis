@@ -37,10 +37,10 @@ interface ClubMatchesProps {
   club: { id: string; name: string } | null;
   colors: any;
   filterType: 'all' | 'singles' | 'doubles';
-  filterDate: 'all' | 'upcoming' | 'week' | 'month';
+  filterDate: 'all' | 'upcoming';
   filterInvolvement: 'all' | 'my' | 'incomplete';
   onFilterTypeChange: (type: 'all' | 'singles' | 'doubles') => void;
-  onFilterDateChange: (date: 'all' | 'upcoming' | 'week' | 'month') => void;
+  onFilterDateChange: (date: 'all' | 'upcoming') => void;
   onFilterInvolvementChange: (involvement: 'all' | 'my' | 'incomplete') => void;
   onClaimMatch?: (matchId: string, playerPosition: "player2" | "player3" | "player4") => void;
   onRecordMatch?: () => void;
@@ -96,14 +96,6 @@ export default function ClubMatches({
       if (filterDate === 'upcoming') {
         // Show only future matches
         if (matchDate <= now) return false;
-      } else if (filterDate === 'week') {
-        const weekAgo = new Date(now);
-        weekAgo.setDate(weekAgo.getDate() - 7);
-        if (matchDate < weekAgo) return false;
-      } else if (filterDate === 'month') {
-        const monthAgo = new Date(now);
-        monthAgo.setMonth(monthAgo.getMonth() - 1);
-        if (matchDate < monthAgo) return false;
       }
     }
     
@@ -207,9 +199,7 @@ export default function ClubMatches({
           <View style={styles.filterButtons}>
             {([
               { key: 'all', label: 'All Time' },
-              { key: 'upcoming', label: 'Upcoming' },
-              { key: 'week', label: 'This Week' },
-              { key: 'month', label: 'This Month' }
+              { key: 'upcoming', label: 'Upcoming' }
             ] as const).map(({ key, label }) => (
               <TouchableOpacity
                 key={key}
@@ -258,7 +248,7 @@ export default function ClubMatches({
                   <View style={styles.invitationDisplay}>
                     <View style={styles.invitationHeader}>
                       <ThemedText style={[styles.invitationStatus, { color: colors.tint }]}>
-                        Looking to Play - {match.match_type.charAt(0).toUpperCase() + match.match_type.slice(1)}
+                        Looking to Play {match.match_type.charAt(0).toUpperCase() + match.match_type.slice(1)} {formatDate(match.date)}
                       </ThemedText>
                       {match.time && (
                         <ThemedText style={[styles.invitationTime, { color: colors.textSecondary }]}>
@@ -315,12 +305,14 @@ export default function ClubMatches({
                   />
                 )}
                 
-                {/* Match Date */}
-                <View style={styles.matchMeta}>
-                  <ThemedText style={[styles.matchDate, { color: colors.textSecondary }]}>
-                    {formatDate(match.date)}
-                  </ThemedText>
-                </View>
+                {/* Match Date - Only show for completed matches, not invitations */}
+                {!match.isInvitation && (
+                  <View style={styles.matchMeta}>
+                    <ThemedText style={[styles.matchDate, { color: colors.textSecondary }]}>
+                      {formatDate(match.date)}
+                    </ThemedText>
+                  </View>
+                )}
               </View>
             ))}
           </View>
@@ -394,16 +386,16 @@ const styles = StyleSheet.create({
   },
   filterButtons: {
     flexDirection: 'row',
-    gap: 8,
+    gap: 6,
     flexWrap: 'wrap',
   },
   filterButton: {
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    borderRadius: 20,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 16,
   },
   filterButtonText: {
-    fontSize: 14,
+    fontSize: 13,
     fontWeight: '500',
   },
   sectionHeader: {
