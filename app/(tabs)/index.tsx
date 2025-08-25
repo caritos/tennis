@@ -9,11 +9,7 @@ import { ThemedView } from '@/components/ThemedView';
 import { ClubCard } from '@/components/ClubCard';
 import { CreateClubButton } from '@/components/CreateClubButton';
 import { OnboardingReEngagement } from '@/components/OnboardingReEngagement';
-import { ContextualPrompt } from '@/components/ContextualPrompt';
-import { QuickActionsCard } from '@/components/QuickActionsCard';
 import { InlineNotificationBanner } from '@/components/InlineNotificationBanner';
-import { useContextualPrompts } from '@/hooks/useContextualPrompts';
-import { useQuickActions } from '@/hooks/useQuickActions';
 import { Club } from '@/lib/supabase';
 import { useColorScheme } from '@/hooks/useColorScheme';
 import { Colors } from '@/constants/Colors';
@@ -41,14 +37,6 @@ export default function ClubScreen() {
   
   // Check if user has seen the welcome message
   const hasSeenWelcome = steps.find(step => step.id === 'welcome_seen')?.completed || false;
-  const { currentPrompt, dismissPrompt } = useContextualPrompts(myClubs, joinedClubIds);
-  const { 
-    quickActionsState, 
-    toggleCollapse, 
-    handleActionPress, 
-    refreshQuickActions,
-    dismissItem 
-  } = useQuickActions(myClubs);
   
   useEffect(() => {
     console.log('ClubScreen: User state changed:', user ? `User: ${user.id}` : 'No user');
@@ -231,11 +219,6 @@ export default function ClubScreen() {
           />
         )}
 
-        {/* Contextual Prompt Section - Now inside ScrollView */}
-        <ContextualPrompt 
-          prompt={currentPrompt}
-          onDismiss={dismissPrompt}
-        />
 
         <ThemedView style={styles.section}>
           <View style={styles.sectionHeader}>
@@ -266,14 +249,6 @@ export default function ClubScreen() {
           )}
         </ThemedView>
 
-        {/* Quick Actions Section */}
-        <QuickActionsCard
-          quickActionsState={quickActionsState}
-          onToggleCollapse={toggleCollapse}
-          onActionPress={handleActionPress}
-          onRefresh={refreshQuickActions}
-          onDismissItem={dismissItem}
-        />
 
         <ThemedView style={styles.discoverSection}>
           <View style={styles.discoverHeader}>

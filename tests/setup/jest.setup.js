@@ -17,15 +17,6 @@ jest.mock('@react-native-community/netinfo', () => ({
   addEventListener: jest.fn(() => jest.fn()),
 }));
 
-// Mock Expo SQLite
-jest.mock('expo-sqlite', () => ({
-  openDatabaseSync: jest.fn(() => ({
-    runAsync: jest.fn(),
-    getFirstAsync: jest.fn(),
-    getAllAsync: jest.fn(),
-    execAsync: jest.fn(),
-  })),
-}));
 
 // Mock Supabase
 jest.mock('../lib/supabase', () => ({

@@ -317,9 +317,192 @@ export class MatchInvitationService {
         }
 
         console.log('🎾 Auto-matched invitation:', invitationId, 'with players:', confirmedPlayerIds);
+        
+        // Send contact sharing notifications after successful auto-match
+        await this.sendContactSharingNotifications(invitationId, invitation, confirmedPlayerIds);
       }
     } catch (error) {
       console.error('❌ Failed to check auto-match:', error);
+    }
+  }
+
+  /**
+   * Send contact sharing notifications to all matched players
+   */
+  private async sendContactSharingNotifications(
+    invitationId: string, 
+    invitation: any, 
+    confirmedPlayerIds: string[]
+  ): Promise<void> {
+    try {
+      console.log('📝 sendContactSharingNotifications called for invitation:', invitationId);
+      console.log('📝 Confirmed players:', confirmedPlayerIds);
+      
+      // Get user details for all confirmed players
+      const { data: players, error: playersError } = await supabase
+        .from('users')
+        .select('id, full_name, phone')
+        .in('id', confirmedPlayerIds);
+
+      if (playersError || !players) {
+        console.error('❌ Failed to get player details:', playersError);
+        return;
+      }
+
+      console.log('📝 Player details:', players);
+
+      if (invitation.match_type === 'singles') {
+        await this.sendSinglesContactNotifications(invitationId, invitation, players);
+      } else {
+        await this.sendDoublesContactNotifications(invitationId, invitation, players);
+      }
+
+      console.log('✅ Contact sharing notifications sent for invitation:', invitationId);
+    } catch (error) {
+      console.error('❌ Failed to send contact sharing notifications:', error);
+    }
+  }
+
+  /**
+   * Send contact notifications for singles matches (2 players)
+   */
+  private async sendSinglesContactNotifications(
+    invitationId: string, 
+    invitation: any, 
+    players: any[]
+  ): Promise<void> {
+    if (players.length !== 2) {
+      console.error('❌ Singles match requires exactly 2 players, got:', players.length);
+      return;
+    }
+
+    const creator = players.find(p => p.id === invitation.creator_id);
+    const participant = players.find(p => p.id !== invitation.creator_id);
+
+    if (!creator || !participant) {
+      console.error('❌ Could not identify creator and participant');
+      return;
+    }
+
+    const formatContactInfo = (name: string, phone?: string) => {
+      if (!phone) return `${name} (no phone number provided)`;
+      return `${name}: ${phone}`;
+    };
+
+    try {
+      console.log('📝 Creating contact sharing notifications for singles match');
+      console.log(`📝 Creator: ${creator.full_name} (${creator.id}), Phone: ${creator.phone}`);
+      console.log(`📝 Participant: ${participant.full_name} (${participant.id}), Phone: ${participant.phone}`);
+
+      // Send notification to creator with participant's contact info
+      const creatorNotificationId = generateUUID();
+      const creatorNotification = {
+        id: creatorNotificationId,
+        user_id: creator.id,
+        type: 'match_invitation',
+        title: '🎾 Match Confirmed - Contact Info Shared',
+        message: `${participant.full_name} joined your ${invitation.match_type} match! Contact: ${formatContactInfo(participant.full_name, participant.phone)}`,
+        is_read: false,
+        action_type: 'view_match',
+        action_data: JSON.stringify({ invitationId }),
+        related_id: invitationId,
+        created_at: new Date().toISOString(),
+      };
+      
+      console.log('📝 Inserting creator notification:', JSON.stringify(creatorNotification, null, 2));
+      const { error: creatorError } = await supabase
+        .from('notifications')
+        .insert(creatorNotification);
+
+      if (creatorError) {
+        console.error('❌ Failed to insert creator notification:', creatorError);
+      } else {
+        console.log('✅ Creator notification inserted successfully');
+      }
+
+      // Send notification to participant with creator's contact info
+      const participantNotificationId = generateUUID();
+      const participantNotification = {
+        id: participantNotificationId,
+        user_id: participant.id,
+        type: 'match_invitation',
+        title: '🎾 Match Confirmed - Contact Info Shared',
+        message: `You joined ${creator.full_name}'s ${invitation.match_type} match! Contact: ${formatContactInfo(creator.full_name, creator.phone)}`,
+        is_read: false,
+        action_type: 'view_match',
+        action_data: JSON.stringify({ invitationId }),
+        related_id: invitationId,
+        created_at: new Date().toISOString(),
+      };
+      
+      console.log('📝 Inserting participant notification:', JSON.stringify(participantNotification, null, 2));
+      const { error: participantError } = await supabase
+        .from('notifications')
+        .insert(participantNotification);
+
+      if (participantError) {
+        console.error('❌ Failed to insert participant notification:', participantError);
+      } else {
+        console.log('✅ Participant notification inserted successfully');
+      }
+    } catch (error) {
+      console.error('❌ Failed to create singles contact notifications:', error);
+    }
+  }
+
+  /**
+   * Send contact notifications for doubles matches (4 players)
+   */
+  private async sendDoublesContactNotifications(
+    invitationId: string, 
+    invitation: any, 
+    players: any[]
+  ): Promise<void> {
+    if (players.length !== 4) {
+      console.error('❌ Doubles match requires exactly 4 players, got:', players.length);
+      return;
+    }
+
+    const formatContactInfo = (name: string, phone?: string) => {
+      if (!phone) return `${name} (no phone number provided)`;
+      return `${name}: ${phone}`;
+    };
+
+    try {
+      console.log('📝 Creating contact sharing notifications for doubles match');
+      
+      // Create a notification for each player with everyone else's contact info
+      for (const player of players) {
+        const otherPlayers = players.filter(p => p.id !== player.id);
+        const contactList = otherPlayers.map(p => formatContactInfo(p.full_name, p.phone)).join(', ');
+        
+        const notificationId = generateUUID();
+        const notification = {
+          id: notificationId,
+          user_id: player.id,
+          type: 'match_invitation',
+          title: '🎾 Doubles Match Confirmed - Contact Info Shared',
+          message: `Your doubles match is confirmed! Other players: ${contactList}`,
+          is_read: false,
+          action_type: 'view_match',
+          action_data: JSON.stringify({ invitationId }),
+          related_id: invitationId,
+          created_at: new Date().toISOString(),
+        };
+        
+        console.log(`📝 Inserting notification for ${player.full_name}:`, JSON.stringify(notification, null, 2));
+        const { error } = await supabase
+          .from('notifications')
+          .insert(notification);
+
+        if (error) {
+          console.error(`❌ Failed to insert notification for ${player.full_name}:`, error);
+        } else {
+          console.log(`✅ Notification inserted for ${player.full_name}`);
+        }
+      }
+    } catch (error) {
+      console.error('❌ Failed to create doubles contact notifications:', error);
     }
   }
 

@@ -183,7 +183,7 @@ export const UpcomingMatchesNotification: React.FC<UpcomingMatchesNotificationPr
       </View>
 
       {upcomingMatches.slice(0, 2).map((match, index) => (
-        <View key={match.invitation.id} style={[styles.matchItem, { borderColor: colors.border }]}>
+        <View key={match.invitation.id} style={[styles.matchItem, { borderColor: colors.tabIconDefault }]}>
           <View style={styles.matchHeader}>
             <View>
               <ThemedText style={[styles.matchDate, { color: colors.text }]}>

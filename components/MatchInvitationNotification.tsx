@@ -29,7 +29,7 @@ export function MatchInvitationNotification({
   const colorScheme = useColorScheme();
   const colors = Colors[colorScheme ?? 'light'];
   
-  const [latestNotification, setLatestNotification] = useState<ClubNotification | null>(null);
+  const [notifications, setNotifications] = useState<ClubNotification[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   
   // Key for storing dismissed notifications in AsyncStorage
@@ -59,66 +59,64 @@ export function MatchInvitationNotification({
 
   useEffect(() => {
     if (clubId) {
-      loadLatestInvitationNotification();
+      loadInvitationNotifications();
     }
   }, [clubId]);
 
-  const loadLatestInvitationNotification = async () => {
+  const loadInvitationNotifications = async () => {
     try {
       setIsLoading(true);
       
       // Load dismissed notifications from storage
       const dismissedNotifications = await loadDismissedNotifications();
       
-      // Get the latest invitation notification for this club
-      const { data: notifications, error } = await supabase
+      // Get all invitation notifications for this club
+      const { data: notificationData, error } = await supabase
         .from('club_notifications')
         .select('*')
         .eq('club_id', clubId)
         .eq('type', 'invitation_created')
         .gte('created_at', new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString()) // Only show notifications from the last 24 hours
         .order('created_at', { ascending: false })
-        .limit(5); // Get more notifications to filter out dismissed ones
+        .limit(10); // Get more notifications to show multiple invitations
 
       if (error) {
         console.error('Failed to load invitation notifications:', error);
         return;
       }
 
-      if (notifications && notifications.length > 0) {
-        // Find the first notification that hasn't been dismissed
-        const undismissedNotification = notifications.find(n => !dismissedNotifications.has(n.id));
+      if (notificationData && notificationData.length > 0) {
+        // Filter out dismissed notifications and process the data
+        const undismissedNotifications = notificationData
+          .filter(n => !dismissedNotifications.has(n.id))
+          .map(n => ({
+            ...n,
+            data: typeof n.data === 'string' 
+              ? JSON.parse(n.data) 
+              : n.data
+          }));
         
-        if (undismissedNotification) {
-          setLatestNotification({
-            ...undismissedNotification,
-            data: typeof undismissedNotification.data === 'string' 
-              ? JSON.parse(undismissedNotification.data) 
-              : undismissedNotification.data
-          });
-        } else {
-          setLatestNotification(null);
-        }
+        setNotifications(undismissedNotifications);
       } else {
-        setLatestNotification(null);
+        setNotifications([]);
       }
     } catch (error) {
       console.error('Error loading invitation notifications:', error);
-      setLatestNotification(null);
+      setNotifications([]);
     } finally {
       setIsLoading(false);
     }
   };
 
-  const handleDismiss = async () => {
-    if (!latestNotification) return;
-
+  const handleDismiss = async (notificationId: string) => {
     try {
       // Mark notification as dismissed in local storage
-      await saveDismissedNotification(latestNotification.id);
-      setLatestNotification(null);
+      await saveDismissedNotification(notificationId);
       
-      console.log('✅ Notification dismissed:', latestNotification.id);
+      // Remove the notification from the current list
+      setNotifications(prev => prev.filter(n => n.id !== notificationId));
+      
+      console.log('✅ Notification dismissed:', notificationId);
     } catch (error) {
       console.error('Failed to dismiss notification:', error);
     }
@@ -126,63 +124,73 @@ export function MatchInvitationNotification({
 
   const handleViewDetails = () => {
     onViewDetails?.();
-    handleDismiss(); // Auto-dismiss when user views details
+    // Don't auto-dismiss notifications when viewing details
+    // User should manually dismiss notifications they want to clear
   };
 
-  if (isLoading || !latestNotification) {
+  if (isLoading || notifications.length === 0) {
     return null;
   }
 
-  const timeSince = new Date(latestNotification.created_at);
-  const timeAgo = getTimeAgo(timeSince);
-
   return (
-    <ThemedView style={[styles.container, { backgroundColor: colors.card }]}>
-      <View style={styles.content}>
-        <View style={styles.header}>
-          <View style={styles.iconContainer}>
-            <Ionicons 
-              name="tennisball" 
-              size={16} 
-              color={colors.tint}
-              style={styles.icon}
-            />
-          </View>
-          
-          <View style={styles.textContainer}>
-            <ThemedText style={[styles.title, { color: colors.text }]}>
-              {latestNotification.title}
-            </ThemedText>
-            <ThemedText style={[styles.message, { color: colors.textSecondary }]}>
-              {latestNotification.message}
-            </ThemedText>
-            <ThemedText style={[styles.timeAgo, { color: colors.tabIconDefault }]}>
-              {timeAgo}
-            </ThemedText>
-          </View>
-          
-          <TouchableOpacity
-            style={styles.dismissButton}
-            onPress={handleDismiss}
-            accessibilityLabel="Dismiss notification"
+    <>
+      {notifications.map((notification) => {
+        const timeSince = new Date(notification.created_at);
+        const timeAgo = getTimeAgo(timeSince);
+
+        return (
+          <ThemedView 
+            key={notification.id} 
+            style={[styles.container, { backgroundColor: colors.card }]}
           >
-            <Ionicons name="close" size={16} color={colors.tabIconDefault} />
-          </TouchableOpacity>
-        </View>
-        
-        {onViewDetails && (
-          <TouchableOpacity
-            style={[styles.actionButton, { borderColor: colors.tint }]}
-            onPress={handleViewDetails}
-          >
-            <ThemedText style={[styles.actionButtonText, { color: colors.tint }]}>
-              View Matches
-            </ThemedText>
-            <Ionicons name="arrow-forward" size={14} color={colors.tint} />
-          </TouchableOpacity>
-        )}
-      </View>
-    </ThemedView>
+            <View style={styles.content}>
+              <View style={styles.header}>
+                <View style={styles.iconContainer}>
+                  <Ionicons 
+                    name="tennisball" 
+                    size={16} 
+                    color={colors.tint}
+                    style={styles.icon}
+                  />
+                </View>
+                
+                <View style={styles.textContainer}>
+                  <ThemedText style={[styles.title, { color: colors.text }]}>
+                    {notification.title}
+                  </ThemedText>
+                  <ThemedText style={[styles.message, { color: colors.textSecondary }]}>
+                    {notification.message}
+                  </ThemedText>
+                  <ThemedText style={[styles.timeAgo, { color: colors.tabIconDefault }]}>
+                    {timeAgo}
+                  </ThemedText>
+                </View>
+                
+                <TouchableOpacity
+                  style={styles.dismissButton}
+                  onPress={() => handleDismiss(notification.id)}
+                  accessibilityLabel="Dismiss notification"
+                >
+                  <Ionicons name="close" size={16} color={colors.tabIconDefault} />
+                </TouchableOpacity>
+              </View>
+              
+              {onViewDetails && (
+                <TouchableOpacity
+                  style={[styles.actionButton, { borderColor: colors.tint }]}
+                  onPress={handleViewDetails}
+                >
+                  <ThemedText style={[styles.actionButtonText, { color: colors.tint }]}>
+                    View Matches
+                  </ThemedText>
+                  <Ionicons name="arrow-forward" size={14} color={colors.tint} />
+                </TouchableOpacity>
+              )}
+            </View>
+          </ThemedView>
+        );
+      })}
+    </>
   );
 }
 

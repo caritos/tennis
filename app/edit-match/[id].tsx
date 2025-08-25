@@ -181,7 +181,7 @@ export default function EditMatchScreen() {
       
       console.log('🔧 updateData to send:', updateData);
 
-      await updateMatch(matchId, updateData, user.id);
+      await updateMatch(matchId, updateData);
       
       console.log('🚗💡🚗💡 MATCH SAVED SUCCESSFULLY - ABOUT TO NAVIGATE');
       

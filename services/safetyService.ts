@@ -1,5 +1,5 @@
-import { initializeDatabase } from '@/database/database';
-import { useAuth } from '@/contexts/AuthContext';
+import { supabase } from '@/lib/supabase';
+import { generateUUID } from '@/utils/uuid';
 
 export interface ReportData {
   id: string;
@@ -23,71 +23,7 @@ export interface BlockedUser {
 }
 
 class SafetyService {
-  private db: any = null;
-
-  constructor() {
-    this.initializeDB();
-  }
-
-  private async initializeDB() {
-    try {
-      this.db = await initializeDatabase();
-      await this.createTables();
-    } catch (error) {
-      console.error('Failed to initialize safety service database:', error);
-    }
-  }
-
-  private async createTables() {
-    if (!this.db) return;
-
-    try {
-      // Reports table
-      await this.db.execAsync(`
-        CREATE TABLE IF NOT EXISTS reports (
-          id TEXT PRIMARY KEY DEFAULT (lower(hex(randomblob(16)))),
-          reporter_id TEXT NOT NULL,
-          reported_user_id TEXT NOT NULL,
-          report_type TEXT NOT NULL CHECK (report_type IN ('spam', 'harassment', 'inappropriate', 'fake_profile', 'other')),
-          description TEXT NOT NULL,
-          status TEXT NOT NULL DEFAULT 'pending' CHECK (status IN ('pending', 'reviewed', 'resolved', 'dismissed')),
-          created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-          reviewed_at DATETIME,
-          reviewed_by TEXT,
-          resolution TEXT,
-          FOREIGN KEY (reporter_id) REFERENCES users (id),
-          FOREIGN KEY (reported_user_id) REFERENCES users (id)
-        );
-      `);
-
-      // Blocked users table
-      await this.db.execAsync(`
-        CREATE TABLE IF NOT EXISTS blocked_users (
-          id TEXT PRIMARY KEY DEFAULT (lower(hex(randomblob(16)))),
-          blocker_id TEXT NOT NULL,
-          blocked_user_id TEXT NOT NULL,
-          reason TEXT,
-          created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-          FOREIGN KEY (blocker_id) REFERENCES users (id),
-          FOREIGN KEY (blocked_user_id) REFERENCES users (id),
-          UNIQUE(blocker_id, blocked_user_id)
-        );
-      `);
-
-      // Indexes for performance
-      await this.db.execAsync(`
-        CREATE INDEX IF NOT EXISTS idx_reports_reporter ON reports(reporter_id);
-        CREATE INDEX IF NOT EXISTS idx_reports_reported ON reports(reported_user_id);
-        CREATE INDEX IF NOT EXISTS idx_reports_status ON reports(status);
-        CREATE INDEX IF NOT EXISTS idx_blocked_users_blocker ON blocked_users(blocker_id);
-        CREATE INDEX IF NOT EXISTS idx_blocked_users_blocked ON blocked_users(blocked_user_id);
-      `);
-
-      console.log('Safety service tables created successfully');
-    } catch (error) {
-      console.error('Failed to create safety service tables:', error);
-    }
-  }
+  // No local database needed - all operations go through Supabase
 
   // Report Management
   async submitReport(reportData: {
@@ -95,25 +31,35 @@ class SafetyService {
     reportedUserId: string;
     reportType: ReportData['reportType'];
     description: string;
+    matchId?: string;
+    invitationId?: string;
   }): Promise<string> {
-    if (!this.db) {
-      throw new Error('Database not initialized');
-    }
-
     try {
-      const result = await this.db.runAsync(
-        `INSERT INTO reports (reporter_id, reported_user_id, report_type, description)
-         VALUES (?, ?, ?, ?)`,
-        [reportData.reporterId, reportData.reportedUserId, reportData.reportType, reportData.description]
-      );
+      const { data, error } = await supabase
+        .from('reports')
+        .insert({
+          reporter_id: reportData.reporterId,
+          reported_user_id: reportData.reportedUserId,
+          report_type: reportData.reportType,
+          description: reportData.description,
+          match_id: reportData.matchId,
+          invitation_id: reportData.invitationId
+        })
+        .select('id')
+        .single();
+
+      if (error) {
+        console.error('Failed to submit report:', error);
+        throw new Error('Failed to submit report');
+      }
 
       // In a real app, this would also:
       // 1. Send notification to moderation team
       // 2. Log safety event for analytics
       // 3. Check for patterns (multiple reports on same user)
       
-      console.log('Report submitted successfully:', result.lastInsertRowId);
-      return result.lastInsertRowId?.toString() || '';
+      console.log('Report submitted successfully:', data.id);
+      return data.id;
     } catch (error) {
       console.error('Failed to submit report:', error);
       throw new Error('Failed to submit report');
@@ -121,21 +67,22 @@ class SafetyService {
   }
 
   async getUserReports(userId: string): Promise<ReportData[]> {
-    if (!this.db) return [];
-
     try {
-      const result = await this.db.getAllAsync(
-        `SELECT 
-           r.*,
-           u.full_name as reported_user_name
-         FROM reports r
-         LEFT JOIN users u ON r.reported_user_id = u.id
-         WHERE r.reporter_id = ?
-         ORDER BY r.created_at DESC`,
-        [userId]
-      );
+      const { data, error } = await supabase
+        .from('reports')
+        .select(`
+          *,
+          reported_user:users!reports_reported_user_id_fkey(full_name)
+        `)
+        .eq('reporter_id', userId)
+        .order('created_at', { ascending: false });
 
-      return result.map((row: any) => ({
+      if (error) {
+        console.error('Failed to get user reports:', error);
+        return [];
+      }
+
+      return data.map((row: any) => ({
         id: row.id,
         reporterId: row.reporter_id,
         reportedUserId: row.reported_user_id,
@@ -155,16 +102,21 @@ class SafetyService {
 
   // Block Management
   async blockUser(blockerId: string, blockedUserId: string, reason?: string): Promise<void> {
-    if (!this.db) {
-      throw new Error('Database not initialized');
-    }
-
     try {
-      await this.db.runAsync(
-        `INSERT OR REPLACE INTO blocked_users (blocker_id, blocked_user_id, reason)
-         VALUES (?, ?, ?)`,
-        [blockerId, blockedUserId, reason || null]
-      );
+      const { error } = await supabase
+        .from('blocked_users')
+        .upsert({
+          blocker_id: blockerId,
+          blocked_user_id: blockedUserId,
+          reason: reason || null
+        }, {
+          onConflict: 'blocker_id,blocked_user_id'
+        });
+
+      if (error) {
+        console.error('Failed to block user:', error);
+        throw new Error('Failed to block user');
+      }
 
       console.log('User blocked successfully');
     } catch (error) {
@@ -174,16 +126,17 @@ class SafetyService {
   }
 
   async unblockUser(blockerId: string, blockedUserId: string): Promise<void> {
-    if (!this.db) {
-      throw new Error('Database not initialized');
-    }
-
     try {
-      await this.db.runAsync(
-        `DELETE FROM blocked_users 
-         WHERE blocker_id = ? AND blocked_user_id = ?`,
-        [blockerId, blockedUserId]
-      );
+      const { error } = await supabase
+        .from('blocked_users')
+        .delete()
+        .eq('blocker_id', blockerId)
+        .eq('blocked_user_id', blockedUserId);
+
+      if (error) {
+        console.error('Failed to unblock user:', error);
+        throw new Error('Failed to unblock user');
+      }
 
       console.log('User unblocked successfully');
     } catch (error) {
@@ -193,16 +146,20 @@ class SafetyService {
   }
 
   async isUserBlocked(blockerId: string, blockedUserId: string): Promise<boolean> {
-    if (!this.db) return false;
-
     try {
-      const result = await this.db.getFirstAsync(
-        `SELECT id FROM blocked_users 
-         WHERE blocker_id = ? AND blocked_user_id = ?`,
-        [blockerId, blockedUserId]
-      );
+      const { data, error } = await supabase
+        .from('blocked_users')
+        .select('id')
+        .eq('blocker_id', blockerId)
+        .eq('blocked_user_id', blockedUserId)
+        .single();
 
-      return !!result;
+      if (error && error.code !== 'PGRST116') { // PGRST116 is "no rows found"
+        console.error('Failed to check if user is blocked:', error);
+        return false;
+      }
+
+      return !!data;
     } catch (error) {
       console.error('Failed to check if user is blocked:', error);
       return false;
@@ -210,21 +167,22 @@ class SafetyService {
   }
 
   async getBlockedUsers(userId: string): Promise<BlockedUser[]> {
-    if (!this.db) return [];
-
     try {
-      const result = await this.db.getAllAsync(
-        `SELECT 
-           bu.*,
-           u.full_name as blocked_user_name
-         FROM blocked_users bu
-         LEFT JOIN users u ON bu.blocked_user_id = u.id
-         WHERE bu.blocker_id = ?
-         ORDER BY bu.created_at DESC`,
-        [userId]
-      );
+      const { data, error } = await supabase
+        .from('blocked_users')
+        .select(`
+          *,
+          blocked_user:users!blocked_users_blocked_user_id_fkey(full_name)
+        `)
+        .eq('blocker_id', userId)
+        .order('created_at', { ascending: false });
 
-      return result.map((row: any) => ({
+      if (error) {
+        console.error('Failed to get blocked users:', error);
+        return [];
+      }
+
+      return data.map((row: any) => ({
         id: row.id,
         blockerId: row.blocker_id,
         blockedUserId: row.blocked_user_id,
@@ -239,16 +197,20 @@ class SafetyService {
 
   // Check if user is blocked by another user (for filtering content)
   async isBlockedBy(userId: string, potentialBlockerId: string): Promise<boolean> {
-    if (!this.db) return false;
-
     try {
-      const result = await this.db.getFirstAsync(
-        `SELECT id FROM blocked_users 
-         WHERE blocker_id = ? AND blocked_user_id = ?`,
-        [potentialBlockerId, userId]
-      );
+      const { data, error } = await supabase
+        .from('blocked_users')
+        .select('id')
+        .eq('blocker_id', potentialBlockerId)
+        .eq('blocked_user_id', userId)
+        .single();
 
-      return !!result;
+      if (error && error.code !== 'PGRST116') { // PGRST116 is "no rows found"
+        console.error('Failed to check if blocked by user:', error);
+        return false;
+      }
+
+      return !!data;
     } catch (error) {
       console.error('Failed to check if blocked by user:', error);
       return false;
@@ -257,20 +219,29 @@ class SafetyService {
 
   // Utility function to filter out blocked users from lists
   async filterBlockedUsers(currentUserId: string, userIds: string[]): Promise<string[]> {
-    if (!this.db || userIds.length === 0) return userIds;
+    if (userIds.length === 0) return userIds;
 
     try {
-      const placeholders = userIds.map(() => '?').join(',');
-      const result = await this.db.getAllAsync(
-        `SELECT blocked_user_id FROM blocked_users 
-         WHERE blocker_id = ? AND blocked_user_id IN (${placeholders})
-         UNION
-         SELECT blocker_id FROM blocked_users 
-         WHERE blocked_user_id = ? AND blocker_id IN (${placeholders})`,
-        [currentUserId, ...userIds, currentUserId, ...userIds]
-      );
+      // Get users who blocked current user or are blocked by current user
+      const { data, error } = await supabase
+        .from('blocked_users')
+        .select('blocker_id, blocked_user_id')
+        .or(`blocker_id.eq.${currentUserId},blocked_user_id.eq.${currentUserId}`);
 
-      const blockedUserIds = new Set(result.map((row: any) => row.blocked_user_id || row.blocker_id));
+      if (error) {
+        console.error('Failed to filter blocked users:', error);
+        return userIds;
+      }
+
+      const blockedUserIds = new Set<string>();
+      data.forEach((row: any) => {
+        if (row.blocker_id === currentUserId) {
+          blockedUserIds.add(row.blocked_user_id);
+        } else if (row.blocked_user_id === currentUserId) {
+          blockedUserIds.add(row.blocker_id);
+        }
+      });
+
       return userIds.filter(id => !blockedUserIds.has(id));
     } catch (error) {
       console.error('Failed to filter blocked users:', error);
@@ -280,22 +251,23 @@ class SafetyService {
 
   // Admin functions (for future moderation dashboard)
   async getPendingReports(): Promise<ReportData[]> {
-    if (!this.db) return [];
-
     try {
-      const result = await this.db.getAllAsync(
-        `SELECT 
-           r.*,
-           reporter.full_name as reporter_name,
-           reported.full_name as reported_user_name
-         FROM reports r
-         LEFT JOIN users reporter ON r.reporter_id = reporter.id
-         LEFT JOIN users reported ON r.reported_user_id = reported.id
-         WHERE r.status = 'pending'
-         ORDER BY r.created_at ASC`
-      );
+      const { data, error } = await supabase
+        .from('reports')
+        .select(`
+          *,
+          reporter:users!reports_reporter_id_fkey(full_name),
+          reported_user:users!reports_reported_user_id_fkey(full_name)
+        `)
+        .eq('status', 'pending')
+        .order('created_at', { ascending: true });
 
-      return result.map((row: any) => ({
+      if (error) {
+        console.error('Failed to get pending reports:', error);
+        return [];
+      }
+
+      return data.map((row: any) => ({
         id: row.id,
         reporterId: row.reporter_id,
         reportedUserId: row.reported_user_id,
@@ -319,17 +291,21 @@ class SafetyService {
     reviewerId: string, 
     resolution?: string
   ): Promise<void> {
-    if (!this.db) {
-      throw new Error('Database not initialized');
-    }
-
     try {
-      await this.db.runAsync(
-        `UPDATE reports 
-         SET status = ?, reviewed_at = CURRENT_TIMESTAMP, reviewed_by = ?, resolution = ?
-         WHERE id = ?`,
-        [status, reviewerId, resolution || null, reportId]
-      );
+      const { error } = await supabase
+        .from('reports')
+        .update({
+          status,
+          reviewed_at: new Date().toISOString(),
+          reviewed_by: reviewerId,
+          resolution: resolution || null
+        })
+        .eq('id', reportId);
+
+      if (error) {
+        console.error('Failed to update report status:', error);
+        throw new Error('Failed to update report status');
+      }
 
       console.log('Report status updated successfully');
     } catch (error) {

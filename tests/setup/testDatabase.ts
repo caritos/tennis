@@ -1,25 +1,17 @@
 /**
  * Test Database Utilities
- * Provides database isolation and setup for tests
+ * Provides database isolation and setup for tests using Supabase
  */
 
-import * as SQLite from 'expo-sqlite';
-import { seedDatabase } from '@/utils/seedData';
+import { supabase } from '@/lib/supabase';
+import { createClub, createUser, createMatch } from './testFactories';
 
-// Mock SQLite for testing environment
-const mockDatabase = {
+// Mock Supabase for testing environment
+const mockSupabaseDatabase = {
   data: new Map<string, any[]>(),
   
-  // Mock execute function
-  execAsync: jest.fn(),
-  getAllAsync: jest.fn(),
-  getFirstAsync: jest.fn(),
-  runAsync: jest.fn(),
-  
-  // Helper methods for test manipulation
   reset: function() {
     this.data.clear();
-    jest.clearAllMocks();
   },
   
   setData: function(table: string, rows: any[]) {
@@ -31,18 +23,27 @@ const mockDatabase = {
   },
 };
 
-// Mock expo-sqlite
-jest.mock('expo-sqlite', () => ({
-  openDatabaseAsync: jest.fn(() => Promise.resolve(mockDatabase)),
+// Mock Supabase client for tests
+jest.mock('@/lib/supabase', () => ({
+  supabase: {
+    from: jest.fn(),
+    auth: {
+      getUser: jest.fn(),
+      signIn: jest.fn(),
+      signOut: jest.fn(),
+    },
+    channel: jest.fn(),
+    removeChannel: jest.fn(),
+  },
 }));
 
 /**
  * Test Database Manager
- * Handles database state for tests
+ * Handles Supabase database state for tests
  */
 export class TestDatabaseManager {
   private static instance: TestDatabaseManager;
-  private db: any = mockDatabase;
+  private db: any = mockSupabaseDatabase;
 
   private constructor() {}
 
@@ -58,54 +59,55 @@ export class TestDatabaseManager {
    */
   async reset(): Promise<void> {
     this.db.reset();
-    this.setupMockResponses();
+    this.setupSupabaseMocks();
   }
 
   /**
    * Seed database with test data
    */
   async seed(): Promise<void> {
-    // Mock the seed data operation
-    this.db.data.set('clubs', [
-      {
-        id: 'club-1',
-        name: 'Test Club 1',
-        description: 'First test club',
-        location: 'Test City, TC',
-        member_count: 10,
-        latitude: 40.7128,
-        longitude: -74.0060,
-      },
-      {
-        id: 'club-2',
-        name: 'Test Club 2', 
-        description: 'Second test club',
-        location: 'Another City, AC',
-        member_count: 15,
-        latitude: 40.7580,
-        longitude: -73.9855,
-      },
-    ]);
+    // Set up test clubs using factory
+    const testClub1 = createClub({
+      id: 'club-1',
+      name: 'Test Club 1',
+      description: 'First test club',
+      location: 'Test City, TC',
+      latitude: 40.7128,
+      longitude: -74.0060,
+    });
+    
+    const testClub2 = createClub({
+      id: 'club-2',
+      name: 'Test Club 2',
+      description: 'Second test club',
+      location: 'Another City, AC',
+      latitude: 40.7580,
+      longitude: -73.9855,
+    });
+    
+    this.db.data.set('clubs', [testClub1, testClub2]);
 
-    this.db.data.set('users', [
-      {
-        id: 'user-1',
-        full_name: 'Test User 1',
-        email: 'user1@test.com',
-        phone: '+1234567890',
-      },
-      {
-        id: 'user-2',
-        full_name: 'Test User 2',
-        email: 'user2@test.com', 
-        phone: '+1234567891',
-      },
-    ]);
+    // Set up test users using factory
+    const testUser1 = createUser({
+      id: 'user-1',
+      full_name: 'Test User 1',
+      email: 'user1@test.com',
+      phone: '+1234567890',
+    });
+    
+    const testUser2 = createUser({
+      id: 'user-2',
+      full_name: 'Test User 2',
+      email: 'user2@test.com',
+      phone: '+1234567891',
+    });
+    
+    this.db.data.set('users', [testUser1, testUser2]);
 
     this.db.data.set('matches', []);
     this.db.data.set('club_members', [
-      { club_id: 'club-1', user_id: 'user-1', role: 'member' },
-      { club_id: 'club-1', user_id: 'user-2', role: 'member' },
+      { club_id: 'club-1', user_id: 'user-1', joined_at: '2024-01-01T00:00:00Z' },
+      { club_id: 'club-1', user_id: 'user-2', joined_at: '2024-01-01T00:00:00Z' },
     ]);
   }
 
@@ -125,58 +127,47 @@ export class TestDatabaseManager {
   }
 
   /**
-   * Setup mock database responses for common queries
+   * Setup mock Supabase responses for common queries
    */
-  private setupMockResponses(): void {
-    // Mock getAllAsync to return data from our mock store
-    this.db.getAllAsync.mockImplementation((query: string, params?: any[]) => {
-      // Simple query parsing for test purposes
-      if (query.includes('FROM clubs')) {
-        return Promise.resolve(this.getData('clubs'));
-      }
-      if (query.includes('FROM users')) {
-        return Promise.resolve(this.getData('users'));
-      }
-      if (query.includes('FROM matches')) {
-        return Promise.resolve(this.getData('matches'));
-      }
-      if (query.includes('FROM club_members')) {
-        return Promise.resolve(this.getData('club_members'));
-      }
-      return Promise.resolve([]);
+  private setupSupabaseMocks(): void {
+    const mockSupabase = jest.mocked(supabase);
+    
+    // Mock from() method to return chainable query builder
+    const createMockQueryBuilder = (tableName: string) => ({
+      select: jest.fn().mockReturnThis(),
+      insert: jest.fn().mockReturnThis(),
+      update: jest.fn().mockReturnThis(),
+      delete: jest.fn().mockReturnThis(),
+      eq: jest.fn().mockReturnThis(),
+      order: jest.fn().mockReturnThis(),
+      limit: jest.fn().mockReturnThis(),
+      single: jest.fn().mockImplementation(() => {
+        const data = this.getData(tableName);
+        return Promise.resolve({ data: data[0] || null, error: null });
+      }),
+      then: jest.fn().mockImplementation((callback) => {
+        const data = this.getData(tableName);
+        return Promise.resolve(callback({ data, error: null }));
+      }),
     });
 
-    // Mock getFirstAsync for single row queries
-    this.db.getFirstAsync.mockImplementation((query: string, params?: any[]) => {
-      const results = this.db.getAllAsync(query, params);
-      return results.then((rows: any[]) => rows[0] || null);
-    });
-
-    // Mock runAsync for INSERT/UPDATE/DELETE operations
-    this.db.runAsync.mockImplementation((query: string, params?: any[]) => {
-      if (query.includes('INSERT INTO')) {
-        // Extract table name and simulate insert
-        const tableMatch = query.match(/INSERT INTO (\w+)/);
-        if (tableMatch) {
-          const table = tableMatch[1];
-          // For tests, we'll just return success
-          return Promise.resolve({ changes: 1, lastInsertRowId: Date.now() });
-        }
-      }
-      return Promise.resolve({ changes: 1 });
-    });
-
-    // Mock execAsync for schema operations
-    this.db.execAsync.mockImplementation((queries: string[]) => {
-      return Promise.resolve();
-    });
+    mockSupabase.from.mockImplementation((tableName: string) => 
+      createMockQueryBuilder(tableName) as any
+    );
   }
 
   /**
-   * Get the mock database instance for direct manipulation in tests
+   * Get the mock Supabase database instance for direct manipulation in tests
    */
   getMockDatabase(): any {
     return this.db;
+  }
+  
+  /**
+   * Get the mocked Supabase client
+   */
+  getMockSupabase(): any {
+    return jest.mocked(supabase);
   }
 }
 
@@ -226,20 +217,19 @@ export const testDbUtils = {
       case 'full':
         // Database with comprehensive test data
         await dbManager.seed();
-        await dbManager.insertData('matches', [
-          {
-            id: 'match-1',
-            club_id: 'club-1',
-            player1_id: 'user-1',
-            player2_id: 'user-2',
-            opponent2_name: 'Test User 2',
-            scores: '6-4,6-3',
-            match_type: 'singles',
-            date: '2024-01-15',
-            notes: 'Test match',
-            created_at: '2024-01-15T10:00:00Z',
-          },
-        ]);
+        const testMatch = createMatch({
+          id: 'match-1',
+          club_id: 'club-1',
+          player1_id: 'user-1',
+          player2_id: 'user-2',
+          opponent2_name: 'Test User 2',
+          scores: '6-4,6-3',
+          match_type: 'singles',
+          date: '2024-01-15',
+          notes: 'Test match',
+          created_at: '2024-01-15T10:00:00Z',
+        });
+        await dbManager.insertData('matches', [testMatch]);
         break;
     }
 

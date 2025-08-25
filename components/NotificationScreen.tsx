@@ -26,11 +26,14 @@ interface NotificationItemProps {
   onDelete: (id: string) => void;
 }
 
-const NotificationItem: React.FC<NotificationItemProps> = ({
+const NotificationItem: React.FC<NotificationItemProps & {
+  onQuickAction: (notification: Notification, action: string) => void;
+}> = ({
   notification,
   onPress,
   onMarkAsRead,
   onDelete,
+  onQuickAction,
 }) => {
   const colorScheme = useColorScheme();
   const colors = Colors[colorScheme ?? 'light'];
@@ -132,13 +135,13 @@ const NotificationItem: React.FC<NotificationItemProps> = ({
               <>
                 <TouchableOpacity
                   style={[styles.actionButton, styles.acceptButton]}
-                  onPress={() => handleQuickAction(notification, 'accept')}
+                  onPress={() => onQuickAction(notification, 'accept')}
                 >
                   <ThemedText style={styles.actionButtonText}>Accept</ThemedText>
                 </TouchableOpacity>
                 <TouchableOpacity
                   style={[styles.actionButton, styles.declineButton]}
-                  onPress={() => handleQuickAction(notification, 'decline')}
+                  onPress={() => onQuickAction(notification, 'decline')}
                 >
                   <ThemedText style={styles.actionButtonText}>Decline</ThemedText>
                 </TouchableOpacity>
@@ -147,7 +150,7 @@ const NotificationItem: React.FC<NotificationItemProps> = ({
             {notification.type === 'match_invitation' && (
               <TouchableOpacity
                 style={[styles.actionButton, styles.joinButton]}
-                onPress={() => handleQuickAction(notification, 'join')}
+                onPress={() => onQuickAction(notification, 'join')}
               >
                 <ThemedText style={styles.actionButtonText}>Join Match</ThemedText>
               </TouchableOpacity>
@@ -177,45 +180,6 @@ const NotificationItem: React.FC<NotificationItemProps> = ({
   );
 };
 
-// Quick action handler
-const handleQuickAction = async (notification: Notification, action: string) => {
-  console.log('Quick action:', action, 'for notification:', notification.id);
-  
-  try {
-    if (notification.type === 'challenge' && notification.action_data) {
-      const { challengeService } = await import('@/services/challengeService');
-      const challengeId = notification.action_data.challengeId;
-      
-      if (action === 'accept') {
-        await challengeService.acceptChallenge(challengeId, notification.user_id);
-        console.log('✅ Challenge accepted via quick action');
-      } else if (action === 'decline') {
-        await challengeService.declineChallenge(challengeId, notification.user_id);
-        console.log('✅ Challenge declined via quick action');
-      }
-    } else if (notification.type === 'match_invitation' && notification.action_data) {
-      const { matchInvitationService } = await import('@/services/matchInvitationService');
-      const invitationId = notification.action_data.invitationId;
-      
-      if (action === 'join') {
-        await matchInvitationService.respondToInvitation(
-          invitationId,
-          notification.user_id,
-          'Interested via quick action'
-        );
-        console.log('✅ Match invitation response sent via quick action');
-      }
-    }
-    
-    // Mark notification as read after action
-    const notificationService = new NotificationService();
-    await notificationService.markAsRead(notification.id);
-    
-  } catch (error) {
-    console.error('❌ Failed to handle quick action:', error);
-    Alert.alert('Error', 'Failed to process action. Please try again.');
-  }
-};
 
 export const NotificationScreen: React.FC = () => {
   const colorScheme = useColorScheme();
@@ -355,6 +319,58 @@ export const NotificationScreen: React.FC = () => {
     }
   };
 
+  // Quick action handler
+  const handleQuickAction = async (notification: Notification, action: string) => {
+    console.log('Quick action:', action, 'for notification:', notification.id);
+    
+    try {
+      if (notification.type === 'challenge' && notification.action_data) {
+        const { challengeService } = await import('@/services/challengeService');
+        const actionData = typeof notification.action_data === 'string' 
+          ? JSON.parse(notification.action_data) 
+          : notification.action_data;
+        const challengeId = actionData.challengeId;
+        
+        if (action === 'accept') {
+          await challengeService.acceptChallenge(challengeId, notification.user_id);
+          console.log('✅ Challenge accepted via quick action');
+        } else if (action === 'decline') {
+          await challengeService.declineChallenge(challengeId, notification.user_id);
+          console.log('✅ Challenge declined via quick action');
+        }
+      } else if (notification.type === 'match_invitation' && notification.action_data) {
+        const { matchInvitationService } = await import('@/services/matchInvitationService');
+        const actionData = typeof notification.action_data === 'string' 
+          ? JSON.parse(notification.action_data) 
+          : notification.action_data;
+        const invitationId = actionData.invitationId;
+        
+        if (action === 'join') {
+          await matchInvitationService.respondToInvitation(
+            invitationId,
+            notification.user_id,
+            'Interested via quick action'
+          );
+          console.log('✅ Match invitation response sent via quick action');
+        }
+      }
+      
+      // Mark notification as read after action
+      const notificationService = new NotificationService();
+      await notificationService.markAsRead(notification.id);
+      
+      // Update local state
+      setNotifications(prev =>
+        prev.map(n => (n.id === notification.id ? { ...n, is_read: true } : n))
+      );
+      setUnreadCount(prev => Math.max(0, prev - 1));
+      
+    } catch (error) {
+      console.error('❌ Failed to handle quick action:', error);
+      Alert.alert('Error', 'Failed to process action. Please try again.');
+    }
+  };
+
   if (loading) {
     return (
       <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
@@ -407,6 +423,7 @@ export const NotificationScreen: React.FC = () => {
               onPress={handleNotificationPress}
               onMarkAsRead={handleMarkAsRead}
               onDelete={handleDelete}
+              onQuickAction={handleQuickAction}
             />
           ))}
         </ScrollView>

@@ -30,11 +30,23 @@ import { formatScoreString } from '../utils/tennisUtils';
 import { Button } from './ui/Button';
 
 interface MatchRecordingFormProps {
-  onSave: (matchData: CreateMatchData) => void;
+  onSave: (matchData: CreateMatchData, reportData?: {
+    playerIds: string[];
+    type: string;
+    description: string;
+  }) => void;
   clubId: string;
   initialData?: Partial<CreateMatchData>;
   isEditing?: boolean;
   onCancel?: () => void;
+  matchType?: 'singles' | 'doubles';
+  players?: Array<{
+    id: string;
+    full_name: string;
+    phone?: string;
+  }>;
+  showReporting?: boolean;
+  isSubmitting?: boolean;
 }
 
 // Legacy interface - can be removed after migration
@@ -58,12 +70,16 @@ export function MatchRecordingForm(componentProps: MatchRecordingFormProps) {
     clubId,
     initialData,
     isEditing = false,
-    onCancel
+    onCancel,
+    matchType: propMatchType,
+    players = [],
+    showReporting = false,
+    isSubmitting = false
   } = props;
 
   // All state hooks
-  const [matchType, setMatchType] = useState<'singles' | 'doubles'>(initialData?.match_type || 'singles');
-  const [matchTypeRadioId, setMatchTypeRadioId] = useState(initialData?.match_type || 'singles');
+  const [matchType, setMatchType] = useState<'singles' | 'doubles'>(propMatchType || initialData?.match_type || 'singles');
+  const [matchTypeRadioId, setMatchTypeRadioId] = useState(propMatchType || initialData?.match_type || 'singles');
   const [selectedOpponent, setSelectedOpponent] = useState<Player | null>(null);
   const [opponentSearchText, setOpponentSearchText] = useState(initialData?.opponent2_name || '');
   const [selectedPartner, setSelectedPartner] = useState<Player | null>(null);
@@ -84,6 +100,12 @@ export function MatchRecordingForm(componentProps: MatchRecordingFormProps) {
   const [clubMembers, setClubMembers] = useState<Player[]>([]);
   const [loadingMembers, setLoadingMembers] = useState(true);
   const [notes, setNotes] = useState(initialData?.notes || '');
+
+  // Reporting-related state
+  const [showReportingSection, setShowReportingSection] = useState(false);
+  const [reportedPlayerIds, setReportedPlayerIds] = useState<string[]>([]);
+  const [reportType, setReportType] = useState('');
+  const [reportDescription, setReportDescription] = useState('');
 
   // All useEffect hooks
   useEffect(() => {
@@ -570,7 +592,17 @@ export function MatchRecordingForm(componentProps: MatchRecordingFormProps) {
       notes: notes.trim() || undefined,
     };
 
-    onSave(matchData);
+    // Prepare report data if any players are reported
+    let reportData = undefined;
+    if (showReporting && reportedPlayerIds.length > 0 && reportType && reportDescription.trim()) {
+      reportData = {
+        playerIds: reportedPlayerIds,
+        type: reportType,
+        description: reportDescription.trim()
+      };
+    }
+
+    onSave(matchData, reportData);
   };
 
   const styles = StyleSheet.create({
@@ -824,6 +856,81 @@ export function MatchRecordingForm(componentProps: MatchRecordingFormProps) {
       backgroundColor: colors.background,
       minHeight: 80,
       textAlignVertical: 'top',
+    },
+
+    // Reporting section styles
+    reportSectionHeader: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      paddingVertical: 12,
+    },
+    reportSectionTitle: {
+      fontSize: 16,
+      fontWeight: '500',
+      color: colors.text,
+    },
+    reportContent: {
+      marginTop: 12,
+    },
+    reportSubtitle: {
+      fontSize: 14,
+      marginBottom: 16,
+      fontStyle: 'italic',
+    },
+    reportPlayersSection: {
+      marginBottom: 16,
+    },
+    reportLabel: {
+      fontSize: 14,
+      fontWeight: '500',
+      color: colors.text,
+      marginBottom: 8,
+    },
+    playerCheckbox: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      paddingVertical: 8,
+    },
+    radioButton: {
+      width: 18,
+      height: 18,
+      borderRadius: 9,
+      borderWidth: 2,
+      alignItems: 'center',
+      justifyContent: 'center',
+      marginRight: 12,
+    },
+    checkbox: {
+      width: 20,
+      height: 20,
+      borderRadius: 4,
+      borderWidth: 2,
+      alignItems: 'center',
+      justifyContent: 'center',
+      marginRight: 12,
+    },
+    playerName: {
+      fontSize: 16,
+    },
+    reportTypeSection: {
+      marginBottom: 16,
+    },
+    reportDescriptionSection: {
+      marginBottom: 8,
+    },
+    reportTextInput: {
+      borderWidth: 1,
+      borderRadius: 8,
+      padding: 12,
+      fontSize: 14,
+      minHeight: 80,
+      textAlignVertical: 'top',
+      marginBottom: 8,
+    },
+    characterCount: {
+      fontSize: 12,
+      textAlign: 'right',
     },
   });
 
@@ -1167,14 +1274,144 @@ export function MatchRecordingForm(componentProps: MatchRecordingFormProps) {
           />
         </View>
 
+        {/* Report Player Section - Only show if enabled */}
+        {showReporting && players.length > 0 && (
+          <View style={styles.section}>
+            <TouchableOpacity
+              style={styles.reportSectionHeader}
+              onPress={() => setShowReportingSection(!showReportingSection)}
+              activeOpacity={0.7}
+            >
+              <Text style={styles.reportSectionTitle}>
+                Report Player Issue
+              </Text>
+              <Ionicons
+                name={showReportingSection ? 'chevron-up' : 'chevron-down'}
+                size={20}
+                color={colors.tabIconDefault}
+              />
+            </TouchableOpacity>
+
+            {showReportingSection && (
+              <View style={styles.reportContent}>
+                <Text style={[styles.reportSubtitle, { color: colors.tabIconDefault }]}>
+                  Only report serious issues that violate community guidelines
+                </Text>
+
+                {/* Player Selection */}
+                <View style={styles.reportPlayersSection}>
+                  <Text style={styles.reportLabel}>Which player(s)?</Text>
+                  {players.filter(p => p.id !== user?.id).map((player) => (
+                    <TouchableOpacity
+                      key={player.id}
+                      style={styles.playerCheckbox}
+                      onPress={() => {
+                        if (matchType === 'singles') {
+                          // Singles: radio button behavior
+                          setReportedPlayerIds(
+                            reportedPlayerIds.includes(player.id) ? [] : [player.id]
+                          );
+                        } else {
+                          // Doubles: checkbox behavior
+                          setReportedPlayerIds(prev => 
+                            prev.includes(player.id) 
+                              ? prev.filter(id => id !== player.id)
+                              : [...prev, player.id]
+                          );
+                        }
+                      }}
+                    >
+                      <View style={[
+                        matchType === 'singles' ? styles.radioButton : styles.checkbox,
+                        {
+                          borderColor: colors.tint,
+                          backgroundColor: reportedPlayerIds.includes(player.id) ? colors.tint : 'transparent'
+                        }
+                      ]}>
+                        {reportedPlayerIds.includes(player.id) && (
+                          <Ionicons 
+                            name="checkmark" 
+                            size={matchType === 'singles' ? 10 : 14} 
+                            color="white" 
+                          />
+                        )}
+                      </View>
+                      <Text style={[styles.playerName, { color: colors.text }]}>
+                        {player.full_name}
+                      </Text>
+                    </TouchableOpacity>
+                  ))}
+                </View>
+
+                {/* Report Type Selection */}
+                {reportedPlayerIds.length > 0 && (
+                  <View style={styles.reportTypeSection}>
+                    <Text style={styles.reportLabel}>What happened?</Text>
+                    {[
+                      { key: 'no_show', label: 'Did Not Show Up' },
+                      { key: 'poor_behavior', label: 'Poor Behavior During Match' },
+                      { key: 'unsportsmanlike', label: 'Unsportsmanlike Conduct' },
+                      { key: 'other', label: 'Other Issue' }
+                    ].map((type) => (
+                      <TouchableOpacity
+                        key={type.key}
+                        style={styles.playerCheckbox}
+                        onPress={() => setReportType(type.key)}
+                      >
+                        <View style={[
+                          styles.radioButton,
+                          {
+                            borderColor: colors.tint,
+                            backgroundColor: reportType === type.key ? colors.tint : 'transparent'
+                          }
+                        ]}>
+                          {reportType === type.key && (
+                            <Ionicons name="checkmark" size={10} color="white" />
+                          )}
+                        </View>
+                        <Text style={[styles.playerName, { color: colors.text }]}>
+                          {type.label}
+                        </Text>
+                      </TouchableOpacity>
+                    ))}
+                  </View>
+                )}
+
+                {/* Description */}
+                {reportType && (
+                  <View style={styles.reportDescriptionSection}>
+                    <Text style={styles.reportLabel}>
+                      Additional Details {reportType === 'other' ? '(Required)' : ''}
+                    </Text>
+                    <TextInput
+                      style={[styles.reportTextInput, { borderColor: colors.tabIconDefault + '30', color: colors.text }]}
+                      placeholder="Provide more details about what happened..."
+                      placeholderTextColor={colors.tabIconDefault}
+                      value={reportDescription}
+                      onChangeText={setReportDescription}
+                      multiline
+                      numberOfLines={3}
+                      maxLength={300}
+                    />
+                    <Text style={[styles.characterCount, { color: colors.tabIconDefault }]}>
+                      {reportDescription.length}/300 characters
+                    </Text>
+                  </View>
+                )}
+              </View>
+            )}
+          </View>
+        )}
+
         {/* Save Match Button - Inside ScrollView */}
         <View style={styles.saveButtonSection}>
           <Button
-            title="Save Match"
+            title={isSubmitting ? "Saving..." : "Save Match"}
             onPress={handleSave}
             variant="primary"
             size="large"
             fullWidth={true}
+            disabled={isSubmitting}
             testID="save-match-button"
           />
         </View>

@@ -6,30 +6,31 @@ export interface CreateMatchData {
   club_id: string;
   player1_id: string;
   player2_id?: string | null;
-  opponent2_name?: string;
+  opponent2_name?: string | null;
   player3_id?: string | null;
-  partner3_name?: string;
+  partner3_name?: string | null;
   player4_id?: string | null;
-  partner4_name?: string;
+  partner4_name?: string | null;
   scores: string;
   match_type: 'singles' | 'doubles';
   date: string;
-  notes?: string;
+  notes?: string | null;
+  invitation_id?: string; // Link to match invitation if created from invitation
 }
 
 export interface UpdateMatchData {
   club_id?: string;
   player1_id?: string;
   player2_id?: string | null;
-  opponent2_name?: string;
+  opponent2_name?: string | null;
   player3_id?: string | null;
-  partner3_name?: string;
+  partner3_name?: string | null;
   player4_id?: string | null;
-  partner4_name?: string;
+  partner4_name?: string | null;
   scores?: string;
   match_type?: 'singles' | 'doubles';
   date?: string;
-  notes?: string;
+  notes?: string | null;
 }
 
 export interface PlayerStats {
@@ -43,6 +44,24 @@ export interface PlayerStats {
   setsLost: number;
   gamesWon: number;
   gamesLost: number;
+}
+
+export interface RankedPlayer {
+  id: string;
+  name: string;
+  ranking: number;
+  rating: number;
+  points?: number;
+  playerId?: string;
+  playerName?: string;
+  isProvisional?: boolean;
+  stats: {
+    wins: number;
+    losses: number;
+    totalMatches: number;
+    winRate: number;
+    winPercentage: number;
+  };
 }
 
 /**
@@ -877,11 +896,16 @@ export const getClubLeaderboard = async (clubId: string): Promise<RankedPlayer[]
         name: player.name,
         ranking: index + 1,
         rating: player.eloRating,
+        points: player.eloRating, // Use ELO rating as points for now
+        playerId: player.id,
+        playerName: player.name,
+        isProvisional: player.gamesPlayed < 5, // Players with less than 5 games are provisional
         stats: {
           wins: player.wins,
           losses: player.losses,
           totalMatches: player.totalMatches,
           winRate: Math.round(player.winRate * 100),
+          winPercentage: Math.round(player.winRate * 100),
         },
       }));
 

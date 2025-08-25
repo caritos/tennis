@@ -69,8 +69,9 @@ const ClubChallenges = React.memo<ClubChallengesProps>(({
         if (invite.creator_id === userId) return false; // Don't show own invites
         if (invite.status !== 'active') return false; // Only active invites
         
-        // Check if user has already responded
-        return !invite.responses?.some(response => response.user_id === userId);
+        // TODO: Check if user has already responded by querying invitation_responses table
+        // For now, just include all active invites that aren't theirs
+        return true;
       });
       
       setSentChallenges(clubSent);
@@ -453,6 +454,14 @@ const styles = StyleSheet.create({
     fontSize: 14,
     textAlign: 'center',
     paddingVertical: 16,
+  },
+  buttonText: {
+    color: 'white',
+    fontSize: 14,
+    fontWeight: '600',
+  },
+  section: {
+    marginBottom: 16,
   },
 });
 

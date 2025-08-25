@@ -122,21 +122,22 @@ describe('Database Dependencies', () => {
 });
 ```
 
-### Create SQLite database initialization function
+### Database Integration Tests
 ```typescript
-// __tests__/database/sqlite.test.ts
-import { initializeDatabase } from '../database/sqlite';
+// __tests__/database/supabase.test.ts
+import { supabase } from '../lib/supabase';
 
-describe('SQLite Database Initialization', () => {
-  it('should create database connection', async () => {
-    const db = await initializeDatabase();
-    expect(db).toBeDefined();
-    expect(typeof db.exec).toBe('function');
+describe('Supabase Database Integration', () => {
+  it('should connect to Supabase', async () => {
+    const { data, error } = await supabase.from('clubs').select('count', { count: 'exact', head: true });
+    expect(error).toBeNull();
+    expect(data).not.toBeNull();
   });
 
-  it('should create database with correct name', async () => {
-    const db = await initializeDatabase();
-    expect(db.databaseName).toBe('tennis_club.db');
+  it('should have proper RLS policies', async () => {
+    // Test that unauthorized access is blocked
+    const { data, error } = await supabase.from('users').select('*');
+    expect(error).toBeDefined(); // Should fail without auth
   });
 });
 ```

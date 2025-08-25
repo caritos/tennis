@@ -41,10 +41,11 @@ export function Button({
   const isDisabled = disabled || isLoading;
 
   const getButtonStyle = (): ViewStyle[] => {
-    const baseStyle: ViewStyle[] = [
-      styles.base,
-      fullWidth && styles.fullWidth,
-    ];
+    const baseStyle: ViewStyle[] = [styles.base];
+    
+    if (fullWidth) {
+      baseStyle.push(styles.fullWidth);
+    }
 
     // Size styles
     switch (size) {

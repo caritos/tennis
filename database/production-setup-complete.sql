@@ -178,6 +178,7 @@ CREATE TABLE matches (
   match_type TEXT NOT NULL CHECK (match_type IN ('singles', 'doubles')),
   date DATE NOT NULL,
   notes TEXT,
+  invitation_id UUID REFERENCES match_invitations(id) ON DELETE SET NULL,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
@@ -274,6 +275,33 @@ CREATE TABLE club_notifications (
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
+-- Reports table for player behavior reporting
+CREATE TABLE reports (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  reporter_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  reported_user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  report_type TEXT NOT NULL CHECK (report_type IN ('spam', 'harassment', 'inappropriate', 'fake_profile', 'no_show', 'poor_behavior', 'unsportsmanlike', 'other')),
+  description TEXT NOT NULL,
+  match_id UUID REFERENCES matches(id) ON DELETE SET NULL,
+  invitation_id UUID REFERENCES match_invitations(id) ON DELETE SET NULL,
+  status TEXT NOT NULL DEFAULT 'pending' CHECK (status IN ('pending', 'reviewed', 'resolved', 'dismissed')),
+  reviewed_at TIMESTAMP WITH TIME ZONE,
+  reviewed_by UUID REFERENCES users(id),
+  resolution TEXT,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- Blocked users table for user blocking functionality
+CREATE TABLE blocked_users (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  blocker_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  blocked_user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  reason TEXT,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  UNIQUE(blocker_id, blocked_user_id)
+);
+
 -- ============================================================================
 -- PART 3: CREATE INDEXES
 -- ============================================================================
@@ -284,6 +312,7 @@ CREATE INDEX idx_clubs_location ON clubs(lat, lng);
 CREATE INDEX idx_matches_club ON matches(club_id);
 CREATE INDEX idx_matches_player1 ON matches(player1_id);
 CREATE INDEX idx_matches_date ON matches(date);
+CREATE INDEX idx_matches_invitation ON matches(invitation_id);
 CREATE INDEX idx_club_members_club ON club_members(club_id);
 CREATE INDEX idx_club_members_user ON club_members(user_id);
 CREATE INDEX idx_match_invitations_club ON match_invitations(club_id);
@@ -303,6 +332,13 @@ CREATE INDEX idx_notifications_read ON notifications(is_read);
 CREATE INDEX idx_notifications_created ON notifications(created_at);
 CREATE INDEX idx_club_notifications_club ON club_notifications(club_id);
 CREATE INDEX idx_club_notifications_created ON club_notifications(created_at);
+CREATE INDEX idx_reports_reporter ON reports(reporter_id);
+CREATE INDEX idx_reports_reported ON reports(reported_user_id);
+CREATE INDEX idx_reports_status ON reports(status);
+CREATE INDEX idx_reports_match ON reports(match_id);
+CREATE INDEX idx_reports_invitation ON reports(invitation_id);
+CREATE INDEX idx_blocked_users_blocker ON blocked_users(blocker_id);
+CREATE INDEX idx_blocked_users_blocked ON blocked_users(blocked_user_id);
 
 -- ============================================================================
 -- PART 4: CREATE TRIGGERS AND FUNCTIONS

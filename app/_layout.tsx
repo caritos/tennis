@@ -10,7 +10,6 @@ import { AuthProvider, useAuth } from '@/contexts/AuthContext';
 import { NotificationProvider } from '@/contexts/NotificationContext';
 import { OnboardingProvider, useOnboarding } from '@/contexts/OnboardingContext';
 import { useNotificationListener } from '@/hooks/useNotificationListener';
-import { useBadgeListener } from '@/hooks/useBadgeListener';
 
 // Hide the "Open debugger" warning in development
 if (__DEV__) {
@@ -24,7 +23,6 @@ function RootLayoutNav() {
   
   // Initialize notification and badge listeners
   useNotificationListener();
-  useBadgeListener();
 
   console.log('RootLayoutNav: Auth state -', { 
     user: user?.id || 'none', 

@@ -3,10 +3,10 @@ export { ThemedText } from './ThemedText';
 export { ThemedView } from './ThemedView';
 
 // Form Components
-export { FormHeader } from './FormHeader';
+export { default as FormHeader } from './FormHeader';
 export { EmailSignInForm } from './EmailSignInForm';
 export { EmailSignUpForm } from './EmailSignUpForm';
-export { AppleSignInButton } from './AppleSignInButton';
+export { default as AppleSignInButton } from './AppleSignInButton';
 
 // Tennis Components
 export { TennisScoreDisplay } from './TennisScoreDisplay';
@@ -28,10 +28,10 @@ export { PlayerStatsDisplay } from './PlayerStatsDisplay';
 // Modal & Dialog Components
 export { ConfirmDialog, InfoDialog, WarningDialog, ErrorDialog, SuccessDialog, DeleteConfirmDialog } from './ConfirmDialog';
 export { default as ChallengeFlowModal } from './ChallengeFlowModal';
-export { MatchInvitationForm } from './MatchInvitationForm';
+export { default as MatchInvitationForm } from './MatchInvitationForm';
 
 // Notification Components
-export { NotificationBanner } from './NotificationBanner';
+export { default as NotificationBanner } from './NotificationBanner';
 export { InlineNotificationBanner } from './InlineNotificationBanner';
 export { NotificationProvider, useNotification } from '../contexts/NotificationContext';
 
@@ -39,12 +39,12 @@ export { NotificationProvider, useNotification } from '../contexts/NotificationC
 export { SyncStatusIndicator } from './SyncStatusIndicator';
 export { CreateClubButton } from './CreateClubButton';
 export { CreateClubForm } from './CreateClubForm';
-export { MatchContactInfo } from './MatchContactInfo';
+export { default as MatchContactInfo } from './MatchContactInfo';
 export { MatchRecordingForm } from './MatchRecordingForm';
 
 // UI Components
 export { Collapsible } from './Collapsible';
-export { ParallaxScrollView } from './ParallaxScrollView';
+export { default as ParallaxScrollView } from './ParallaxScrollView';
 export { ExternalLink } from './ExternalLink';
 export { HapticTab } from './HapticTab';
 
@@ -54,7 +54,7 @@ export { WelcomeScreen } from './WelcomeScreen';
 export { HelloWave } from './HelloWave';
 export { NetworkTest } from './NetworkTest';
 export { CalendarDatePicker } from './CalendarDatePicker';
-export { ChallengeNotifications } from './ChallengeNotifications';
+export { default as ChallengeNotifications } from './ChallengeNotifications';
 
 // Type exports
 export type { PlayerCardData } from './PlayerCard';

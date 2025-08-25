@@ -22,12 +22,6 @@ jest.mock('../../../lib/supabase', () => ({
   },
 }));
 
-jest.mock('../../../database/database', () => ({
-  initializeDatabase: jest.fn(() => Promise.resolve({
-    runAsync: jest.fn(),
-    getFirstAsync: jest.fn(() => Promise.resolve(null)),
-  })),
-}));
 
 function TestComponent() {
   const { isLoading } = useAuth();

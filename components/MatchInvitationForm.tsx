@@ -29,10 +29,12 @@ const MatchInvitationForm: React.FC<MatchInvitationFormProps> = ({
   const { showSuccess, showError } = useNotification();
 
   const [matchType, setMatchType] = useState<'singles' | 'doubles'>('singles');
-  // Default to tomorrow's date in YYYY-MM-DD format
+  // Default to tomorrow's date in YYYY-MM-DD format (fix timezone issue)
   const tomorrow = new Date();
   tomorrow.setDate(tomorrow.getDate() + 1);
-  const [selectedDate, setSelectedDate] = useState<string>(tomorrow.toISOString().split('T')[0]);
+  // Use local timezone instead of UTC for date string
+  const tomorrowStr = `${tomorrow.getFullYear()}-${String(tomorrow.getMonth() + 1).padStart(2, '0')}-${String(tomorrow.getDate()).padStart(2, '0')}`;
+  const [selectedDate, setSelectedDate] = useState<string>(tomorrowStr);
   const [time, setTime] = useState('');
   const [location, setLocation] = useState('Location TBD');
   const [notes, setNotes] = useState('');
@@ -84,7 +86,8 @@ const MatchInvitationForm: React.FC<MatchInvitationFormProps> = ({
           .single();
 
         const creatorName = userData?.full_name || 'A club member';
-        const dateStr = new Date(selectedDate).toLocaleDateString('en-US', {
+        // Fix timezone issue: ensure date is parsed in local timezone, not UTC
+        const dateStr = new Date(selectedDate + 'T00:00:00').toLocaleDateString('en-US', {
           weekday: 'short',
           month: 'short',
           day: 'numeric'
@@ -136,6 +139,7 @@ const MatchInvitationForm: React.FC<MatchInvitationFormProps> = ({
   const formatDate = (dateString: string) => {
     if (!dateString) return '';
     
+    // Fix timezone issue: parse date in local timezone, not UTC
     const date = new Date(dateString + 'T00:00:00');
     const today = new Date();
     const tomorrow = new Date(today);

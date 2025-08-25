@@ -1,5 +1,4 @@
-import { Database } from '@/database/database';
-import QueryOptimizer from '@/database/queryOptimizer';
+import { supabase } from '@/lib/supabase';
 import { generateUUID } from '../utils/uuid';
 
 export interface Notification {
@@ -28,38 +27,33 @@ export interface CreateNotificationParams {
 }
 
 export class NotificationService {
-  private queryOptimizer: QueryOptimizer;
-
-  constructor(private db: Database) {
-    this.queryOptimizer = new QueryOptimizer(db);
-    // Initialize performance indexes
-    this.queryOptimizer.createPerformanceIndexes().catch(error => 
-      console.warn('Failed to create performance indexes:', error)
-    );
+  constructor() {
+    // Supabase-based implementation - no initialization needed
   }
 
   async createNotification(params: CreateNotificationParams): Promise<string> {
     const id = generateUUID();
     
     try {
-      await this.db.runAsync(
-        `INSERT INTO notifications (
-          id, user_id, type, title, message, is_read, 
-          action_type, action_data, related_id, expires_at
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-        [
+      const { error } = await supabase
+        .from('notifications')
+        .insert({
           id,
-          params.user_id,
-          params.type,
-          params.title,
-          params.message || null,
-          0, // is_read = false
-          params.action_type || null,
-          params.action_data ? JSON.stringify(params.action_data) : null,
-          params.related_id || null,
-          params.expires_at || null,
-        ]
-      );
+          user_id: params.user_id,
+          type: params.type,
+          title: params.title,
+          message: params.message || null,
+          is_read: false,
+          action_type: params.action_type || null,
+          action_data: params.action_data ? JSON.stringify(params.action_data) : null,
+          related_id: params.related_id || null,
+          expires_at: params.expires_at || null,
+        });
+
+      if (error) {
+        console.error('❌ Supabase error creating notification:', error);
+        throw error;
+      }
 
       console.log('✅ Notification created:', { id, title: params.title, user_id: params.user_id });
       return id;
@@ -71,16 +65,19 @@ export class NotificationService {
 
   async getNotifications(userId: string, limit: number = 50): Promise<Notification[]> {
     try {
-      const notifications = await this.queryOptimizer.cachedQuery<Notification>(
-        `SELECT * FROM notifications 
-         WHERE user_id = ? 
-         ORDER BY created_at DESC 
-         LIMIT ?`,
-        [userId, limit],
-        30 // Cache for 30 seconds
-      );
+      const { data, error } = await supabase
+        .from('notifications')
+        .select('*')
+        .eq('user_id', userId)
+        .order('created_at', { ascending: false })
+        .limit(limit);
 
-      return notifications.map(notification => ({
+      if (error) {
+        console.error('❌ Supabase error getting notifications:', error);
+        throw error;
+      }
+
+      return (data || []).map(notification => ({
         ...notification,
         is_read: Boolean(notification.is_read),
         action_data: notification.action_data ? JSON.parse(notification.action_data) : undefined,
@@ -93,13 +90,18 @@ export class NotificationService {
 
   async getUnreadCount(userId: string): Promise<number> {
     try {
-      const result = await this.queryOptimizer.cachedQuery<{ count: number }>(
-        'SELECT COUNT(*) as count FROM notifications WHERE user_id = ? AND is_read = 0',
-        [userId],
-        60 // Cache unread count for 1 minute
-      );
+      const { count, error } = await supabase
+        .from('notifications')
+        .select('*', { count: 'exact' })
+        .eq('user_id', userId)
+        .eq('is_read', false);
 
-      return result[0]?.count || 0;
+      if (error) {
+        console.error('❌ Supabase error getting unread count:', error);
+        return 0;
+      }
+
+      return count || 0;
     } catch (error) {
       console.error('❌ Failed to get unread count:', error);
       return 0;
@@ -108,13 +110,15 @@ export class NotificationService {
 
   async markAsRead(notificationId: string): Promise<void> {
     try {
-      await this.db.runAsync(
-        'UPDATE notifications SET is_read = 1 WHERE id = ?',
-        [notificationId]
-      );
+      const { error } = await supabase
+        .from('notifications')
+        .update({ is_read: true })
+        .eq('id', notificationId);
 
-      // Clear cache to ensure fresh data on next read
-      this.queryOptimizer.clearCache();
+      if (error) {
+        console.error('❌ Supabase error marking notification as read:', error);
+        throw error;
+      }
       
       console.log('✅ Notification marked as read:', notificationId);
     } catch (error) {
@@ -125,13 +129,16 @@ export class NotificationService {
 
   async markAllAsRead(userId: string): Promise<void> {
     try {
-      await this.db.runAsync(
-        'UPDATE notifications SET is_read = 1 WHERE user_id = ? AND is_read = 0',
-        [userId]
-      );
+      const { error } = await supabase
+        .from('notifications')
+        .update({ is_read: true })
+        .eq('user_id', userId)
+        .eq('is_read', false);
 
-      // Clear cache to ensure fresh data on next read
-      this.queryOptimizer.clearCache();
+      if (error) {
+        console.error('❌ Supabase error marking all notifications as read:', error);
+        throw error;
+      }
       
       console.log('✅ All notifications marked as read for user:', userId);
     } catch (error) {
@@ -142,13 +149,15 @@ export class NotificationService {
 
   async deleteNotification(notificationId: string): Promise<void> {
     try {
-      await this.db.runAsync(
-        'DELETE FROM notifications WHERE id = ?',
-        [notificationId]
-      );
+      const { error } = await supabase
+        .from('notifications')
+        .delete()
+        .eq('id', notificationId);
 
-      // Clear cache to ensure fresh data on next read
-      this.queryOptimizer.clearCache();
+      if (error) {
+        console.error('❌ Supabase error deleting notification:', error);
+        throw error;
+      }
       
       console.log('✅ Notification deleted:', notificationId);
     } catch (error) {
@@ -160,10 +169,16 @@ export class NotificationService {
   async deleteExpiredNotifications(): Promise<void> {
     try {
       const now = new Date().toISOString();
-      await this.db.runAsync(
-        'DELETE FROM notifications WHERE expires_at IS NOT NULL AND expires_at < ?',
-        [now]
-      );
+      const { error } = await supabase
+        .from('notifications')
+        .delete()
+        .not('expires_at', 'is', null)
+        .lt('expires_at', now);
+
+      if (error) {
+        console.error('❌ Supabase error deleting expired notifications:', error);
+        throw error;
+      }
 
       console.log('✅ Expired notifications cleaned up');
     } catch (error) {

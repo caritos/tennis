@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useEffect, useState, ReactNode } from 'react';
 import { User } from '@supabase/supabase-js';
 import { supabase } from '@/lib/supabase';
+import { AuthErrorHandler } from '@/services/authErrorHandler';
 
 interface UserProfile {
   id: string;
@@ -50,6 +51,11 @@ export function AuthProvider({ children }: AuthProviderProps) {
         
         if (error) {
           console.error('❌ AuthContext: Session error:', error);
+          
+          // Handle auth errors properly
+          if (AuthErrorHandler.isAuthError(error)) {
+            await AuthErrorHandler.getInstance().handleAuthError(error);
+          }
         } else if (session?.user) {
           console.log('✅ AuthContext: Found existing session for:', session.user.email);
           
@@ -58,8 +64,13 @@ export function AuthProvider({ children }: AuthProviderProps) {
         } else {
           console.log('📭 AuthContext: No existing session');
         }
-      } catch (error) {
+      } catch (error: any) {
         console.error('❌ AuthContext: Failed to get session:', error);
+        
+        // Handle auth errors
+        if (AuthErrorHandler.isAuthError(error)) {
+          await AuthErrorHandler.getInstance().handleAuthError(error);
+        }
       } finally {
         setIsLoading(false);
       }
@@ -71,9 +82,28 @@ export function AuthProvider({ children }: AuthProviderProps) {
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
       console.log('🔐 AuthContext: Auth state changed:', event, session?.user?.email);
       
+      // Handle specific auth events
+      if (event === 'TOKEN_REFRESHED') {
+        console.log('🔄 AuthContext: Token refreshed successfully');
+      } else if (event === 'SIGNED_OUT') {
+        console.log('🚪 AuthContext: User signed out');
+        setUser(null);
+        setIsFirstTimeUser(false);
+        setIsOnboardingComplete(false);
+      } else if (event === 'USER_UPDATED') {
+        console.log('👤 AuthContext: User updated');
+      }
+      
       if (session?.user) {
-        await loadUserProfile(session.user);
-      } else {
+        try {
+          await loadUserProfile(session.user);
+        } catch (error: any) {
+          console.error('❌ AuthContext: Error loading profile:', error);
+          if (AuthErrorHandler.isAuthError(error)) {
+            await AuthErrorHandler.getInstance().handleAuthError(error);
+          }
+        }
+      } else if (event !== 'SIGNED_OUT') {
         setUser(null);
         setIsFirstTimeUser(false);
         setIsOnboardingComplete(false);

@@ -164,7 +164,7 @@ describe('Club Joining Functionality', () => {
       const clubId = 'club-123';
 
       const constraintError = new Error('Database constraint violation');
-      (constraintError as any).code = 'SQLITE_CONSTRAINT';
+      (constraintError as any).code = '23505'; // PostgreSQL unique violation
       
       mockClubService.joinClub.mockRejectedValue(constraintError);
 

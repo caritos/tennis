@@ -3,6 +3,9 @@ module.exports = {
   setupFilesAfterEnv: [
     '<rootDir>/jest.setup.js'
   ],
+  moduleNameMapper: {
+    '^@/(.*)$': '<rootDir>/$1'
+  },
   testMatch: [
     '<rootDir>/tests/unit/**/*.test.{ts,tsx}',
     '<rootDir>/tests/integration/**/*.test.{ts,tsx}'
@@ -45,18 +48,32 @@ module.exports = {
   projects: [
     {
       displayName: 'unit',
+      preset: 'jest-expo',
       testMatch: ['<rootDir>/tests/unit/**/*.test.{ts,tsx}'],
       setupFilesAfterEnv: [
         '<rootDir>/jest.setup.js'
       ],
+      moduleNameMapper: {
+        '^@/(.*)$': '<rootDir>/$1'
+      },
+      transformIgnorePatterns: [
+        'node_modules/(?!((jest-)?react-native|@react-native(-community)?)|expo(nent)?|@expo(nent)?/.*|@expo-google-fonts/.*|react-navigation|@react-navigation/.*|@unimodules/.*|unimodules|sentry-expo|native-base|react-native-svg|@supabase/.*|isows|@testing-library/react-native)'
+      ],
     },
     {
       displayName: 'integration',
+      preset: 'jest-expo',
       testMatch: ['<rootDir>/tests/integration/**/*.test.{ts,tsx}'],
       setupFilesAfterEnv: [
         '<rootDir>/jest.setup.js',
         '<rootDir>/tests/setup/testUtils.js',
         '<rootDir>/tests/setup/testDatabase.ts'
+      ],
+      moduleNameMapper: {
+        '^@/(.*)$': '<rootDir>/$1'
+      },
+      transformIgnorePatterns: [
+        'node_modules/(?!((jest-)?react-native|@react-native(-community)?)|expo(nent)?|@expo(nent)?/.*|@expo-google-fonts/.*|react-navigation|@react-navigation/.*|@unimodules/.*|unimodules|sentry-expo|native-base|react-native-svg|@supabase/.*|isows|@testing-library/react-native)'
       ],
     }
   ]

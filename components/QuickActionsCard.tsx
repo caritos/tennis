@@ -364,7 +364,7 @@ const styles = StyleSheet.create({
     marginRight: 8,
   },
   chevron: {
-    transition: 'transform 0.3s ease',
+    // Transition handled by Animated.View
   },
   contentWrapper: {
     overflow: 'hidden',

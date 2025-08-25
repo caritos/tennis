@@ -206,8 +206,8 @@ export const NotificationList: React.FC = () => {
       // Navigate to match details (would need to implement this route)
       console.log('Navigate to match:', notification.related_id);
     } else if (notification.action_type === 'view_ranking') {
-      // Navigate to rankings
-      router.push('/clubs');
+      // Navigate to clubs tab to view rankings
+      router.push('/(tabs)');
     }
   };
 
@@ -216,9 +216,10 @@ export const NotificationList: React.FC = () => {
 
     try {
       await notificationService.markAsRead(notificationId);
-      setNotifications(prev => 
-        prev.map(n => n.id === notificationId ? { ...n, is_read: true } : n)
+      const updatedNotifications = notifications.map((n: Notification) => 
+        n.id === notificationId ? { ...n, is_read: true } : n
       );
+      setNotifications(updatedNotifications);
     } catch (error) {
       console.error('Failed to mark notification as read:', error);
     }
@@ -229,7 +230,8 @@ export const NotificationList: React.FC = () => {
 
     try {
       await notificationService.markAllAsRead(user.id);
-      setNotifications(prev => prev.map(n => ({ ...n, is_read: true })));
+      const updatedNotifications = notifications.map((n: Notification) => ({ ...n, is_read: true }));
+      setNotifications(updatedNotifications);
       showSuccess('All notifications marked as read');
     } catch (error) {
       console.error('Failed to mark all as read:', error);
@@ -340,7 +342,7 @@ export const NotificationList: React.FC = () => {
                   onPress={handleNotificationPress}
                   onMarkAsRead={handleMarkAsRead}
                   onChallengeAction={handleChallengeAction}
-                  colorScheme={colorScheme}
+                  colorScheme={colorScheme ?? 'light'}
                 />
               ))}
             </View>

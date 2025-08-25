@@ -115,7 +115,27 @@
         },
         {
           "question": "How do I report inappropriate behavior?",
-          "answer": "Contact your club administrator for club-specific issues. For app-wide concerns or serious violations, email support@caritos.com"
+          "answer": "After playing a match, you can report player issues directly from the match recording screen:\n• Tap 'Record Results' after your match\n• Look for 'Report Player Issue' section (collapsed by default)\n• Select the player(s) and describe what happened\n• Reports are tied to specific matches to prevent abuse\n\nFor urgent safety concerns, email support@caritos.com immediately."
+        },
+        {
+          "question": "What happens when someone is reported?",
+          "answer": "Reports are reviewed by our safety team:\n• **2 reports**: Player receives a warning notification\n• **3 reports**: 7-day temporary removal from the club\n• **4+ reports**: Permanent ban from the club\n\nAll reports are investigated to ensure fairness. False reports may result in action against the reporter."
+        },
+        {
+          "question": "What types of behavior should I report?",
+          "answer": "Report serious violations only:\n• **No Show**: Player didn't appear for scheduled match\n• **Poor Behavior**: Inappropriate conduct during match\n• **Unsportsmanlike Conduct**: Cheating, verbal abuse, or unfair play\n• **Other Issues**: Safety concerns or community guideline violations\n\nDon't report minor disagreements or skill mismatches."
+        },
+        {
+          "question": "Can I report multiple players from one match?",
+          "answer": "• **Singles matches**: You can report one player (radio button selection)\n• **Doubles matches**: You can report multiple players (checkbox selection)\n• Each player can only be reported once per match\n• This prevents report threshold manipulation"
+        },
+        {
+          "question": "When can I report a player?",
+          "answer": "You can only report players after a match has been played:\n• Reports must be submitted when recording match results\n• Cannot report players before the match occurs\n• Reports are permanently tied to that specific match\n• This ensures all reports have proper context"
+        },
+        {
+          "question": "How is my privacy protected when reporting?",
+          "answer": "• Reports are confidential - reported players don't see who reported them\n• Only safety team members can view report details\n• Your identity is protected throughout the review process\n• Contact information is only shared with match participants"
         }
       ]
     },

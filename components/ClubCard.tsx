@@ -5,7 +5,6 @@ import { ThemedView } from './ThemedView';
 import { ClubBadge } from './ClubBadge';
 import { Colors } from '@/constants/Colors';
 import { useColorScheme } from '@/hooks/useColorScheme';
-import { useClubBadges } from '@/hooks/useClubBadges';
 import { Club } from '@/lib/supabase';
 
 interface ClubCardProps {
@@ -20,9 +19,6 @@ interface ClubCardProps {
 export function ClubCard({ club, onPress, onJoin, distance, isJoined, isJoining }: ClubCardProps) {
   const colorScheme = useColorScheme();
   const colors = Colors[colorScheme ?? 'light'];
-  const { getClubBadgeData } = useClubBadges();
-  
-  const clubBadgeData = isJoined ? getClubBadgeData(club.id) : null;
 
   const formatDistance = (distance: number): string => {
     // Distance is in kilometers, convert and format appropriately
@@ -89,14 +85,6 @@ export function ClubCard({ club, onPress, onJoin, distance, isJoined, isJoining 
               <ThemedText type="defaultSemiBold" style={styles.clubName} numberOfLines={1}>
                 {club.name}
               </ThemedText>
-              {clubBadgeData && (
-                <ClubBadge 
-                  clubBadgeData={clubBadgeData}
-                  size="small"
-                  style={styles.clubBadge}
-                  showUrgencyIndicator={true}
-                />
-              )}
             </View>
           </View>
           <View style={styles.rightContainer}>

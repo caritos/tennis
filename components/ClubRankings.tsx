@@ -41,8 +41,8 @@ const getTrendingPlayers = (rankings: RankedPlayer[]): RankedPlayer[] => {
   
   // Sort by a combination of win percentage, recent activity, and points
   const sorted = trendingCandidates.sort((a, b) => {
-    const aScore = (a.stats.winPercentage * 0.4) + (a.stats.totalMatches * 2) + (a.points * 0.001);
-    const bScore = (b.stats.winPercentage * 0.4) + (b.stats.totalMatches * 2) + (b.points * 0.001);
+    const aScore = (a.stats.winPercentage * 0.4) + (a.stats.totalMatches * 2) + ((a.points || 0) * 0.001);
+    const bScore = (b.stats.winPercentage * 0.4) + (b.stats.totalMatches * 2) + ((b.points || 0) * 0.001);
     return bScore - aScore;
   });
   
@@ -82,10 +82,10 @@ export function ClubRankings({
   const renderPlayer = (player: RankedPlayer) => {
     const winRate = player.stats.winPercentage;
     const record = `${player.stats.wins}-${player.stats.losses}`;
-    const isCurrentUser = player.playerId === currentUserId;
+    const isCurrentUser = (player.playerId || player.id) === currentUserId;
 
     return (
-      <View key={player.playerId} style={styles.rankingItem}>
+      <View key={player.playerId || player.id} style={styles.rankingItem}>
         <View style={styles.playerContent}>
           <View style={styles.rankingLeft}>
             <ThemedText style={styles.rankNumber}>{player.ranking}.</ThemedText>
@@ -124,17 +124,17 @@ export function ClubRankings({
           <TouchableOpacity
             style={[
               styles.challengeButton, 
-              { borderColor: pendingChallenges.has(player.playerId) ? colors.tabIconDefault : colors.tint },
-              pendingChallenges.has(player.playerId) && styles.challengeButtonDisabled
+              { borderColor: pendingChallenges.has(player.playerId || player.id) ? colors.tabIconDefault : colors.tint },
+              pendingChallenges.has(player.playerId || player.id) && styles.challengeButtonDisabled
             ]}
-            onPress={() => onChallengePress(player.playerId, player.playerName)}
-            disabled={pendingChallenges.has(player.playerId)}
+            onPress={() => onChallengePress(player.playerId || player.id, player.playerName || player.name)}
+            disabled={pendingChallenges.has(player.playerId || player.id)}
           >
             <ThemedText style={[
               styles.challengeButtonText, 
-              { color: pendingChallenges.has(player.playerId) ? colors.tabIconDefault : colors.tint }
+              { color: pendingChallenges.has(player.playerId || player.id) ? colors.tabIconDefault : colors.tint }
             ]}>
-              {pendingChallenges.has(player.playerId) ? 'Pending' : 'Challenge'}
+              {pendingChallenges.has(player.playerId || player.id) ? 'Pending' : 'Challenge'}
             </ThemedText>
           </TouchableOpacity>
         )}
@@ -157,7 +157,7 @@ export function ClubRankings({
       {rankings.length > 0 ? (
         <View style={[styles.rankingsList, { borderColor: colors.tabIconDefault + '30' }]}>
           {displayedRankings.map((player, index) => (
-            <React.Fragment key={player.playerId}>
+            <React.Fragment key={player.playerId || player.id}>
               {renderPlayer(player)}
               {index < displayedRankings.length - 1 && (
                 <View style={[styles.divider, { backgroundColor: colors.tabIconDefault + '20' }]} />

@@ -14,53 +14,99 @@ import { ThemedView } from './ThemedView';
 import { useColorScheme } from '@/hooks/useColorScheme';
 import { Colors } from '@/constants/Colors';
 
-export type ReportType = 'spam' | 'harassment' | 'inappropriate' | 'fake_profile' | 'other';
+export type ReportType = 'spam' | 'harassment' | 'inappropriate' | 'fake_profile' | 'no_show' | 'poor_behavior' | 'unsportsmanlike' | 'other';
 
 interface ReportModalProps {
   visible: boolean;
   onClose: () => void;
-  reportedUserId: string;
-  reportedUserName: string;
+  reportedUserId?: string;
+  reportedUserName?: string;
+  matchContext?: {
+    invitationId: string;
+    matchDate: string;
+    matchType: 'singles' | 'doubles';
+    clubName?: string;
+    players: {
+      id: string;
+      name: string;
+      phone?: string;
+    }[];
+  };
   onSubmitReport: (reportData: {
     type: ReportType;
     description: string;
-    reportedUserId: string;
+    reportedUserId?: string; // For backward compatibility
+    reportedPlayerIds?: string[]; // For multiple player reporting
+    matchContext?: {
+      invitationId: string;
+      matchDate: string;
+      matchType: 'singles' | 'doubles';
+      clubName?: string;
+    };
   }) => Promise<void>;
 }
 
-const REPORT_TYPES: { key: ReportType; label: string; description: string }[] = [
-  {
-    key: 'spam',
-    label: 'Spam or Unwanted Content',
-    description: 'Excessive promotional content or irrelevant messages'
-  },
-  {
-    key: 'harassment',
-    label: 'Harassment or Bullying',
-    description: 'Abusive, threatening, or intimidating behavior'
-  },
-  {
-    key: 'inappropriate',
-    label: 'Inappropriate Content',
-    description: 'Content that violates community guidelines'
-  },
-  {
-    key: 'fake_profile',
-    label: 'Fake Profile',
-    description: 'Impersonation or misleading identity'
-  },
-  {
-    key: 'other',
+const getReportTypes = (hasMatchContext: boolean): { key: ReportType; label: string; description: string }[] => {
+  const baseTypes = [
+    {
+      key: 'spam' as ReportType,
+      label: 'Spam or Unwanted Content',
+      description: 'Excessive promotional content or irrelevant messages'
+    },
+    {
+      key: 'harassment' as ReportType,
+      label: 'Harassment or Bullying',
+      description: 'Abusive, threatening, or intimidating behavior'
+    },
+    {
+      key: 'inappropriate' as ReportType,
+      label: 'Inappropriate Content',
+      description: 'Content that violates community guidelines'
+    },
+    {
+      key: 'fake_profile' as ReportType,
+      label: 'Fake Profile',
+      description: 'Impersonation or misleading identity'
+    }
+  ];
+
+  const matchSpecificTypes = [
+    {
+      key: 'no_show' as ReportType,
+      label: 'Did Not Show Up',
+      description: 'Player failed to appear for the scheduled match'
+    },
+    {
+      key: 'poor_behavior' as ReportType,
+      label: 'Poor Behavior During Match',
+      description: 'Inappropriate conduct during or around the match'
+    },
+    {
+      key: 'unsportsmanlike' as ReportType,
+      label: 'Unsportsmanlike Conduct',
+      description: 'Bad sportsmanship, cheating, or unfair play'
+    }
+  ];
+
+  const otherType = {
+    key: 'other' as ReportType,
     label: 'Other',
-    description: 'Other safety or community guideline violations'
-  }
-];
+    description: hasMatchContext 
+      ? 'Other match-related issues or community guideline violations'
+      : 'Other safety or community guideline violations'
+  };
+
+  return hasMatchContext 
+    ? [...matchSpecificTypes, ...baseTypes, otherType]
+    : [...baseTypes, otherType];
+};
 
 export function ReportModal({
   visible,
   onClose,
   reportedUserId,
   reportedUserName,
+  matchContext,
   onSubmitReport
 }: ReportModalProps) {
   const colorScheme = useColorScheme();
@@ -69,6 +115,9 @@ export function ReportModal({
   const [selectedType, setSelectedType] = useState<ReportType | null>(null);
   const [description, setDescription] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  
+  const reportTypes = getReportTypes(!!matchContext);
+  const hasMatchContext = !!matchContext;
 
   const handleSubmit = async () => {
     if (!selectedType) {
@@ -86,7 +135,8 @@ export function ReportModal({
       await onSubmitReport({
         type: selectedType,
         description: description.trim(),
-        reportedUserId
+        reportedUserId,
+        matchContext
       });
 
       Alert.alert(
@@ -140,8 +190,26 @@ export function ReportModal({
             <ThemedText type="subtitle" style={styles.sectionTitle}>
               Reporting: {reportedUserName}
             </ThemedText>
+            {matchContext && (
+              <ThemedView style={[styles.matchContextBox, { backgroundColor: colors.tint + '10', borderColor: colors.tint + '30' }]}>
+                <ThemedText style={[styles.matchContextTitle, { color: colors.tint }]}>
+                  🎾 Match Context
+                </ThemedText>
+                <ThemedText style={[styles.matchContextText, { color: colors.text }]}>
+                  {matchContext.matchType.charAt(0).toUpperCase() + matchContext.matchType.slice(1)} match on {new Date(matchContext.matchDate).toLocaleDateString()}
+                </ThemedText>
+                {matchContext.clubName && (
+                  <ThemedText style={[styles.matchContextText, { color: colors.tabIconDefault }]}>
+                    at {matchContext.clubName}
+                  </ThemedText>
+                )}
+              </ThemedView>
+            )}
             <ThemedText style={[styles.sectionDescription, { color: colors.tabIconDefault }]}>
-              Your report will be reviewed by our safety team. False reports may result in account restrictions.
+              {hasMatchContext 
+                ? 'This report is related to a specific match. Your report will be reviewed by our safety team.'
+                : 'Your report will be reviewed by our safety team. False reports may result in account restrictions.'
+              }
             </ThemedText>
           </ThemedView>
 
@@ -151,7 +219,7 @@ export function ReportModal({
               Why are you reporting this user?
             </ThemedText>
             
-            {REPORT_TYPES.map((reportType) => (
+            {reportTypes.map((reportType) => (
               <TouchableOpacity
                 key={reportType.key}
                 style={[
@@ -351,6 +419,21 @@ const styles = StyleSheet.create({
     fontSize: 14,
     marginLeft: 8,
     fontWeight: '500',
+  },
+  matchContextBox: {
+    padding: 12,
+    borderRadius: 8,
+    borderWidth: 1,
+    marginVertical: 8,
+  },
+  matchContextTitle: {
+    fontSize: 14,
+    fontWeight: '600',
+    marginBottom: 4,
+  },
+  matchContextText: {
+    fontSize: 14,
+    marginBottom: 2,
   },
   footer: {
     padding: 20,

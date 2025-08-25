@@ -11,7 +11,7 @@ Play Serve is a React Native tennis community app built with Expo, focusing on c
 - **Framework**: React Native with Expo (Managed Workflow)
 - **Navigation**: Expo Router (file-based routing)
 - **Backend**: Supabase (PostgreSQL + Auth + Real-time + Notifications)
-- **Data Architecture**: Supabase-only (no local SQLite database)
+- **Data Architecture**: Supabase PostgreSQL database
 - **State Management**: React Context
 - **Testing**: Jest (unit), Maestro (E2E)
 - **Build System**: EAS Build
@@ -25,7 +25,7 @@ Play Serve is a React Native tennis community app built with Expo, focusing on c
 ├── contexts/               # React Context providers (Auth, Notifications, etc.)
 ├── hooks/                  # Custom React hooks
 ├── services/               # Business logic and external service integrations
-├── database/               # Legacy database schemas (deprecated - Supabase only)
+├── database/               # Supabase database schemas (production-setup-complete.sql)
 ├── data/                   # Single source of truth for content (FAQ, legal docs)
 ├── docs/                   # Comprehensive project documentation
 ├── tests/                  # Unit and integration tests
@@ -70,7 +70,7 @@ Play Serve is a React Native tennis community app built with Expo, focusing on c
 ### **Supabase-Only Data Architecture**
 > "All data operations go through Supabase"
 
-- **No Local SQLite Database**: All data is stored and accessed via Supabase PostgreSQL
+- **Supabase PostgreSQL**: All data is stored and accessed via Supabase
 - **Real-time Subscriptions**: Live updates for challenges, notifications, and matches
 - **Contact Sharing**: Phone numbers shared through Supabase notifications system
 - **Challenge System**: Singles (2 players) and doubles (4 players) contact coordination
@@ -126,7 +126,6 @@ Supabase provides the complete backend with PostgreSQL database. All data operat
 - **Notifications**: Real-time notifications stored in Supabase `notifications` table
 - **Matches & Clubs**: All tennis-related data in Supabase tables
 - **Row Level Security (RLS)**: Enabled for all tables with proper access policies
-- **Legacy SQLite**: Completely removed from architecture - Supabase only
 
 ### **Log Access**
 Development logs are available at `logs/expo.log`. Use a subagent to tail and analyze logs when debugging.

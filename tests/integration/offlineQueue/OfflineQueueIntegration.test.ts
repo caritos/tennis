@@ -1,15 +1,15 @@
 // Integration tests for the complete offline queue system
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import NetInfo from '@react-native-community/netinfo';
-import { OfflineQueueManager } from '../../../services/offlineQueue/OfflineQueueManager';
-import { NetworkManager } from '../../../services/offlineQueue/NetworkManager';
-import { SyncService } from '../../../services/sync';
-import { supabase } from '../../../lib/supabase';
+import { OfflineQueueManager } from '@/services/offlineQueue/OfflineQueueManager';
+import { NetworkManager } from '@/services/offlineQueue/NetworkManager';
+import { SyncService } from '@/services/sync';
+import { supabase } from '@/lib/supabase';
 
 // Mock external dependencies
 jest.mock('@react-native-async-storage/async-storage');
 jest.mock('@react-native-community/netinfo');
-jest.mock('../../../lib/supabase');
+jest.mock('@/lib/supabase');
 
 describe('Offline Queue Integration', () => {
   const mockAsyncStorage = AsyncStorage as jest.Mocked<typeof AsyncStorage>;

@@ -84,7 +84,7 @@ const NotificationBanner: React.FC<NotificationBannerProps> = ({
         <Ionicons 
           name="shield-checkmark" 
           size={24} 
-          color={notificationColors.iconColor} 
+          color={notificationColors.text} 
         />
       );
     }

@@ -2,8 +2,8 @@ const React = require('react');
 const { render: rtlRender } = require('@testing-library/react-native');
 
 // Mock all the common dependencies that tests frequently need
-jest.mock('@/hooks/useColorScheme', () => ({
-  useColorScheme: jest.fn(() => 'light'),
+jest.mock('react-native/Libraries/Utilities/useColorScheme', () => ({
+  default: jest.fn(() => 'light'),
 }));
 
 jest.mock('@/constants/Colors', () => ({

@@ -106,6 +106,7 @@ export interface ClubFactoryOptions {
   member_count?: number;
   latitude?: number;
   longitude?: number;
+  creator_id?: string;
   created_at?: string;
 }
 
@@ -114,10 +115,11 @@ export const createClub = (options: ClubFactoryOptions = {}): Club => ({
   name: options.name || 'Test Tennis Club',
   description: options.description || 'A great club for testing',
   location: options.location || 'Test City, TC',
-  member_count: options.member_count !== undefined ? options.member_count : 25,
-  latitude: options.latitude || 40.7128,
-  longitude: options.longitude || -74.0060,
+  lat: options.latitude || 40.7128,
+  lng: options.longitude || -74.0060,
+  creator_id: 'test-creator-id',
   created_at: options.created_at || '2024-01-01T00:00:00Z',
+  memberCount: options.member_count !== undefined ? options.member_count : 25,
 });
 
 /**
@@ -165,6 +167,8 @@ export interface UserFactoryOptions {
   email?: string;
   full_name?: string;
   phone?: string;
+  role?: 'player' | 'admin';
+  contact_preference?: 'whatsapp' | 'phone' | 'text';
   created_at?: string;
 }
 
@@ -173,6 +177,8 @@ export const createUser = (options: UserFactoryOptions = {}): User => ({
   email: options.email || 'test@example.com',
   full_name: options.full_name || 'Test User',
   phone: options.phone || '+1234567890',
+  role: 'player',
+  contact_preference: 'phone',
   created_at: options.created_at || '2024-01-01T00:00:00Z',
 });
 
@@ -218,11 +224,12 @@ export const createTestScenario = {
     for (let i = 0; i < matchCount; i++) {
       const scenario = scenarios[i % scenarios.length];
       const date = new Date(2024, 0, 15 - i); // Recent to older
-      matches.push(scenario(playerId).then(match => ({
+      const match = scenario(playerId);
+      matches.push({
         ...match,
         date: date.toISOString().split('T')[0],
         created_at: date.toISOString(),
-      })));
+      });
     }
 
     return matches;
@@ -242,10 +249,14 @@ export const createTestScenario = {
         email: `member${i + 1}@club.com`,
       });
       members.push(member);
-
-      // Create matches for this member
+    }
+    
+    // Create matches between members
+    for (let i = 0; i < memberCount; i++) {
+      const member = members[i];
       for (let j = 0; j < matchesPerMember; j++) {
-        const opponent = members[Math.floor(Math.random() * members.length)];
+        const randomOpponentIndex = Math.floor(Math.random() * members.length);
+        const opponent = members[randomOpponentIndex];
         if (opponent && opponent.id !== member.id) {
           matches.push(createMatch({
             club_id: club.id,
@@ -282,7 +293,9 @@ export const validateTestData = {
       club.id &&
       club.name &&
       club.location &&
-      typeof club.member_count === 'number'
+      club.creator_id &&
+      typeof club.lat === 'number' &&
+      typeof club.lng === 'number'
     );
   },
 

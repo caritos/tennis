@@ -1,11 +1,11 @@
 import React from 'react';
-import { View, Button, StyleSheet } from 'react-native';
+import { View, StyleSheet } from 'react-native';
+import { Button } from '../ui/Button';
 
 interface FormActionsProps {
   onSave: () => void;
   onCancel?: () => void;
   saveButtonTitle?: string;
-  saveButtonColor: string;
   isEditing?: boolean;
 }
 
@@ -13,7 +13,6 @@ const FormActions = React.memo(function FormActions({
   onSave,
   onCancel,
   saveButtonTitle = 'Save Match',
-  saveButtonColor,
   isEditing = false,
 }: FormActionsProps) {
   return (
@@ -23,14 +22,16 @@ const FormActions = React.memo(function FormActions({
           <Button
             title="Cancel"
             onPress={onCancel}
-            color="#666666"
+            variant="secondary"
+            fullWidth={true}
           />
         </View>
       )}
       <Button
         title={isEditing ? 'Update Match' : saveButtonTitle}
         onPress={onSave}
-        color={saveButtonColor}
+        variant="primary"
+        fullWidth={true}
         testID="save-match-button"
       />
     </View>
