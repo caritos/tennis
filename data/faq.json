@@ -57,6 +57,22 @@
         {
           "question": "How do I filter matches in the Matches tab?",
           "answer": "The Matches tab provides simple filtering options:\n• **Type**: Filter by match format (All, Singles, or Doubles)\n• **Date**: Filter by time period (All Time, Last Week, or Last Month)\n\nThese filters help you quickly find specific matches or review recent club activity."
+        },
+        {
+          "question": "What happens after I join a Looking to Play match?",
+          "answer": "Once you join a match invitation:\n• **Contact sharing**: Your phone number is shared with other participants (and theirs with you)\n• **Private coordination**: Coordinate match details privately via phone/text outside the app\n• **Upcoming matches**: The match appears in your upcoming matches list\n• **Match day**: Play your match at the agreed time and location\n• **Post-match**: Record results via the notification that appears in your club's overview tab"
+        },
+        {
+          "question": "How do I coordinate with my tennis partners?",
+          "answer": "Coordination happens privately outside the app:\n• **Contact exchange**: Phone numbers are automatically shared when you join a match\n• **Direct communication**: Use phone calls or text messages to coordinate\n• **Discuss details**: Arrange specific court, time confirmation, and any other logistics\n• **Stay flexible**: Players handle schedule changes and communication directly\n\nPlay Serve focuses on connecting you - the actual coordination is up to you and your playing partners."
+        },
+        {
+          "question": "Can I cancel a confirmed match?",
+          "answer": "Match cancellations are handled privately between players:\n• **Contact directly**: Use the shared phone numbers to communicate with your partners\n• **Be courteous**: Give as much notice as possible if you need to cancel\n• **Stay responsible**: Frequent cancellations may affect your reputation in the club\n• **No app management**: Play Serve doesn't manage cancellations - handle them directly via phone/text\n\nRemember, other players are counting on you, so communicate any changes promptly."
+        },
+        {
+          "question": "Who can see my contact information?",
+          "answer": "Your contact information is shared selectively:\n• **Match participants only**: Only players confirmed in the same match can see your phone number\n• **Automatic sharing**: Contact info is shared when you join a match invitation\n• **Privacy protection**: Other club members cannot see your contact details\n• **Match-specific**: Contact sharing is limited to that specific match only\n\nThis ensures privacy while enabling necessary coordination for confirmed matches."
         }
       ]
     },
