@@ -45,7 +45,7 @@ export default function ClubDetailScreen() {
   const [memberSortBy, setMemberSortBy] = useState<'name' | 'wins' | 'matches' | 'joined' | 'ranking'>('name');
   const [memberFilterBy, setMemberFilterBy] = useState<'all' | 'active' | 'new'>('all');
   const [matchFilterType, setMatchFilterType] = useState<'all' | 'singles' | 'doubles'>('all');
-  const [matchFilterDate, setMatchFilterDate] = useState<'all' | 'upcoming' | 'week' | 'month'>('all');
+  const [matchFilterDate, setMatchFilterDate] = useState<'all' | 'upcoming'>('all');
   const [matchFilterInvolvement, setMatchFilterInvolvement] = useState<'all' | 'my' | 'incomplete'>('all');
 
   useEffect(() => {
