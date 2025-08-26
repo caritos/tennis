@@ -416,60 +416,39 @@ export class MatchInvitationService {
     };
 
     try {
-      console.log('📝 Creating contact sharing notifications for singles match');
+      console.log('📝 Creating contact sharing notifications for singles match using PostgreSQL function');
       console.log(`📝 Creator: ${creator.full_name} (${creator.id}), Phone: ${creator.phone}`);
       console.log(`📝 Participant: ${participant.full_name} (${participant.id}), Phone: ${participant.phone}`);
-
-      // Send notification to creator with participant's contact info
-      const creatorNotificationId = generateUUID();
-      const creatorNotification = {
-        id: creatorNotificationId,
-        user_id: creator.id,
-        type: 'match_invitation',
-        title: '🎾 Match Confirmed - Contact Info Shared',
-        message: `${participant.full_name} joined your ${invitation.match_type} match! Contact: ${formatContactInfo(participant.full_name, participant.phone)}`,
-        is_read: false,
-        action_type: 'view_match',
-        action_data: JSON.stringify({ invitationId }),
-        related_id: invitationId,
-        created_at: new Date().toISOString(),
-      };
+      console.log('📝 Invitation ID:', invitationId);
+      console.log('📝 Current user (participant):', participant.id);
       
-      console.log('📝 Inserting creator notification:', JSON.stringify(creatorNotification, null, 2));
-      const { error: creatorError } = await supabase
-        .from('notifications')
-        .insert(creatorNotification);
+      // Wait a moment for database consistency
+      console.log('🔍 Waiting 100ms for database consistency...');
+      await new Promise(resolve => setTimeout(resolve, 100));
 
-      if (creatorError) {
-        console.error('❌ Failed to insert creator notification:', creatorError);
-      } else {
-        console.log('✅ Creator notification inserted successfully');
+      // Use PostgreSQL function to create notifications (bypasses RLS)
+      console.log('📝 Creating match invitation notifications using PostgreSQL function');
+      const { data: result, error } = await supabase.rpc('create_match_invitation_notifications', {
+        p_invitation_id: invitationId,
+        p_notification_type: 'match_confirmed',
+        p_initiator_user_id: participant.id
+      });
+
+      if (error) {
+        console.error('❌ PostgreSQL function error:', error);
+        throw error;
       }
 
-      // Send notification to participant with creator's contact info
-      const participantNotificationId = generateUUID();
-      const participantNotification = {
-        id: participantNotificationId,
-        user_id: participant.id,
-        type: 'match_invitation',
-        title: '🎾 Match Confirmed - Contact Info Shared',
-        message: `You joined ${creator.full_name}'s ${invitation.match_type} match! Contact: ${formatContactInfo(creator.full_name, creator.phone)}`,
-        is_read: false,
-        action_type: 'view_match',
-        action_data: JSON.stringify({ invitationId }),
-        related_id: invitationId,
-        created_at: new Date().toISOString(),
-      };
+      console.log('📝 PostgreSQL function result:', result);
       
-      console.log('📝 Inserting participant notification:', JSON.stringify(participantNotification, null, 2));
-      const { error: participantError } = await supabase
-        .from('notifications')
-        .insert(participantNotification);
-
-      if (participantError) {
-        console.error('❌ Failed to insert participant notification:', participantError);
+      if (result?.success) {
+        console.log('✅ Match invitation notifications created successfully:', result);
+        console.log('✅ Created', result.notifications_created, 'notifications');
+        console.log('✅ Creator notification ID:', result.creator_notification_id);
+        console.log('✅ Participant notification ID:', result.participant_notification_id);
       } else {
-        console.log('✅ Participant notification inserted successfully');
+        console.error('❌ Function returned error:', result?.error);
+        throw new Error(result?.error || 'Unknown error from PostgreSQL function');
       }
     } catch (error) {
       console.error('❌ Failed to create singles contact notifications:', error);
