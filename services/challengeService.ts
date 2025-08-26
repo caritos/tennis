@@ -10,7 +10,7 @@ export interface Challenge {
   proposed_date?: string;
   proposed_time?: string;
   message?: string;
-  status: 'pending' | 'accepted' | 'declined' | 'countered' | 'expired';
+  status: 'pending' | 'accepted' | 'declined' | 'countered' | 'expired' | 'completed';
   expires_at?: string;
   contacts_shared: boolean;
   created_at: string;
@@ -567,7 +567,32 @@ class ChallengeService {
       console.log(`📝 Challenger: ${challengerName} (${challenge.challenger_id}), Phone: ${challengerPhone}`);
       console.log(`📝 Challenged: ${challengedName} (${challenge.challenged_id}), Phone: ${challengedPhone}`);
 
-      // Send notification to challenger with challenged player's contact info
+      // First, create notification for the current user (the one who accepted - challenged player)
+      const challengedNotificationId = (await import('../utils/uuid')).generateUUID();
+      const challengedNotification = {
+        id: challengedNotificationId,
+        user_id: challenge.challenged_id, // This should match currentUser.id
+        type: 'challenge',
+        title: '🎾 Challenge Accepted - Contact Info Shared',
+        message: `You accepted ${challengerName}'s singles challenge! Contact: ${formatContactInfo(challengerName, challengerPhone)}`,
+        is_read: false,
+        action_type: 'view_match',
+        action_data: JSON.stringify({ challengeId }),
+        related_id: challengeId,
+        created_at: new Date().toISOString(),
+      };
+      
+      console.log('📝 Inserting challenged notification (for self):', JSON.stringify(challengedNotification, null, 2));
+      const { error: challengedError, data: challengedData } = await supabase.from('notifications').insert(challengedNotification).select();
+      if (challengedError) {
+        console.error('❌ Failed to insert challenged notification:', challengedError);
+        console.error('❌ Challenged notification error details:', JSON.stringify(challengedError, null, 2));
+      } else {
+        console.log('✅ Challenged notification inserted successfully:', challengedData);
+      }
+
+      // Then try to create notification for the challenger
+      // Note: This might fail if RLS is strict, but we'll try anyway
       const challengerNotificationId = (await import('../utils/uuid')).generateUUID();
       const challengerNotification = {
         id: challengerNotificationId,
@@ -589,30 +614,6 @@ class ChallengeService {
         console.error('❌ Challenger notification error details:', JSON.stringify(challengerError, null, 2));
       } else {
         console.log('✅ Challenger notification inserted successfully:', challengerData);
-      }
-
-      // Send notification to challenged player with challenger's contact info
-      const challengedNotificationId = (await import('../utils/uuid')).generateUUID();
-      const challengedNotification = {
-        id: challengedNotificationId,
-        user_id: challenge.challenged_id,
-        type: 'challenge',
-        title: '🎾 Challenge Accepted - Contact Info Shared',
-        message: `You accepted ${challengerName}'s singles challenge! Contact: ${formatContactInfo(challengerName, challengerPhone)}`,
-        is_read: false,
-        action_type: 'view_match',
-        action_data: JSON.stringify({ challengeId }),
-        related_id: challengeId,
-        created_at: new Date().toISOString(),
-      };
-      
-      console.log('📝 Inserting challenged notification:', JSON.stringify(challengedNotification, null, 2));
-      const { error: challengedError, data: challengedData } = await supabase.from('notifications').insert(challengedNotification).select();
-      if (challengedError) {
-        console.error('❌ Failed to insert challenged notification:', challengedError);
-        console.error('❌ Challenged notification error details:', JSON.stringify(challengedError, null, 2));
-      } else {
-        console.log('✅ Challenged notification inserted successfully:', challengedData);
       }
     } catch (error) {
       console.error('❌ Failed to create singles contact notifications:', error);
@@ -746,6 +747,86 @@ class ChallengeService {
     console.log(`✅ Doubles contact notifications sent to all ${playersArray.length} players - game is ready!`);
   }
 
+
+  /**
+   * Get a challenge by ID in format needed for match recording screen
+   */
+  public async getChallengeById(challengeId: string): Promise<{
+    id: string;
+    match_type: 'singles' | 'doubles';
+    proposed_date: string;
+    club_id: string;
+    club_name?: string;
+    challenger: { id: string; full_name: string; phone?: string };
+    challenged: { id: string; full_name: string; phone?: string };
+    status: string;
+  } | null> {
+    try {
+      const { data: challenge, error } = await supabase
+        .from('challenges')
+        .select(`
+          *,
+          challenger:users!challenges_challenger_id_fkey(full_name, phone),
+          challenged:users!challenges_challenged_id_fkey(full_name, phone),
+          club:clubs!challenges_club_id_fkey(name)
+        `)
+        .eq('id', challengeId)
+        .single();
+
+      if (error || !challenge) {
+        console.error('❌ Failed to get challenge by ID:', error);
+        return null;
+      }
+
+      return {
+        id: challenge.id,
+        match_type: challenge.match_type,
+        proposed_date: challenge.proposed_date,
+        club_id: challenge.club_id,
+        club_name: challenge.club?.name,
+        challenger: {
+          id: challenge.challenger_id,
+          full_name: challenge.challenger?.full_name || 'Unknown Player',
+          phone: challenge.challenger?.phone
+        },
+        challenged: {
+          id: challenge.challenged_id,
+          full_name: challenge.challenged?.full_name || 'Unknown Player',
+          phone: challenge.challenged?.phone
+        },
+        status: challenge.status
+      };
+    } catch (error) {
+      console.error('❌ Failed to get challenge by ID:', error);
+      return null;
+    }
+  }
+
+  /**
+   * Complete a challenge by linking it to a match record
+   */
+  public async completeChallenge(challengeId: string, matchId: string): Promise<void> {
+    try {
+      const { error } = await supabase
+        .from('challenges')
+        .update({
+          status: 'completed',
+          match_id: matchId,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', challengeId);
+
+      if (error) {
+        console.error('❌ Failed to complete challenge:', error);
+        throw new Error('Failed to complete challenge');
+      }
+
+      console.log('✅ Challenge completed and linked to match:', challengeId, matchId);
+    } catch (error) {
+      console.error('❌ Failed to complete challenge:', error);
+      throw error;
+    }
+  }
 
   /**
    * Get contact information after challenge acceptance

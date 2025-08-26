@@ -57,9 +57,16 @@ describe('ContactSharingNotification', () => {
 
     // Mock Supabase chain methods
     mockOrder = jest.fn();
-    mockEq = jest.fn().mockReturnValue({ order: mockOrder });
-    mockSelect = jest.fn().mockReturnValue({ eq: mockEq });
-    mockUpdate = jest.fn().mockReturnValue({ eq: mockEq });
+    // Create a chainable mock that returns itself for multiple .eq() calls
+    const chainableMock = {
+      eq: jest.fn(),
+      order: mockOrder
+    };
+    chainableMock.eq.mockReturnValue(chainableMock); // Allow chaining
+    
+    mockEq = chainableMock.eq;
+    mockSelect = jest.fn().mockReturnValue(chainableMock);
+    mockUpdate = jest.fn().mockReturnValue(chainableMock);
 
     mockSupabaseFrom = supabase.from as jest.MockedFunction<typeof supabase.from>;
     mockSupabaseFrom.mockReturnValue({

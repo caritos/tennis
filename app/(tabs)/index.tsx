@@ -211,11 +211,13 @@ export default function ClubScreen() {
         {showWelcomeMessage && (
           <InlineNotificationBanner
             title="Welcome to Play Serve!"
-            description="Find tennis partners, record matches, and climb rankings in local clubs near you."
+            description="Find tennis partners, record matches, and climb rankings in local clubs near you. Need help? Check out the FAQ section in your profile for guides and tips!"
             icon="🎾"
             variant="welcome"
             dismissible={true}
             onDismiss={handleWelcomeDismiss}
+            actionLabel="View FAQ"
+            onAction={() => router.push('/faq')}
           />
         )}
 

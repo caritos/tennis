@@ -11,7 +11,7 @@ export function useOptimizedState<T>(
 ) {
   const [state, setState] = useState<T>(initialValue);
   const pendingUpdates = useRef<T[]>([]);
-  const timeoutRef = useRef<NodeJS.Timeout>();
+  const timeoutRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
 
   // Batch multiple state updates
   const batchedSetState = useCallback((newValue: T | ((prev: T) => T)) => {
@@ -61,8 +61,8 @@ export function useComputedValue<T, D extends readonly unknown[]>(
   computeFn: () => T,
   dependencies: D
 ): T {
-  const cachedValue = useRef<T>();
-  const cachedDeps = useRef<D>();
+  const cachedValue = useRef<T | undefined>(undefined);
+  const cachedDeps = useRef<D | undefined>(undefined);
 
   // Deep comparison of dependencies
   const depsChanged = !cachedDeps.current || 

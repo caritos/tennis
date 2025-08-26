@@ -166,17 +166,12 @@ export function TennisScoreDisplay({
 
   return (
     <ThemedView style={[styles.container, { backgroundColor: colors.background }]}>
-      {/* Club name header if available */}
-      {clubName && (
+      {/* Compact header with club name and date */}
+      {(clubName || matchDate) && (
         <View style={[styles.clubHeader, { borderBottomColor: colors.tabIconDefault + '20' }]}>
           <ThemedText style={[styles.clubHeaderText, { color: colors.tabIconDefault }]}>
-            {clubName}
+            {clubName}{clubName && matchDate && ' • '}{matchDate && formatMatchDate(matchDate)}
           </ThemedText>
-          {matchDate && (
-            <ThemedText style={[styles.matchDateText, { color: colors.tabIconDefault }]}>
-              {formatMatchDate(matchDate)}
-            </ThemedText>
-          )}
         </View>
       )}
 
@@ -370,10 +365,10 @@ const styles = StyleSheet.create({
   },
   clubHeader: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
+    justifyContent: 'center',
     alignItems: 'center',
     paddingHorizontal: 12,
-    paddingVertical: 8,
+    paddingVertical: 6,
     borderBottomWidth: 1,
   },
   clubHeaderText: {

@@ -69,7 +69,7 @@ export function useE2ETextInput({
   };
 
   // Method to programmatically set value (useful for E2E)
-  const setValue = (newValue: string) => {
+  const setValueProgrammatically = (newValue: string) => {
     console.log(`🔧 Programmatically setting ${e2eTestId || 'unknown'} value:`, newValue);
     setValue(newValue);
   };
@@ -87,7 +87,7 @@ export function useE2ETextInput({
     onBlur,
     ref: inputRef,
     isFocused,
-    setValue,
+    setValue: setValueProgrammatically,
     clearValue,
     // E2E test helpers
     isE2EMode: !!e2eAutoFillTrigger,

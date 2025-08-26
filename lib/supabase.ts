@@ -173,7 +173,7 @@ export const supabase = createClient<Database>(config.supabase.url, config.supab
       } catch (error) {
         clearTimeout(timeoutId);
         // Don't log network errors to reduce noise
-        if (error.message?.includes('Network request failed')) {
+        if ((error as Error)?.message?.includes('Network request failed')) {
           throw error;
         }
         console.error('Supabase fetch error:', error);

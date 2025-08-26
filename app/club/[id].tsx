@@ -22,7 +22,7 @@ import { matchInvitationService } from '@/services/matchInvitationService';
 type TabType = 'overview' | 'members' | 'matches';
 
 export default function ClubDetailScreen() {
-  const { id } = useLocalSearchParams();
+  const { id, tab } = useLocalSearchParams();
   const colorScheme = useColorScheme();
   const colors = Colors[colorScheme ?? 'light'];
   const { user } = useAuth();
@@ -42,6 +42,17 @@ export default function ClubDetailScreen() {
   const [activeTab, setActiveTab] = useState<TabType>('overview');
   const [showInviteForm, setShowInviteForm] = useState(false);
   const [unreadChallengeCount, setUnreadChallengeCount] = useState(0);
+
+  // Set active tab from query parameter
+  useEffect(() => {
+    if (tab === 'matches') {
+      setActiveTab('matches');
+    } else if (tab === 'members') {
+      setActiveTab('members');
+    } else if (tab === 'overview') {
+      setActiveTab('overview');
+    }
+  }, [tab]);
   const [memberSortBy, setMemberSortBy] = useState<'name' | 'wins' | 'matches' | 'joined' | 'ranking'>('name');
   const [memberFilterBy, setMemberFilterBy] = useState<'all' | 'active' | 'new'>('all');
   const [matchFilterType, setMatchFilterType] = useState<'all' | 'singles' | 'doubles'>('all');
@@ -310,8 +321,30 @@ export default function ClubDetailScreen() {
         processed: true
       }));
 
-      // Combine completed matches and invitations
-      const allMatchesAndInvitations = [...processedCompletedMatches, ...processedInvitations];
+      // Load accepted challenges for display
+      const acceptedChallenges = await challengeService.getClubChallenges(String(id));
+      const acceptedOnly = acceptedChallenges.filter(challenge => challenge.status === 'accepted');
+      
+      // Process challenges for display
+      const processedChallenges = acceptedOnly.map((challenge: any) => ({
+        id: challenge.id,
+        player1_name: challenge.challenger_name || challenge.challenger?.full_name || 'Unknown',
+        player2_name: challenge.challenged_name || challenge.challenged?.full_name || 'Unknown',
+        player1_id: challenge.challenger_id,
+        player2_id: challenge.challenged_id,
+        scores: '', // No scores yet for challenges
+        winner: null,
+        match_type: challenge.match_type,
+        date: challenge.proposed_date || challenge.created_at,
+        time: challenge.proposed_time,
+        location: club?.name || 'Tennis Club',
+        notes: challenge.message,
+        status: 'challenge',
+        isChallenge: true, // Flag to identify challenges
+      }));
+
+      // Combine completed matches, invitations, and challenges
+      const allMatchesAndInvitations = [...processedCompletedMatches, ...processedInvitations, ...processedChallenges];
       
       setAllMatches(allMatchesAndInvitations);
       

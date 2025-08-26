@@ -40,13 +40,11 @@ export function VirtualizedList<T>({
 
   // Optimize item layout calculation if height is fixed
   const getItemLayout = useCallback(
-    itemHeight
-      ? (_data: any, index: number) => ({
-          length: itemHeight,
-          offset: itemHeight * index,
-          index,
-        })
-      : undefined,
+    (data: ArrayLike<T> | null | undefined, index: number) => ({
+      length: itemHeight || 50,
+      offset: (itemHeight || 50) * index,
+      index,
+    }),
     [itemHeight]
   );
 
@@ -68,7 +66,7 @@ export function VirtualizedList<T>({
       data={data}
       renderItem={renderItem}
       keyExtractor={props.keyExtractor || keyExtractor}
-      getItemLayout={getItemLayout}
+      getItemLayout={itemHeight ? getItemLayout : undefined}
       // Performance flags
       maintainVisibleContentPosition={{
         minIndexForVisible: 0,

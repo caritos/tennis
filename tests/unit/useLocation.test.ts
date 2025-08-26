@@ -1,6 +1,6 @@
 import { renderHook, act } from '@testing-library/react-native';
 import * as Location from 'expo-location';
-import { useLocation } from '../hooks/useLocation';
+import { useLocation } from '../../hooks/useLocation';
 
 // Mock expo-location
 jest.mock('expo-location', () => ({

@@ -1,5 +1,7 @@
 import React from 'react';
 import { View, TouchableOpacity, StyleSheet, ScrollView } from 'react-native';
+import { router } from 'expo-router';
+import { Ionicons } from '@expo/vector-icons';
 import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
 import { TennisScoreDisplay } from '@/components/TennisScoreDisplay';
@@ -27,8 +29,11 @@ interface Match {
   isInvitation?: boolean;
   responses?: {
     id: string;
+    invitation_id?: string;
+    user_id?: string;
     user_name?: string;
     status: 'interested' | 'confirmed' | 'declined';
+    created_at?: string;
   }[];
 }
 
@@ -243,7 +248,57 @@ export default function ClubMatches({
                   { borderColor: colors.border }
                 ]}
               >
-                {match.isInvitation ? (
+                {match.isChallenge ? (
+                  // Display challenge match
+                  <View style={[styles.challengeDisplay, { borderColor: '#FF6B35', borderWidth: 1, borderRadius: 8 }]}>
+                    <View style={styles.challengeHeader}>
+                      <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                        <ThemedText style={{ fontSize: 16, marginRight: 6 }}>⚔️</ThemedText>
+                        <ThemedText style={[styles.challengeStatus, { color: '#FF6B35' }]}>
+                          Challenge Match
+                        </ThemedText>
+                      </View>
+                      <ThemedText style={[styles.challengeType, { color: colors.textSecondary }]}>
+                        Ready to Play
+                      </ThemedText>
+                    </View>
+                    
+                    <ThemedText style={[styles.challengePlayers, { color: colors.text }]}>
+                      {match.player1_name} vs {match.player2_name}
+                    </ThemedText>
+                    
+                    <ThemedText style={[styles.challengeMatchType, { color: colors.textSecondary }]}>
+                      {match.match_type.charAt(0).toUpperCase() + match.match_type.slice(1)}
+                    </ThemedText>
+                    
+                    {match.time && (
+                      <ThemedText style={[styles.challengeTime, { color: colors.textSecondary }]}>
+                        {match.time}
+                      </ThemedText>
+                    )}
+                    
+                    {match.notes && (
+                      <ThemedText style={[styles.challengeNotes, { color: colors.textSecondary }]}>
+                        &quot;{match.notes}&quot;
+                      </ThemedText>
+                    )}
+                    
+                    <TouchableOpacity
+                      style={[styles.challengeRecordButton, { backgroundColor: '#FF6B35' }]}
+                      onPress={() => {
+                        // Navigate to record challenge match screen
+                        router.push(`/record-challenge-match/${match.id}`);
+                      }}
+                    >
+                      <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center' }}>
+                        <Ionicons name="trophy" size={16} color="white" style={{ marginRight: 6 }} />
+                        <ThemedText style={styles.challengeRecordText}>
+                          Record Match Results
+                        </ThemedText>
+                      </View>
+                    </TouchableOpacity>
+                  </View>
+                ) : match.isInvitation ? (
                   // Display invitation with grid-style participant slots
                   <View style={styles.invitationDisplay}>
                     <View style={styles.invitationHeader}>
@@ -266,7 +321,14 @@ export default function ClubMatches({
                     {/* Grid-style participant display */}
                     <DoublesMatchParticipants
                       creatorName={match.player1_name}
-                      responses={match.responses || []}
+                      responses={(match.responses || []).map(r => ({
+                        id: r.id,
+                        invitation_id: r.invitation_id || match.id,
+                        user_id: r.user_id || r.id,
+                        message: '',
+                        status: r.status,
+                        created_at: r.created_at || new Date().toISOString()
+                      }))}
                       matchType={match.match_type}
                       isMatched={false}
                       onJoinMatch={onJoinInvitation ? () => onJoinInvitation(match.id) : undefined}
@@ -450,6 +512,59 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     marginTop: 4,
     opacity: 0.7,
+  },
+  // Challenge display styles
+  challengeDisplay: {
+    padding: 12,
+    marginVertical: 4,
+  },
+  challengeHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  challengeStatus: {
+    fontSize: 14,
+    fontWeight: '600',
+  },
+  challengeType: {
+    fontSize: 12,
+    fontWeight: '500',
+    textTransform: 'uppercase',
+  },
+  challengePlayers: {
+    fontSize: 16,
+    fontWeight: '700',
+    marginBottom: 4,
+  },
+  challengeMatchType: {
+    fontSize: 13,
+    fontWeight: '500',
+    marginBottom: 4,
+  },
+  challengeTime: {
+    fontSize: 13,
+    marginBottom: 4,
+  },
+  challengeNotes: {
+    fontSize: 12,
+    fontStyle: 'italic',
+    marginTop: 4,
+  },
+  challengeRecordButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    borderRadius: 8,
+    marginTop: 12,
+  },
+  challengeRecordText: {
+    color: 'white',
+    fontSize: 14,
+    fontWeight: '600',
   },
   // Invitation display styles
   invitationDisplay: {

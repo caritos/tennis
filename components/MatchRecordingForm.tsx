@@ -80,8 +80,31 @@ export function MatchRecordingForm(componentProps: MatchRecordingFormProps) {
   // All state hooks
   const [matchType, setMatchType] = useState<'singles' | 'doubles'>(propMatchType || initialData?.match_type || 'singles');
   const [matchTypeRadioId, setMatchTypeRadioId] = useState(propMatchType || initialData?.match_type || 'singles');
-  const [selectedOpponent, setSelectedOpponent] = useState<Player | null>(null);
-  const [opponentSearchText, setOpponentSearchText] = useState(initialData?.opponent2_name || '');
+  
+  // Pre-fill opponent from players prop if available (for challenges)
+  const getInitialOpponent = () => {
+    if (players.length >= 2 && user) {
+      // Find the other player (not the current user)
+      const otherPlayer = players.find(p => p.id !== user.id);
+      if (otherPlayer) {
+        return { id: otherPlayer.id, name: otherPlayer.full_name };
+      }
+    }
+    return null;
+  };
+  
+  const getInitialOpponentText = () => {
+    if (players.length >= 2 && user) {
+      const otherPlayer = players.find(p => p.id !== user.id);
+      if (otherPlayer) {
+        return otherPlayer.full_name;
+      }
+    }
+    return initialData?.opponent2_name || '';
+  };
+  
+  const [selectedOpponent, setSelectedOpponent] = useState<Player | null>(getInitialOpponent());
+  const [opponentSearchText, setOpponentSearchText] = useState(getInitialOpponentText());
   const [selectedPartner, setSelectedPartner] = useState<Player | null>(null);
   const [partnerSearchText, setPartnerSearchText] = useState(initialData?.partner3_name || '');
   const [selectedOpponentPartner, setSelectedOpponentPartner] = useState<Player | null>(null);
@@ -1037,22 +1060,29 @@ export function MatchRecordingForm(componentProps: MatchRecordingFormProps) {
 
         {/* Opponent Selection */}
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>{matchType === 'doubles' ? 'Opponent 1' : 'Opponent'}</Text>
+          <Text style={styles.sectionTitle}>
+            {matchType === 'doubles' ? 'Opponent 1' : 'Opponent'}
+            {players.length >= 2 && ' (Challenge Match)'}
+          </Text>
           <View style={styles.inputContainer}>
             <TextInput
               style={[
                 styles.searchInput,
                 selectedOpponent && styles.searchInputSelected, // Green confirmation when selected
-                showSuggestions && styles.searchInputFocused
+                showSuggestions && styles.searchInputFocused,
+                players.length >= 2 && { backgroundColor: colors.background + '50' } // Visual indication when pre-filled
               ]}
               value={opponentSearchText}
-              onChangeText={(text) => handleSearchTextChange(text, 'opponent')}
+              onChangeText={(text) => players.length >= 2 ? null : handleSearchTextChange(text, 'opponent')}
               placeholder="🔍 Search or add opponent..."
               testID="opponent-search-input"
+              editable={players.length < 2} // Disable editing when players are pre-defined from challenge
               onFocus={() => {
-                setActiveSearchField('opponent');
-                if (opponentSearchText.trim()) {
-                  setShowSuggestions(true);
+                if (players.length < 2) {
+                  setActiveSearchField('opponent');
+                  if (opponentSearchText.trim()) {
+                    setShowSuggestions(true);
+                  }
                 }
               }}
             />

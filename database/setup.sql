@@ -114,6 +114,7 @@ BEGIN
         DROP POLICY IF EXISTS "System can create notifications" ON notifications;
         DROP POLICY IF EXISTS "Users can create challenge notifications" ON notifications;
         DROP POLICY IF EXISTS "Authenticated users can create challenge notifications" ON notifications;
+        DROP POLICY IF EXISTS "Allow notification creation" ON notifications;
         DROP POLICY IF EXISTS "Users can update own notifications" ON notifications;
         DROP POLICY IF EXISTS "Users can delete own notifications" ON notifications;
     END IF;
@@ -663,23 +664,34 @@ CREATE POLICY "Users can delete own counters" ON challenge_counters
 CREATE POLICY "Users can view own notifications" ON notifications
   FOR SELECT USING (auth.uid()::text = user_id::text);
 
-CREATE POLICY "System can create notifications" ON notifications
-  FOR INSERT WITH CHECK (auth.role() = 'service_role');
-CREATE POLICY "Authenticated users can create challenge notifications" ON notifications
+-- Single comprehensive INSERT policy for all notification creation
+CREATE POLICY "Allow notification creation" ON notifications
   FOR INSERT WITH CHECK (
-    auth.role() = 'authenticated' 
-    AND type = 'challenge'
-    AND (
-      -- Users can create notifications for themselves
-      auth.uid()::text = user_id::text
-      OR 
-      -- Users can create notifications for other participants in their challenges
-      EXISTS (
-        SELECT 1 FROM challenges c 
-        WHERE c.id::text = (action_data->>'challengeId')::text
-        AND (
-          (c.challenger_id::text = auth.uid()::text AND c.challenged_id::text = user_id::text) OR
-          (c.challenged_id::text = auth.uid()::text AND c.challenger_id::text = user_id::text)
+    -- Service role can always create
+    auth.role() = 'service_role'
+    OR
+    -- Authenticated users can create notifications
+    (
+      auth.role() = 'authenticated' 
+      AND (
+        -- Case 1: Users can always create notifications for themselves
+        auth.uid() = user_id
+        OR
+        -- Case 2: For challenge notifications, participants can notify each other
+        (
+          type = 'challenge' 
+          AND related_id IS NOT NULL
+          AND EXISTS (
+            SELECT 1 FROM challenges c 
+            WHERE c.id = related_id::uuid
+            AND (
+              -- Auth user is challenger, creating for challenged
+              (c.challenger_id = auth.uid() AND c.challenged_id = user_id)
+              OR
+              -- Auth user is challenged, creating for challenger
+              (c.challenged_id = auth.uid() AND c.challenger_id = user_id)
+            )
+          )
         )
       )
     )
@@ -786,12 +798,14 @@ END $$;
 -- Fix: Remove any conflicting notification policies to ensure proper contact sharing
 DO $$
 BEGIN
-    -- Drop any existing conflicting notification policies
+    -- Drop any existing conflicting notification policies that might interfere
     DROP POLICY IF EXISTS "Users can create challenge notifications" ON notifications;
-    RAISE NOTICE '✅ Removed conflicting notification policy for contact sharing fix';
+    DROP POLICY IF EXISTS "Authenticated users can create challenge notifications" ON notifications;
+    DROP POLICY IF EXISTS "System can create notifications" ON notifications;
+    RAISE NOTICE '✅ Removed conflicting notification policies for contact sharing fix';
 EXCEPTION
     WHEN OTHERS THEN
-        RAISE NOTICE 'ℹ️ No conflicting notification policy found to remove';
+        RAISE NOTICE 'ℹ️ No conflicting notification policies found to remove';
 END $$;
 
 -- Fix: Update all user policies to use consistent UUID handling

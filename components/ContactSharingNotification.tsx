@@ -1,12 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import { View, TouchableOpacity, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { router } from 'expo-router';
 import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
 import { Colors } from '@/constants/Colors';
 import { useColorScheme } from '@/hooks/useColorScheme';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/lib/supabase';
+import { challengeService } from '@/services/challengeService';
 
 interface ContactSharingNotificationProps {
   onViewAll?: () => void;
@@ -102,6 +104,42 @@ export function ContactSharingNotification({ onViewAll }: ContactSharingNotifica
     }
   };
 
+  const handleNotificationPress = async (notification: Notification) => {
+    console.log('🔘 ContactSharingNotification: Tapped notification:', notification.id);
+    
+    // Mark as read
+    handleMarkAsRead(notification.id);
+    
+    // Navigate to club matches tab where challenges appear alongside invitations
+    if (notification.action_type === 'view_match' && notification.related_id) {
+      if (notification.type === 'challenge') {
+        try {
+          console.log('🔍 ContactSharingNotification: Getting challenge data for ID:', notification.related_id);
+          const challengeData = await challengeService.getChallengeById(notification.related_id);
+          console.log('🔍 ContactSharingNotification: Challenge data retrieved:', challengeData);
+          
+          if (challengeData?.club_id) {
+            console.log('🔗 ContactSharingNotification: Navigating to club page matches tab:', challengeData.club_id);
+            // Navigate to the club page with matches tab selected
+            router.push(`/club/${challengeData.club_id}?tab=matches`);
+          } else {
+            console.log('⚠️ ContactSharingNotification: No club_id found, navigating to clubs tab');
+            router.push('/(tabs)');
+          }
+        } catch (error) {
+          console.error('❌ ContactSharingNotification: Failed to get challenge club ID:', error);
+          router.push('/(tabs)');
+        }
+      } else {
+        // For other match types, navigate to clubs tab
+        router.push('/(tabs)');
+      }
+    } else {
+      console.log('⚠️ ContactSharingNotification: No action_type or related_id, navigating to clubs tab');
+      router.push('/(tabs)');
+    }
+  };
+
   if (isLoading) {
     console.log('📝 ContactSharingNotification: Still loading...');
     return null;
@@ -142,6 +180,19 @@ export function ContactSharingNotification({ onViewAll }: ContactSharingNotifica
           onPress={() => handleMarkAsRead(latestNotification.id)}
         >
           <Ionicons name="close" size={20} color={colors.textSecondary} />
+        </TouchableOpacity>
+      </View>
+      
+      {/* Action Buttons */}
+      <View style={styles.actionButtons}>
+        <TouchableOpacity
+          style={[styles.actionButton, { backgroundColor: colors.tint }]}
+          onPress={() => handleNotificationPress(latestNotification)}
+        >
+          <Ionicons name="tennisball" size={16} color="white" style={styles.buttonIcon} />
+          <ThemedText style={[styles.actionButtonText, { color: 'white' }]}>
+            View Match Details
+          </ThemedText>
         </TouchableOpacity>
       </View>
       
@@ -203,5 +254,27 @@ const styles = StyleSheet.create({
   viewAllText: {
     fontSize: 14,
     fontWeight: '500',
+  },
+  actionButtons: {
+    flexDirection: 'row',
+    paddingHorizontal: 16,
+    paddingBottom: 16,
+    gap: 8,
+  },
+  actionButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 8,
+    paddingHorizontal: 16,
+    borderRadius: 8,
+    flex: 1,
+  },
+  buttonIcon: {
+    marginRight: 6,
+  },
+  actionButtonText: {
+    fontSize: 14,
+    fontWeight: '600',
+    textAlign: 'center',
   },
 });

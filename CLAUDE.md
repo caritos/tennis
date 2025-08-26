@@ -116,6 +116,16 @@ eas workflow:run production-release           # Manual workflow trigger
 
 ## Important Notes
 
+### **Environment Configuration**
+⚠️ **CRITICAL**: When making EAS builds for App Store submission, ensure you're using the correct environment profile:
+- **Production builds**: Use `--profile production` to connect to production Supabase database
+- **Preview builds**: Use `--profile preview` for testing with development database
+- **Local development**: Use `npm run start:prod` for production database, `npm run start:dev` for development
+
+The app has dual environment setup:
+- `.env.production` → Production Supabase database (dgkdbqloehxruoijylzw.supabase.co)
+- `.env.development` → Development Supabase database (lbfoobwxjnyymnxdajxh.supabase.co)
+
 ### **Managed Workflow**
 This project uses Expo's managed workflow - no `ios/` or `android/` directories exist. All configuration is handled through `app.json` and EAS generates native projects during builds.
 

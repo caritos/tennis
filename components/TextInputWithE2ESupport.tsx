@@ -46,15 +46,15 @@ export function TextInputWithE2ESupport({
   };
 
   // Handle focus events - potential workaround trigger
-  const handleFocus = () => {
+  const handleFocus = (e: any) => {
     console.log('🔍 TextInput focused, current value:', internalValue);
-    props.onFocus?.();
+    props.onFocus?.(e);
   };
 
   // Handle blur events - another potential trigger point
-  const handleBlur = () => {
+  const handleBlur = (e: any) => {
     console.log('🔍 TextInput blurred, final value:', internalValue);
-    props.onBlur?.();
+    props.onBlur?.(e);
   };
 
   return (

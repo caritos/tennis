@@ -7,7 +7,7 @@ import {
   isValidTennisScore,
   TennisSet,
   TennisMatch,
-} from '../utils/tennisScore';
+} from '../../utils/tennisScore';
 
 describe('Tennis Scoring System', () => {
   describe('validateSetScore', () => {

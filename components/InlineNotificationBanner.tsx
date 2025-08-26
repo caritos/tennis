@@ -17,6 +17,8 @@ interface InlineNotificationBannerProps {
   dismissible?: boolean;
   onDismiss?: () => void;
   onPress?: () => void;
+  actionLabel?: string;
+  onAction?: () => void;
   testID?: string;
   style?: any;
 }
@@ -29,6 +31,8 @@ export const InlineNotificationBanner: React.FC<InlineNotificationBannerProps> =
   dismissible = true,
   onDismiss,
   onPress,
+  actionLabel,
+  onAction,
   testID = 'inline-notification-banner',
   style,
 }) => {
@@ -176,6 +180,17 @@ export const InlineNotificationBanner: React.FC<InlineNotificationBannerProps> =
               {description}
             </ThemedText>
           )}
+          {actionLabel && onAction && (
+            <TouchableOpacity
+              style={[styles.actionButton, { borderColor: variantColors.iconColor }]}
+              onPress={onAction}
+              testID={`${testID}-action`}
+            >
+              <ThemedText style={[styles.actionButtonText, { color: variantColors.iconColor }]}>
+                {actionLabel}
+              </ThemedText>
+            </TouchableOpacity>
+          )}
         </View>
       </TouchableOpacity>
     </ThemedView>
@@ -236,5 +251,18 @@ const styles = StyleSheet.create({
     borderRadius: 14,
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  actionButton: {
+    marginTop: 12,
+    marginLeft: 52,
+    paddingVertical: 6,
+    paddingHorizontal: 12,
+    borderRadius: 6,
+    borderWidth: 1,
+    alignSelf: 'flex-start',
+  },
+  actionButtonText: {
+    fontSize: 13,
+    fontWeight: '600',
   },
 });

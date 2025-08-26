@@ -16,6 +16,7 @@ export interface CreateMatchData {
   date: string;
   notes?: string | null;
   invitation_id?: string; // Link to match invitation if created from invitation
+  challenge_id?: string; // Link to challenge if created from challenge
 }
 
 export interface UpdateMatchData {
@@ -167,6 +168,8 @@ export class MatchService {
       match_type: matchData.match_type,
       date: matchData.date,
       notes: matchData.notes || null,
+      invitation_id: matchData.invitation_id || null,
+      challenge_id: matchData.challenge_id || null,
       created_at: new Date().toISOString()
     };
 

@@ -10,7 +10,7 @@ export const useNotificationCount = () => {
 
   useEffect(() => {
     let notificationService: NotificationService;
-    let intervalId: NodeJS.Timeout;
+    let intervalId: ReturnType<typeof setInterval>;
 
     const initializeService = async () => {
       try {

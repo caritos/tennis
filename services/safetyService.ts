@@ -33,6 +33,7 @@ class SafetyService {
     description: string;
     matchId?: string;
     invitationId?: string;
+    challengeId?: string;
   }): Promise<string> {
     try {
       const { data, error } = await supabase
@@ -43,7 +44,8 @@ class SafetyService {
           report_type: reportData.reportType,
           description: reportData.description,
           match_id: reportData.matchId,
-          invitation_id: reportData.invitationId
+          invitation_id: reportData.invitationId,
+          challenge_id: reportData.challengeId
         })
         .select('id')
         .single();

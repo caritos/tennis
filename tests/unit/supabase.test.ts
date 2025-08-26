@@ -1,5 +1,5 @@
 import { createClient } from '@supabase/supabase-js';
-import { supabase, getSupabaseConfig } from '../lib/supabase';
+import { supabase, getSupabaseConfig } from '../../lib/supabase';
 
 // Mock @supabase/supabase-js
 jest.mock('@supabase/supabase-js', () => ({
@@ -55,7 +55,7 @@ describe('Supabase Configuration', () => {
 
       // Re-import to get fresh instance
       jest.resetModules();
-      require('../lib/supabase');
+      require('../../lib/supabase');
 
       expect(createClient).toHaveBeenCalledWith(
         'https://test.supabase.co',

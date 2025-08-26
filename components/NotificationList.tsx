@@ -198,13 +198,29 @@ export const NotificationList: React.FC = () => {
     setRefreshing(false);
   };
 
-  const handleNotificationPress = (notification: Notification) => {
+  const handleNotificationPress = async (notification: Notification) => {
     handleMarkAsRead(notification.id);
     
     // Navigate based on notification type
     if (notification.action_type === 'view_match' && notification.related_id) {
-      // Navigate to match details (would need to implement this route)
-      console.log('Navigate to match:', notification.related_id);
+      if (notification.type === 'challenge') {
+        // For challenges, get club ID and navigate to club matches tab
+        try {
+          const challengeData = await challengeService.getChallengeById(notification.related_id);
+          if (challengeData?.club_id) {
+            router.push(`/club/${challengeData.club_id}?tab=matches`);
+          } else {
+            // Fallback to clubs tab
+            router.push('/(tabs)');
+          }
+        } catch (error) {
+          console.error('Failed to get challenge club ID:', error);
+          router.push('/(tabs)');
+        }
+      } else {
+        // For other match types (invitations), navigate to clubs tab
+        router.push('/(tabs)');
+      }
     } else if (notification.action_type === 'view_ranking') {
       // Navigate to clubs tab to view rankings
       router.push('/(tabs)');

@@ -4,7 +4,7 @@ import { router } from 'expo-router';
 import Constants from 'expo-constants';
 
 // Check if we're in a development build or production (not Expo Go)
-const isNativeModuleAvailable = Constants.appOwnership === 'standalone' || Constants.appOwnership === 'expo';
+const isNativeModuleAvailable = Constants.appOwnership === 'standalone' || Constants.appOwnership === 'expo' || Boolean(Constants.appOwnership);
 
 export function useNotificationListener() {
   const notificationListener = useRef<Notifications.Subscription>();
@@ -19,13 +19,13 @@ export function useNotificationListener() {
 
     try {
       // Listen for notifications received while app is foregrounded
-      notificationListener.current = Notifications.addNotificationReceivedListener(notification => {
+      notificationListener.current = Notifications.addNotificationReceivedListener((notification) => {
         console.log('🔔 Notification received:', notification);
         // Optional: Show custom in-app notification UI
       });
 
       // Listen for user interactions with notifications
-      responseListener.current = Notifications.addNotificationResponseReceivedListener(response => {
+      responseListener.current = Notifications.addNotificationResponseReceivedListener((response) => {
         console.log('👆 Notification response:', response);
         
         // Navigate based on notification type
@@ -57,10 +57,10 @@ export function useNotificationListener() {
       // Clean up listeners
       try {
         if (notificationListener.current) {
-          notificationListener.current.remove();
+          Notifications.removeNotificationSubscription(notificationListener.current);
         }
         if (responseListener.current) {
-          responseListener.current.remove();
+          Notifications.removeNotificationSubscription(responseListener.current);
         }
       } catch (error) {
         console.warn('⚠️ Failed to cleanup notification listeners:', error);

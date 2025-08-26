@@ -10,6 +10,8 @@
   },
   "scripts": {
     "start": "expo start",
+    "start:prod": "mv .env.development .env.development.bak 2>/dev/null || true && NODE_ENV=production expo start; mv .env.development.bak .env.development 2>/dev/null || true",
+    "start:dev": "NODE_ENV=development expo start",
     "reset-project": "node ./scripts/reset-project.js",
     "android": "expo run:android",
     "ios": "expo run:ios",

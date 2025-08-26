@@ -6,7 +6,7 @@ import Constants from 'expo-constants';
 import { supabase } from '@/lib/supabase';
 
 // Check if we're in a development build or production (not Expo Go)
-const isNativeModuleAvailable = Constants.appOwnership === 'standalone' || Constants.appOwnership === 'expo';
+const isNativeModuleAvailable = Constants.appOwnership === 'standalone' || Constants.appOwnership === 'expo' || Boolean(Constants.appOwnership);
 
 // Configure how notifications are handled when app is in foreground (only if native modules available)
 if (isNativeModuleAvailable) {
@@ -16,6 +16,8 @@ if (isNativeModuleAvailable) {
         shouldShowAlert: true,
         shouldPlaySound: true,
         shouldSetBadge: true,
+        shouldShowBanner: true,
+        shouldShowList: true,
       }),
     });
   } catch (error) {
