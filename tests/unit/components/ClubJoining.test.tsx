@@ -3,9 +3,9 @@ import { render, fireEvent, waitFor } from '@testing-library/react-native';
 import { Alert } from 'react-native';
 
 // Mock dependencies
-jest.mock('../../services/clubService');
-jest.mock('../../hooks/useLocation');
-jest.mock('../../lib/supabase', () => ({
+jest.mock('../../../services/clubService');
+jest.mock('../../../hooks/useLocation');
+jest.mock('../../../lib/supabase', () => ({
   supabase: {
     from: jest.fn(),
     auth: {
@@ -17,9 +17,9 @@ jest.mock('../../lib/supabase', () => ({
   },
 }));
 
-import { ClubCard } from '../../components/ClubCard';
-import { ClubService } from '../../services/clubService';
-import { Club } from '../../lib/supabase';
+import { ClubCard } from '../../../components/ClubCard';
+import { ClubService } from '../../../services/clubService';
+import { Club } from '../../../lib/supabase';
 
 describe('Club Joining Functionality', () => {
   let mockClubService: jest.Mocked<ClubService>;

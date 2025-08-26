@@ -1,9 +1,9 @@
 import React from 'react';
 import { render, fireEvent } from '@testing-library/react-native';
-import { ClubList } from '../../components/ClubList';
+import { ClubList } from '../../../components/ClubList';
 
 // Mock the ClubCard component
-jest.mock('../../components/ClubCard', () => {
+jest.mock('../../../components/ClubCard', () => {
   const { TouchableOpacity, Text } = require('react-native');
   return {
     ClubCard: ({ club, onPress, isJoined, distance }: any) => (
@@ -18,7 +18,7 @@ jest.mock('../../components/ClubCard', () => {
 });
 
 // Mock the ThemedText component
-jest.mock('../../components/ThemedText', () => {
+jest.mock('../../../components/ThemedText', () => {
   const { Text } = require('react-native');
   return {
     ThemedText: ({ children, ...props }: any) => <Text {...props}>{children}</Text>,

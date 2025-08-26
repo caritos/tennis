@@ -1,9 +1,9 @@
 import React from 'react';
 import { render, fireEvent } from '@testing-library/react-native';
-import { CreateClubButton } from '../../components/CreateClubButton';
+import { CreateClubButton } from '../../../components/CreateClubButton';
 
 // Mock the ThemedText component
-jest.mock('../../components/ThemedText', () => {
+jest.mock('../../../components/ThemedText', () => {
   const { Text } = require('react-native');
   return {
     ThemedText: ({ children, ...props }: any) => <Text {...props}>{children}</Text>,

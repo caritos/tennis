@@ -1,16 +1,16 @@
 import React from 'react';
 import { render, fireEvent } from '@testing-library/react-native';
-import { ClubCard } from '../../components/ClubCard';
+import { ClubCard } from '../../../components/ClubCard';
 
 // Mock the ThemedText and ThemedView components
-jest.mock('../../components/ThemedText', () => {
+jest.mock('../../../components/ThemedText', () => {
   const { Text } = require('react-native');
   return {
     ThemedText: ({ children, ...props }: any) => <Text {...props}>{children}</Text>,
   };
 });
 
-jest.mock('../../components/ThemedView', () => {
+jest.mock('../../../components/ThemedView', () => {
   const { View } = require('react-native');
   return {
     ThemedView: ({ children, ...props }: any) => <View {...props}>{children}</View>,
