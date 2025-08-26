@@ -261,3 +261,6 @@ export class NotificationService {
     });
   }
 }
+
+// Export singleton instance
+export default new NotificationService();

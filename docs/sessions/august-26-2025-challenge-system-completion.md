@@ -101,15 +101,37 @@ const getInitialOpponent = () => {
 - Button navigates to `/record-challenge-match/${match.id}`
 - Consistent with invitation cards that have action buttons
 
-### 6. Database RLS Policy Fixes ✅
-**Problem:** Challenge notifications failed with RLS policy violations  
-**Solution:** Unified notification creation policies in `database/setup.sql`
+### 6. Database RLS Policy Complete Solution ✅
+**Problem:** Challenge notifications failed with persistent RLS policy violations during cross-user notification creation  
+**Solution:** Implemented PostgreSQL function with elevated privileges to bypass RLS for legitimate cross-user operations
 
-**Root Cause:** Multiple conflicting INSERT policies on notifications table  
-**Fix:** Created single comprehensive policy allowing:
-- Service role access
-- Users creating notifications for themselves  
-- Challenge participants notifying each other
+**Root Cause Analysis:** RLS policies are designed to prevent cross-user data creation, but challenge notifications inherently require creating notifications for other users. Multiple attempts to create RLS policies that allowed cross-user writes failed due to:
+- PostgreSQL table prefix handling issues
+- Type casting complications between UUID and TEXT
+- Architectural mismatch between RLS design and business requirements
+
+**Final Solution:** PostgreSQL Function with `SECURITY DEFINER`
+- **File:** `database/challenge-notification-function.sql`
+- **Function:** `create_challenge_notifications(challenge_id, notification_type, initiator_user_id)`
+- **Benefits:** 
+  - Bypasses RLS entirely with elevated privileges
+  - Maintains security through custom validation logic
+  - Atomic operations (both notifications created or none)
+  - Standard PostgreSQL pattern for cross-user operations
+- **Service Integration:** Updated `challengeService.ts` to use `supabase.rpc()` instead of direct INSERT statements
+
+**Technical Details:**
+```sql
+CREATE OR REPLACE FUNCTION create_challenge_notifications(
+    p_challenge_id uuid,
+    p_notification_type text, 
+    p_initiator_user_id uuid
+) RETURNS json AS $$ 
+-- Validates user involvement and creates notifications with SECURITY DEFINER privileges
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+```
+
+**Key Insight:** This demonstrates the correct architectural approach for cross-user operations in PostgreSQL - use server-side functions with elevated privileges rather than trying to make RLS allow cross-user writes.
 
 ### 7. Fixed Test Mock Issues ✅
 **Problem:** Component tests failing due to non-chainable Supabase mocks  

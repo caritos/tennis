@@ -590,110 +590,51 @@ class ChallengeService {
 
   /**
    * Send contact notifications for singles games (2 players)
+   * Uses PostgreSQL function to bypass RLS issues
    */
   private async sendSinglesContactNotifications(challengeId: string, challenge: any): Promise<void> {
-    const challengerName = challenge.challenger?.full_name || 'Tennis Player';
-    const challengedName = challenge.challenged?.full_name || 'Tennis Player';
-    const challengerPhone = challenge.challenger?.phone;
-    const challengedPhone = challenge.challenged?.phone;
-
-    const formatContactInfo = (name: string, phone?: string) => {
-      if (!phone) return `${name} (no phone number provided)`;
-      return `${name}: ${phone}`;
-    };
-
     try {
-      // Check authentication status first
+      console.log('📝 Creating contact sharing notifications using PostgreSQL function');
+      console.log('📝 Challenge ID:', challengeId);
+      console.log('📝 Challenge details:', {
+        challenger_id: challenge.challenger_id,
+        challenged_id: challenge.challenged_id,
+        match_type: challenge.match_type
+      });
+
+      // Get current user to determine who is the initiator (the one accepting the challenge)
       const { data: { user: currentUser }, error: authError } = await supabase.auth.getUser();
-      console.log('📝 Current auth user:', currentUser?.id, 'Auth error:', authError);
       
-      console.log('📝 Creating contact sharing notifications for singles game');
-      console.log(`📝 Challenger: ${challengerName} (${challenge.challenger_id}), Phone: ${challengerPhone}`);
-      console.log(`📝 Challenged: ${challengedName} (${challenge.challenged_id}), Phone: ${challengedPhone}`);
-
-      // First, create notification for the current user (the one who accepted - challenged player)
-      const challengedNotificationId = (await import('../utils/uuid')).generateUUID();
-      const challengedNotification = {
-        id: challengedNotificationId,
-        user_id: challenge.challenged_id, // This should match currentUser.id
-        type: 'challenge',
-        title: '🎾 Challenge Accepted - Contact Info Shared',
-        message: `You accepted ${challengerName}'s singles challenge! Contact: ${formatContactInfo(challengerName, challengerPhone)}`,
-        is_read: false,
-        action_type: 'view_match',
-        action_data: JSON.stringify({ challengeId }),
-        related_id: challengeId,
-        created_at: new Date().toISOString(),
-      };
-      
-      console.log('📝 Inserting challenged notification (for self):', JSON.stringify(challengedNotification, null, 2));
-      const { error: challengedError, data: challengedData } = await supabase.from('notifications').insert(challengedNotification).select();
-      if (challengedError) {
-        console.error('❌ Failed to insert challenged notification:', challengedError);
-        console.error('❌ Challenged notification error details:', JSON.stringify(challengedError, null, 2));
-      } else {
-        console.log('✅ Challenged notification inserted successfully:', challengedData);
+      if (authError || !currentUser) {
+        console.error('❌ Failed to get current user:', authError);
+        throw new Error('Authentication required');
       }
 
-      // Before creating the challenger notification, let's verify the challenge state
-      console.log('🔍 Pre-notification check: Verifying challenge state in database...');
-      const { data: verifyChallenge, error: verifyError } = await supabase
-        .from('challenges')
-        .select('id, status, challenger_id, challenged_id')
-        .eq('id', challengeId)
-        .single();
-      
-      if (verifyError) {
-        console.error('🔍 Failed to verify challenge state:', verifyError);
-      } else {
-        console.log('🔍 Challenge verification result:', JSON.stringify(verifyChallenge, null, 2));
-        console.log(`🔍 Challenge status: ${verifyChallenge.status} (expected: accepted)`);
+      console.log('📝 Current user (accepter):', currentUser.id);
+
+      // Call the PostgreSQL function to create notifications with elevated privileges
+      const { data, error } = await supabase.rpc('create_challenge_notifications', {
+        p_challenge_id: challengeId,
+        p_notification_type: 'challenge_accepted',
+        p_initiator_user_id: currentUser.id
+      });
+
+      if (error) {
+        console.error('❌ Failed to create notifications via function:', error);
+        throw new Error(`Failed to create notifications: ${error.message}`);
       }
 
-      // Then try to create notification for the challenger
-      // Note: This might fail if RLS is strict, but we'll try anyway
-      const challengerNotificationId = (await import('../utils/uuid')).generateUUID();
-      const challengerNotification = {
-        id: challengerNotificationId,
-        user_id: challenge.challenger_id,
-        type: 'challenge',
-        title: '🎾 Challenge Accepted - Contact Info Shared',
-        message: `${challengedName} accepted your singles challenge! Contact: ${formatContactInfo(challengedName, challengedPhone)}`,
-        is_read: false,
-        action_type: 'view_match',
-        action_data: JSON.stringify({ challengeId }),
-        related_id: challengeId,
-        created_at: new Date().toISOString(),
-      };
+      console.log('✅ Challenge notifications created successfully:', data);
       
-      console.log('📝 Inserting challenger notification:', JSON.stringify(challengerNotification, null, 2));
-      console.log('🔍 RLS Debug - Current user (auth.uid()):', currentUser?.id);
-      console.log('🔍 RLS Debug - Notification user_id:', challengerNotification.user_id);
-      console.log('🔍 RLS Debug - Challenge ID:', challengeId);
-      console.log('🔍 RLS Debug - Related ID:', challengerNotification.related_id);
-      console.log('🔍 RLS Debug - Challenger ID:', challenge.challenger_id);
-      console.log('🔍 RLS Debug - Challenged ID:', challenge.challenged_id);
-      console.log('🔍 RLS Debug - Expected condition: challenged_id matches current user and challenger_id matches notification target');
-      console.log('🔍 RLS Debug - Actual check: challenged_id =', challenge.challenged_id, 'auth.uid() =', currentUser?.id, 'matches:', challenge.challenged_id === currentUser?.id);
-      console.log('🔍 RLS Debug - Actual check: challenger_id =', challenge.challenger_id, 'user_id =', challengerNotification.user_id, 'matches:', challenge.challenger_id === challengerNotification.user_id);
-      
-      // Test the exact policy condition that should be matching
-      console.log('🔍 Policy condition test:');
-      console.log(`🔍 - type = 'challenge': ${challengerNotification.type === 'challenge'}`);
-      console.log(`🔍 - related_id IS NOT NULL: ${challengerNotification.related_id != null}`);
-      console.log(`🔍 - Policy should find challenge with id = ${challengerNotification.related_id}`);
-      console.log(`🔍 - Expected policy match: c.challenged_id::text (${challenge.challenged_id}) = auth.uid()::text (${currentUser?.id}) AND c.challenger_id::text (${challenge.challenger_id}) = user_id::text (${challengerNotification.user_id})`);
-      console.log(`🔍 - This should evaluate to: ${challenge.challenged_id === currentUser?.id} AND ${challenge.challenger_id === challengerNotification.user_id} = ${(challenge.challenged_id === currentUser?.id) && (challenge.challenger_id === challengerNotification.user_id)}`);
-      
-      const { error: challengerError, data: challengerData } = await supabase.from('notifications').insert(challengerNotification).select();
-      if (challengerError) {
-        console.error('❌ Failed to insert challenger notification:', challengerError);
-        console.error('❌ Challenger notification error details:', JSON.stringify(challengerError, null, 2));
-        console.error('🔍 RLS Policy Failed - This means the database policy is not matching the expected conditions');
-        console.error('🔍 Expected: User', currentUser?.id, 'should be able to create notification for', challengerNotification.user_id, 'for challenge', challengeId);
+      if (data?.success) {
+        console.log(`✅ Created ${data.notifications_created} notifications`);
+        console.log('✅ Challenger notification ID:', data.challenger_notification_id);
+        console.log('✅ Challenged notification ID:', data.challenged_notification_id);
       } else {
-        console.log('✅ Challenger notification inserted successfully:', challengerData);
+        console.error('❌ Function returned error:', data?.error);
+        throw new Error(data?.error || 'Unknown error from notification function');
       }
+
     } catch (error) {
       console.error('❌ Failed to create singles contact notifications:', error);
       throw error;

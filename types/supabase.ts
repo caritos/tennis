@@ -1,3 +1,4 @@
+
 export type Json =
   | string
   | number
@@ -11,6 +12,31 @@ export type Database = {
   // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
   __InternalSupabase: {
     PostgrestVersion: "13.0.4"
+  }
+  graphql_public: {
+    Tables: {
+      [_ in never]: never
+    }
+    Views: {
+      [_ in never]: never
+    }
+    Functions: {
+      graphql: {
+        Args: {
+          extensions?: Json
+          operationName?: string
+          query?: string
+          variables?: Json
+        }
+        Returns: Json
+      }
+    }
+    Enums: {
+      [_ in never]: never
+    }
+    CompositeTypes: {
+      [_ in never]: never
+    }
   }
   public: {
     Tables: {
@@ -264,6 +290,7 @@ export type Database = {
           lat: number | null
           lng: number | null
           location: string
+          member_count: number | null
           name: string
         }
         Insert: {
@@ -274,6 +301,7 @@ export type Database = {
           lat?: number | null
           lng?: number | null
           location: string
+          member_count?: number | null
           name: string
         }
         Update: {
@@ -284,6 +312,7 @@ export type Database = {
           lat?: number | null
           lng?: number | null
           location?: string
+          member_count?: number | null
           name?: string
         }
         Relationships: [
@@ -664,7 +693,9 @@ export type Database = {
           full_name: string
           games_played: number | null
           id: string
+          notification_preferences: Json | null
           phone: string
+          profile_photo_uri: string | null
           role: string | null
         }
         Insert: {
@@ -675,7 +706,9 @@ export type Database = {
           full_name: string
           games_played?: number | null
           id?: string
+          notification_preferences?: Json | null
           phone: string
+          profile_photo_uri?: string | null
           role?: string | null
         }
         Update: {
@@ -686,7 +719,9 @@ export type Database = {
           full_name?: string
           games_played?: number | null
           id?: string
+          notification_preferences?: Json | null
           phone?: string
+          profile_photo_uri?: string | null
           role?: string | null
         }
         Relationships: []
@@ -839,6 +874,9 @@ export type CompositeTypes<
     : never
 
 export const Constants = {
+  graphql_public: {
+    Enums: {},
+  },
   public: {
     Enums: {},
   },
