@@ -1,5 +1,5 @@
 import { createClient } from '@supabase/supabase-js';
-import { supabase, getSupabaseConfig } from '../../lib/supabase';
+import { supabase } from '../../lib/supabase';
 
 // Mock @supabase/supabase-js
 jest.mock('@supabase/supabase-js', () => ({

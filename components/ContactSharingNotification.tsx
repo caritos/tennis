@@ -7,25 +7,11 @@ import { ThemedView } from '@/components/ThemedView';
 import { Colors } from '@/constants/Colors';
 import { useColorScheme } from '@/hooks/useColorScheme';
 import { useAuth } from '@/contexts/AuthContext';
-import { supabase } from '@/lib/supabase';
+import { supabase, Notification } from '@/lib/supabase';
 import { challengeService } from '@/services/challengeService';
 
 interface ContactSharingNotificationProps {
   onViewAll?: () => void;
-}
-
-interface Notification {
-  id: string;
-  user_id: string;
-  type: string;
-  title: string;
-  message?: string;
-  is_read: boolean;
-  action_type?: string;
-  action_data?: any;
-  related_id?: string;
-  created_at: string;
-  expires_at?: string;
 }
 
 export function ContactSharingNotification({ onViewAll }: ContactSharingNotificationProps) {

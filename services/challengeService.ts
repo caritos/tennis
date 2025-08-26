@@ -123,6 +123,22 @@ class ChallengeService {
         throw new Error('Failed to create challenge');
       }
 
+      // Send notification to the challenged user
+      try {
+        const notificationService = (await import('./NotificationService')).default;
+        await notificationService.createChallengeNotification(
+          challengeData.challenged_id,
+          challenger.full_name,
+          challengeId,
+          challengeData.match_type,
+          challengeData.message
+        );
+        console.log('✅ Challenge notification sent to challenged user');
+      } catch (notificationError) {
+        console.error('❌ Failed to send challenge notification:', notificationError);
+        // Don't fail the challenge creation if notification fails
+      }
+
       console.log('✅ Challenge created:', challengeId);
       return challengeId;
     } catch (error) {
@@ -283,6 +299,10 @@ class ChallengeService {
    */
   public async acceptChallenge(challengeId: string, userId: string): Promise<void> {
     try {
+      console.log('🔍 ACCEPT CHALLENGE DEBUG - Starting acceptance');
+      console.log('🔍 Challenge ID:', challengeId);
+      console.log('🔍 User ID (should be challenged):', userId);
+      
       // Get challenge details with full user information
       const { data: challenge, error: challengeError } = await supabase
         .from('challenges')
@@ -290,6 +310,7 @@ class ChallengeService {
           challenger_id,
           challenged_id,
           match_type,
+          status,
           challenger:users!challenges_challenger_id_fkey(full_name, phone),
           challenged:users!challenges_challenged_id_fkey(full_name, phone)
         `)
@@ -297,10 +318,19 @@ class ChallengeService {
         .eq('challenged_id', userId)
         .single();
 
+      console.log('🔍 Challenge query result:', JSON.stringify(challenge, null, 2));
+      console.log('🔍 Challenge query error:', challengeError);
+
       if (challengeError || !challenge) {
         console.error('❌ Challenge not found or not authorized:', challengeError);
         throw new Error('Challenge not found or not authorized');
       }
+
+      console.log('🔍 Challenge details before update:');
+      console.log('🔍 - Challenger ID:', challenge.challenger_id);
+      console.log('🔍 - Challenged ID:', challenge.challenged_id);
+      console.log('🔍 - Current status:', challenge.status);
+      console.log('🔍 - Match type:', challenge.match_type);
 
       // Update challenge status
       const { error: updateError } = await supabase
@@ -317,6 +347,20 @@ class ChallengeService {
         console.error('❌ Failed to accept challenge:', updateError);
         throw new Error('Failed to accept challenge');
       }
+
+      console.log('✅ Challenge status updated to accepted, contacts_shared set to true');
+      console.log('🔍 About to send contact sharing notifications');
+      console.log('🔍 Challenge data being passed to notifications:', JSON.stringify({
+        challenger_id: challenge.challenger_id,
+        challenged_id: challenge.challenged_id,
+        match_type: challenge.match_type,
+        challenger_name: challenge.challenger?.full_name,
+        challenged_name: challenge.challenged?.full_name
+      }, null, 2));
+
+      // Small delay to ensure challenge update is committed to database
+      console.log('🔍 Waiting 100ms for database commit...');
+      await new Promise(resolve => setTimeout(resolve, 100));
 
       // Send contact sharing notifications to both players
       await this.sendContactSharingNotifications(challengeId, challenge);
@@ -591,6 +635,21 @@ class ChallengeService {
         console.log('✅ Challenged notification inserted successfully:', challengedData);
       }
 
+      // Before creating the challenger notification, let's verify the challenge state
+      console.log('🔍 Pre-notification check: Verifying challenge state in database...');
+      const { data: verifyChallenge, error: verifyError } = await supabase
+        .from('challenges')
+        .select('id, status, challenger_id, challenged_id')
+        .eq('id', challengeId)
+        .single();
+      
+      if (verifyError) {
+        console.error('🔍 Failed to verify challenge state:', verifyError);
+      } else {
+        console.log('🔍 Challenge verification result:', JSON.stringify(verifyChallenge, null, 2));
+        console.log(`🔍 Challenge status: ${verifyChallenge.status} (expected: accepted)`);
+      }
+
       // Then try to create notification for the challenger
       // Note: This might fail if RLS is strict, but we'll try anyway
       const challengerNotificationId = (await import('../utils/uuid')).generateUUID();
@@ -608,10 +667,30 @@ class ChallengeService {
       };
       
       console.log('📝 Inserting challenger notification:', JSON.stringify(challengerNotification, null, 2));
+      console.log('🔍 RLS Debug - Current user (auth.uid()):', currentUser?.id);
+      console.log('🔍 RLS Debug - Notification user_id:', challengerNotification.user_id);
+      console.log('🔍 RLS Debug - Challenge ID:', challengeId);
+      console.log('🔍 RLS Debug - Related ID:', challengerNotification.related_id);
+      console.log('🔍 RLS Debug - Challenger ID:', challenge.challenger_id);
+      console.log('🔍 RLS Debug - Challenged ID:', challenge.challenged_id);
+      console.log('🔍 RLS Debug - Expected condition: challenged_id matches current user and challenger_id matches notification target');
+      console.log('🔍 RLS Debug - Actual check: challenged_id =', challenge.challenged_id, 'auth.uid() =', currentUser?.id, 'matches:', challenge.challenged_id === currentUser?.id);
+      console.log('🔍 RLS Debug - Actual check: challenger_id =', challenge.challenger_id, 'user_id =', challengerNotification.user_id, 'matches:', challenge.challenger_id === challengerNotification.user_id);
+      
+      // Test the exact policy condition that should be matching
+      console.log('🔍 Policy condition test:');
+      console.log(`🔍 - type = 'challenge': ${challengerNotification.type === 'challenge'}`);
+      console.log(`🔍 - related_id IS NOT NULL: ${challengerNotification.related_id != null}`);
+      console.log(`🔍 - Policy should find challenge with id = ${challengerNotification.related_id}`);
+      console.log(`🔍 - Expected policy match: c.challenged_id::text (${challenge.challenged_id}) = auth.uid()::text (${currentUser?.id}) AND c.challenger_id::text (${challenge.challenger_id}) = user_id::text (${challengerNotification.user_id})`);
+      console.log(`🔍 - This should evaluate to: ${challenge.challenged_id === currentUser?.id} AND ${challenge.challenger_id === challengerNotification.user_id} = ${(challenge.challenged_id === currentUser?.id) && (challenge.challenger_id === challengerNotification.user_id)}`);
+      
       const { error: challengerError, data: challengerData } = await supabase.from('notifications').insert(challengerNotification).select();
       if (challengerError) {
         console.error('❌ Failed to insert challenger notification:', challengerError);
         console.error('❌ Challenger notification error details:', JSON.stringify(challengerError, null, 2));
+        console.error('🔍 RLS Policy Failed - This means the database policy is not matching the expected conditions');
+        console.error('🔍 Expected: User', currentUser?.id, 'should be able to create notification for', challengerNotification.user_id, 'for challenge', challengeId);
       } else {
         console.log('✅ Challenger notification inserted successfully:', challengerData);
       }
@@ -640,8 +719,8 @@ class ChallengeService {
         challenger_id,
         challenged_id,
         status,
-        challenger:users!challenges_challenger_id_fkey(full_name, phone),
-        challenged:users!challenges_challenged_id_fkey(full_name, phone)
+        challenger:users!challenges_challenger_id_fkey(full_name, phone, contact_preference),
+        challenged:users!challenges_challenged_id_fkey(full_name, phone, contact_preference)
       `)
       .eq('challenger_id', challenge.challenger_id)
       .eq('match_type', 'doubles')
@@ -674,7 +753,8 @@ class ChallengeService {
     const allPlayers = new Map();
     
     // Add challenger (same across all related challenges)
-    const challenger = relatedChallenges[0]?.challenger;
+    const challengerData = relatedChallenges[0]?.challenger;
+    const challenger = Array.isArray(challengerData) ? challengerData[0] : challengerData;
     if (challenger) {
       allPlayers.set(challenge.challenger_id, {
         id: challenge.challenger_id,
@@ -686,7 +766,8 @@ class ChallengeService {
 
     // Add all challenged players
     for (const relatedChallenge of relatedChallenges) {
-      const challenged = relatedChallenge.challenged;
+      const challengedData = relatedChallenge.challenged;
+      const challenged = Array.isArray(challengedData) ? challengedData[0] : challengedData;
       if (challenged) {
         allPlayers.set(relatedChallenge.challenged_id, {
           id: relatedChallenge.challenged_id,

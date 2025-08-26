@@ -69,7 +69,7 @@ export default function EditProfilePage() {
       const { error } = await supabase
         .from('users')
         .update({
-          phone: data.phone || null,
+          phone: data.phone || '',
         })
         .eq('id', user.id);
 

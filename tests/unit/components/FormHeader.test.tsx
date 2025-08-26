@@ -1,6 +1,6 @@
 import React from 'react';
 import { render, fireEvent } from '@testing-library/react-native';
-import { FormHeader } from '../../../components/FormHeader';
+import FormHeader from '../../../components/FormHeader';
 
 describe('FormHeader Component', () => {
   const mockOnBack = jest.fn();

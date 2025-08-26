@@ -94,6 +94,13 @@ npm start                    # Start Expo development server
 npm run ios                  # Run on iOS simulator
 npm run android             # Run on Android emulator
 
+# Database Management (Environment-Aware)
+npm run env:dev              # Switch to development environment
+npm run env:prod             # Switch to production environment  
+npm run db:generate-types    # Generate TypeScript types from current environment
+npm run db:diff -- name      # Create migration from current environment changes
+npm run db:push              # Apply migrations to current environment database
+
 # Quality Assurance  
 npm run lint                # ESLint code quality check
 npm run type-check          # TypeScript type checking
@@ -130,7 +137,11 @@ The app has dual environment setup:
 This project uses Expo's managed workflow - no `ios/` or `android/` directories exist. All configuration is handled through `app.json` and EAS generates native projects during builds.
 
 ### **Database Management**
-Supabase provides the complete backend with PostgreSQL database. All data operations use Supabase directly:
+Supabase provides the complete backend with PostgreSQL database managed through CLI migrations:
+- **Migration System**: Supabase CLI with migrations in `supabase/migrations/`
+- **Type Generation**: Auto-generated TypeScript types in `types/supabase.ts`
+- **Schema Management**: Use `npm run db:diff` to create migrations from schema changes
+- **Type Safety**: Generated types provide full type safety for all database operations
 - **User Data**: Authentication and profiles stored in Supabase `users` table
 - **Challenges**: Challenge system with contact sharing via Supabase `challenges` table
 - **Notifications**: Real-time notifications stored in Supabase `notifications` table
@@ -186,3 +197,4 @@ For detailed development history and major milestones, see:
 ---
 
 *This file should be updated when major architectural changes occur or new development patterns are established.*
+- Stick with Supabase CLI migrations + supabase gen types for type safety

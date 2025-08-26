@@ -1,4 +1,4 @@
-import { matchService, CreateMatchData } from '@/services/matchService';
+import matchService, { CreateMatchData } from '@/services/matchService';
 import { supabase } from '@/lib/supabase';
 
 // Mock dependencies

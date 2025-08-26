@@ -2,6 +2,11 @@
 process.env.EXPO_PUBLIC_SUPABASE_URL = 'https://test.supabase.co';
 process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY = 'test-anon-key';
 
+// Mock Supabase before any imports
+jest.mock('@/lib/supabase');
+jest.mock('@supabase/supabase-js');
+jest.mock('@/contexts/AuthContext');
+
 // Global polyfills for Jest environment
 global.self = global;
 global.WebSocket = class WebSocket {

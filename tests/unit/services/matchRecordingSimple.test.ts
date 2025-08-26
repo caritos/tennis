@@ -10,11 +10,11 @@ describe('Issue #100: Match recording with challenge_id - Schema Verification', 
         scores: '6-4,6-2',
         match_type: 'singles',
         date: '2025-08-25',
-        challenge_id: null, // This should not cause TypeScript errors
+        challenge_id: undefined, // This should not cause TypeScript errors
         notes: 'Test match'
       };
 
-      expect(matchData.challenge_id).toBe(null);
+      expect(matchData.challenge_id).toBe(undefined);
     });
 
     it('should handle challenge_id for challenge matches', () => {

@@ -7,15 +7,9 @@ import { useColorScheme } from '@/hooks/useColorScheme';
 import { Colors } from '@/constants/Colors';
 import { supabase } from '@/lib/supabase';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { Database } from '@/types/supabase';
 
-interface ClubNotification {
-  id: string;
-  type: string;
-  title: string;
-  message: string;
-  data: any;
-  created_at: string;
-}
+type ClubNotification = Database['public']['Tables']['club_notifications']['Row'];
 
 interface MatchInvitationNotificationProps {
   clubId: string;

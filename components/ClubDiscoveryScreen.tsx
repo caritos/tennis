@@ -81,13 +81,16 @@ export const ClubDiscoveryScreen: React.FC<ClubDiscoveryScreenProps> = ({
       if (location) {
         const newDistances = new Map<string, number>();
         nearbyClubs.forEach(club => {
-          const distance = calculateDistance(
-            userLat,
-            userLng,
-            club.lat,
-            club.lng
-          );
-          newDistances.set(club.id, distance);
+          // Only calculate distance if club has valid coordinates
+          if (club.lat !== null && club.lng !== null) {
+            const distance = calculateDistance(
+              userLat,
+              userLng,
+              club.lat,
+              club.lng
+            );
+            newDistances.set(club.id, distance);
+          }
         });
         setDistances(newDistances);
       }

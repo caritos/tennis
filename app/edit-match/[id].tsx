@@ -243,7 +243,7 @@ export default function EditMatchScreen() {
     player4_id: existingMatch.player4_id,
     partner4_name: existingMatch.partner4_name,
     scores: existingMatch.scores,
-    match_type: existingMatch.match_type,
+    match_type: existingMatch.match_type as 'singles' | 'doubles',
     date: existingMatch.date,
     notes: existingMatch.notes,
   };
