@@ -125,6 +125,32 @@ export class MatchInvitationService {
   }
 
   /**
+   * Get a specific invitation by ID (for notification navigation)
+   */
+  public async getInvitationById(invitationId: string): Promise<MatchInvitation | null> {
+    try {
+      const { data: invitation, error } = await supabase
+        .from('match_invitations')
+        .select(`
+          *,
+          users!creator_id(full_name)
+        `)
+        .eq('id', invitationId)
+        .single();
+
+      if (error) {
+        console.error('❌ Failed to get invitation by ID:', error);
+        return null;
+      }
+
+      return invitation as MatchInvitation;
+    } catch (error) {
+      console.error('❌ Failed to get invitation by ID:', error);
+      return null;
+    }
+  }
+
+  /**
    * Get responses for an invitation
    */
   public async getInvitationResponses(invitationId: string): Promise<InvitationResponse[]> {

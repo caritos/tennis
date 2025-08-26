@@ -244,7 +244,34 @@ export const NotificationScreen: React.FC = () => {
         router.push('/(tabs)'); // Navigate to clubs tab where challenges are visible
         break;
       case 'match_invitation':
-        router.push('/(tabs)'); // Navigate to clubs tab for match invitations
+        // Handle match invitation navigation with invitation data
+        if (notification.action_data) {
+          try {
+            const actionData = typeof notification.action_data === 'string' 
+              ? JSON.parse(notification.action_data) 
+              : notification.action_data;
+            
+            if (actionData.invitationId) {
+              // Get invitation details to find the club
+              const { matchInvitationService } = await import('@/services/matchInvitationService');
+              const invitation = await matchInvitationService.getInvitationById(actionData.invitationId);
+              
+              if (invitation?.club_id) {
+                // Navigate to the specific club's matches tab
+                router.push(`/club/${invitation.club_id}?tab=matches`);
+              } else {
+                router.push('/(tabs)'); // Fallback to clubs tab
+              }
+            } else {
+              router.push('/(tabs)');
+            }
+          } catch (error) {
+            console.error('❌ Error handling match invitation navigation:', error);
+            router.push('/(tabs)');
+          }
+        } else {
+          router.push('/(tabs)'); // Fallback when no action data
+        }
         break;
       case 'match_result':
         router.push('/(tabs)/profile'); // Navigate to profile for match history

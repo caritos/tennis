@@ -4,6 +4,8 @@
 
 When users clicked "view match details" from challenge accepted notifications, they were redirected to the matches tab but could not see the accepted challenge matches displayed. The challenge system was working correctly (notifications, contact sharing, database records), but the UI was not rendering the challenge matches in the matches tab.
 
+**Similar Issue**: The same problem existed for "Looking to Play" match invitation notifications - users would click notification buttons but weren't taken to the specific club's matches tab to see their match invitations.
+
 ## Root Cause Analysis
 
 The issue was identified through systematic debugging:
@@ -84,8 +86,28 @@ To prevent similar issues:
 3. **Debug Logging**: Maintain debug logging in data processing pipelines for easier troubleshooting
 4. **Cross-User Testing**: Always test UI changes with multiple user accounts to catch user-specific issues
 
+## Match Invitation Fix (Follow-up)
+
+After fixing challenges, the same issue was identified for match invitations ("Looking to Play" notifications). Applied identical solution:
+
+### Additional Changes Made:
+1. **NotificationScreen.tsx**: Added deep-link navigation for match invitations
+   - Parse `invitationId` from notification action_data
+   - Fetch invitation details to get club_id
+   - Navigate to `/club/{club_id}?tab=matches`
+
+2. **matchInvitationService.ts**: Added `getInvitationById()` method
+   - Retrieves invitation details needed for navigation
+   - Used by notification click handlers
+
+### Result:
+- ✅ Match invitation notifications now navigate to correct club matches tab
+- ✅ Users can see their "Looking to Play" matches after clicking notification
+- ✅ Both challenge and match invitation notification flows work end-to-end
+
 ## Related Documentation
 
 - Challenge System Overview: `/docs/features/challenge-system.md`
+- Looking to Play System: `/docs/features/looking-to-play.md`
 - Contact Sharing Implementation: `/database/fix-challenge-notification-function.sql`
 - Match Recording Integration: `/docs/features/match-claiming-system.md`
