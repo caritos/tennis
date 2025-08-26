@@ -25,6 +25,7 @@ interface ClubMatch extends Match {
   notes?: string;
   status?: string;
   isInvitation?: boolean;
+  isChallenge?: boolean;
   responses?: {
     id: string;
     invitation_id?: string;
@@ -116,6 +117,7 @@ export default function ClubMatches({
       return dateB.getTime() - dateA.getTime();
     }
   });
+
 
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
@@ -246,7 +248,7 @@ export default function ClubMatches({
                   { borderColor: colors.border }
                 ]}
               >
-                {match.challenge_id ? (
+                {match.isChallenge ? (
                   // Display challenge match
                   <View style={[styles.challengeDisplay, { borderColor: '#FF6B35', borderWidth: 1, borderRadius: 8 }]}>
                     <View style={styles.challengeHeader}>

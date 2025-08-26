@@ -321,8 +321,11 @@ export default function ClubDetailScreen() {
       }));
 
       // Load accepted challenges for display
+      console.log('🔍 ClubDetails: Loading challenges for club:', id);
       const acceptedChallenges = await challengeService.getClubChallenges(String(id));
+      console.log('🔍 ClubDetails: All challenges loaded:', acceptedChallenges.length, acceptedChallenges.map(c => ({ id: c.id, status: c.status })));
       const acceptedOnly = acceptedChallenges.filter(challenge => challenge.status === 'accepted');
+      console.log('🔍 ClubDetails: Accepted challenges found:', acceptedOnly.length, acceptedOnly.map(c => ({ id: c.id, status: c.status })));
       
       // Process challenges for display
       const processedChallenges = acceptedOnly.map((challenge: any) => ({
@@ -343,7 +346,9 @@ export default function ClubDetailScreen() {
       }));
 
       // Combine completed matches, invitations, and challenges
+      console.log('🔍 ClubDetails: Processed challenges for display:', processedChallenges.length, processedChallenges.map(c => ({ id: c.id, isChallenge: c.isChallenge })));
       const allMatchesAndInvitations = [...processedCompletedMatches, ...processedInvitations, ...processedChallenges];
+      console.log('🔍 ClubDetails: Combined all data - matches:', processedCompletedMatches.length, 'invitations:', processedInvitations.length, 'challenges:', processedChallenges.length, 'total:', allMatchesAndInvitations.length);
       
       setAllMatches(allMatchesAndInvitations);
       

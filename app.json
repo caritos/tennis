@@ -9,7 +9,6 @@
     "icon": "./assets/images/retro-tennis-ball-motion.png",
     "scheme": "playserve",
     "userInterfaceStyle": "automatic",
-    "newArchEnabled": false,
     "ios": {
       "supportsTablet": true,
       "usesAppleSignIn": false,
