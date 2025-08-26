@@ -155,6 +155,14 @@ const NotificationItem: React.FC<NotificationItemProps & {
                 <ThemedText style={styles.actionButtonText}>Join Match</ThemedText>
               </TouchableOpacity>
             )}
+            {notification.action_type === 'join_club' && (
+              <TouchableOpacity
+                style={[styles.actionButton, styles.acceptButton]}
+                onPress={() => onQuickAction(notification, 'join')}
+              >
+                <ThemedText style={styles.actionButtonText}>Join Club</ThemedText>
+              </TouchableOpacity>
+            )}
           </View>
         )}
       </View>
@@ -279,6 +287,28 @@ export const NotificationScreen: React.FC = () => {
       case 'ranking_update':
         router.push('/(tabs)'); // Navigate to clubs tab for rankings
         break;
+      case 'club_activity':
+        // Handle club creation notifications with club data
+        if (notification.action_data && notification.related_id) {
+          try {
+            const actionData = typeof notification.action_data === 'string' 
+              ? JSON.parse(notification.action_data) 
+              : notification.action_data;
+            
+            if (actionData.clubId) {
+              // Navigate directly to the new club
+              router.push(`/club/${actionData.clubId}`);
+            } else {
+              router.push('/(tabs)'); // Fallback to clubs tab
+            }
+          } catch (error) {
+            console.error('❌ Error handling club activity navigation:', error);
+            router.push('/(tabs)');
+          }
+        } else {
+          router.push('/(tabs)'); // Fallback when no action data
+        }
+        break;
       default:
         router.push('/(tabs)');
     }
@@ -379,6 +409,13 @@ export const NotificationScreen: React.FC = () => {
             'Interested via quick action'
           );
           console.log('✅ Match invitation response sent via quick action');
+        }
+      } else if (notification.type === 'club_activity' && notification.related_id) {
+        const { joinClub } = await import('@/services/clubService');
+        
+        if (action === 'join') {
+          await joinClub(notification.related_id, notification.user_id);
+          console.log('✅ Club joined via quick action');
         }
       }
       

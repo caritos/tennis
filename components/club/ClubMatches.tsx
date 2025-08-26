@@ -49,6 +49,7 @@ interface ClubMatchesProps {
   onClaimMatch?: (matchId: string, playerPosition: "player2" | "player3" | "player4") => void;
   onRecordMatch?: () => void;
   onJoinInvitation?: (invitationId: string) => void;
+  joiningInvitations?: Set<string>;
   currentUserId?: string;
 }
 
@@ -65,6 +66,7 @@ export default function ClubMatches({
   onClaimMatch,
   onRecordMatch,
   onJoinInvitation,
+  joiningInvitations,
   currentUserId,
 }: ClubMatchesProps) {
   // Filter and sort matches based on type, involvement, and date
@@ -332,6 +334,7 @@ export default function ClubMatches({
                       matchType={match.match_type}
                       isMatched={false}
                       onJoinMatch={onJoinInvitation ? () => onJoinInvitation(match.id) : undefined}
+                      isJoining={joiningInvitations?.has(match.id) || false}
                       currentUserId={currentUserId}
                       creatorId={match.player1_id}
                     />

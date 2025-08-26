@@ -12,6 +12,7 @@ interface DoublesMatchParticipantsProps {
   matchType: 'singles' | 'doubles';
   isMatched: boolean;
   onJoinMatch?: () => void;
+  isJoining?: boolean;
   currentUserId?: string;
   creatorId?: string;
 }
@@ -22,6 +23,7 @@ export const DoublesMatchParticipants: React.FC<DoublesMatchParticipantsProps> =
   matchType,
   isMatched,
   onJoinMatch,
+  isJoining,
   currentUserId,
   creatorId
 }) => {
@@ -35,7 +37,7 @@ export const DoublesMatchParticipants: React.FC<DoublesMatchParticipantsProps> =
   // Check if current user has already responded or is the creator
   const hasUserResponded = currentUserId && responses.some(r => r.user_id === currentUserId);
   const isUserCreator = currentUserId && currentUserId === creatorId;
-  const canJoin = currentUserId && !hasUserResponded && !isUserCreator && onJoinMatch && !isMatched;
+  const canJoin = currentUserId && !hasUserResponded && !isUserCreator && onJoinMatch && !isMatched && !isJoining;
   
   // For doubles, show all players without team assignments
   if (matchType === 'doubles') {
@@ -75,16 +77,17 @@ export const DoublesMatchParticipants: React.FC<DoublesMatchParticipantsProps> =
             
             {/* Empty slots for remaining players */}
             {Array.from({ length: Math.max(0, 4 - allPlayers.length) }).map((_, index) => {
-              if (canJoin) {
+              if (canJoin || isJoining) {
                 return (
                   <TouchableOpacity 
                     key={`empty-${index}`} 
-                    style={[styles.emptySlot, styles.clickableSlot, { borderColor: colors.tint }]}
-                    onPress={onJoinMatch}
+                    style={[styles.emptySlot, styles.clickableSlot, { borderColor: colors.tint, opacity: isJoining ? 0.6 : 1 }]}
+                    onPress={isJoining ? undefined : onJoinMatch}
                     activeOpacity={0.7}
+                    disabled={isJoining}
                   >
                     <ThemedText style={[styles.emptySlotText, { color: colors.tint }]}>
-                      + Join Match
+                      {isJoining ? '⏳ Joining...' : '+ Join Match'}
                     </ThemedText>
                   </TouchableOpacity>
                 );
@@ -154,14 +157,15 @@ export const DoublesMatchParticipants: React.FC<DoublesMatchParticipantsProps> =
               {confirmedResponses[0].user_name || 'Unknown Player'}
             </ThemedText>
           </View>
-        ) : canJoin ? (
+        ) : canJoin || isJoining ? (
           <TouchableOpacity 
-            style={[styles.emptySlot, styles.clickableSlot, { borderColor: colors.tint }]}
-            onPress={onJoinMatch}
+            style={[styles.emptySlot, styles.clickableSlot, { borderColor: colors.tint, opacity: isJoining ? 0.6 : 1 }]}
+            onPress={isJoining ? undefined : onJoinMatch}
             activeOpacity={0.7}
+            disabled={isJoining}
           >
             <ThemedText style={[styles.emptySlotText, { color: colors.tint }]}>
-              + Join Match
+              {isJoining ? '⏳ Joining...' : '+ Join Match'}
             </ThemedText>
           </TouchableOpacity>
         ) : (

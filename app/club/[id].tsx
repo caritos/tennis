@@ -38,6 +38,7 @@ export default function ClubDetailScreen() {
   const [showChallengeModal, setShowChallengeModal] = useState(false);
   const [challengeTarget, setChallengeTarget] = useState<{ id: string; name: string } | null>(null);
   const [pendingChallenges, setPendingChallenges] = useState<Set<string>>(new Set());
+  const [joiningInvitations, setJoiningInvitations] = useState<Set<string>>(new Set());
   const [activeTab, setActiveTab] = useState<TabType>('overview');
   const [showInviteForm, setShowInviteForm] = useState(false);
   const [unreadChallengeCount, setUnreadChallengeCount] = useState(0);
@@ -499,7 +500,14 @@ export default function ClubDetailScreen() {
   const handleJoinInvitation = async (invitationId: string) => {
     if (!user?.id) return;
     
+    // Prevent multiple concurrent join attempts
+    if (joiningInvitations.has(invitationId)) {
+      console.log('⏳ Already joining invitation:', invitationId);
+      return;
+    }
+    
     try {
+      setJoiningInvitations(prev => new Set(prev).add(invitationId));
       console.log('🎾 Joining invitation:', invitationId);
       await matchInvitationService.respondToInvitation(invitationId, user.id);
       
@@ -518,6 +526,12 @@ export default function ClubDetailScreen() {
       
       // You might want to show a toast/alert here
       console.log('Error message for user:', errorMessage);
+    } finally {
+      setJoiningInvitations(prev => {
+        const newSet = new Set(prev);
+        newSet.delete(invitationId);
+        return newSet;
+      });
     }
   };
 
@@ -651,6 +665,7 @@ export default function ClubDetailScreen() {
             onClaimMatch={handleClaimMatch}
             onRecordMatch={handleRecordMatch}
             onJoinInvitation={handleJoinInvitation}
+            joiningInvitations={joiningInvitations}
             currentUserId={user?.id}
           />
         )}

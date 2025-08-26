@@ -100,6 +100,27 @@ export class ClubService {
         console.log('✅ Creator added as club member');
       }
 
+      // Create notifications for nearby users using PostgreSQL function
+      try {
+        const { data: notificationResult, error: notificationError } = await supabase.rpc(
+          'create_club_creation_notifications',
+          {
+            p_club_id: clubId,
+            p_club_lat: clubData.lat,
+            p_club_lng: clubData.lng
+          }
+        );
+
+        if (notificationError) {
+          console.error('⚠️ Failed to create club notifications:', notificationError);
+        } else {
+          console.log('✅ Club notifications created:', notificationResult);
+        }
+      } catch (notificationErr) {
+        console.error('⚠️ Club notification function failed:', notificationErr);
+        // Don't throw - club creation was successful
+      }
+
       return club;
 
     } catch (error) {
@@ -129,6 +150,26 @@ export class ClubService {
       }
 
       console.log('✅ Successfully joined club');
+
+      // Create notifications for club members using PostgreSQL function
+      try {
+        const { data: notificationResult, error: notificationError } = await supabase.rpc(
+          'create_club_join_notifications',
+          {
+            p_club_id: clubId,
+            p_new_member_id: userId
+          }
+        );
+
+        if (notificationError) {
+          console.error('⚠️ Failed to create club join notifications:', notificationError);
+        } else {
+          console.log('✅ Club join notifications created:', notificationResult);
+        }
+      } catch (notificationErr) {
+        console.error('⚠️ Club join notification function failed:', notificationErr);
+        // Don't throw - club join was successful
+      }
 
     } catch (error) {
       console.error('❌ Join club failed:', error);

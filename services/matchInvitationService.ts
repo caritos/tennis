@@ -224,8 +224,8 @@ export class MatchInvitationService {
         throw error;
       }
 
-      // TODO: Create notification for invitation creator
-      // This would require implementing a notification system with Supabase
+      // Notifications for match confirmations are handled by checkAutoMatch() 
+      // when enough players join using PostgreSQL function
 
       // Check if we should auto-match
       await this.checkAutoMatch(invitationId);

@@ -205,6 +205,30 @@ export class MatchService {
         console.log('  - Opponent present:', !!(matchData.player2_id || matchData.opponent2_name));
       }
 
+      // Create notifications for match participants using PostgreSQL function
+      if (matchData.scores) {
+        try {
+          const winner = determineMatchWinner(match.scores);
+          const { data: notificationResult, error: notificationError } = await supabase.rpc(
+            'create_match_result_notifications',
+            {
+              p_match_id: match.id,
+              p_winner: winner,
+              p_recorder_user_id: matchData.player1_id // Assuming player1 is always the recorder
+            }
+          );
+
+          if (notificationError) {
+            console.error('⚠️ Failed to create match result notifications:', notificationError);
+          } else {
+            console.log('✅ Match result notifications created:', notificationResult);
+          }
+        } catch (notificationErr) {
+          console.error('⚠️ Match notification function failed:', notificationErr);
+          // Don't throw - match creation was successful
+        }
+      }
+
       return match;
 
     } catch (error) {
