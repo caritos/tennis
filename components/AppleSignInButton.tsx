@@ -1,8 +1,7 @@
 import React from 'react';
-import { Platform, Alert } from 'react-native';
+import { Platform } from 'react-native';
 import * as AppleAuthentication from 'expo-apple-authentication';
 import * as Device from 'expo-device';
-import Constants from 'expo-constants';
 import { supabase } from '@/lib/supabase';
 import { getAuthErrorMessage } from '@/utils/errorHandling';
 import { logAppleSignInDebugInfo, isAppleSignInSupported } from '@/utils/appleSignInDebug';

@@ -198,3 +198,4 @@ For detailed development history and major milestones, see:
 
 *This file should be updated when major architectural changes occur or new development patterns are established.*
 - Stick with Supabase CLI migrations + supabase gen types for type safety
+- what else can we fix while the supabase is down

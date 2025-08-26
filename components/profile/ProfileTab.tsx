@@ -31,7 +31,7 @@ const ProfileTab = React.memo(function ProfileTab({ user, colors, onUserUpdate }
   // Always update state when user data changes, including initial load
   useEffect(() => {
     if (user) {
-      const newFullName = user.user_metadata?.full_name || user.full_name || '';
+      const newFullName = user.user_metadata?.full_name || (user as any).full_name || '';
       const newPhone = user.phone || user.user_metadata?.phone || '';
       
       setFullName(newFullName);
@@ -48,12 +48,11 @@ const ProfileTab = React.memo(function ProfileTab({ user, colors, onUserUpdate }
       // Update users table
       const { error: dbError } = await supabase
         .from('users')
-        .upsert({
-          id: user.id,
+        .update({
           full_name: fullName.trim(),
-          email: user.email,
           phone: phone.trim(),
-        });
+        })
+        .eq('id', user.id);
 
       if (dbError) {
         console.error('Database update error:', dbError);

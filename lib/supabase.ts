@@ -9,7 +9,7 @@ export type Club = Database['public']['Tables']['clubs']['Row'];
 export type Match = Database['public']['Tables']['matches']['Row'];
 export type Challenge = Database['public']['Tables']['challenges']['Row'];
 export type Notification = Database['public']['Tables']['notifications']['Row'];
-export type ClubMembership = Database['public']['Tables']['club_memberships']['Row'];
+export type ClubMembership = Database['public']['Tables']['club_members']['Row'];
 
 // Create Supabase client with environment-specific configuration and generated types
 export const supabase = createClient<Database>(config.supabase.url, config.supabase.anonKey, {

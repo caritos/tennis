@@ -1,6 +1,6 @@
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
-import { ClubBadgeData, BadgeUrgency, getBadgeColor } from '@/types/badges';
+import { ClubBadgeData, getBadgeColor } from '@/types/badges';
 
 interface ClubBadgeProps {
   clubBadgeData: ClubBadgeData | null;

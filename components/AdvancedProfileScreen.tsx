@@ -57,7 +57,7 @@ export const AdvancedProfileScreen: React.FC<AdvancedProfileScreenProps> = ({ on
       
       const { data: result, error } = await supabase
         .from('users')
-        .select('full_name, phone, profile_photo_uri, notification_preferences')
+        .select('full_name, phone')
         .eq('id', user.id)
         .single();
 
@@ -71,17 +71,27 @@ export const AdvancedProfileScreen: React.FC<AdvancedProfileScreenProps> = ({ on
         const profile: UserProfile = {
           full_name: result.full_name || '',
           phone: result.phone || '',
-          profile_photo_uri: result.profile_photo_uri || undefined,
-        };
-
-        // Parse notification preferences if they exist
-        if (result.notification_preferences) {
-          try {
-            profile.notification_preferences = JSON.parse(result.notification_preferences);
-          } catch (error) {
-            console.warn('Failed to parse notification preferences:', error);
+          // profile_photo_uri and notification_preferences will be available after database migration
+          profile_photo_uri: undefined,
+          notification_preferences: {
+            challenge_received: true,
+            challenge_accepted: true,
+            challenge_declined: true,
+            challenge_expired: true,
+            match_invitation_received: true,
+            match_invitation_matched: true,
+            match_invitation_cancelled: true,
+            match_recorded: true,
+            ranking_updated: true,
+            new_club_member: true,
+            club_announcement: true,
+            push_notifications: true,
+            email_notifications: true,
+            quiet_hours_enabled: false,
+            quiet_hours_start: '22:00',
+            quiet_hours_end: '08:00'
           }
-        }
+        };
 
         setUserProfile(profile);
       }
@@ -129,17 +139,10 @@ export const AdvancedProfileScreen: React.FC<AdvancedProfileScreenProps> = ({ on
     if (!user?.id) return;
 
     try {
-      const { error } = await supabase
-        .from('users')
-        .update({ notification_preferences: JSON.stringify(preferences) })
-        .eq('id', user.id);
-
-      if (error) {
-        console.error('Failed to save notification preferences:', error);
-        throw new Error('Failed to save notification preferences');
-      }
-
-      // Update local state
+      // TODO: Enable after database migration adds notification_preferences field
+      console.log('Notification preferences update pending database migration:', preferences);
+      
+      // For now, just update local state
       setUserProfile(prev => prev ? { ...prev, notification_preferences: preferences } : null);
       
     } catch (error) {

@@ -129,7 +129,7 @@ export function MatchInvitationNotification({
   return (
     <>
       {notifications.map((notification) => {
-        const timeSince = new Date(notification.created_at);
+        const timeSince = new Date(notification.created_at || new Date());
         const timeAgo = getTimeAgo(timeSince);
 
         return (

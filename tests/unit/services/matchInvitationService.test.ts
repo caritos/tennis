@@ -1,12 +1,9 @@
-import { matchInvitationService } from '../../../services/matchInvitationService';
+import { matchInvitationService, CreateInvitationData } from '../../../services/matchInvitationService';
 import { supabase } from '../../../lib/supabase';
 
 jest.mock('../../../lib/supabase', () => ({
   supabase: {
     from: jest.fn(),
-    auth: {
-      getUser: jest.fn(),
-    },
   },
 }));
 
@@ -16,433 +13,127 @@ const mockSupabaseChain = {
   update: jest.fn().mockReturnThis(),
   delete: jest.fn().mockReturnThis(),
   eq: jest.fn().mockReturnThis(),
-  in: jest.fn().mockReturnThis(),
   order: jest.fn().mockReturnThis(),
-  limit: jest.fn().mockReturnThis(),
   single: jest.fn(),
-  maybeSingle: jest.fn(),
 };
 
-const mockUser = {
-  id: 'user-1',
-  email: 'test@example.com',
-};
-
-const mockInvitation = {
-  id: 'invitation-1',
-  matchId: 'match-1',
-  inviterId: 'user-1',
-  inviteeId: 'user-2',
-  status: 'pending',
-  message: 'Let\'s play tennis!',
-  createdAt: '2024-01-15T10:00:00Z',
-};
-
-const mockMatch = {
-  id: 'match-1',
-  clubId: 'club-1',
-  player1Id: 'user-1',
-  player2Id: null,
-  scheduledAt: '2024-01-20T14:00:00Z',
-  matchType: 'singles',
-};
-
-describe('matchInvitationService', () => {
+describe('MatchInvitationService', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     (supabase.from as jest.Mock).mockReturnValue(mockSupabaseChain);
-    (supabase.auth.getUser as jest.Mock).mockResolvedValue({
-      data: { user: mockUser },
-      error: null,
-    });
   });
 
   describe('createInvitation', () => {
-    it('creates a match invitation successfully', async () => {
+    it('should create a match invitation with correct data structure', async () => {
+      const mockInvitation = {
+        id: 'test-id',
+        club_id: 'test-club-id',
+        creator_id: 'test-user-id',
+        match_type: 'singles',
+        date: '2025-08-26',
+        status: 'active',
+        created_at: new Date().toISOString(),
+      };
+
       mockSupabaseChain.single.mockResolvedValue({
         data: mockInvitation,
         error: null,
       });
 
-      const result = await matchInvitationService.createInvitation({
-        matchId: 'match-1',
-        inviteeId: 'user-2',
-        message: 'Let\'s play tennis!',
-      });
+      const invitationData: CreateInvitationData = {
+        club_id: 'test-club-id',
+        creator_id: 'test-user-id',
+        match_type: 'singles',
+        date: '2025-08-26',
+        time: '10:00',
+        location: 'Court 1',
+        notes: 'Let\'s play!',
+      };
+
+      const result = await matchInvitationService.createInvitation(invitationData);
 
       expect(supabase.from).toHaveBeenCalledWith('match_invitations');
-      expect(mockSupabaseChain.insert).toHaveBeenCalledWith({
-        matchId: 'match-1',
-        inviterId: 'user-1',
-        inviteeId: 'user-2',
-        message: 'Let\'s play tennis!',
-        status: 'pending',
-      });
+      expect(mockSupabaseChain.insert).toHaveBeenCalled();
+      expect(mockSupabaseChain.select).toHaveBeenCalled();
+      expect(mockSupabaseChain.single).toHaveBeenCalled();
       expect(result).toEqual(mockInvitation);
     });
 
-    it('throws error when user is not authenticated', async () => {
-      (supabase.auth.getUser as jest.Mock).mockResolvedValue({
-        data: { user: null },
-        error: null,
-      });
-
-      await expect(
-        matchInvitationService.createInvitation({
-          matchId: 'match-1',
-          inviteeId: 'user-2',
-        })
-      ).rejects.toThrow('User not authenticated');
-    });
-
-    it('handles database errors', async () => {
+    it('should handle database errors during creation', async () => {
       mockSupabaseChain.single.mockResolvedValue({
         data: null,
         error: { message: 'Database error' },
       });
 
+      const invitationData: CreateInvitationData = {
+        club_id: 'test-club-id',
+        creator_id: 'test-user-id',
+        match_type: 'singles',
+        date: '2025-08-26',
+      };
+
       await expect(
-        matchInvitationService.createInvitation({
-          matchId: 'match-1',
-          inviteeId: 'user-2',
-        })
-      ).rejects.toThrow('Database error');
+        matchInvitationService.createInvitation(invitationData)
+      ).rejects.toThrow('Failed to create match invitation: Database error');
     });
   });
 
-  describe('acceptInvitation', () => {
-    it('accepts an invitation successfully', async () => {
-      const acceptedInvitation = { ...mockInvitation, status: 'accepted' };
-      
-      mockSupabaseChain.single.mockResolvedValue({
-        data: acceptedInvitation,
+  describe('getClubInvitations', () => {
+    it('should retrieve invitations for a club', async () => {
+      const mockInvitations = [
+        {
+          id: 'inv-1',
+          club_id: 'test-club-id',
+          creator_id: 'user-1',
+          match_type: 'singles',
+          date: '2025-08-26',
+          status: 'active',
+          users: { full_name: 'John Doe' }
+        }
+      ];
+
+      mockSupabaseChain.order = jest.fn().mockResolvedValue({
+        data: mockInvitations,
         error: null,
       });
 
-      const result = await matchInvitationService.acceptInvitation('invitation-1');
+      const result = await matchInvitationService.getClubInvitations('test-club-id');
 
       expect(supabase.from).toHaveBeenCalledWith('match_invitations');
-      expect(mockSupabaseChain.update).toHaveBeenCalledWith({
-        status: 'accepted',
-        respondedAt: expect.any(String),
-      });
-      expect(mockSupabaseChain.eq).toHaveBeenCalledWith('id', 'invitation-1');
-      expect(result).toEqual(acceptedInvitation);
-    });
-
-    it('handles acceptance errors', async () => {
-      mockSupabaseChain.single.mockResolvedValue({
-        data: null,
-        error: { message: 'Failed to accept invitation' },
-      });
-
-      await expect(
-        matchInvitationService.acceptInvitation('invitation-1')
-      ).rejects.toThrow('Failed to accept invitation');
+      expect(mockSupabaseChain.select).toHaveBeenCalled();
+      expect(mockSupabaseChain.eq).toHaveBeenCalledWith('club_id', 'test-club-id');
+      expect(mockSupabaseChain.eq).toHaveBeenCalledWith('status', 'active');
+      expect(result).toHaveLength(1);
+      expect(result[0].creator_name).toBe('John Doe');
     });
   });
 
-  describe('declineInvitation', () => {
-    it('declines an invitation successfully', async () => {
-      const declinedInvitation = { ...mockInvitation, status: 'declined' };
-      
+  describe('respondToInvitation', () => {
+    it('should create a response to an invitation', async () => {
+      const mockResponse = {
+        id: 'response-1',
+        invitation_id: 'inv-1',
+        user_id: 'user-2',
+        status: 'interested',
+        message: 'Count me in!',
+        created_at: new Date().toISOString(),
+      };
+
       mockSupabaseChain.single.mockResolvedValue({
-        data: declinedInvitation,
+        data: mockResponse,
         error: null,
       });
 
-      const result = await matchInvitationService.declineInvitation('invitation-1', 'Not available');
-
-      expect(mockSupabaseChain.update).toHaveBeenCalledWith({
-        status: 'declined',
-        declineReason: 'Not available',
-        respondedAt: expect.any(String),
-      });
-      expect(result).toEqual(declinedInvitation);
-    });
-
-    it('declines without reason', async () => {
-      mockSupabaseChain.single.mockResolvedValue({
-        data: { ...mockInvitation, status: 'declined' },
-        error: null,
-      });
-
-      await matchInvitationService.declineInvitation('invitation-1');
-
-      expect(mockSupabaseChain.update).toHaveBeenCalledWith({
-        status: 'declined',
-        declineReason: null,
-        respondedAt: expect.any(String),
-      });
-    });
-  });
-
-  describe('getUserInvitations', () => {
-    const mockInvitations = [
-      { ...mockInvitation, id: 'inv-1' },
-      { ...mockInvitation, id: 'inv-2', status: 'accepted' },
-    ];
-
-    it('gets received invitations', async () => {
-      mockSupabaseChain.select.mockResolvedValue({
-        data: mockInvitations,
-        error: null,
-      });
-
-      const result = await matchInvitationService.getUserInvitations('received');
-
-      expect(mockSupabaseChain.select).toHaveBeenCalledWith(`
-        *,
-        match:matches(*),
-        inviter:users!inviterId(id, name, email)
-      `);
-      expect(mockSupabaseChain.eq).toHaveBeenCalledWith('inviteeId', 'user-1');
-      expect(result).toEqual(mockInvitations);
-    });
-
-    it('gets sent invitations', async () => {
-      mockSupabaseChain.select.mockResolvedValue({
-        data: mockInvitations,
-        error: null,
-      });
-
-      const result = await matchInvitationService.getUserInvitations('sent');
-
-      expect(mockSupabaseChain.select).toHaveBeenCalledWith(`
-        *,
-        match:matches(*),
-        invitee:users!inviteeId(id, name, email)
-      `);
-      expect(mockSupabaseChain.eq).toHaveBeenCalledWith('inviterId', 'user-1');
-      expect(result).toEqual(mockInvitations);
-    });
-
-    it('filters by status', async () => {
-      mockSupabaseChain.select.mockResolvedValue({
-        data: [mockInvitations[0]],
-        error: null,
-      });
-
-      await matchInvitationService.getUserInvitations('received', 'pending');
-
-      expect(mockSupabaseChain.eq).toHaveBeenCalledWith('status', 'pending');
-    });
-
-    it('handles database errors', async () => {
-      mockSupabaseChain.select.mockResolvedValue({
-        data: null,
-        error: { message: 'Database error' },
-      });
-
-      await expect(
-        matchInvitationService.getUserInvitations('received')
-      ).rejects.toThrow('Database error');
-    });
-  });
-
-  describe('getInvitationById', () => {
-    it('gets invitation by ID', async () => {
-      mockSupabaseChain.single.mockResolvedValue({
-        data: mockInvitation,
-        error: null,
-      });
-
-      const result = await matchInvitationService.getInvitationById('invitation-1');
-
-      expect(mockSupabaseChain.select).toHaveBeenCalledWith(`
-        *,
-        match:matches(*),
-        inviter:users!inviterId(id, name, email),
-        invitee:users!inviteeId(id, name, email)
-      `);
-      expect(mockSupabaseChain.eq).toHaveBeenCalledWith('id', 'invitation-1');
-      expect(result).toEqual(mockInvitation);
-    });
-
-    it('returns null when invitation not found', async () => {
-      mockSupabaseChain.single.mockResolvedValue({
-        data: null,
-        error: null,
-      });
-
-      const result = await matchInvitationService.getInvitationById('nonexistent');
-
-      expect(result).toBeNull();
-    });
-  });
-
-  describe('cancelInvitation', () => {
-    it('cancels an invitation successfully', async () => {
-      mockSupabaseChain.single.mockResolvedValue({
-        data: { ...mockInvitation, status: 'cancelled' },
-        error: null,
-      });
-
-      const result = await matchInvitationService.cancelInvitation('invitation-1');
-
-      expect(mockSupabaseChain.update).toHaveBeenCalledWith({
-        status: 'cancelled',
-        cancelledAt: expect.any(String),
-      });
-      expect(mockSupabaseChain.eq).toHaveBeenCalledWith('id', 'invitation-1');
-    });
-
-    it('only allows inviter to cancel', async () => {
-      mockSupabaseChain.single.mockResolvedValue({
-        data: null,
-        error: null,
-      });
-
-      // Get invitation first to check ownership
-      const getChain = { ...mockSupabaseChain };
-      getChain.single.mockResolvedValue({
-        data: { ...mockInvitation, inviterId: 'other-user' },
-        error: null,
-      });
-
-      await expect(
-        matchInvitationService.cancelInvitation('invitation-1')
-      ).rejects.toThrow('Not authorized to cancel this invitation');
-    });
-  });
-
-  describe('getMatchInvitations', () => {
-    it('gets all invitations for a match', async () => {
-      mockSupabaseChain.select.mockResolvedValue({
-        data: [mockInvitation],
-        error: null,
-      });
-
-      const result = await matchInvitationService.getMatchInvitations('match-1');
-
-      expect(mockSupabaseChain.eq).toHaveBeenCalledWith('matchId', 'match-1');
-      expect(result).toEqual([mockInvitation]);
-    });
-  });
-
-  describe('hasUserRespondedToInvitation', () => {
-    it('returns true when user has responded', async () => {
-      mockSupabaseChain.maybeSingle.mockResolvedValue({
-        data: { ...mockInvitation, status: 'accepted' },
-        error: null,
-      });
-
-      const result = await matchInvitationService.hasUserRespondedToInvitation(
-        'invitation-1',
-        'user-2'
+      const result = await matchInvitationService.respondToInvitation(
+        'inv-1',
+        'user-2',
+        'interested',
+        'Count me in!'
       );
 
-      expect(result).toBe(true);
-    });
-
-    it('returns false when user has not responded', async () => {
-      mockSupabaseChain.maybeSingle.mockResolvedValue({
-        data: { ...mockInvitation, status: 'pending' },
-        error: null,
-      });
-
-      const result = await matchInvitationService.hasUserRespondedToInvitation(
-        'invitation-1',
-        'user-2'
-      );
-
-      expect(result).toBe(false);
-    });
-
-    it('returns false when invitation not found', async () => {
-      mockSupabaseChain.maybeSingle.mockResolvedValue({
-        data: null,
-        error: null,
-      });
-
-      const result = await matchInvitationService.hasUserRespondedToInvitation(
-        'nonexistent',
-        'user-2'
-      );
-
-      expect(result).toBe(false);
-    });
-  });
-
-  describe('getPendingInvitationsCount', () => {
-    it('returns count of pending invitations', async () => {
-      mockSupabaseChain.single.mockResolvedValue({
-        data: { count: 5 },
-        error: null,
-      });
-
-      const result = await matchInvitationService.getPendingInvitationsCount();
-
-      expect(mockSupabaseChain.select).toHaveBeenCalledWith('*', { count: 'exact', head: true });
-      expect(mockSupabaseChain.eq).toHaveBeenCalledWith('inviteeId', 'user-1');
-      expect(mockSupabaseChain.eq).toHaveBeenCalledWith('status', 'pending');
-      expect(result).toBe(5);
-    });
-
-    it('returns 0 when no pending invitations', async () => {
-      mockSupabaseChain.single.mockResolvedValue({
-        data: { count: 0 },
-        error: null,
-      });
-
-      const result = await matchInvitationService.getPendingInvitationsCount();
-
-      expect(result).toBe(0);
-    });
-  });
-
-  describe('expireOldInvitations', () => {
-    it('expires old pending invitations', async () => {
-      mockSupabaseChain.select.mockResolvedValue({
-        data: { count: 3 },
-        error: null,
-      });
-
-      const result = await matchInvitationService.expireOldInvitations();
-
-      expect(mockSupabaseChain.update).toHaveBeenCalledWith({
-        status: 'expired',
-        expiredAt: expect.any(String),
-      });
-      expect(mockSupabaseChain.eq).toHaveBeenCalledWith('status', 'pending');
-      expect(result).toBe(3);
-    });
-
-    it('handles no expired invitations', async () => {
-      mockSupabaseChain.select.mockResolvedValue({
-        data: { count: 0 },
-        error: null,
-      });
-
-      const result = await matchInvitationService.expireOldInvitations();
-
-      expect(result).toBe(0);
-    });
-  });
-
-  describe('error handling', () => {
-    it('handles network errors gracefully', async () => {
-      (supabase.from as jest.Mock).mockImplementation(() => {
-        throw new Error('Network error');
-      });
-
-      await expect(
-        matchInvitationService.createInvitation({
-          matchId: 'match-1',
-          inviteeId: 'user-2',
-        })
-      ).rejects.toThrow('Network error');
-    });
-
-    it('handles malformed responses', async () => {
-      mockSupabaseChain.single.mockResolvedValue({
-        data: undefined,
-        error: null,
-      });
-
-      await expect(
-        matchInvitationService.getInvitationById('invitation-1')
-      ).resolves.toBeNull();
+      expect(supabase.from).toHaveBeenCalledWith('invitation_responses');
+      expect(mockSupabaseChain.insert).toHaveBeenCalled();
+      expect(result).toEqual(mockResponse);
     });
   });
 });

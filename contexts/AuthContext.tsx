@@ -8,8 +8,8 @@ interface UserProfile {
   email: string;
   full_name: string;
   phone: string;
-  role: string;
-  contact_preference: string;
+  role: string | null;
+  contact_preference: string | null;
   created_at: string;
   // Add auth metadata for backward compatibility
   user_metadata?: {

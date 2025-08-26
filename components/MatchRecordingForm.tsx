@@ -40,11 +40,11 @@ interface MatchRecordingFormProps {
   isEditing?: boolean;
   onCancel?: () => void;
   matchType?: 'singles' | 'doubles';
-  players?: Array<{
+  players?: {
     id: string;
     full_name: string;
     phone?: string;
-  }>;
+  }[];
   showReporting?: boolean;
   isSubmitting?: boolean;
 }

@@ -6,13 +6,11 @@ import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
 import { TennisScoreDisplay } from '@/components/TennisScoreDisplay';
 import { DoublesMatchParticipants } from '@/components/DoublesMatchParticipants';
+import { Match } from '@/lib/supabase';
 
-interface Match {
-  id: string;
+interface ClubMatch extends Match {
   player1_name: string;
   player2_name?: string;
-  opponent2_name?: string;
-  partner3_name?: string;
   partner4_name?: string;
   player1_id: string;
   player2_id?: string;
@@ -38,7 +36,7 @@ interface Match {
 }
 
 interface ClubMatchesProps {
-  matches: Match[];
+  matches: ClubMatch[];
   club: { id: string; name: string } | null;
   colors: any;
   filterType: 'all' | 'singles' | 'doubles';
@@ -248,7 +246,7 @@ export default function ClubMatches({
                   { borderColor: colors.border }
                 ]}
               >
-                {match.isChallenge ? (
+                {match.challenge_id ? (
                   // Display challenge match
                   <View style={[styles.challengeDisplay, { borderColor: '#FF6B35', borderWidth: 1, borderRadius: 8 }]}>
                     <View style={styles.challengeHeader}>

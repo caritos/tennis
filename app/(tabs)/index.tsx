@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { StyleSheet, View, TouchableOpacity, ScrollView } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
@@ -42,9 +42,9 @@ export default function ClubScreen() {
     console.log('ClubScreen: User state changed:', user ? `User: ${user.id}` : 'No user');
     console.log('ClubScreen: Current clubs count:', clubs.length);
     console.log('ClubScreen: Triggering loadClubs due to user change');
-  }, [user]);
+  }, [user, clubs.length]);
 
-  const loadClubs = async (isRefresh = false) => {
+  const loadClubs = useCallback(async (isRefresh = false) => {
     console.log('🔄 loadClubs called - isRefresh:', isRefresh, 'user:', user?.id);
     try {
       if (!isRefresh) setLoading(true);
@@ -113,7 +113,7 @@ export default function ClubScreen() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [location, user?.id]);
 
   const handleRefresh = () => {
     loadClubs(true);
@@ -142,7 +142,7 @@ export default function ClubScreen() {
       setJoinedClubIds(prev => [...prev, club.id]);
       
       // Update the club's member count in both lists
-      const updatedClub = { ...club, memberCount: (club.memberCount || 0) + 1 };
+      const updatedClub = { ...club, memberCount: ((club as any).memberCount || 0) + 1 };
       
       // Update in myClubs
       setMyClubs(prev => [...prev, updatedClub]);
@@ -178,18 +178,18 @@ export default function ClubScreen() {
 
   useEffect(() => {
     requestLocationPermission();
-  }, []);
+  }, [requestLocationPermission]);
 
   useEffect(() => {
     // Load clubs even without location (will use default NYC coordinates)
     loadClubs();
-  }, [user?.id]); // Reload when user changes
+  }, [user?.id, loadClubs]); // Reload when user changes
 
   useEffect(() => {
     if (location) {
       loadClubs();
     }
-  }, [location]);
+  }, [location, loadClubs]);
 
   // Show welcome message for first-time users
   useEffect(() => {

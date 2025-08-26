@@ -5,7 +5,6 @@ import { Ionicons } from '@expo/vector-icons';
 import React, { useState } from 'react';
 
 import { ThemedText } from '@/components/ThemedText';
-import { ThemedView } from '@/components/ThemedView';
 import { useColorScheme } from '@/hooks/useColorScheme';
 import { Colors } from '@/constants/Colors';
 import { getLegacyFAQData, type LegacyFAQItem } from '@/data/faq';

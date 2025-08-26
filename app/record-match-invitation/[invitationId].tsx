@@ -19,11 +19,11 @@ interface MatchInvitationData {
   match_date: string;
   club_id: string;
   club_name?: string;
-  confirmed_players: Array<{
+  confirmed_players: {
     id: string;
     full_name: string;
     phone?: string;
-  }>;
+  }[];
 }
 
 export default function RecordMatchInvitationScreen() {
