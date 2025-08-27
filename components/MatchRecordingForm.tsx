@@ -134,7 +134,8 @@ export function MatchRecordingForm(componentProps: MatchRecordingFormProps) {
 
   // Reporting-related state
   const [showReportingSection, setShowReportingSection] = useState(false);
-  const [reportedPlayerIds, setReportedPlayerIds] = useState<string[]>([]);
+  const [reportedPlayerIds, setReportedPlayerIds] = useState<string[]>([]); // For winner selection in challenge matches
+  const [reportTargetPlayerIds, setReportTargetPlayerIds] = useState<string[]>([]); // For player reporting
   const [reportType, setReportType] = useState('');
   const [reportDescription, setReportDescription] = useState('');
 
@@ -785,10 +786,11 @@ export function MatchRecordingForm(componentProps: MatchRecordingFormProps) {
 
     // Prepare report data if any players are reported
     // For challenge matches, reportedPlayerIds is used for winner selection, not reporting
+    // reportTargetPlayerIds is used for actual player reporting
     let reportData = undefined;
-    if (showReporting && players.length < 2 && reportedPlayerIds.length > 0 && reportType && reportDescription.trim()) {
+    if (showReporting && reportTargetPlayerIds.length > 0 && reportType && reportDescription.trim()) {
       reportData = {
-        playerIds: reportedPlayerIds,
+        playerIds: reportTargetPlayerIds,
         type: reportType,
         description: reportDescription.trim()
       };
@@ -1619,32 +1621,22 @@ export function MatchRecordingForm(componentProps: MatchRecordingFormProps) {
                   Only report serious issues that violate community guidelines
                 </Text>
 
-                {/* For singles matches, show who is being reported */}
-                {matchType === 'singles' && availablePlayersForReporting.length > 0 && (
-                  <View style={styles.reportPlayersSection}>
-                    <Text style={[styles.reportLabel, { marginBottom: 8 }]}>
-                      Reporting: {availablePlayersForReporting[0].full_name || availablePlayersForReporting[0].name}
-                    </Text>
-                  </View>
-                )}
-
-                {/* Player Selection - Only show for doubles matches */}
-                {matchType === 'doubles' && (
-                  <View style={styles.reportPlayersSection}>
-                    <Text style={styles.reportLabel}>Which player(s)?</Text>
-                    {availablePlayersForReporting.map((player) => (
+                {/* Section 1: Select player(s) to report */}
+                <View style={styles.reportPlayersSection}>
+                  <Text style={styles.reportLabel}>Select player(s) to report:</Text>
+                  {availablePlayersForReporting.map((player) => (
                     <TouchableOpacity
                       key={player.id}
                       style={styles.playerCheckbox}
                       onPress={() => {
                         if (matchType === 'singles') {
                           // Singles: radio button behavior
-                          setReportedPlayerIds(
-                            reportedPlayerIds.includes(player.id) ? [] : [player.id]
+                          setReportTargetPlayerIds(
+                            reportTargetPlayerIds.includes(player.id) ? [] : [player.id]
                           );
                         } else {
                           // Doubles: checkbox behavior
-                          setReportedPlayerIds(prev => 
+                          setReportTargetPlayerIds(prev => 
                             prev.includes(player.id) 
                               ? prev.filter(id => id !== player.id)
                               : [...prev, player.id]
@@ -1656,10 +1648,10 @@ export function MatchRecordingForm(componentProps: MatchRecordingFormProps) {
                         matchType === 'singles' ? styles.radioButton : styles.checkbox,
                         {
                           borderColor: colors.tint,
-                          backgroundColor: reportedPlayerIds.includes(player.id) ? colors.tint : 'transparent'
+                          backgroundColor: reportTargetPlayerIds.includes(player.id) ? colors.tint : 'transparent'
                         }
                       ]}>
-                        {reportedPlayerIds.includes(player.id) && (
+                        {reportTargetPlayerIds.includes(player.id) && (
                           <Ionicons 
                             name="checkmark" 
                             size={matchType === 'singles' ? 10 : 14} 
@@ -1671,19 +1663,18 @@ export function MatchRecordingForm(componentProps: MatchRecordingFormProps) {
                         {player.full_name}
                       </Text>
                     </TouchableOpacity>
-                    ))}
-                  </View>
-                )}
+                  ))}
+                </View>
 
-                {/* Report Type Selection */}
-                {reportedPlayerIds.length > 0 && (
+                {/* Section 2: Reason for report */}
+                {reportTargetPlayerIds.length > 0 && (
                   <View style={styles.reportTypeSection}>
-                    <Text style={styles.reportLabel}>What happened?</Text>
+                    <Text style={styles.reportLabel}>Reason for report:</Text>
                     {[
-                      { key: 'no_show', label: 'Did Not Show Up' },
-                      { key: 'poor_behavior', label: 'Poor Behavior During Match' },
-                      { key: 'unsportsmanlike', label: 'Unsportsmanlike Conduct' },
-                      { key: 'other', label: 'Other Issue' }
+                      { key: 'no_show', label: 'No-show' },
+                      { key: 'unsportsmanlike', label: 'Unsportsmanlike' },
+                      { key: 'inappropriate', label: 'Inappropriate' },
+                      { key: 'other', label: 'Other' }
                     ].map((type) => (
                       <TouchableOpacity
                         key={type.key}
@@ -1709,11 +1700,11 @@ export function MatchRecordingForm(componentProps: MatchRecordingFormProps) {
                   </View>
                 )}
 
-                {/* Description */}
+                {/* Section 3: Description */}
                 {reportType && (
                   <View style={styles.reportDescriptionSection}>
                     <Text style={styles.reportLabel}>
-                      Additional Details {reportType === 'other' ? '(Required)' : ''}
+                      Description:
                     </Text>
                     <TextInput
                       style={[styles.reportTextInput, { borderColor: colors.tabIconDefault + '30', color: colors.text }]}
