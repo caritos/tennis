@@ -121,13 +121,13 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   header: {
-    paddingHorizontal: 20,
-    paddingTop: 20,
-    paddingBottom: 10,
-    borderBottomWidth: 1,
+    paddingHorizontal: 16,  // iOS HIG: Standard margins
+    paddingTop: 8,
+    paddingBottom: 12,
+    borderBottomWidth: 0.5,  // iOS HIG: Thinner separator
   },
   headerTitle: {
-    fontSize: 28,
+    fontSize: 34,  // iOS HIG: Large Title
     fontWeight: 'bold',
   },
   tabBar: {
@@ -142,9 +142,11 @@ const styles = StyleSheet.create({
     borderBottomWidth: 2,
     borderBottomColor: 'transparent',
     gap: 4,
+    minHeight: 44,  // iOS HIG: Minimum touch target
   },
   tabText: {
-    fontSize: 12,
+    fontSize: 10,  // iOS HIG: Tab bar labels
     fontWeight: '500',
+    textAlign: 'center',
   },
 });

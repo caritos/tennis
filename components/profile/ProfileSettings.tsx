@@ -133,21 +133,26 @@ export default ProfileSettings;
 
 const styles = StyleSheet.create({
   section: {
-    paddingHorizontal: 20,
-    marginBottom: 24,
+    paddingHorizontal: 16,  // iOS HIG: Standard margins
+    paddingVertical: 16,
+    marginBottom: 0,
   },
   settingsContainer: {
     paddingVertical: 8,
-    gap: 12,
+    backgroundColor: 'transparent',
+    borderRadius: 12,  // iOS HIG: Group container
+    overflow: 'hidden',
   },
   settingsItem: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingVertical: 16,
+    paddingVertical: 12,
     paddingHorizontal: 16,
-    borderRadius: 12,
-    borderWidth: 1,
+    borderRadius: 0,  // iOS HIG: Settings list should not have individual borders
+    borderWidth: 0,
+    borderBottomWidth: 0.5,  // iOS HIG: Separator lines
+    minHeight: 44,  // iOS HIG: Minimum touch target
   },
   settingsItemContent: {
     flexDirection: 'row',
@@ -155,19 +160,21 @@ const styles = StyleSheet.create({
     gap: 12,
   },
   settingsItemText: {
-    fontSize: 16,
-    fontWeight: '500',
+    fontSize: 17,  // iOS HIG: Body text
+    fontWeight: '400',  // iOS HIG: Regular weight for list items
   },
   signOutButton: {
     paddingVertical: 14,
     paddingHorizontal: 24,
-    borderRadius: 10,
+    borderRadius: 12,  // iOS HIG: Standard corner radius
     alignItems: 'center',
     justifyContent: 'center',
+    marginTop: 32,  // iOS HIG: Separate destructive actions
+    minHeight: 50,  // iOS HIG: Standard button height
   },
   signOutButtonText: {
     color: '#ffffff',
-    fontSize: 16,
+    fontSize: 17,  // iOS HIG: Button text size
     fontWeight: '600',
   },
 });

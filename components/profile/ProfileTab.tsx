@@ -176,51 +176,57 @@ export default ProfileTab;
 
 const styles = StyleSheet.create({
   section: {
-    paddingHorizontal: 20,
-    marginBottom: 24,
+    paddingHorizontal: 16,  // iOS HIG: Standard margins
+    paddingVertical: 16,
+    marginBottom: 0,  // Remove extra margin
   },
   formContainer: {
-    gap: 20,
+    gap: 24,  // iOS HIG: Better spacing between form elements
   },
   fieldContainer: {
-    gap: 8,
+    gap: 6,  // iOS HIG: Tighter label-to-input spacing
   },
   fieldLabel: {
-    fontSize: 16,
-    fontWeight: '600',
+    fontSize: 13,  // iOS HIG: Footnote
+    fontWeight: '400',
+    textTransform: 'uppercase',
+    letterSpacing: 0.6,
   },
   textInput: {
     borderWidth: 1,
-    borderRadius: 8,
-    paddingHorizontal: 12,
+    borderRadius: 12,  // iOS HIG: Standard corner radius
+    paddingHorizontal: 16,  // iOS HIG: Better padding
     paddingVertical: 12,
-    fontSize: 16,
+    fontSize: 17,  // iOS HIG: Text input size
+    minHeight: 44,  // iOS HIG: Minimum touch target
   },
   readOnlyField: {
-    borderRadius: 8,
-    paddingHorizontal: 12,
+    borderRadius: 12,  // iOS HIG: Standard corner radius
+    paddingHorizontal: 16,  // iOS HIG: Consistent padding
     paddingVertical: 12,
+    minHeight: 44,  // iOS HIG: Consistent height
   },
   readOnlyText: {
-    fontSize: 16,
+    fontSize: 17,  // iOS HIG: Body text
   },
   saveButton: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     gap: 8,
-    paddingVertical: 12,
-    borderRadius: 8,
-    marginTop: 8,
+    paddingVertical: 14,  // iOS HIG: Better button padding
+    borderRadius: 12,  // iOS HIG: Standard corner radius
+    marginTop: 16,
+    minHeight: 50,  // iOS HIG: Standard button height
   },
   saveButtonText: {
     color: 'white',
-    fontSize: 16,
+    fontSize: 17,  // iOS HIG: Button text size
     fontWeight: '600',
   },
   loadingText: {
     textAlign: 'center',
-    fontSize: 16,
+    fontSize: 15,  // iOS HIG: Body text
     padding: 20,
   },
 });

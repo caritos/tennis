@@ -50,7 +50,8 @@ export default ProfileStats;
 
 const styles = {
   section: {
-    paddingHorizontal: 20,
-    marginBottom: 24,
+    paddingHorizontal: 16,  // iOS HIG: Standard margins
+    paddingVertical: 16,
+    marginBottom: 0,
   },
 };

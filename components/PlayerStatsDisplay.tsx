@@ -141,7 +141,7 @@ const styles = StyleSheet.create({
     borderRadius: 12,
   },
   loadingText: {
-    fontSize: 16,
+    fontSize: 15,  // iOS HIG: Body text
     opacity: 0.7,
   },
   errorContainer: {
@@ -152,13 +152,13 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   errorText: {
-    fontSize: 16,
-    fontWeight: '500',
+    fontSize: 17,  // iOS HIG: Headline
+    fontWeight: '600',
     marginBottom: 4,
-    color: '#ff4444',
+    color: '#ff3b30',  // iOS HIG: System red
   },
   errorSubtext: {
-    fontSize: 14,
+    fontSize: 15,  // iOS HIG: Body text
     opacity: 0.7,
     textAlign: 'center',
   },
@@ -170,12 +170,12 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   placeholderText: {
-    fontSize: 16,
-    fontWeight: '500',
+    fontSize: 17,  // iOS HIG: Headline
+    fontWeight: '600',
     marginBottom: 4,
   },
   placeholderSubtext: {
-    fontSize: 14,
+    fontSize: 15,  // iOS HIG: Body text
     opacity: 0.7,
   },
   statsRow: {
@@ -188,22 +188,23 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   statValue: {
-    fontSize: 24,
+    fontSize: 28,  // iOS HIG: Title 1
     fontWeight: 'bold',
     marginBottom: 4,
   },
   statLabel: {
-    fontSize: 12,
+    fontSize: 11,  // iOS HIG: Caption 2
     opacity: 0.7,
     textAlign: 'center',
     textTransform: 'uppercase',
-    letterSpacing: 0.5,
+    letterSpacing: 0.6,
+    fontWeight: '500',
   },
   breakdownSection: {
     marginBottom: 20,
   },
   sectionTitle: {
-    fontSize: 16,
+    fontSize: 17,  // iOS HIG: Headline
     fontWeight: '600',
     marginBottom: 12,
   },
@@ -216,17 +217,17 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   matchTypeLabel: {
-    fontSize: 14,
+    fontSize: 15,  // iOS HIG: Body text
     fontWeight: '500',
     marginBottom: 4,
   },
   matchTypeRecord: {
-    fontSize: 18,
+    fontSize: 20,  // iOS HIG: Title 3
     fontWeight: 'bold',
     marginBottom: 2,
   },
   matchTypePercentage: {
-    fontSize: 12,
+    fontSize: 13,  // iOS HIG: Caption 1
     opacity: 0.7,
   },
   detailedStatsSection: {
@@ -241,20 +242,21 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   detailedStatValue: {
-    fontSize: 16,
+    fontSize: 17,  // iOS HIG: Body text (bold)
     fontWeight: 'bold',
     marginBottom: 4,
   },
   detailedStatLabel: {
-    fontSize: 12,
+    fontSize: 11,  // iOS HIG: Caption 2
     opacity: 0.7,
     textAlign: 'center',
     textTransform: 'uppercase',
-    letterSpacing: 0.5,
+    letterSpacing: 0.6,
+    fontWeight: '500',
     marginBottom: 2,
   },
   detailedStatPercentage: {
-    fontSize: 11,
+    fontSize: 11,  // iOS HIG: Caption 2
     opacity: 0.6,
   },
 });
