@@ -86,11 +86,30 @@ export default function ClubMatches({
       if (!isUserInvolved) return false;
     } else if (filterInvolvement === 'incomplete') {
       // Show matches that need more players (have empty slots)
-      const isIncomplete = match.match_type === 'singles' 
-        ? !match.player2_id && !match.opponent2_name
-        : !match.player2_id && !match.opponent2_name || 
-          !match.player3_id && !match.partner3_name || 
-          !match.player4_id && !match.partner4_name;
+      let isIncomplete = false;
+      
+      if (match.isInvitation) {
+        // For invitation matches, count responses + creator to determine if incomplete
+        const confirmedResponses = match.responses?.filter(r => r.status === 'confirmed') || [];
+        const totalConfirmedPlayers = confirmedResponses.length + 1; // +1 for creator
+        
+        const requiredPlayers = match.match_type === 'singles' ? 2 : 4;
+        isIncomplete = totalConfirmedPlayers < requiredPlayers;
+      } else {
+        // For regular matches, check player ID/name slots
+        if (match.match_type === 'singles') {
+          // For singles: incomplete if player2 slot is completely empty (no ID and no name)
+          isIncomplete = !match.player2_id && !match.opponent2_name;
+        } else {
+          // For doubles: incomplete if ANY position is completely empty (no ID and no name)
+          const player2Missing = !match.player2_id && !match.opponent2_name;
+          const player3Missing = !match.player3_id && !match.partner3_name;
+          const player4Missing = !match.player4_id && !match.partner4_name;
+          
+          isIncomplete = player2Missing || player3Missing || player4Missing;
+        }
+      }
+      
       if (!isIncomplete) return false;
     }
     
@@ -285,6 +304,30 @@ export default function ClubMatches({
                       </ThemedText>
                     )}
                     
+                    {/* Contact Information for Challenge Participants */}
+                    {currentUserId && (match.player1_id === currentUserId || match.player2_id === currentUserId) && (
+                      <View style={[styles.contactInfo, { backgroundColor: colors.background, borderColor: colors.border }]}>
+                        <View style={styles.contactHeader}>
+                          <Ionicons name="call" size={16} color={colors.tint} />
+                          <ThemedText style={[styles.contactTitle, { color: colors.text }]}>
+                            Contact Information
+                          </ThemedText>
+                        </View>
+                        <View style={styles.contactList}>
+                          {match.player1_phone && (
+                            <ThemedText style={[styles.contactItem, { color: colors.textSecondary }]}>
+                              {match.player1_name}: {match.player1_phone}
+                            </ThemedText>
+                          )}
+                          {match.player2_phone && (
+                            <ThemedText style={[styles.contactItem, { color: colors.textSecondary }]}>
+                              {match.player2_name}: {match.player2_phone}
+                            </ThemedText>
+                          )}
+                        </View>
+                      </View>
+                    )}
+                    
                     <TouchableOpacity
                       style={[styles.challengeRecordButton, { backgroundColor: '#FF6B35' }]}
                       onPress={() => {
@@ -301,12 +344,15 @@ export default function ClubMatches({
                     </TouchableOpacity>
                   </View>
                 ) : match.isInvitation ? (
-                  // Display invitation with grid-style participant slots
-                  <View style={styles.invitationDisplay}>
+                  // Display invitation with grid-style participant slots - Enhanced styling
+                  <View style={[styles.invitationDisplay, { borderColor: '#4A90E2', borderWidth: 1, borderRadius: 8 }]}>
                     <View style={styles.invitationHeader}>
-                      <ThemedText style={[styles.invitationStatus, { color: colors.tint }]}>
-                        Looking to Play {match.match_type.charAt(0).toUpperCase() + match.match_type.slice(1)} {formatDate(match.date)}
-                      </ThemedText>
+                      <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                        <ThemedText style={{ fontSize: 16, marginRight: 6 }}>🎾</ThemedText>
+                        <ThemedText style={[styles.invitationStatus, { color: '#4A90E2' }]}>
+                          Looking to Play {match.match_type.charAt(0).toUpperCase() + match.match_type.slice(1)} {formatDate(match.date)}
+                        </ThemedText>
+                      </View>
                       {match.time && (
                         <ThemedText style={[styles.invitationTime, { color: colors.textSecondary }]}>
                           {match.time}
@@ -327,6 +373,7 @@ export default function ClubMatches({
                         id: r.id,
                         invitation_id: r.invitation_id || match.id,
                         user_id: r.user_id || r.id,
+                        user_name: r.user_name,
                         message: '',
                         status: r.status,
                         created_at: r.created_at || new Date().toISOString()
@@ -338,6 +385,56 @@ export default function ClubMatches({
                       currentUserId={currentUserId}
                       creatorId={match.player1_id}
                     />
+
+                    {/* Contact Information for Match Invitation Participants */}
+                    {currentUserId && (match.player1_id === currentUserId || (match.responses || []).some((r: any) => r.user_id === currentUserId)) && (
+                      <View style={[styles.contactInfo, { backgroundColor: colors.background, borderColor: colors.border }]}>
+                        <View style={styles.contactHeader}>
+                          <Ionicons name="call" size={16} color={colors.tint} />
+                          <ThemedText style={[styles.contactTitle, { color: colors.text }]}>
+                            Contact Information
+                          </ThemedText>
+                        </View>
+                        <View style={styles.contactList}>
+                          {match.player1_phone && (
+                            <ThemedText style={[styles.contactItem, { color: colors.textSecondary }]}>
+                              {match.player1_name}: {match.player1_phone}
+                            </ThemedText>
+                          )}
+                          {(match.responses || [])
+                            .filter((r: any) => r.user_phone)
+                            .map((r: any, index: number) => (
+                              <ThemedText key={index} style={[styles.contactItem, { color: colors.textSecondary }]}>
+                                {r.user_name}: {r.user_phone}
+                              </ThemedText>
+                            ))}
+                        </View>
+                      </View>
+                    )}
+
+                    {/* Record Match Result Button - Show when enough players have joined */}
+                    {(() => {
+                      const requiredPlayers = match.match_type === 'singles' ? 2 : 4;
+                      const totalPlayers = 1 + (match.responses || []).length; // creator + responses
+                      const canRecordMatch = totalPlayers >= requiredPlayers;
+                      
+                      return canRecordMatch && currentUserId && (match.player1_id === currentUserId || (match.responses || []).some((r: any) => r.user_id === currentUserId)) && (
+                        <TouchableOpacity
+                          style={[styles.invitationRecordButton, { backgroundColor: '#4A90E2' }]}
+                          onPress={() => {
+                            // Navigate to record match screen for invitation
+                            router.push(`/record-invitation-match/${match.id}`);
+                          }}
+                        >
+                          <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center' }}>
+                            <Ionicons name="trophy" size={16} color="white" style={{ marginRight: 6 }} />
+                            <ThemedText style={styles.invitationRecordText}>
+                              Record Match Results
+                            </ThemedText>
+                          </View>
+                        </TouchableOpacity>
+                      );
+                    })()}
                   </View>
                 ) : (
                   // Display completed match with scores
@@ -360,6 +457,9 @@ export default function ClubMatches({
                     player3Id={match.player3_id}
                     player4Id={match.player4_id}
                     matchType={match.match_type}
+                    clubName={club?.name}
+                    matchDate={match.date}
+                    notes={match.notes}
                     isPlayer2Unregistered={!match.player2_id && !!match.opponent2_name}
                     isPlayer3Unregistered={!match.player3_id && !!match.partner3_name}
                     isPlayer4Unregistered={!match.player4_id && !!match.partner4_name}
@@ -368,15 +468,6 @@ export default function ClubMatches({
                     unregisteredPlayer4Name={match.partner4_name}
                     onClaimMatch={onClaimMatch}
                   />
-                )}
-                
-                {/* Match Date - Only show for completed matches, not invitations */}
-                {!match.isInvitation && (
-                  <View style={styles.matchMeta}>
-                    <ThemedText style={[styles.matchDate, { color: colors.textSecondary }]}>
-                      {formatDate(match.date)}
-                    </ThemedText>
-                  </View>
                 )}
               </View>
             ))}
@@ -483,14 +574,6 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     paddingBottom: 16,
   },
-  matchMeta: {
-    marginTop: 8,
-    alignItems: 'center',
-  },
-  matchDate: {
-    fontSize: 12,
-    fontWeight: '500',
-  },
   placeholder: {
     borderWidth: 1,
     borderStyle: 'dashed',
@@ -592,5 +675,45 @@ const styles = StyleSheet.create({
     fontStyle: 'italic',
     marginBottom: 8,
     paddingHorizontal: 4,
+  },
+  // Contact Information styles
+  contactInfo: {
+    marginTop: 12,
+    marginBottom: 12,
+    padding: 12,
+    borderRadius: 8,
+    borderWidth: 1,
+  },
+  contactHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 8,
+    gap: 6,
+  },
+  contactTitle: {
+    fontSize: 14,
+    fontWeight: '600',
+  },
+  contactList: {
+    gap: 4,
+  },
+  contactItem: {
+    fontSize: 13,
+    fontFamily: 'monospace', // Makes phone numbers easier to read
+  },
+  // Invitation Record Button styles
+  invitationRecordButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    borderRadius: 8,
+    marginTop: 12,
+  },
+  invitationRecordText: {
+    color: 'white',
+    fontSize: 14,
+    fontWeight: '600',
   },
 });

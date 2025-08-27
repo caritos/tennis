@@ -57,7 +57,6 @@ export class AuthService {
           full_name: userData.fullName,
           phone: userData.phone || null,
           role: 'player',
-          contact_preference: 'whatsapp',
           created_at: new Date().toISOString()
         });
 
@@ -115,7 +114,6 @@ export class AuthService {
             full_name: data.user.user_metadata?.full_name || 'Tennis Player',
             phone: data.user.user_metadata?.phone || null,
             role: 'player',
-            contact_preference: 'whatsapp',
             created_at: new Date().toISOString()
           });
 

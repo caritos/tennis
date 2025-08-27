@@ -9,7 +9,6 @@ interface UserProfile {
   full_name: string;
   phone: string;
   role: string | null;
-  contact_preference: string | null;
   created_at: string;
   // Add auth metadata for backward compatibility
   user_metadata?: {
@@ -137,10 +136,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
             email: authUser.email || '',
             full_name: authUser.user_metadata?.full_name || authUser.email?.split('@')[0] || 'User',
             phone: authUser.user_metadata?.phone || '',
-            role: 'player',
-            contact_preference: 'whatsapp',
-            elo_rating: 1200,
-            games_played: 0
+            role: 'player'
           };
           
           console.log('🔍 AuthContext: Creating profile with data:', profileData);
@@ -159,6 +155,25 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
           if (insertedProfile) {
             console.log('✅ AuthContext: User profile inserted successfully');
+            
+            // Now add the rating fields with a separate update (workaround for schema cache issue)
+            try {
+              const { error: updateError } = await supabase
+                .from('users')
+                .update({
+                  elo_rating: 1200,
+                  games_played: 0
+                })
+                .eq('id', authUser.id);
+              
+              if (updateError) {
+                console.warn('⚠️ AuthContext: Failed to update rating fields (non-critical):', updateError);
+              } else {
+                console.log('✅ AuthContext: Rating fields updated successfully');
+              }
+            } catch (updateErr) {
+              console.warn('⚠️ AuthContext: Rating update failed (non-critical):', updateErr);
+            }
             
             // Create user profile from inserted data
             const userProfile: UserProfile = {
@@ -185,7 +200,6 @@ export function AuthProvider({ children }: AuthProviderProps) {
             full_name: authUser.user_metadata?.full_name || authUser.email?.split('@')[0] || 'User',
             phone: authUser.user_metadata?.phone || '',
             role: 'player',
-            contact_preference: 'whatsapp',
             created_at: new Date().toISOString(),
             user_metadata: authUser.user_metadata
           };
@@ -263,7 +277,6 @@ export function AuthProvider({ children }: AuthProviderProps) {
           full_name: fullName,
           phone: phone || '',
           role: 'player',
-          contact_preference: 'whatsapp',
           elo_rating: 1200,
           games_played: 0,
           created_at: new Date().toISOString()

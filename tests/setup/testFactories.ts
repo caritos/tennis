@@ -168,7 +168,6 @@ export interface UserFactoryOptions {
   full_name?: string;
   phone?: string;
   role?: 'player' | 'admin';
-  contact_preference?: 'whatsapp' | 'phone' | 'text';
   created_at?: string;
 }
 
@@ -178,7 +177,6 @@ export const createUser = (options: UserFactoryOptions = {}): User => ({
   full_name: options.full_name || 'Test User',
   phone: options.phone || '+1234567890',
   role: 'player',
-  contact_preference: 'phone',
   created_at: options.created_at || '2024-01-01T00:00:00Z',
 });
 

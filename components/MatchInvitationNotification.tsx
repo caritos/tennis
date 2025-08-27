@@ -7,9 +7,17 @@ import { useColorScheme } from '@/hooks/useColorScheme';
 import { Colors } from '@/constants/Colors';
 import { supabase } from '@/lib/supabase';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { Database } from '@/types/supabase';
 
-type ClubNotification = Database['public']['Tables']['club_notifications']['Row'];
+interface ActiveInvitation {
+  id: string;
+  match_type: 'singles' | 'doubles';
+  date: string;
+  time?: string;
+  location?: string;
+  creator_name?: string;
+  created_at: string;
+  responses_count: number;
+}
 
 interface MatchInvitationNotificationProps {
   clubId: string;
@@ -23,11 +31,11 @@ export function MatchInvitationNotification({
   const colorScheme = useColorScheme();
   const colors = Colors[colorScheme ?? 'light'];
   
-  const [notifications, setNotifications] = useState<ClubNotification[]>([]);
+  const [activeInvitations, setActiveInvitations] = useState<ActiveInvitation[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   
   // Key for storing dismissed notifications in AsyncStorage
-  const DISMISSED_NOTIFICATIONS_KEY = 'dismissedNotifications';
+  const DISMISSED_NOTIFICATIONS_KEY = 'dismissedInvitations';
 
   // Load dismissed notification IDs from storage
   const loadDismissedNotifications = async (): Promise<Set<string>> => {
@@ -64,55 +72,63 @@ export function MatchInvitationNotification({
       // Load dismissed notifications from storage
       const dismissedNotifications = await loadDismissedNotifications();
       
-      // Get all invitation notifications for this club
-      const { data: notificationData, error } = await supabase
-        .from('club_notifications')
-        .select('*')
+      // Get active match invitations for this club directly from match_invitations table
+      const { data: invitations, error } = await supabase
+        .from('match_invitations')
+        .select(`
+          *,
+          creator:users!creator_id(full_name),
+          responses:invitation_responses(id)
+        `)
         .eq('club_id', clubId)
-        .eq('type', 'invitation_created')
-        .gte('created_at', new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString()) // Only show notifications from the last 24 hours
+        .eq('status', 'active')
+        .gte('date', new Date().toISOString().split('T')[0]) // Only future or today's invitations
         .order('created_at', { ascending: false })
-        .limit(10); // Get more notifications to show multiple invitations
+        .limit(5);
 
       if (error) {
-        console.error('Failed to load invitation notifications:', error);
+        console.error('Failed to load active invitations:', error);
         return;
       }
 
-      if (notificationData && notificationData.length > 0) {
-        // Filter out dismissed notifications and process the data
-        const undismissedNotifications = notificationData
-          .filter(n => !dismissedNotifications.has(n.id))
-          .map(n => ({
-            ...n,
-            data: typeof n.data === 'string' 
-              ? JSON.parse(n.data) 
-              : n.data
+      if (invitations && invitations.length > 0) {
+        // Filter out dismissed invitations and format the data
+        const activeInvites = invitations
+          .filter(inv => !dismissedNotifications.has(inv.id))
+          .map(inv => ({
+            id: inv.id,
+            match_type: inv.match_type,
+            date: inv.date,
+            time: inv.time,
+            location: inv.location,
+            creator_name: inv.creator?.full_name || 'A club member',
+            created_at: inv.created_at,
+            responses_count: inv.responses?.length || 0
           }));
         
-        setNotifications(undismissedNotifications);
+        setActiveInvitations(activeInvites);
       } else {
-        setNotifications([]);
+        setActiveInvitations([]);
       }
     } catch (error) {
       console.error('Error loading invitation notifications:', error);
-      setNotifications([]);
+      setActiveInvitations([]);
     } finally {
       setIsLoading(false);
     }
   };
 
-  const handleDismiss = async (notificationId: string) => {
+  const handleDismiss = async (invitationId: string) => {
     try {
-      // Mark notification as dismissed in local storage
-      await saveDismissedNotification(notificationId);
+      // Mark invitation as dismissed in local storage
+      await saveDismissedNotification(invitationId);
       
-      // Remove the notification from the current list
-      setNotifications(prev => prev.filter(n => n.id !== notificationId));
+      // Remove the invitation from the current list
+      setActiveInvitations(prev => prev.filter(inv => inv.id !== invitationId));
       
-      console.log('✅ Notification dismissed:', notificationId);
+      console.log('✅ Invitation notification dismissed:', invitationId);
     } catch (error) {
-      console.error('Failed to dismiss notification:', error);
+      console.error('Failed to dismiss invitation notification:', error);
     }
   };
 
@@ -122,19 +138,43 @@ export function MatchInvitationNotification({
     // User should manually dismiss notifications they want to clear
   };
 
-  if (isLoading || notifications.length === 0) {
+  const formatDate = (dateString: string) => {
+    const date = new Date(dateString + 'T00:00:00');
+    const today = new Date();
+    const tomorrow = new Date(today);
+    tomorrow.setDate(tomorrow.getDate() + 1);
+
+    if (date.toDateString() === today.toDateString()) {
+      return 'Today';
+    } else if (date.toDateString() === tomorrow.toDateString()) {
+      return 'Tomorrow';
+    } else {
+      return date.toLocaleDateString('en-US', { 
+        weekday: 'short', 
+        month: 'short', 
+        day: 'numeric' 
+      });
+    }
+  };
+
+  if (isLoading || activeInvitations.length === 0) {
     return null;
   }
 
   return (
     <>
-      {notifications.map((notification) => {
-        const timeSince = new Date(notification.created_at || new Date());
+      {activeInvitations.map((invitation) => {
+        const timeSince = new Date(invitation.created_at);
         const timeAgo = getTimeAgo(timeSince);
+        const dateStr = formatDate(invitation.date);
+        const timeStr = invitation.time ? ` at ${invitation.time}` : '';
+        const responseText = invitation.responses_count > 0 
+          ? ` (${invitation.responses_count} interested)` 
+          : '';
 
         return (
           <ThemedView 
-            key={notification.id} 
+            key={invitation.id} 
             style={[styles.container, { backgroundColor: colors.card }]}
           >
             <View style={styles.content}>
@@ -150,10 +190,10 @@ export function MatchInvitationNotification({
                 
                 <View style={styles.textContainer}>
                   <ThemedText style={[styles.title, { color: colors.text }]}>
-                    {notification.title}
+                    New {invitation.match_type} invitation
                   </ThemedText>
                   <ThemedText style={[styles.message, { color: colors.textSecondary }]}>
-                    {notification.message}
+                    {invitation.creator_name} is looking for a {invitation.match_type} partner on {dateStr}{timeStr}{responseText}
                   </ThemedText>
                   <ThemedText style={[styles.timeAgo, { color: colors.tabIconDefault }]}>
                     {timeAgo}
@@ -162,7 +202,7 @@ export function MatchInvitationNotification({
                 
                 <TouchableOpacity
                   style={styles.dismissButton}
-                  onPress={() => handleDismiss(notification.id)}
+                  onPress={() => handleDismiss(invitation.id)}
                   accessibilityLabel="Dismiss notification"
                 >
                   <Ionicons name="close" size={16} color={colors.tabIconDefault} />
@@ -175,7 +215,7 @@ export function MatchInvitationNotification({
                   onPress={handleViewDetails}
                 >
                   <ThemedText style={[styles.actionButtonText, { color: colors.tint }]}>
-                    View Matches
+                    View Match Detail
                   </ThemedText>
                   <Ionicons name="arrow-forward" size={14} color={colors.tint} />
                 </TouchableOpacity>

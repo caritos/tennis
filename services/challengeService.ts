@@ -20,10 +20,8 @@ export interface Challenge {
 export interface ChallengeWithUsers extends Challenge {
   challenger_name: string;
   challenger_phone?: string;
-  challenger_contact_preference: string;
   challenged_name: string;
   challenged_phone?: string;
-  challenged_contact_preference: string;
 }
 
 export interface ChallengeCounter {
@@ -156,8 +154,8 @@ class ChallengeService {
         .from('challenges')
         .select(`
           *,
-          challenger:users!challenges_challenger_id_fkey(full_name, phone, contact_preference),
-          challenged:users!challenges_challenged_id_fkey(full_name, phone, contact_preference)
+          challenger:users!challenges_challenger_id_fkey(full_name, phone),
+          challenged:users!challenges_challenged_id_fkey(full_name, phone)
         `)
         .eq('club_id', clubId)
         .neq('status', 'expired')
@@ -173,10 +171,8 @@ class ChallengeService {
         ...challenge,
         challenger_name: challenge.challenger?.full_name,
         challenger_phone: challenge.challenger?.phone,
-        challenger_contact_preference: challenge.challenger?.contact_preference,
         challenged_name: challenge.challenged?.full_name,
         challenged_phone: challenge.challenged?.phone,
-        challenged_contact_preference: challenge.challenged?.contact_preference,
       }));
     } catch (error) {
       console.error('❌ Failed to get club challenges:', error);
@@ -193,8 +189,8 @@ class ChallengeService {
         .from('challenges')
         .select(`
           *,
-          challenger:users!challenges_challenger_id_fkey(full_name, phone, contact_preference),
-          challenged:users!challenges_challenged_id_fkey(full_name, phone, contact_preference)
+          challenger:users!challenges_challenger_id_fkey(full_name, phone),
+          challenged:users!challenges_challenged_id_fkey(full_name, phone)
         `)
         .eq('challenger_id', userId)
         .neq('status', 'expired')
@@ -210,10 +206,8 @@ class ChallengeService {
         ...challenge,
         challenger_name: challenge.challenger?.full_name,
         challenger_phone: challenge.challenger?.phone,
-        challenger_contact_preference: challenge.challenger?.contact_preference,
         challenged_name: challenge.challenged?.full_name,
         challenged_phone: challenge.challenged?.phone,
-        challenged_contact_preference: challenge.challenged?.contact_preference,
       }));
     } catch (error) {
       console.error('❌ Failed to get user sent challenges:', error);
@@ -230,8 +224,8 @@ class ChallengeService {
         .from('challenges')
         .select(`
           *,
-          challenger:users!challenges_challenger_id_fkey(full_name, phone, contact_preference),
-          challenged:users!challenges_challenged_id_fkey(full_name, phone, contact_preference)
+          challenger:users!challenges_challenger_id_fkey(full_name, phone),
+          challenged:users!challenges_challenged_id_fkey(full_name, phone)
         `)
         .eq('challenged_id', userId)
         .neq('status', 'expired')
@@ -247,10 +241,8 @@ class ChallengeService {
         ...challenge,
         challenger_name: challenge.challenger?.full_name,
         challenger_phone: challenge.challenger?.phone,
-        challenger_contact_preference: challenge.challenger?.contact_preference,
         challenged_name: challenge.challenged?.full_name,
         challenged_phone: challenge.challenged?.phone,
-        challenged_contact_preference: challenge.challenged?.contact_preference,
       }));
     } catch (error) {
       console.error('❌ Failed to get user received challenges:', error);
@@ -267,8 +259,8 @@ class ChallengeService {
         .from('challenges')
         .select(`
           *,
-          challenger:users!challenges_challenger_id_fkey(full_name, phone, contact_preference),
-          challenged:users!challenges_challenged_id_fkey(full_name, phone, contact_preference)
+          challenger:users!challenges_challenger_id_fkey(full_name, phone),
+          challenged:users!challenges_challenged_id_fkey(full_name, phone)
         `)
         .eq('id', challengeId)
         .single();
@@ -283,10 +275,8 @@ class ChallengeService {
         ...challenge,
         challenger_name: challenge.challenger?.full_name,
         challenger_phone: challenge.challenger?.phone,
-        challenger_contact_preference: challenge.challenger?.contact_preference,
         challenged_name: challenge.challenged?.full_name,
         challenged_phone: challenge.challenged?.phone,
-        challenged_contact_preference: challenge.challenged?.contact_preference,
       };
     } catch (error) {
       console.error('❌ Failed to get challenge:', error);
@@ -660,8 +650,8 @@ class ChallengeService {
         challenger_id,
         challenged_id,
         status,
-        challenger:users!challenges_challenger_id_fkey(full_name, phone, contact_preference),
-        challenged:users!challenges_challenged_id_fkey(full_name, phone, contact_preference)
+        challenger:users!challenges_challenger_id_fkey(full_name, phone),
+        challenged:users!challenges_challenged_id_fkey(full_name, phone)
       `)
       .eq('challenger_id', challenge.challenger_id)
       .eq('match_type', 'doubles')
@@ -701,7 +691,6 @@ class ChallengeService {
         id: challenge.challenger_id,
         name: challenger.full_name,
         phone: challenger.phone,
-        contact_preference: challenger.contact_preference,
       });
     }
 
@@ -714,7 +703,6 @@ class ChallengeService {
           id: relatedChallenge.challenged_id,
           name: challenged.full_name,
           phone: challenged.phone,
-          contact_preference: challenged.contact_preference,
         });
       }
     }
@@ -854,8 +842,8 @@ class ChallengeService {
    * Get contact information after challenge acceptance
    */
   public async getContactInfo(challengeId: string): Promise<{
-    challenger: { name: string; phone?: string; contact_preference: string };
-    challenged: { name: string; phone?: string; contact_preference: string };
+    challenger: { name: string; phone?: string };
+    challenged: { name: string; phone?: string };
   } | null> {
     const challenge = await this.getChallenge(challengeId);
     
@@ -867,12 +855,10 @@ class ChallengeService {
       challenger: {
         name: challenge.challenger_name,
         phone: challenge.challenger_phone,
-        contact_preference: challenge.challenger_contact_preference,
       },
       challenged: {
         name: challenge.challenged_name,
         phone: challenge.challenged_phone,
-        contact_preference: challenge.challenged_contact_preference,
       },
     };
   }

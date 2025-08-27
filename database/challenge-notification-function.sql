@@ -37,23 +37,22 @@ BEGIN
         INSERT INTO notifications (
             id, user_id, type, title, message, 
             related_id, action_type, action_data, 
-            expires_at, created_at, updated_at
+            expires_at, created_at
         ) 
         SELECT 
             gen_random_uuid(),
             challenge_record.challenger_id,
             'challenge',
-            '🎾 Challenge Accepted - Contact Info Shared',
+            '🎾 Challenge Accepted',
             CASE 
                 WHEN challenge_record.challenger_id = p_initiator_user_id 
-                THEN 'You accepted ' || (SELECT full_name FROM users WHERE id = challenge_record.challenged_id) || '''s ' || challenge_record.match_type || ' challenge! Contact: ' || (SELECT full_name FROM users WHERE id = challenge_record.challenged_id) || ': ' || (SELECT phone FROM users WHERE id = challenge_record.challenged_id)
-                ELSE (SELECT full_name FROM users WHERE id = challenge_record.challenged_id) || ' accepted your ' || challenge_record.match_type || ' challenge! Contact: ' || (SELECT full_name FROM users WHERE id = challenge_record.challenged_id) || ': ' || (SELECT phone FROM users WHERE id = challenge_record.challenged_id)
+                THEN 'You accepted ' || (SELECT full_name FROM users WHERE id = challenge_record.challenged_id) || '''s ' || challenge_record.match_type || ' challenge! Check the Matches tab for details.'
+                ELSE (SELECT full_name FROM users WHERE id = challenge_record.challenged_id) || ' accepted your ' || challenge_record.match_type || ' challenge! Check the Matches tab for details.'
             END,
             p_challenge_id,
             'view_match',
             json_build_object('challengeId', p_challenge_id),
             NULL, -- No expiration for contact sharing
-            NOW(),
             NOW()
         RETURNING id INTO challenger_notification_id;
         
@@ -61,23 +60,22 @@ BEGIN
         INSERT INTO notifications (
             id, user_id, type, title, message,
             related_id, action_type, action_data,
-            expires_at, created_at, updated_at
+            expires_at, created_at
         )
         SELECT 
             gen_random_uuid(),
             challenge_record.challenged_id,
             'challenge', 
-            '🎾 Challenge Accepted - Contact Info Shared',
+            '🎾 Challenge Accepted',
             CASE 
                 WHEN challenge_record.challenged_id = p_initiator_user_id
-                THEN 'You accepted ' || (SELECT full_name FROM users WHERE id = challenge_record.challenger_id) || '''s ' || challenge_record.match_type || ' challenge! Contact: ' || (SELECT full_name FROM users WHERE id = challenge_record.challenger_id) || ': ' || (SELECT phone FROM users WHERE id = challenge_record.challenger_id)
-                ELSE (SELECT full_name FROM users WHERE id = challenge_record.challenger_id) || ' accepted your ' || challenge_record.match_type || ' challenge! Contact: ' || (SELECT full_name FROM users WHERE id = challenge_record.challenger_id) || ': ' || (SELECT phone FROM users WHERE id = challenge_record.challenger_id)
+                THEN 'You accepted ' || (SELECT full_name FROM users WHERE id = challenge_record.challenger_id) || '''s ' || challenge_record.match_type || ' challenge! Check the Matches tab for details.'
+                ELSE (SELECT full_name FROM users WHERE id = challenge_record.challenger_id) || ' accepted your ' || challenge_record.match_type || ' challenge! Check the Matches tab for details.'
             END,
             p_challenge_id,
             'view_match', 
             json_build_object('challengeId', p_challenge_id),
             NULL,
-            NOW(),
             NOW()
         RETURNING id INTO challenged_notification_id;
         

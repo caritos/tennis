@@ -16,7 +16,6 @@ import { useNotification } from '@/contexts/NotificationContext';
 interface ContactInfo {
   name: string;
   phone?: string;
-  contact_preference: string;
 }
 
 interface MatchContactInfoProps {

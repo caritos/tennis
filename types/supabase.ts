@@ -1,4 +1,3 @@
-
 export type Json =
   | string
   | number
@@ -12,31 +11,6 @@ export type Database = {
   // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
   __InternalSupabase: {
     PostgrestVersion: "13.0.4"
-  }
-  graphql_public: {
-    Tables: {
-      [_ in never]: never
-    }
-    Views: {
-      [_ in never]: never
-    }
-    Functions: {
-      graphql: {
-        Args: {
-          extensions?: Json
-          operationName?: string
-          query?: string
-          variables?: Json
-        }
-        Returns: Json
-      }
-    }
-    Enums: {
-      [_ in never]: never
-    }
-    CompositeTypes: {
-      [_ in never]: never
-    }
   }
   public: {
     Tables: {
@@ -239,44 +213,6 @@ export type Database = {
             columns: ["user_id"]
             isOneToOne: false
             referencedRelation: "users"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      club_notifications: {
-        Row: {
-          club_id: string
-          created_at: string | null
-          data: Json | null
-          id: string
-          message: string
-          title: string
-          type: string
-        }
-        Insert: {
-          club_id: string
-          created_at?: string | null
-          data?: Json | null
-          id?: string
-          message: string
-          title: string
-          type: string
-        }
-        Update: {
-          club_id?: string
-          created_at?: string | null
-          data?: Json | null
-          id?: string
-          message?: string
-          title?: string
-          type?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "club_notifications_club_id_fkey"
-            columns: ["club_id"]
-            isOneToOne: false
-            referencedRelation: "clubs"
             referencedColumns: ["id"]
           },
         ]
@@ -686,7 +622,6 @@ export type Database = {
       }
       users: {
         Row: {
-          contact_preference: string | null
           created_at: string | null
           elo_rating: number | null
           email: string
@@ -699,7 +634,6 @@ export type Database = {
           role: string | null
         }
         Insert: {
-          contact_preference?: string | null
           created_at?: string | null
           elo_rating?: number | null
           email: string
@@ -712,7 +646,6 @@ export type Database = {
           role?: string | null
         }
         Update: {
-          contact_preference?: string | null
           created_at?: string | null
           elo_rating?: number | null
           email?: string
@@ -731,6 +664,54 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      can_create_notification: {
+        Args:
+          | {
+              p_auth_uid: string
+              p_related_id: string
+              p_type: string
+              p_user_id: string
+            }
+          | {
+              p_auth_uid: string
+              p_related_id: string
+              p_type: string
+              p_user_id: string
+            }
+        Returns: boolean
+      }
+      create_challenge_notifications: {
+        Args: {
+          p_challenge_id: string
+          p_initiator_user_id: string
+          p_notification_type: string
+        }
+        Returns: Json
+      }
+      create_club_creation_notifications: {
+        Args: { p_club_id: string; p_club_lat: number; p_club_lng: number }
+        Returns: Json
+      }
+      create_club_join_notifications: {
+        Args: { p_club_id: string; p_new_member_id: string }
+        Returns: Json
+      }
+      create_match_invitation_notifications: {
+        Args: {
+          p_initiator_user_id: string
+          p_invitation_id: string
+          p_notification_type: string
+        }
+        Returns: Json
+      }
+      create_match_result_notifications: {
+        Args: {
+          p_match_id: string
+          p_recorder_user_id: string
+          p_winner: number
+        }
+        Returns: Json
+      }
       is_admin: {
         Args: Record<PropertyKey, never>
         Returns: boolean
@@ -874,9 +855,6 @@ export type CompositeTypes<
     : never
 
 export const Constants = {
-  graphql_public: {
-    Enums: {},
-  },
   public: {
     Enums: {},
   },

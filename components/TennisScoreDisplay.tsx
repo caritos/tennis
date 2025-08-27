@@ -177,6 +177,7 @@ export function TennisScoreDisplay({
 
       {/* Score Grid */}
       <View style={styles.scoreGrid}>
+        
         {/* Column Headers */}
         <View style={styles.headerRow}>
           <View style={styles.playerInfo}>

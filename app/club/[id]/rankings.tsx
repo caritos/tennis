@@ -11,7 +11,7 @@ import { ClubRankings, RankedPlayer } from '@/components/ClubRankings';
 import { getClubLeaderboard } from '@/services/matchService';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/contexts/AuthContext';
-import ChallengeFlowModal from '@/components/ChallengeFlowModal';
+import ChallengeFlowModalSimple from '@/components/ChallengeFlowModalSimple';
 
 export default function ClubRankingsScreen() {
   const { id } = useLocalSearchParams();
@@ -145,7 +145,7 @@ export default function ClubRankingsScreen() {
       </ScrollView>
 
       {/* Challenge Modal */}
-      <ChallengeFlowModal
+      <ChallengeFlowModalSimple
         clubId={id as string}
         targetPlayerId={challengeTarget?.id}
         targetPlayerName={challengeTarget?.name}

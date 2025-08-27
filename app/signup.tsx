@@ -126,9 +126,6 @@ export default function SignUpPage() {
             email: email.trim(),
             phone: phone.trim(),
             role: 'player',
-            contact_preference: 'whatsapp',
-            elo_rating: 1200,
-            games_played: 0,
             created_at: new Date().toISOString()
           }, {
             onConflict: 'id'

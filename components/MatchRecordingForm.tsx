@@ -28,6 +28,7 @@ import { TennisScoreEntry } from './TennisScoreEntry';
 import { TennisSet } from '@/types/tennis';
 import { formatScoreString } from '../utils/tennisUtils';
 import { Button } from './ui/Button';
+import { supabase } from '@/lib/supabase';
 
 interface MatchRecordingFormProps {
   onSave: (matchData: CreateMatchData, reportData?: {
@@ -47,6 +48,7 @@ interface MatchRecordingFormProps {
   }[];
   showReporting?: boolean;
   isSubmitting?: boolean;
+  invitationId?: string;
 }
 
 // Legacy interface - can be removed after migration
@@ -74,12 +76,18 @@ export function MatchRecordingForm(componentProps: MatchRecordingFormProps) {
     matchType: propMatchType,
     players = [],
     showReporting = false,
-    isSubmitting = false
+    isSubmitting = false,
+    invitationId
   } = props;
 
   // All state hooks
   const [matchType, setMatchType] = useState<'singles' | 'doubles'>(propMatchType || initialData?.match_type || 'singles');
   const [matchTypeRadioId, setMatchTypeRadioId] = useState(propMatchType || initialData?.match_type || 'singles');
+  
+  // State for invitation data
+  const [invitationData, setInvitationData] = useState<any>(null);
+  const [loadingInvitation, setLoadingInvitation] = useState(!!invitationId);
+  const [effectiveClubId, setEffectiveClubId] = useState<string | undefined>(clubId);
   
   // Pre-fill opponent from players prop if available (for challenges)
   const getInitialOpponent = () => {
@@ -131,6 +139,126 @@ export function MatchRecordingForm(componentProps: MatchRecordingFormProps) {
   const [reportDescription, setReportDescription] = useState('');
 
   // All useEffect hooks
+  
+  // Load invitation data if invitationId is provided
+  useEffect(() => {
+    if (invitationId && user) {
+      loadInvitationData();
+    }
+  }, [invitationId, user]);
+  
+  const loadInvitationData = async () => {
+    if (!invitationId || !user) return;
+    
+    try {
+      setLoadingInvitation(true);
+      
+      // Load invitation with responses
+      const { data: invitation, error } = await supabase
+        .from('match_invitations')
+        .select(`
+          *,
+          creator:users!creator_id(id, full_name, phone),
+          responses:invitation_responses(
+            id,
+            user_id,
+            status,
+            user:users!invitation_responses_user_id_fkey(id, full_name, phone)
+          )
+        `)
+        .eq('id', invitationId)
+        .single();
+
+      if (error) {
+        console.error('Failed to load invitation data:', error);
+        return;
+      }
+
+      console.log('🎾 Loaded invitation data:', invitation);
+      setInvitationData(invitation);
+      
+      // Set effective club ID from invitation if not already provided
+      if (invitation.club_id && !clubId) {
+        setEffectiveClubId(invitation.club_id);
+      }
+      
+      // Set match type from invitation
+      if (invitation.match_type) {
+        setMatchType(invitation.match_type);
+        setMatchTypeRadioId(invitation.match_type);
+      }
+      
+      // Set match date from invitation
+      if (invitation.date) {
+        setMatchDate(invitation.date);
+      }
+      
+      // Pre-fill players from invitation responses
+      // Note: Current user could be the creator OR a responder, but they shouldn't be their own opponent
+      
+      // Get all other players (excluding current user)
+      const allOtherPlayers = [];
+      
+      // Add invitation creator if it's not the current user
+      if (invitation.creator && invitation.creator.id !== user.id) {
+        allOtherPlayers.push({
+          user: {
+            id: invitation.creator.id,
+            full_name: invitation.creator.full_name,
+            phone: invitation.creator.phone
+          }
+        });
+      }
+      
+      // Add responses (excluding current user)
+      if (invitation.responses && invitation.responses.length > 0) {
+        const otherPlayerResponses = invitation.responses.filter(
+          (response: any) => response.user && response.user.id !== user.id
+        );
+        allOtherPlayers.push(...otherPlayerResponses);
+      }
+      
+      console.log('🎾 Current user ID:', user.id);
+      console.log('🎾 Invitation creator ID:', invitation.creator?.id);
+      console.log('🎾 All responses:', invitation.responses?.length || 0);
+      console.log('🎾 Other players (excluding current user):', allOtherPlayers.length);
+        
+      // For singles - just need one opponent (excluding current user)
+      if (invitation.match_type === 'singles' && allOtherPlayers.length >= 1) {
+        const opponent = allOtherPlayers[0];
+        if (opponent.user) {
+          setSelectedOpponent({ id: opponent.user.id, name: opponent.user.full_name });
+          setOpponentSearchText(opponent.user.full_name);
+          console.log('🎾 Singles opponent set:', opponent.user.full_name);
+        }
+      }
+      
+      // For doubles - need up to 3 other players (partner + 2 opponents)  
+      if (invitation.match_type === 'doubles') {
+        if (allOtherPlayers.length >= 1 && allOtherPlayers[0].user) {
+          setSelectedPartner({ id: allOtherPlayers[0].user.id, name: allOtherPlayers[0].user.full_name });
+          setPartnerSearchText(allOtherPlayers[0].user.full_name);
+          console.log('🎾 Doubles partner set:', allOtherPlayers[0].user.full_name);
+        }
+        if (allOtherPlayers.length >= 2 && allOtherPlayers[1].user) {
+          setSelectedOpponent({ id: allOtherPlayers[1].user.id, name: allOtherPlayers[1].user.full_name });
+          setOpponentSearchText(allOtherPlayers[1].user.full_name);
+          console.log('🎾 Doubles opponent set:', allOtherPlayers[1].user.full_name);
+        }
+        if (allOtherPlayers.length >= 3 && allOtherPlayers[2].user) {
+          setSelectedOpponentPartner({ id: allOtherPlayers[2].user.id, name: allOtherPlayers[2].user.full_name });
+          setOpponentPartnerSearchText(allOtherPlayers[2].user.full_name);
+          console.log('🎾 Doubles opponent partner set:', allOtherPlayers[2].user.full_name);
+        }
+      }
+      
+    } catch (error) {
+      console.error('Error loading invitation data:', error);
+    } finally {
+      setLoadingInvitation(false);
+    }
+  };
+
   useEffect(() => {
     console.log('🎾 tennisSets state changed:', tennisSets);
   }, [tennisSets]);
@@ -197,7 +325,7 @@ export function MatchRecordingForm(componentProps: MatchRecordingFormProps) {
   // Load real club members from database
   useEffect(() => {
     loadClubMembers();
-  }, [clubId]);
+  }, [effectiveClubId]);
 
   // Filter players based on active search field
   useEffect(() => {
@@ -380,13 +508,13 @@ export function MatchRecordingForm(componentProps: MatchRecordingFormProps) {
   };
 
   const loadClubMembers = async () => {
-    if (!clubId) {
-      console.log('📋 No clubId provided');
+    if (!effectiveClubId) {
+      console.log('📋 No effective clubId available yet');
       return;
     }
     
     try {
-      console.log('📋 Loading club members for club:', clubId, 'excluding user:', user?.id);
+      console.log('📋 Loading club members for club:', effectiveClubId, 'excluding user:', user?.id);
       
       // Import supabase
       const { supabase } = await import('@/lib/supabase');
@@ -400,7 +528,7 @@ export function MatchRecordingForm(componentProps: MatchRecordingFormProps) {
             full_name
           )
         `)
-        .eq('club_id', clubId)
+        .eq('club_id', effectiveClubId)
         .neq('user_id', user?.id || '');
       
       if (error) {
@@ -601,7 +729,7 @@ export function MatchRecordingForm(componentProps: MatchRecordingFormProps) {
     console.log('🎾 Final scoreString to save:', scoreString);
     
     const matchData: CreateMatchData = {
-      club_id: clubId,
+      club_id: effectiveClubId,
       player1_id: user.id, // Use actual user ID from auth context
       player2_id: selectedOpponent?.id?.startsWith('new-player') ? null : selectedOpponent?.id || null,
       opponent2_name: selectedOpponent?.id?.startsWith('new-player') ? selectedOpponent.name : null,
@@ -955,7 +1083,27 @@ export function MatchRecordingForm(componentProps: MatchRecordingFormProps) {
       fontSize: 12,
       textAlign: 'right',
     },
+    loadingContainer: {
+      justifyContent: 'center',
+      alignItems: 'center',
+      flex: 1,
+      padding: 20,
+    },
+    loadingText: {
+      fontSize: 16,
+      textAlign: 'center',
+      color: '#666',
+    },
   });
+
+  // Show loading state while invitation data is being loaded
+  if (loadingInvitation) {
+    return (
+      <View style={[styles.container, styles.loadingContainer]}>
+        <Text style={styles.loadingText}>Loading match details...</Text>
+      </View>
+    );
+  }
 
   return (
     <KeyboardAvoidingView 
@@ -1305,11 +1453,57 @@ export function MatchRecordingForm(componentProps: MatchRecordingFormProps) {
         </View>
 
         {/* Report Player Section - Only show if enabled */}
-        {showReporting && players.length > 0 && (
+        {showReporting && (players.length > 0 || invitationId) && (() => {
+          // Build available players list for reporting from both props and internal state
+          const getAvailablePlayersForReporting = () => {
+            // For challenge matches, use players prop
+            if (players.length > 0) {
+              return players.filter(p => p.id !== user?.id);
+            }
+            
+            // For invitation matches, build from selected players in internal state
+            const availablePlayers = [];
+            
+            if (selectedOpponent) {
+              availablePlayers.push({ 
+                id: selectedOpponent.id, 
+                full_name: selectedOpponent.name,
+                name: selectedOpponent.name // For compatibility
+              });
+            }
+            
+            if (selectedPartner && matchType === 'doubles') {
+              availablePlayers.push({ 
+                id: selectedPartner.id, 
+                full_name: selectedPartner.name,
+                name: selectedPartner.name
+              });
+            }
+            
+            if (selectedOpponentPartner && matchType === 'doubles') {
+              availablePlayers.push({ 
+                id: selectedOpponentPartner.id, 
+                full_name: selectedOpponentPartner.name,
+                name: selectedOpponentPartner.name
+              });
+            }
+            
+            return availablePlayers;
+          };
+          
+          const availablePlayersForReporting = getAvailablePlayersForReporting();
+          
+          return (
           <View style={styles.section}>
             <TouchableOpacity
               style={styles.reportSectionHeader}
-              onPress={() => setShowReportingSection(!showReportingSection)}
+              onPress={() => {
+                setShowReportingSection(!showReportingSection);
+                // For singles matches, automatically select the opponent when opening
+                if (!showReportingSection && matchType === 'singles' && availablePlayersForReporting.length > 0) {
+                  setReportedPlayerIds([availablePlayersForReporting[0].id]);
+                }
+              }}
               activeOpacity={0.7}
             >
               <Text style={styles.reportSectionTitle}>
@@ -1328,10 +1522,20 @@ export function MatchRecordingForm(componentProps: MatchRecordingFormProps) {
                   Only report serious issues that violate community guidelines
                 </Text>
 
-                {/* Player Selection */}
-                <View style={styles.reportPlayersSection}>
-                  <Text style={styles.reportLabel}>Which player(s)?</Text>
-                  {players.filter(p => p.id !== user?.id).map((player) => (
+                {/* For singles matches, show who is being reported */}
+                {matchType === 'singles' && availablePlayersForReporting.length > 0 && (
+                  <View style={styles.reportPlayersSection}>
+                    <Text style={[styles.reportLabel, { marginBottom: 8 }]}>
+                      Reporting: {availablePlayersForReporting[0].full_name || availablePlayersForReporting[0].name}
+                    </Text>
+                  </View>
+                )}
+
+                {/* Player Selection - Only show for doubles matches */}
+                {matchType === 'doubles' && (
+                  <View style={styles.reportPlayersSection}>
+                    <Text style={styles.reportLabel}>Which player(s)?</Text>
+                    {availablePlayersForReporting.map((player) => (
                     <TouchableOpacity
                       key={player.id}
                       style={styles.playerCheckbox}
@@ -1370,8 +1574,9 @@ export function MatchRecordingForm(componentProps: MatchRecordingFormProps) {
                         {player.full_name}
                       </Text>
                     </TouchableOpacity>
-                  ))}
-                </View>
+                    ))}
+                  </View>
+                )}
 
                 {/* Report Type Selection */}
                 {reportedPlayerIds.length > 0 && (
@@ -1431,7 +1636,8 @@ export function MatchRecordingForm(componentProps: MatchRecordingFormProps) {
               </View>
             )}
           </View>
-        )}
+          );
+        })()}
 
         {/* Save Match Button - Inside ScrollView */}
         <View style={styles.saveButtonSection}>

@@ -146,7 +146,6 @@ CREATE TABLE IF NOT EXISTS users (
   email TEXT UNIQUE NOT NULL,
   phone TEXT,
   role TEXT DEFAULT 'player' CHECK (role IN ('player', 'admin')),
-  contact_preference TEXT DEFAULT 'whatsapp' CHECK (contact_preference IN ('whatsapp', 'phone', 'text')),
   elo_rating INTEGER DEFAULT 1200, -- ELO rating for tennis ranking (starts at 1200)
   games_played INTEGER DEFAULT 0, -- Number of games played for K-factor calculation
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()

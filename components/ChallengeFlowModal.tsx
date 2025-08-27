@@ -5,6 +5,7 @@ import {
   ScrollView,
   Modal,
   TouchableOpacity,
+  TextInput,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
@@ -15,11 +16,12 @@ import { challengeService, CreateChallengeData } from '@/services/challengeServi
 import { useNotification } from '@/contexts/NotificationContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/lib/supabase';
-import MatchTypeSelection from './challenge-flow/MatchTypeSelection';
-import PlayerSelection from './challenge-flow/PlayerSelection';
-import TimingOptions from './challenge-flow/TimingOptions';
-import MessageSection from './challenge-flow/MessageSection';
-import FormActions from './challenge-flow/FormActions';
+import { CalendarDatePicker } from './CalendarDatePicker';
+import { MatchTypeSelection } from './challenge-flow/MatchTypeSelection';
+import { PlayerSelection } from './challenge-flow/PlayerSelection';
+import { TimingOptions } from './challenge-flow/TimingOptions';
+import { MessageSection } from './challenge-flow/MessageSection';
+import { FormActions } from './challenge-flow/FormActions';
 
 interface Player {
   id: string;

@@ -12,7 +12,7 @@ import { ThemedText } from '@/components/ThemedText';
 
 export default function RecordMatchScreen() {
   const router = useRouter();
-  const { clubId = 'demo-club-123' } = useLocalSearchParams<{ clubId?: string }>();
+  const { clubId, invitationId } = useLocalSearchParams<{ clubId?: string; invitationId?: string }>();
   const colorScheme = useColorScheme();
   const colors = Colors[colorScheme ?? 'light'];
   
@@ -90,7 +90,9 @@ export default function RecordMatchScreen() {
 
       <MatchRecordingForm
         onSave={handleSave}
-        clubId={clubId}
+        clubId={clubId || undefined}
+        invitationId={invitationId}
+        showReporting={!!invitationId}
       />
       
       {/* Notification Banner */}

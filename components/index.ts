@@ -26,7 +26,7 @@ export { PlayerStatsDisplay } from './PlayerStatsDisplay';
 
 // Modal & Dialog Components
 export { ConfirmDialog, InfoDialog, WarningDialog, ErrorDialog, SuccessDialog, DeleteConfirmDialog } from './ConfirmDialog';
-export { default as ChallengeFlowModal } from './ChallengeFlowModal';
+export { default as ChallengeFlowModal } from './ChallengeFlowModalSimple';
 export { default as MatchInvitationForm } from './MatchInvitationForm';
 
 // Notification Components

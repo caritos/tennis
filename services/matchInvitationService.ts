@@ -486,8 +486,8 @@ export class MatchInvitationService {
           id: notificationId,
           user_id: player.id,
           type: 'match_invitation',
-          title: '🎾 Doubles Match Confirmed - Contact Info Shared',
-          message: `Your doubles match is confirmed! Other players: ${contactList}`,
+          title: '🎾 Doubles Match Confirmed',
+          message: `Your doubles match is confirmed with ${otherPlayers.length} other players! Check the Matches tab for contact details.`,
           is_read: false,
           action_type: 'view_match',
           action_data: JSON.stringify({ invitationId }),
@@ -655,6 +655,7 @@ export class MatchInvitationService {
 
   /**
    * Create a club notification for match invitation
+   * NOTE: Currently disabled as club_notifications table doesn't exist
    */
   public async createClubNotification(clubId: string, notificationData: {
     type: string;
@@ -667,6 +668,11 @@ export class MatchInvitationService {
     location?: string;
     creator_name: string;
   }): Promise<void> {
+    // Skip this functionality as club_notifications table doesn't exist
+    console.log('📝 Club notifications are currently disabled (table not created yet)');
+    return;
+    
+    /* Original implementation - to be enabled when table is created
     try {
       const { error } = await supabase
         .from('club_notifications')
@@ -697,6 +703,7 @@ export class MatchInvitationService {
       console.error('❌ Failed to create club notification:', error);
       throw error;
     }
+    */
   }
 }
 

@@ -9,7 +9,7 @@ import { Colors } from '@/constants/Colors';
 import { Club , supabase } from '@/lib/supabase';
 import { useAuth } from '@/contexts/AuthContext';
 import { RankedPlayer } from '@/components/ClubRankings';
-import ChallengeFlowModal from '@/components/ChallengeFlowModal';
+import ChallengeFlowModalSimple from '@/components/ChallengeFlowModalSimple';
 import ClubOverview from '@/components/club/ClubOverview';
 import ClubMembers from '@/components/club/ClubMembers';
 import ClubMatches from '@/components/club/ClubMatches';
@@ -220,23 +220,67 @@ export default function ClubDetailScreen() {
         .from('match_invitations')
         .select(`
           *,
-          creator:users!creator_id(full_name)
+          creator:users!creator_id(full_name, phone)
         `)
         .eq('club_id', id)
         .eq('status', 'active')
         .order('date', { ascending: true })
         .order('created_at', { ascending: false });
 
-      // Fetch responses for each invitation
+      // Filter out past invitations (dates before today)
+      const today = new Date();
+      today.setHours(0, 0, 0, 0); // Set to start of day for accurate comparison
+      
+      const activeInvitations = [];
+      const pastInvitations = [];
+      
+      (matchInvitations || []).forEach((invitation: any) => {
+        const invitationDate = new Date(invitation.date + 'T00:00:00'); // Parse date in local timezone
+        
+        // Check if invitation has passed the date
+        if (invitationDate < today) {
+          pastInvitations.push(invitation);
+          return;
+        }
+        
+        // Check if invitation has enough players to convene
+        const requiredPlayers = invitation.match_type === 'singles' ? 2 : 4;
+        const currentPlayers = 1; // Creator is always counted as 1 player
+        // Note: We'll count actual responses after they're loaded
+        
+        activeInvitations.push(invitation);
+      });
+
+      console.log(`🔍 ClubDetails: Filtered invitations - Total: ${matchInvitations?.length || 0}, Active (not past): ${activeInvitations.length}, Past: ${pastInvitations.length}`);
+
+      // Update past invitations to 'expired' status in background (non-blocking)
+      if (pastInvitations.length > 0) {
+        const pastInvitationIds = pastInvitations.map(inv => inv.id);
+        console.log(`🕰️ ClubDetails: Marking ${pastInvitations.length} past invitations as expired:`, pastInvitationIds);
+        
+        supabase
+          .from('match_invitations')
+          .update({ status: 'expired' })
+          .in('id', pastInvitationIds)
+          .then(({ error }) => {
+            if (error) {
+              console.error('Failed to mark past invitations as expired:', error);
+            } else {
+              console.log(`✅ ClubDetails: Successfully marked ${pastInvitations.length} past invitations as expired`);
+            }
+          });
+      }
+
+      // Fetch responses for each active invitation
       const invitationsWithResponses = await Promise.all(
-        (matchInvitations || []).map(async (invitation: any) => {
+        activeInvitations.map(async (invitation: any) => {
           const { data: responses } = await supabase
             .from('invitation_responses')
             .select(`
               id,
               user_id,
               status,
-              user:users!invitation_responses_user_id_fkey(full_name)
+              user:users!invitation_responses_user_id_fkey(full_name, phone)
             `)
             .eq('invitation_id', invitation.id);
 
@@ -244,12 +288,56 @@ export default function ClubDetailScreen() {
             ...invitation,
             responses: (responses || []).map((response: any) => ({
               id: response.id,
+              user_id: response.user_id,
               user_name: response.user?.full_name || 'Unknown Player',
+              user_phone: response.user?.phone,
               status: response.status
             }))
           };
         })
       );
+
+      // Filter out invitations that are for today/past and don't have enough players to convene
+      const viableInvitations = [];
+      const failedInvitations = [];
+      
+      invitationsWithResponses.forEach((invitation: any) => {
+        const requiredPlayers = invitation.match_type === 'singles' ? 2 : 4;
+        const currentPlayers = 1 + (invitation.responses || []).length; // Creator + responses
+        const invitationDate = new Date(invitation.date + 'T00:00:00');
+        const isToday = invitationDate.toDateString() === today.toDateString();
+        
+        // If it's a future date, always show it (players can still join)
+        // If it's today and has enough players, show it (match can happen)  
+        // If it's today and doesn't have enough players, hide it (match can't happen)
+        if (invitationDate > today || (isToday && currentPlayers >= requiredPlayers)) {
+          viableInvitations.push(invitation);
+        } else if (isToday && currentPlayers < requiredPlayers) {
+          failedInvitations.push(invitation);
+        } else {
+          viableInvitations.push(invitation); // fallback - keep showing
+        }
+      });
+
+      console.log(`🔍 ClubDetails: Player count filtering - Viable: ${viableInvitations.length}, Failed to convene: ${failedInvitations.length}`);
+
+      // Mark failed invitations as expired in background (non-blocking)
+      if (failedInvitations.length > 0) {
+        const failedIds = failedInvitations.map(inv => inv.id);
+        console.log(`👥 ClubDetails: Marking ${failedInvitations.length} failed invitations as expired:`, failedIds);
+        
+        supabase
+          .from('match_invitations')
+          .update({ status: 'expired' })
+          .in('id', failedIds)
+          .then(({ error }) => {
+            if (error) {
+              console.error('Failed to mark failed invitations as expired:', error);
+            } else {
+              console.log(`✅ ClubDetails: Successfully marked ${failedInvitations.length} failed invitations as expired`);
+            }
+          });
+      }
       
       // Process completed matches
       const processedCompletedMatches = allMatchesData?.map((match: any) => {
@@ -295,10 +383,11 @@ export default function ClubDetailScreen() {
         };
       }) || [];
 
-      // Process match invitations (looking to play) as upcoming matches
-      const processedInvitations = invitationsWithResponses.map((invitation: any) => ({
+      // Process match invitations (looking to play) as upcoming matches - only viable ones
+      const processedInvitations = viableInvitations.map((invitation: any) => ({
         id: invitation.id,
         player1_name: invitation.creator?.full_name || 'Unknown Player',
+        player1_phone: invitation.creator?.phone,
         player2_name: 'Looking for opponent',
         opponent2_name: null,
         partner3_name: null,
@@ -335,6 +424,8 @@ export default function ClubDetailScreen() {
         player2_name: challenge.challenged_name || challenge.challenged?.full_name || 'Unknown',
         player1_id: challenge.challenger_id,
         player2_id: challenge.challenged_id,
+        player1_phone: challenge.challenger_phone,
+        player2_phone: challenge.challenged_phone,
         scores: '', // No scores yet for challenges
         winner: null,
         match_type: challenge.match_type,
@@ -509,10 +600,16 @@ export default function ClubDetailScreen() {
     try {
       setJoiningInvitations(prev => new Set(prev).add(invitationId));
       console.log('🎾 Joining invitation:', invitationId);
-      await matchInvitationService.respondToInvitation(invitationId, user.id);
+      
+      // Create the response
+      const response = await matchInvitationService.respondToInvitation(invitationId, user.id);
+      console.log('✅ Response created:', response);
+      
+      // Add a small delay to ensure database consistency
+      await new Promise(resolve => setTimeout(resolve, 500));
       
       // Reload matches to reflect the change
-      loadClubDetails();
+      await loadClubDetails();
       
       console.log('✅ Successfully joined match invitation');
     } catch (error) {
@@ -672,7 +769,7 @@ export default function ClubDetailScreen() {
         </ScrollView>
 
         {/* Challenge Modal */}
-        <ChallengeFlowModal
+        <ChallengeFlowModalSimple
           clubId={id as string}
           targetPlayerId={challengeTarget?.id}
           targetPlayerName={challengeTarget?.name}
