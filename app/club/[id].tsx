@@ -6,6 +6,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { ThemedText } from '@/components/ThemedText';
 import { useColorScheme } from '@/hooks/useColorScheme';
 import { Colors } from '@/constants/Colors';
+import { IOSTypography, IOSSpacing, IOSBorderRadius, IOSColors, IOSShadows, IOSStyles } from '@/constants/IOSDesign';
 import { Club , supabase } from '@/lib/supabase';
 import { useAuth } from '@/contexts/AuthContext';
 import { RankedPlayer } from '@/components/ClubRankings';
@@ -814,20 +815,18 @@ const styles = StyleSheet.create({
   header: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: 16,
-    paddingVertical: 12,
+    paddingHorizontal: IOSSpacing.contentMargin,
+    paddingVertical: IOSSpacing.medium,
     borderBottomWidth: 1,
-    borderBottomColor: '#e0e0e0',
+    borderBottomColor: IOSColors.systemGray5,
   },
   backButton: {
-    padding: 8,
+    ...IOSStyles.backButton,
   },
   headerTitle: {
+    ...IOSStyles.headerTitle,
     flex: 1,
-    fontSize: 18,
-    fontWeight: '600',
-    textAlign: 'center',
-    marginHorizontal: 16,
+    marginHorizontal: IOSSpacing.standard,
   },
   headerSpacer: {
     width: 60,
@@ -955,42 +954,39 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   loadingText: {
-    marginTop: 16,
-    fontSize: 16,
+    ...IOSStyles.loadingText,
   },
   errorContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    padding: 20,
+    ...IOSStyles.contentContainer,
   },
   errorText: {
-    fontSize: 16,
-    marginBottom: 20,
+    ...IOSTypography.body,
+    marginBottom: IOSSpacing.comfortable,
     textAlign: 'center',
   },
   button: {
-    paddingHorizontal: 24,
-    paddingVertical: 12,
-    borderRadius: 8,
+    ...IOSStyles.primaryButton,
   },
   buttonText: {
     color: 'white',
-    fontSize: 16,
+    ...IOSTypography.body,
     fontWeight: '600',
   },
   tabContainer: {
     flexDirection: 'row',
     borderBottomWidth: 1,
-    borderBottomColor: '#e0e0e0',
+    borderBottomColor: IOSColors.systemGray5,
   },
   tab: {
     flex: 1,
-    paddingVertical: 12,
+    ...IOSStyles.listItem,
     alignItems: 'center',
   },
   tabText: {
-    fontSize: 15,
+    ...IOSTypography.subheadline,
     fontWeight: '600',
   },
   memberItem: {

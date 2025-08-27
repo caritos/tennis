@@ -1,10 +1,11 @@
-import { ScrollView, StyleSheet, View, TouchableOpacity } from 'react-native';
+import { ScrollView, StyleSheet, TouchableOpacity } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import React, { useState } from 'react';
 
 import { ThemedText } from '@/components/ThemedText';
+import { ThemedView } from '@/components/ThemedView';
 import { useColorScheme } from '@/hooks/useColorScheme';
 import { Colors } from '@/constants/Colors';
 import { getLegacyFAQData, type LegacyFAQItem } from '@/data/faq';
@@ -31,20 +32,22 @@ export default function FAQScreen() {
 
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
-      <View style={[styles.header, { borderBottomColor: colors.icon + '20' }]}>
+      <ThemedView style={[styles.header, { borderBottomColor: colors.icon + '20' }]}>
         <TouchableOpacity
           onPress={() => router.back()}
           style={styles.backButton}
+          accessibilityRole="button"
+          accessibilityLabel="Go back"
         >
-          <Ionicons name="arrow-back" size={24} color={colors.text} />
+          <Ionicons name="chevron-back" size={28} color={colors.text} />
         </TouchableOpacity>
         <ThemedText type="title" style={styles.headerTitle}>FAQ</ThemedText>
-        <View style={{ width: 40 }} />
-      </View>
+        <ThemedView style={styles.headerSpacer} />
+      </ThemedView>
       
       <ScrollView showsVerticalScrollIndicator={false} style={styles.content}>
         {categories.map((category) => (
-          <View key={category} style={styles.categorySection}>
+          <ThemedView key={category} style={styles.categorySection}>
             <ThemedText type="subtitle" style={styles.categoryTitle}>
               {category}
             </ThemedText>
@@ -60,8 +63,10 @@ export default function FAQScreen() {
                     key={globalIndex}
                     onPress={() => toggleItem(globalIndex)}
                     style={[styles.faqItem, { borderColor: colors.icon + '20' }]}
+                    accessibilityRole="button"
+                    accessibilityState={{ expanded: isExpanded }}
                   >
-                    <View style={styles.questionRow}>
+                    <ThemedView style={styles.questionRow}>
                       <ThemedText style={styles.question}>
                         {item.question}
                       </ThemedText>
@@ -70,7 +75,7 @@ export default function FAQScreen() {
                         size={20} 
                         color={colors.icon}
                       />
-                    </View>
+                    </ThemedView>
                     
                     {isExpanded && (
                       <ThemedText style={styles.answer}>
@@ -80,7 +85,7 @@ export default function FAQScreen() {
                   </TouchableOpacity>
                 );
               })}
-          </View>
+          </ThemedView>
         ))}
       </ScrollView>
     </SafeAreaView>
@@ -95,27 +100,36 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingHorizontal: 20,
-    paddingVertical: 16,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
     borderBottomWidth: 1,
+    minHeight: 44,
   },
   backButton: {
-    width: 40,
+    minWidth: 44,
+    minHeight: 44,
     alignItems: 'flex-start',
+    justifyContent: 'center',
+    paddingRight: 8,
   },
   headerTitle: {
-    fontSize: 20,
+    fontSize: 17,
     fontWeight: '600',
+    flex: 1,
+    textAlign: 'center',
+  },
+  headerSpacer: {
+    width: 44,
   },
   content: {
     flex: 1,
   },
   categorySection: {
-    paddingHorizontal: 20,
+    paddingHorizontal: 16,
     paddingTop: 24,
   },
   categoryTitle: {
-    fontSize: 18,
+    fontSize: 20,
     fontWeight: '600',
     marginBottom: 16,
   },
@@ -129,18 +143,22 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    padding: 16,
+    paddingHorizontal: 16,
+    paddingVertical: 16,
+    minHeight: 50,
   },
   question: {
-    fontSize: 16,
+    fontSize: 17,
     fontWeight: '500',
     flex: 1,
-    marginRight: 12,
+    marginRight: 16,
+    lineHeight: 24,
   },
   answer: {
     fontSize: 15,
     lineHeight: 22,
     paddingHorizontal: 16,
+    paddingTop: 8,
     paddingBottom: 16,
     opacity: 0.8,
   },

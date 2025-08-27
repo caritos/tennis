@@ -6,6 +6,7 @@ import { ThemedText } from '@/components/ThemedText';
 import { EditClubForm } from '@/components/EditClubForm';
 import { useColorScheme } from '@/hooks/useColorScheme';
 import { Colors } from '@/constants/Colors';
+import { IOSTypography, IOSSpacing, IOSColors, IOSStyles } from '@/constants/IOSDesign';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/lib/supabase';
 
@@ -126,27 +127,25 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    padding: 20,
+    ...IOSStyles.contentContainer,
   },
   loadingText: {
-    marginTop: 16,
-    fontSize: 16,
-    textAlign: 'center',
+    ...IOSStyles.loadingText,
   },
   errorContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    padding: 20,
+    ...IOSStyles.contentContainer,
   },
   errorText: {
-    fontSize: 16,
+    ...IOSTypography.body,
     textAlign: 'center',
-    marginBottom: 20,
-    color: '#ff4444',
+    marginBottom: IOSSpacing.comfortable,
+    color: IOSColors.destructive,
   },
   backLink: {
-    fontSize: 16,
+    ...IOSTypography.body,
     fontWeight: '600',
     textDecorationLine: 'underline',
   },

@@ -247,12 +247,15 @@ const styles = StyleSheet.create({
     flexGrow: 1,
   },
   header: {
-    paddingHorizontal: 20,
+    paddingHorizontal: 16, // iOS standard margins
     paddingTop: 10,
     paddingBottom: 20,
   },
   backButton: {
-    width: 40,
+    width: 44, // iOS minimum touch target
+    height: 44,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   iconContainer: {
     alignItems: 'center',
@@ -267,51 +270,54 @@ const styles = StyleSheet.create({
   },
   content: {
     flex: 1,
-    paddingHorizontal: 24,
+    paddingHorizontal: 16, // iOS standard content margins
   },
   title: {
-    fontSize: 28,
+    fontSize: 28, // iOS Title 1
     fontWeight: 'bold',
     textAlign: 'center',
     marginBottom: 12,
   },
   description: {
-    fontSize: 16,
+    fontSize: 17, // iOS Body
     textAlign: 'center',
     marginBottom: 32,
-    lineHeight: 22,
+    lineHeight: 24, // Better line height for iOS
     opacity: 0.8,
   },
   inputContainer: {
     marginBottom: 24,
   },
   label: {
-    fontSize: 14,
+    fontSize: 15, // iOS Body
     fontWeight: '600',
     marginBottom: 8,
   },
   input: {
     borderWidth: 1,
-    borderRadius: 10,
-    paddingHorizontal: 16,
-    paddingVertical: 14,
-    fontSize: 16,
+    borderRadius: 12, // iOS standard radius
+    paddingHorizontal: 16, // iOS standard padding
+    paddingVertical: 16,
+    fontSize: 17, // iOS text input size
+    minHeight: 50, // iOS minimum input height
   },
   errorText: {
-    color: '#ff3b30',
-    fontSize: 12,
+    color: '#ff3b30', // iOS system red
+    fontSize: 13, // iOS Caption 1
     marginTop: 4,
     marginLeft: 4,
   },
   submitButton: {
     paddingVertical: 16,
-    borderRadius: 10,
+    borderRadius: 12, // iOS standard radius
     alignItems: 'center',
+    justifyContent: 'center',
     marginBottom: 16,
+    minHeight: 50, // iOS minimum primary button height
   },
   submitButtonText: {
     color: '#ffffff',
-    fontSize: 16,
+    fontSize: 17, // iOS Headline
     fontWeight: '600',
   },
   disabledButton: {
@@ -320,9 +326,11 @@ const styles = StyleSheet.create({
   signInLink: {
     alignItems: 'center',
     paddingVertical: 12,
+    minHeight: 44, // iOS minimum touch target
+    justifyContent: 'center',
   },
   signInLinkText: {
-    fontSize: 16,
+    fontSize: 17, // iOS Headline
     fontWeight: '500',
   },
   successIcon: {
@@ -335,35 +343,37 @@ const styles = StyleSheet.create({
     marginBottom: 24,
   },
   successTitle: {
-    fontSize: 24,
+    fontSize: 28, // iOS Title 1
     fontWeight: '600',
     textAlign: 'center',
     marginBottom: 16,
   },
   successDescription: {
-    fontSize: 16,
+    fontSize: 17, // iOS Body
     textAlign: 'center',
     marginBottom: 8,
     opacity: 0.8,
   },
   emailText: {
-    fontSize: 16,
+    fontSize: 17, // iOS Headline
     fontWeight: '600',
     textAlign: 'center',
     marginBottom: 24,
   },
   successNote: {
-    fontSize: 14,
+    fontSize: 15, // iOS Body
     textAlign: 'center',
     marginBottom: 32,
-    lineHeight: 20,
+    lineHeight: 22, // Better line height for iOS
     opacity: 0.7,
   },
   resendLink: {
     alignItems: 'center',
     paddingVertical: 12,
+    minHeight: 44, // iOS minimum touch target
+    justifyContent: 'center',
   },
   resendLinkText: {
-    fontSize: 14,
+    fontSize: 15, // iOS Body
   },
 });

@@ -363,7 +363,7 @@ const styles = StyleSheet.create({
     paddingTop: 0,
   },
   section: {
-    paddingHorizontal: 20,
+    paddingHorizontal: 16,  // iOS HIG: Standard margins
     marginBottom: 16,
     marginTop: 8,
   },
@@ -371,7 +371,7 @@ const styles = StyleSheet.create({
     marginBottom: 12,
   },
   discoverSection: {
-    paddingHorizontal: 20,
+    paddingHorizontal: 16,  // iOS HIG: Standard margins
     marginBottom: 24,
   },
   discoverHeader: {
@@ -383,14 +383,15 @@ const styles = StyleSheet.create({
   locationPrompt: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: 10,
-    paddingVertical: 6,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
     borderWidth: 1,
-    borderRadius: 16,
+    borderRadius: 20,  // iOS HIG: Pill shape for chips
     gap: 4,
+    minHeight: 32,  // iOS HIG: Better touch target
   },
   locationPromptText: {
-    fontSize: 12,
+    fontSize: 13,  // iOS HIG: Caption 1
     fontWeight: '500',
   },
   sectionTitle: {
@@ -407,12 +408,12 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   placeholderText: {
-    fontSize: 16,
-    fontWeight: '500',
+    fontSize: 17,  // iOS HIG: Headline
+    fontWeight: '600',
     marginBottom: 4,
   },
   placeholderSubtext: {
-    fontSize: 14,
+    fontSize: 15,  // iOS HIG: Body text
     opacity: 0.7,
   },
   loadingContainer: {
@@ -420,7 +421,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   loadingText: {
-    fontSize: 18,
+    fontSize: 17,  // iOS HIG: Headline
     textAlign: 'center',
   },
   errorContainer: {
@@ -428,17 +429,19 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   errorText: {
-    fontSize: 16,
+    fontSize: 17,  // iOS HIG: Headline
     textAlign: 'center',
-    color: '#FF6B6B',
+    color: '#ff3b30',  // iOS HIG: System red
     marginBottom: 16,
   },
   retryButton: {
-    paddingVertical: 8,
+    paddingVertical: 12,  // iOS HIG: Better touch target
     paddingHorizontal: 16,
+    minHeight: 44,  // iOS HIG: Minimum touch target
+    justifyContent: 'center',
   },
   retryText: {
-    fontSize: 16,
+    fontSize: 17,  // iOS HIG: Body text
     fontWeight: '500',
   },
   emptyContainer: {
@@ -446,15 +449,15 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   emptyTitle: {
-    fontSize: 20,
+    fontSize: 20,  // iOS HIG: Title 3
     fontWeight: '600',
     textAlign: 'center',
     marginBottom: 8,
   },
   emptySubtitle: {
-    fontSize: 16,
+    fontSize: 15,  // iOS HIG: Body text
     textAlign: 'center',
-    lineHeight: 24,
+    lineHeight: 22,  // iOS HIG: Proper line height
   },
   createClubContainer: {
     marginTop: 24,
@@ -462,7 +465,7 @@ const styles = StyleSheet.create({
     gap: 12,
   },
   createClubText: {
-    fontSize: 16,
+    fontSize: 15,  // iOS HIG: Body text
     textAlign: 'center',
     opacity: 0.8,
     marginBottom: 4,

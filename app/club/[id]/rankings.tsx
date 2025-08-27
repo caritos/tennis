@@ -7,6 +7,7 @@ import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
 import { useColorScheme } from '@/hooks/useColorScheme';
 import { Colors } from '@/constants/Colors';
+import { IOSTypography, IOSSpacing, IOSBorderRadius, IOSColors, IOSShadows, IOSStyles } from '@/constants/IOSDesign';
 import { ClubRankings, RankedPlayer } from '@/components/ClubRankings';
 import { getClubLeaderboard } from '@/services/matchService';
 import { supabase } from '@/lib/supabase';
@@ -167,30 +168,28 @@ const styles = StyleSheet.create({
   header: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: 16,
-    paddingVertical: 12,
+    paddingHorizontal: IOSSpacing.contentMargin,
+    paddingVertical: IOSSpacing.medium,
     borderBottomWidth: 1,
-    borderBottomColor: '#e0e0e0',
+    borderBottomColor: IOSColors.systemGray5,
   },
   backButton: {
-    padding: 8,
+    ...IOSStyles.backButton,
   },
   headerTitle: {
+    ...IOSStyles.headerTitle,
     flex: 1,
-    fontSize: 18,
-    fontWeight: '600',
-    textAlign: 'center',
-    marginHorizontal: 16,
+    marginHorizontal: IOSSpacing.standard,
   },
   headerSpacer: {
-    width: 40,
+    width: IOSSpacing.minimumTouchTarget,
   },
   scrollView: {
     flex: 1,
   },
   content: {
-    paddingHorizontal: 20,
-    paddingVertical: 16,
+    ...IOSStyles.contentContainer,
+    paddingVertical: IOSSpacing.standard,
   },
   loadingContainer: {
     flex: 1,
@@ -198,28 +197,25 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   loadingText: {
-    marginTop: 16,
-    fontSize: 16,
+    ...IOSStyles.loadingText,
   },
   errorContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    padding: 20,
+    ...IOSStyles.contentContainer,
   },
   errorText: {
-    fontSize: 16,
-    marginBottom: 20,
+    ...IOSTypography.body,
+    marginBottom: IOSSpacing.comfortable,
     textAlign: 'center',
   },
   button: {
-    paddingHorizontal: 24,
-    paddingVertical: 12,
-    borderRadius: 8,
+    ...IOSStyles.primaryButton,
   },
   buttonText: {
     color: 'white',
-    fontSize: 16,
+    ...IOSTypography.body,
     fontWeight: '600',
   },
 });

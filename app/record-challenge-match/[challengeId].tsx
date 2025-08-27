@@ -394,7 +394,9 @@ const styles = StyleSheet.create({
     padding: 12,
     // iOS HIG compliant touch target
     minHeight: 44,
+    minWidth: 44,
     alignItems: 'center',
+    justifyContent: 'center',
   },
   backButtonText: {
     fontSize: 17, // iOS HIG button font size

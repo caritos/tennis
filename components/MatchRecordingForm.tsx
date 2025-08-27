@@ -807,24 +807,24 @@ export function MatchRecordingForm(componentProps: MatchRecordingFormProps) {
       backgroundColor: colors.background,
     },
     scrollContent: {
-      padding: CompactStyles.scrollContent.paddingHorizontal,
+      padding: 16, // iOS HIG: Standard content margins
       paddingBottom: 20, // Normal bottom padding for scroll content
     },
     title: {
-      fontSize: CompactStyles.title.fontSize,
+      fontSize: 28, // iOS HIG: Title 1 size
       fontWeight: 'bold',
       color: colors.text,
-      marginBottom: CompactStyles.sectionMargin,
+      marginBottom: 24, // iOS HIG: Standard section margin
       textAlign: 'center',
     },
     section: {
-      marginBottom: CompactStyles.sectionMargin,
+      marginBottom: 24, // iOS HIG: Standard section margin
     },
     sectionTitle: {
       fontSize: 17,  // iOS HIG: Headline
       fontWeight: '600',
       color: colors.text,
-      marginBottom: CompactStyles.smallMargin,
+      marginBottom: 8, // iOS HIG: Small margin
     },
     radioGroupContainer: {
       alignItems: 'flex-start',
@@ -832,12 +832,13 @@ export function MatchRecordingForm(componentProps: MatchRecordingFormProps) {
     searchInput: {
       borderWidth: 1,
       borderColor: colors.tabIconDefault,
-      borderRadius: CompactStyles.input.borderRadius,
-      paddingVertical: CompactStyles.input.paddingVertical,
-      paddingHorizontal: CompactStyles.input.paddingHorizontal,
-      fontSize: CompactStyles.input.fontSize,
+      borderRadius: 12, // iOS HIG: Standard corner radius
+      paddingVertical: 12, // iOS HIG: Adequate padding for touch targets
+      paddingHorizontal: 16, // iOS HIG: Standard horizontal padding
+      fontSize: 17, // iOS HIG: Body text size
       color: colors.text,
       backgroundColor: colors.background,
+      minHeight: 44, // iOS HIG: Minimum touch target height
     },
     searchInputFocused: {
       borderColor: colors.tint,
@@ -862,60 +863,62 @@ export function MatchRecordingForm(componentProps: MatchRecordingFormProps) {
     dateInput: {
       borderWidth: 1,
       borderColor: colors.tabIconDefault,
-      borderRadius: CompactStyles.input.borderRadius,
-      paddingVertical: CompactStyles.input.paddingVertical,
-      paddingHorizontal: CompactStyles.input.paddingHorizontal,
-      fontSize: CompactStyles.input.fontSize,
+      borderRadius: 12, // iOS HIG: Standard corner radius
+      paddingVertical: 12, // iOS HIG: Adequate padding for touch targets
+      paddingHorizontal: 16, // iOS HIG: Standard horizontal padding
+      fontSize: 17, // iOS HIG: Body text size
       color: colors.text,
       backgroundColor: colors.background,
+      minHeight: 44, // iOS HIG: Minimum touch target height
     },
     addSetButton: {
       marginBottom: CompactStyles.itemMargin,
     },
     setContainer: {
       backgroundColor: colors.background,
-      borderRadius: CompactStyles.input.borderRadius,
-      padding: CompactStyles.itemMargin,
-      marginBottom: CompactStyles.smallMargin,
+      borderRadius: 12, // iOS HIG: Standard corner radius
+      padding: 16, // iOS HIG: Standard content padding
+      marginBottom: 8, // Consistent small margin
       borderWidth: 1,
       borderColor: colors.tabIconDefault,
     },
     setTitle: {
-      fontSize: CompactStyles.input.fontSize,
+      fontSize: 17, // iOS HIG: Body text size
       fontWeight: '600',
       color: colors.text,
-      marginBottom: CompactStyles.smallMargin,
+      marginBottom: 8, // Consistent small margin
     },
     scoreInputRow: {
       flexDirection: 'row',
       alignItems: 'center',
-      gap: CompactStyles.itemMargin,
+      gap: 16, // iOS HIG: Standard spacing
     },
     scoreInput: {
       borderWidth: 1,
       borderColor: colors.tabIconDefault,
-      borderRadius: 6,
-      padding: CompactStyles.smallMargin,
+      borderRadius: 8, // iOS HIG: Smaller corner radius for compact inputs
+      padding: 12, // iOS HIG: Adequate padding
       width: 60,
       textAlign: 'center',
-      fontSize: CompactStyles.input.fontSize,
+      fontSize: 17, // iOS HIG: Body text size
       color: colors.text,
       backgroundColor: colors.background,
+      minHeight: 44, // iOS HIG: Minimum touch target height
     },
     scoreLabel: {
-      fontSize: CompactStyles.input.fontSize,
+      fontSize: 17, // iOS HIG: Body text size
       color: colors.text,
       flex: 1,
     },
     errorContainer: {
       backgroundColor: '#ffebee',
-      padding: CompactStyles.smallMargin,
-      borderRadius: CompactStyles.input.borderRadius,
-      marginBottom: CompactStyles.itemMargin,
+      padding: 12, // iOS HIG: Standard padding
+      borderRadius: 12, // iOS HIG: Standard corner radius
+      marginBottom: 16, // iOS HIG: Standard spacing
     },
     errorText: {
       color: '#c62828',
-      fontSize: CompactStyles.errorText.fontSize,
+      fontSize: 15, // iOS HIG: Body text size for errors
     },
     buttonContainer: {
       marginTop: 24,
@@ -924,18 +927,21 @@ export function MatchRecordingForm(componentProps: MatchRecordingFormProps) {
       position: 'absolute',
       bottom: 0,
       right: 0,
-      paddingVertical: 10,
+      paddingVertical: 12, // iOS HIG: Better padding
       paddingHorizontal: 20,
-      borderTopLeftRadius: 12,
+      borderTopLeftRadius: 12, // iOS HIG: Standard corner radius
       shadowColor: '#000',
       shadowOffset: { width: 0, height: -2 },
       shadowOpacity: 0.1,
       shadowRadius: 3,
       elevation: 5,
       zIndex: 1000,
+      minHeight: 44, // iOS HIG: Minimum touch target height
+      alignItems: 'center',
+      justifyContent: 'center',
     },
     keyboardToolbarText: {
-      fontSize: 16,
+      fontSize: 17, // iOS HIG: Standard button text size
       fontWeight: '600',
     },
     saveButtonSection: {
@@ -943,22 +949,22 @@ export function MatchRecordingForm(componentProps: MatchRecordingFormProps) {
       marginBottom: 20,
     },
     saveButton: {
-      borderRadius: 12,
-      paddingVertical: 16,
+      borderRadius: 12, // iOS HIG: Standard corner radius
+      paddingVertical: 16, // iOS HIG: Adequate padding
       paddingHorizontal: 32,
       alignItems: 'center',
       justifyContent: 'center',
-      minHeight: 56,
+      minHeight: 50, // iOS HIG: Primary button minimum height
     },
     saveButtonText: {
-      fontSize: 18,
+      fontSize: 17, // iOS HIG: Standard button text size
       fontWeight: '600',
     },
     suggestionsContainer: {
       backgroundColor: colors.background,
       borderWidth: 1,
       borderColor: colors.tabIconDefault,
-      borderRadius: 8,
+      borderRadius: 12, // iOS HIG: Standard corner radius
       marginTop: 4,
       maxHeight: 200,
       shadowColor: '#000',
@@ -971,25 +977,29 @@ export function MatchRecordingForm(componentProps: MatchRecordingFormProps) {
       elevation: 3,
     },
     suggestionItem: {
-      padding: 12,
+      padding: 16, // iOS HIG: Adequate padding for touch targets
       borderBottomWidth: 1,
       borderBottomColor: colors.tabIconDefault,
+      minHeight: 44, // iOS HIG: Minimum touch target height
+      justifyContent: 'center',
     },
     suggestionItemLast: {
       borderBottomWidth: 0,
     },
     suggestionText: {
-      fontSize: 16,
+      fontSize: 17, // iOS HIG: Body text size
       color: colors.text,
     },
     addNewPlayerItem: {
-      padding: 12,
+      padding: 16, // iOS HIG: Adequate padding for touch targets
       borderTopWidth: 1,
       borderTopColor: colors.tabIconDefault,
       backgroundColor: colors.background,
+      minHeight: 44, // iOS HIG: Minimum touch target height
+      justifyContent: 'center',
     },
     addNewPlayerText: {
-      fontSize: 16,
+      fontSize: 17, // iOS HIG: Body text size
       color: colors.tint,
       fontWeight: '500',
     },
@@ -1003,20 +1013,20 @@ export function MatchRecordingForm(componentProps: MatchRecordingFormProps) {
       borderStyle: 'dashed',
     },
     placeholderTitle: {
-      fontSize: 18,
+      fontSize: 20, // iOS HIG: Title 3 size
       fontWeight: '600',
       color: colors.tabIconDefault,
       marginBottom: 8,
       textAlign: 'center',
     },
     placeholderText: {
-      fontSize: 14,
+      fontSize: 15, // iOS HIG: Body text size
       color: colors.tabIconDefault,
       textAlign: 'center',
       lineHeight: 20,
     },
     inputLabel: {
-      fontSize: 14,
+      fontSize: 15, // iOS HIG: Body text size for labels
       color: colors.text,
       marginBottom: 6,
       fontWeight: '500',
@@ -1024,11 +1034,12 @@ export function MatchRecordingForm(componentProps: MatchRecordingFormProps) {
     textInput: {
       borderWidth: 1,
       borderColor: colors.tabIconDefault,
-      borderRadius: 8,
-      padding: 12,
-      fontSize: 16,
+      borderRadius: 12, // iOS HIG: Standard corner radius
+      padding: 16, // iOS HIG: Adequate padding
+      fontSize: 17, // iOS HIG: Body text size
       color: colors.text,
       backgroundColor: colors.background,
+      minHeight: 44, // iOS HIG: Minimum touch target height
     },
     tiebreakSection: {
       marginTop: 12,
@@ -1037,7 +1048,7 @@ export function MatchRecordingForm(componentProps: MatchRecordingFormProps) {
       borderTopColor: colors.tabIconDefault,
     },
     tiebreakTitle: {
-      fontSize: 14,
+      fontSize: 15, // iOS HIG: Body text size
       fontWeight: '600',
       color: colors.text,
       marginBottom: 8,
@@ -1045,12 +1056,12 @@ export function MatchRecordingForm(componentProps: MatchRecordingFormProps) {
     notesInput: {
       borderWidth: 1,
       borderColor: colors.tabIconDefault,
-      borderRadius: 8,
-      padding: 12,
-      fontSize: 16,
+      borderRadius: 12, // iOS HIG: Standard corner radius
+      padding: 16, // iOS HIG: Adequate padding
+      fontSize: 17, // iOS HIG: Body text size
       color: colors.text,
       backgroundColor: colors.background,
-      minHeight: 80,
+      minHeight: 88, // iOS HIG: Better minimum height for text area (2x touch target)
       textAlignVertical: 'top',
     },
 
@@ -1060,9 +1071,10 @@ export function MatchRecordingForm(componentProps: MatchRecordingFormProps) {
       justifyContent: 'space-between',
       alignItems: 'center',
       paddingVertical: 12,
+      minHeight: 44, // iOS HIG: Minimum touch target height
     },
     reportSectionTitle: {
-      fontSize: 16,
+      fontSize: 17, // iOS HIG: Body text size
       fontWeight: '500',
       color: colors.text,
     },
@@ -1070,7 +1082,7 @@ export function MatchRecordingForm(componentProps: MatchRecordingFormProps) {
       marginTop: 12,
     },
     reportSubtitle: {
-      fontSize: 14,
+      fontSize: 15, // iOS HIG: Body text size
       marginBottom: 16,
       fontStyle: 'italic',
     },
@@ -1081,7 +1093,7 @@ export function MatchRecordingForm(componentProps: MatchRecordingFormProps) {
       marginBottom: 20,
     },
     reportLabel: {
-      fontSize: 14,
+      fontSize: 15, // iOS HIG: Body text size for labels
       fontWeight: '500',
       color: colors.text,
       marginBottom: 8,
@@ -1089,7 +1101,8 @@ export function MatchRecordingForm(componentProps: MatchRecordingFormProps) {
     playerCheckbox: {
       flexDirection: 'row',
       alignItems: 'center',
-      paddingVertical: 8,
+      paddingVertical: 12, // iOS HIG: Better padding for touch targets
+      minHeight: 44, // iOS HIG: Minimum touch target height
     },
     radioButton: {
       width: 18,
@@ -1110,7 +1123,7 @@ export function MatchRecordingForm(componentProps: MatchRecordingFormProps) {
       marginRight: 12,
     },
     playerName: {
-      fontSize: 16,
+      fontSize: 17, // iOS HIG: Body text size
     },
     reportTypeSection: {
       marginBottom: 16,
@@ -1128,7 +1141,7 @@ export function MatchRecordingForm(componentProps: MatchRecordingFormProps) {
       marginBottom: 8,
     },
     characterCount: {
-      fontSize: 12,
+      fontSize: 13, // iOS HIG: Caption 1 size
       textAlign: 'right',
     },
     loadingContainer: {
@@ -1138,7 +1151,7 @@ export function MatchRecordingForm(componentProps: MatchRecordingFormProps) {
       padding: 20,
     },
     loadingText: {
-      fontSize: 16,
+      fontSize: 17, // iOS HIG: Body text size
       textAlign: 'center',
       color: '#666',
     },

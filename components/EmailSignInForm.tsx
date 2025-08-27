@@ -290,18 +290,22 @@ const styles = StyleSheet.create({
   header: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: 16,
-    paddingVertical: 8,
+    paddingHorizontal: 16, // iOS standard margins
+    paddingVertical: 12,
     borderBottomWidth: 1,
     borderBottomColor: '#e0e0e0',
   },
   backButton: {
     padding: 8,
+    minHeight: 44, // iOS minimum touch target
+    minWidth: 44,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   headerTitle: {
     flex: 1,
     textAlign: 'center',
-    fontSize: 18,
+    fontSize: 17, // iOS Headline
     fontWeight: '600',
   },
   headerSpacer: {
@@ -311,7 +315,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   scrollContent: {
-    paddingHorizontal: 24,
+    paddingHorizontal: 16, // iOS standard margins
     paddingTop: 12,
     paddingBottom: 24,
   },
@@ -323,39 +327,44 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   appTitle: {
-    fontSize: 20,
+    fontSize: 20, // iOS Title 3
     fontWeight: 'bold',
     marginBottom: 4,
   },
   subtitle: {
-    fontSize: 14,
+    fontSize: 15, // iOS Body
   },
   inputGroup: {
-    marginBottom: 12,
+    marginBottom: 20, // Increased spacing
   },
   label: {
-    fontSize: 14,
+    fontSize: 15, // iOS Body
     fontWeight: '500',
-    marginBottom: 4,
+    marginBottom: 8,
   },
   input: {
     borderWidth: 1,
-    borderRadius: 8,
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    fontSize: 15,
+    borderRadius: 12, // iOS standard radius
+    paddingHorizontal: 16, // iOS standard padding
+    paddingVertical: 16,
+    fontSize: 17, // iOS text input size
+    minHeight: 50, // iOS minimum input height
   },
   errorText: {
-    color: '#FF6B6B',
-    fontSize: 12,
-    marginTop: 2,
+    color: '#ff3b30', // iOS system red
+    fontSize: 13, // iOS Caption 1
+    marginTop: 4,
   },
   forgotPasswordSection: {
     alignItems: 'flex-end',
     marginBottom: 16,
+    minHeight: 44, // iOS minimum touch target
+    paddingVertical: 12,
+    paddingHorizontal: 8,
+    justifyContent: 'center',
   },
   forgotPasswordLink: {
-    fontSize: 13,
+    fontSize: 15, // iOS Body
     fontWeight: '500',
     textDecorationLine: 'underline',
   },
@@ -364,17 +373,17 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   submitButton: {
-    paddingVertical: 12,
+    paddingVertical: 16,
     paddingHorizontal: 24,
-    borderRadius: 10,
+    borderRadius: 12, // iOS standard radius
     alignItems: 'center',
     marginBottom: 16,
-    minHeight: 44,
+    minHeight: 50, // iOS minimum primary button height
     justifyContent: 'center',
   },
   submitButtonText: {
     color: '#ffffff',
-    fontSize: 16,
+    fontSize: 17, // iOS Headline
     fontWeight: '600',
   },
   signUpSection: {
@@ -383,10 +392,10 @@ const styles = StyleSheet.create({
     marginTop: 8,
   },
   signUpPrompt: {
-    fontSize: 14,
+    fontSize: 17, // iOS Body
   },
   signUpLink: {
-    fontSize: 14,
+    fontSize: 17, // iOS Headline
     fontWeight: '600',
     textDecorationLine: 'underline',
   },

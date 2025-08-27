@@ -280,15 +280,15 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     padding: 12,
-    marginHorizontal: 20,
+    marginHorizontal: 16, // iOS standard margins
     marginBottom: 16,
-    borderRadius: 8,
+    borderRadius: 12, // iOS standard radius
     borderWidth: 1,
   },
   errorText: {
     flex: 1,
     marginLeft: 8,
-    fontSize: 14,
+    fontSize: 15, // iOS Body
   },
   errorDismiss: {
     padding: 4,
@@ -303,11 +303,15 @@ const styles = StyleSheet.create({
   },
   backButton: {
     padding: 8,
+    minHeight: 44, // iOS minimum touch target
+    minWidth: 44,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   headerTitle: {
     flex: 1,
     textAlign: 'center',
-    fontSize: 18,
+    fontSize: 17, // iOS Headline
     fontWeight: '600',
   },
   headerSpacer: {
@@ -315,7 +319,7 @@ const styles = StyleSheet.create({
   },
   content: {
     flex: 1,
-    paddingHorizontal: 32,
+    paddingHorizontal: 16, // iOS standard content margins
     paddingVertical: 40,
   },
   titleSection: {
@@ -323,12 +327,12 @@ const styles = StyleSheet.create({
     marginBottom: 40,
   },
   appTitle: {
-    fontSize: 28,
+    fontSize: 28, // iOS Title 1
     fontWeight: 'bold',
     marginBottom: 8,
   },
   subtitle: {
-    fontSize: 16,
+    fontSize: 17, // iOS Body
   },
   formContainer: {
     flex: 1,
@@ -337,54 +341,68 @@ const styles = StyleSheet.create({
     marginBottom: 20,
   },
   inputLabel: {
-    fontSize: 14,
+    fontSize: 15, // iOS Body
     fontWeight: '600',
     marginBottom: 8,
   },
   input: {
     borderWidth: 1,
-    borderRadius: 8,
-    paddingHorizontal: 12,
-    paddingVertical: 12,
-    fontSize: 16,
+    borderRadius: 12, // iOS standard radius
+    paddingHorizontal: 16, // iOS standard padding
+    paddingVertical: 16,
+    fontSize: 17, // iOS text input size
+    minHeight: 50, // iOS minimum input height
   },
   passwordContainer: {
     position: 'relative',
   },
   passwordInput: {
     borderWidth: 1,
-    borderRadius: 8,
-    paddingHorizontal: 12,
-    paddingVertical: 12,
-    paddingRight: 45,
-    fontSize: 16,
+    borderRadius: 12, // iOS standard radius
+    paddingHorizontal: 16, // iOS standard padding
+    paddingVertical: 16,
+    paddingRight: 50,
+    fontSize: 17, // iOS text input size
+    minHeight: 50, // iOS minimum input height
   },
   eyeButton: {
     position: 'absolute',
     right: 12,
-    top: 12,
-    padding: 4,
+    top: '50%',
+    marginTop: -22, // Center vertically
+    padding: 12,
+    minHeight: 44, // iOS minimum touch target
+    minWidth: 44,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   forgotPasswordContainer: {
     alignSelf: 'flex-end',
     marginBottom: 24,
+    minHeight: 44, // iOS minimum touch target
+    paddingVertical: 12,
+    paddingHorizontal: 8,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   forgotPasswordText: {
-    fontSize: 14,
+    fontSize: 15, // iOS Body
     fontWeight: '500',
   },
   signInButton: {
     paddingVertical: 16,
     paddingHorizontal: 24,
-    borderRadius: 12,
+    borderRadius: 12, // iOS standard radius
     marginBottom: 24,
     alignItems: 'center',
+    justifyContent: 'center',
+    minHeight: 50, // iOS minimum primary button height
   },
   disabledButton: {
     opacity: 0.6,
   },
   signInButtonText: {
-    fontSize: 16,
+    fontSize: 17, // iOS Headline
     fontWeight: '600',
   },
   signUpSection: {
@@ -394,10 +412,10 @@ const styles = StyleSheet.create({
     flexWrap: 'wrap',
   },
   signUpPrompt: {
-    fontSize: 16,
+    fontSize: 17, // iOS Body
   },
   signUpLink: {
-    fontSize: 16,
+    fontSize: 17, // iOS Headline
     fontWeight: '600',
     textDecorationLine: 'underline',
   },
@@ -413,10 +431,10 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   footerLink: {
-    fontSize: 14,
+    fontSize: 13, // iOS Caption 1
     textDecorationLine: 'underline',
   },
   footerSeparator: {
-    fontSize: 14,
+    fontSize: 13, // iOS Caption 1
   },
 });

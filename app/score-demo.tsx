@@ -90,16 +90,20 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   content: {
-    padding: 20,
+    padding: 16,
   },
   title: {
+    fontSize: 28,
+    fontWeight: 'bold',
     textAlign: 'center',
-    marginBottom: 30,
+    marginBottom: 32,
   },
   section: {
-    marginBottom: 30,
+    marginBottom: 32,
   },
   sectionTitle: {
-    marginBottom: 12,
+    fontSize: 20,
+    fontWeight: '600',
+    marginBottom: 16,
   },
 });

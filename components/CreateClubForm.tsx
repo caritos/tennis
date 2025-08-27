@@ -11,7 +11,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useColorScheme } from '@/hooks/useColorScheme';
 import { Colors } from '@/constants/Colors';
-import { CompactStyles } from '@/constants/CompactStyles';
+import { IOSTypography, IOSSpacing, IOSBorderRadius, IOSColors, IOSShadows, IOSStyles } from '@/constants/IOSDesign';
 import { useAuth } from '@/contexts/AuthContext';
 import { ClubService } from '@/services/clubService';
 import { Club } from '@/lib/supabase';
@@ -200,124 +200,86 @@ export function CreateClubForm({ onSuccess, onCancel }: CreateClubFormProps) {
       flexDirection: 'row',
       alignItems: 'center',
       justifyContent: 'space-between',
-      paddingHorizontal: CompactStyles.header.paddingHorizontal,
-      paddingVertical: CompactStyles.header.paddingVertical,
-      borderBottomWidth: 0,  // Remove the border for cleaner look
-      borderBottomColor: colors.tabIconDefault + '20',
+      paddingHorizontal: IOSSpacing.contentMargin,
+      paddingVertical: IOSSpacing.medium,
+      borderBottomWidth: 0, // Clean iOS look without border
     },
     backButton: {
-      padding: 8,
+      ...IOSStyles.backButton,
     },
     headerTitle: {
-      fontSize: 18,
-      fontWeight: '600',
+      ...IOSStyles.headerTitle,
       color: colors.text,
       flex: 1,
-      textAlign: 'center',
-      marginRight: 40, // Balance the back button
+      marginRight: IOSSpacing.minimumTouchTarget, // Balance the back button
     },
     scrollContainer: {
       flex: 1,
     },
     form: {
-      padding: CompactStyles.scrollContent.paddingHorizontal,
+      ...IOSStyles.contentContainer,
+      paddingTop: IOSSpacing.comfortable,
     },
     fieldContainer: {
-      marginBottom: CompactStyles.inputGroup.marginBottom,
+      ...IOSStyles.section,
     },
     label: {
-      fontSize: CompactStyles.label.fontSize,
-      fontWeight: '500',
+      ...IOSTypography.subheadline,
+      fontWeight: '600',
       color: colors.text,
-      marginBottom: CompactStyles.label.marginBottom,
+      marginBottom: IOSSpacing.tight,
     },
     input: {
-      borderWidth: 1,
+      ...IOSStyles.textInput,
       borderColor: colors.tabIconDefault + '30',
-      borderRadius: 10, // More rounded for iOS feel
-      paddingHorizontal: CompactStyles.input.paddingHorizontal,
-      paddingVertical: 14, // Slightly more padding for better touch target
-      fontSize: 17, // iOS standard body text size
       color: colors.text,
       backgroundColor: colors.background,
-      // iOS-style shadow for depth
-      shadowColor: '#000',
-      shadowOffset: {
-        width: 0,
-        height: 1,
-      },
-      shadowOpacity: 0.05,
-      shadowRadius: 2,
-      elevation: 1,
+      height: IOSSpacing.inputHeight + 4, // Slightly taller for better UX
     },
     inputError: {
-      borderColor: '#ff3b30', // iOS system red
-      borderWidth: 1.5, // Slightly thicker for emphasis
+      borderColor: IOSColors.destructive,
+      borderWidth: 1.5,
     },
     textArea: {
-      height: 60,
+      height: 80,
       textAlignVertical: 'top',
+      paddingTop: IOSSpacing.medium, // Proper top padding for multiline
     },
     errorText: {
-      color: '#ff3b30', // iOS system red
-      fontSize: 14, // Slightly smaller than input text
-      marginTop: 6,
-      fontWeight: '500', // Medium weight for better readability
+      ...IOSStyles.errorText,
     },
     buttonContainer: {
-      marginTop: 24,
-      marginBottom: 20,
+      marginTop: IOSSpacing.extraLoose,
+      marginBottom: IOSSpacing.comfortable,
     },
     button: {
+      ...IOSStyles.primaryButton,
       width: '100%',
-      paddingVertical: 16, // iOS standard button height
-      borderRadius: 12, // More rounded for iOS feel
-      alignItems: 'center',
-      justifyContent: 'center',
-      minHeight: 50, // Ensure proper touch target size
-      // iOS-style shadow
-      shadowColor: '#000',
-      shadowOffset: {
-        width: 0,
-        height: 2,
-      },
-      shadowOpacity: 0.1,
-      shadowRadius: 4,
-      elevation: 2,
     },
     createButton: {
       backgroundColor: colors.tint,
     },
     createButtonDisabled: {
-      backgroundColor: colors.tabIconDefault + '80',
-      shadowOpacity: 0, // Remove shadow when disabled
-      elevation: 0,
+      backgroundColor: IOSColors.systemGray,
+      ...IOSShadows.subtle, // Lighter shadow when disabled
     },
     buttonText: {
-      fontSize: 17, // iOS standard body text size
+      ...IOSTypography.body,
       fontWeight: '600',
     },
     createButtonText: {
       color: '#ffffff',
     },
     generalError: {
-      backgroundColor: '#ff3b30', // iOS system red
-      padding: 16,
-      borderRadius: 10,
-      marginBottom: 16,
-      // iOS-style shadow
-      shadowColor: '#000',
-      shadowOffset: {
-        width: 0,
-        height: 1,
-      },
-      shadowOpacity: 0.1,
-      shadowRadius: 3,
-      elevation: 1,
+      backgroundColor: IOSColors.destructive,
+      padding: IOSSpacing.standard,
+      borderRadius: IOSBorderRadius.medium,
+      marginBottom: IOSSpacing.standard,
+      ...IOSShadows.subtle,
     },
     generalErrorText: {
+      ...IOSTypography.subheadline,
       color: '#ffffff',
-      fontSize: 15, // Slightly larger for better readability
       textAlign: 'center',
       fontWeight: '500',
     },
@@ -334,7 +296,7 @@ export function CreateClubForm({ onSuccess, onCancel }: CreateClubFormProps) {
           <Ionicons name="chevron-back" size={24} color={colors.text} />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Create Club</Text>
-        <View style={{ width: 40 }} />
+        <View style={{ width: IOSSpacing.minimumTouchTarget }} />
       </View>
 
       <ScrollView style={styles.scrollContainer}>

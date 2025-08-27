@@ -256,12 +256,12 @@ const styles = StyleSheet.create({
     flexGrow: 1,
   },
   header: {
-    paddingHorizontal: 20,
+    paddingHorizontal: 16, // iOS standard margins
     paddingTop: 20,
     paddingBottom: 20,
   },
   title: {
-    fontSize: 28,
+    fontSize: 28, // iOS Title 1
     fontWeight: 'bold',
     textAlign: 'center',
   },
@@ -278,20 +278,20 @@ const styles = StyleSheet.create({
   },
   content: {
     flex: 1,
-    paddingHorizontal: 24,
+    paddingHorizontal: 16, // iOS standard content margins
   },
   description: {
-    fontSize: 16,
+    fontSize: 17, // iOS Body
     textAlign: 'center',
     marginBottom: 32,
-    lineHeight: 22,
+    lineHeight: 24, // Better line height for iOS
     opacity: 0.8,
   },
   inputContainer: {
     marginBottom: 20,
   },
   label: {
-    fontSize: 14,
+    fontSize: 15, // iOS Body
     fontWeight: '600',
     marginBottom: 8,
   },
@@ -300,34 +300,42 @@ const styles = StyleSheet.create({
   },
   input: {
     borderWidth: 1,
-    borderRadius: 10,
-    paddingHorizontal: 16,
-    paddingVertical: 14,
-    fontSize: 16,
-    paddingRight: 48,
+    borderRadius: 12, // iOS standard radius
+    paddingHorizontal: 16, // iOS standard padding
+    paddingVertical: 16,
+    fontSize: 17, // iOS text input size
+    paddingRight: 50,
+    minHeight: 50, // iOS minimum input height
   },
   eyeButton: {
     position: 'absolute',
-    right: 16,
+    right: 12,
     top: '50%',
-    transform: [{ translateY: -10 }],
+    marginTop: -22, // Center vertically
+    padding: 12,
+    minHeight: 44, // iOS minimum touch target
+    minWidth: 44,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   errorText: {
-    color: '#ff3b30',
-    fontSize: 12,
+    color: '#ff3b30', // iOS system red
+    fontSize: 13, // iOS Caption 1
     marginTop: 4,
     marginLeft: 4,
   },
   submitButton: {
     paddingVertical: 16,
-    borderRadius: 10,
+    borderRadius: 12, // iOS standard radius
     alignItems: 'center',
+    justifyContent: 'center',
     marginBottom: 16,
     marginTop: 12,
+    minHeight: 50, // iOS minimum primary button height
   },
   submitButtonText: {
     color: '#ffffff',
-    fontSize: 16,
+    fontSize: 17, // iOS Headline
     fontWeight: '600',
   },
   disabledButton: {
@@ -336,8 +344,10 @@ const styles = StyleSheet.create({
   cancelLink: {
     alignItems: 'center',
     paddingVertical: 12,
+    minHeight: 44, // iOS minimum touch target
+    justifyContent: 'center',
   },
   cancelLinkText: {
-    fontSize: 16,
+    fontSize: 17, // iOS Headline
   },
 });

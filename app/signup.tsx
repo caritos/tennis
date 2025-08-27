@@ -470,15 +470,15 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     padding: 12,
-    marginHorizontal: 20,
+    marginHorizontal: 16, // iOS standard margins
     marginBottom: 16,
-    borderRadius: 8,
+    borderRadius: 12, // iOS standard radius
     borderWidth: 1,
   },
   errorText: {
     flex: 1,
     marginLeft: 8,
-    fontSize: 14,
+    fontSize: 15, // iOS Body
   },
   errorDismiss: {
     padding: 4,
@@ -493,11 +493,15 @@ const styles = StyleSheet.create({
   },
   backButton: {
     padding: 8,
+    minHeight: 44, // iOS minimum touch target
+    minWidth: 44,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   headerTitle: {
     flex: 1,
     textAlign: 'center',
-    fontSize: 18,
+    fontSize: 17, // iOS Headline
     fontWeight: '600',
   },
   headerSpacer: {
@@ -505,7 +509,7 @@ const styles = StyleSheet.create({
   },
   content: {
     flex: 1,
-    paddingHorizontal: 32,
+    paddingHorizontal: 16, // iOS standard content margins
     paddingVertical: 20,
   },
   titleSection: {
@@ -532,16 +536,17 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   inputLabel: {
-    fontSize: 14,
+    fontSize: 15, // iOS Body
     fontWeight: '600',
     marginBottom: 8,
   },
   input: {
     borderWidth: 1,
-    borderRadius: 8,
-    paddingHorizontal: 12,
-    paddingVertical: 12,
-    fontSize: 16,
+    borderRadius: 12, // iOS standard radius
+    paddingHorizontal: 16, // iOS standard padding
+    paddingVertical: 16,
+    fontSize: 17, // iOS text input size
+    minHeight: 50, // iOS minimum input height
   },
   passwordContainer: {
     position: 'relative',
@@ -551,16 +556,23 @@ const styles = StyleSheet.create({
   passwordInput: {
     flex: 1,
     borderWidth: 1,
-    borderRadius: 8,
-    paddingHorizontal: 12,
-    paddingVertical: 12,
-    paddingRight: 45,
-    fontSize: 16,
+    borderRadius: 12, // iOS standard radius
+    paddingHorizontal: 16, // iOS standard padding
+    paddingVertical: 16,
+    paddingRight: 50,
+    fontSize: 17, // iOS text input size
+    minHeight: 50, // iOS minimum input height
   },
   eyeButton: {
     position: 'absolute',
-    right: 8,
-    padding: 8,
+    right: 12,
+    top: '50%',
+    marginTop: -22, // Center vertically
+    padding: 12,
+    minHeight: 44, // iOS minimum touch target
+    minWidth: 44,
+    alignItems: 'center',
+    justifyContent: 'center',
     zIndex: 1,
   },
   checkboxContainer: {
@@ -576,26 +588,28 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   termsText: {
-    fontSize: 14,
+    fontSize: 15, // iOS Body
   },
   termsLink: {
-    fontSize: 14,
+    fontSize: 15, // iOS Body
     fontWeight: '600',
     textDecorationLine: 'underline',
   },
   signUpButton: {
     paddingVertical: 16,
     paddingHorizontal: 24,
-    borderRadius: 12,
+    borderRadius: 12, // iOS standard radius
     marginBottom: 40, // Increased bottom margin
     marginTop: 16,    // Added top margin
     alignItems: 'center',
+    justifyContent: 'center',
+    minHeight: 50, // iOS minimum primary button height
   },
   disabledButton: {
     opacity: 0.6,
   },
   signUpButtonText: {
-    fontSize: 16,
+    fontSize: 17, // iOS Headline
     fontWeight: '600',
   },
   signInSection: {
@@ -604,15 +618,15 @@ const styles = StyleSheet.create({
     flexWrap: 'wrap',
   },
   signInPrompt: {
-    fontSize: 16,
+    fontSize: 17, // iOS Body
   },
   signInLink: {
-    fontSize: 16,
+    fontSize: 17, // iOS Headline
     fontWeight: '600',
     textDecorationLine: 'underline',
   },
   helpText: {
-    fontSize: 12,
+    fontSize: 13, // iOS Caption 1
     marginTop: 4,
     lineHeight: 16,
   },

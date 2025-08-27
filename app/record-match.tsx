@@ -126,34 +126,39 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingHorizontal: 20,
-    paddingVertical: 16,
+    paddingHorizontal: 16, // iOS HIG: Standard content margins
+    paddingVertical: 12,   // Reduced for better proportions
   },
   backButton: {
     flexDirection: 'row',
     alignItems: 'center',
+    // iOS HIG: Minimum 44pt touch target
+    minHeight: 44,
+    minWidth: 44,
+    justifyContent: 'center',
+    paddingHorizontal: 4, // Small padding for content alignment
   },
   backText: {
-    fontSize: 16,
+    fontSize: 17, // iOS HIG: Standard navigation button text
     marginLeft: 4,
   },
   headerTitle: {
-    fontSize: 18,
+    fontSize: 17, // iOS HIG: Standard navigation title
     fontWeight: '600',
   },
   headerSpacer: {
-    width: 60, // Same width as back button for centering
+    width: 44, // Match headerBackButton minimum width for symmetry
   },
   notification: {
     position: 'absolute',
     top: 50,
-    left: 20,
-    right: 20,
+    left: 16, // iOS HIG: Standard content margins
+    right: 16,
     flexDirection: 'row',
     alignItems: 'center',
     paddingVertical: 12,
     paddingHorizontal: 16,
-    borderRadius: 8,
+    borderRadius: 12, // iOS HIG: Standard corner radius
     shadowColor: '#000',
     shadowOffset: {
       width: 0,
@@ -174,7 +179,7 @@ const styles = StyleSheet.create({
   },
   notificationText: {
     color: 'white',
-    fontSize: 14,
+    fontSize: 15, // iOS HIG: Body text
     fontWeight: '500',
     flex: 1,
   },

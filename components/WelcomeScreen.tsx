@@ -187,7 +187,7 @@ const styles = StyleSheet.create({
   content: {
     flex: 1,
     justifyContent: 'center',
-    paddingHorizontal: 32,
+    paddingHorizontal: 16, // iOS standard content margins
     paddingVertical: 48,
   },
   header: {
@@ -195,7 +195,7 @@ const styles = StyleSheet.create({
     marginBottom: 40,
   },
   appTitle: {
-    fontSize: 32,
+    fontSize: 34, // iOS Large Title
     fontWeight: 'bold',
     textAlign: 'center',
   },
@@ -204,7 +204,7 @@ const styles = StyleSheet.create({
     marginBottom: 60,
   },
   tagline: {
-    fontSize: 20,
+    fontSize: 20, // iOS Title 3
     fontWeight: '600',
     textAlign: 'center',
     marginBottom: 20,
@@ -214,13 +214,13 @@ const styles = StyleSheet.create({
     marginBottom: 20,
   },
   feature: {
-    fontSize: 16,
+    fontSize: 17, // iOS Body
     textAlign: 'center',
     marginBottom: 8,
     lineHeight: 24,
   },
   description: {
-    fontSize: 16,
+    fontSize: 17, // iOS Body
     textAlign: 'center',
     lineHeight: 24,
   },
@@ -231,29 +231,34 @@ const styles = StyleSheet.create({
   primaryButton: {
     paddingVertical: 16,
     paddingHorizontal: 48,
-    borderRadius: 12,
+    borderRadius: 12, // iOS standard radius
     marginBottom: 24,
     minWidth: 200,
+    minHeight: 50, // iOS minimum touch target for primary buttons
     alignItems: 'center',
+    justifyContent: 'center',
   },
   primaryButtonText: {
     color: '#ffffff',
-    fontSize: 18,
+    fontSize: 17, // iOS Headline
     fontWeight: '600',
   },
   signInContainer: {
     alignItems: 'center',
   },
   signInPrompt: {
-    fontSize: 16,
+    fontSize: 17, // iOS Body
     marginBottom: 8,
   },
   secondaryButton: {
     paddingVertical: 12,
     paddingHorizontal: 24,
+    minHeight: 44, // iOS minimum touch target
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   secondaryButtonText: {
-    fontSize: 16,
+    fontSize: 17, // iOS Headline
     fontWeight: '600',
   },
   footer: {
@@ -265,12 +270,15 @@ const styles = StyleSheet.create({
   footerLink: {
     paddingVertical: 8,
     paddingHorizontal: 4,
+    minHeight: 44, // iOS minimum touch target
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   footerLinkText: {
-    fontSize: 14,
+    fontSize: 13, // iOS Caption 1
     textDecorationLine: 'underline',
   },
   footerSeparator: {
-    fontSize: 14,
+    fontSize: 13, // iOS Caption 1
   },
 });

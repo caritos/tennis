@@ -228,49 +228,53 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingHorizontal: 20,
-    paddingVertical: 16,
+    paddingHorizontal: 16, // iOS HIG: Standard content margins
+    paddingVertical: 12,   // Better proportions
   },
   headerBackButton: {
     flexDirection: 'row',
     alignItems: 'center',
+    // iOS HIG: Minimum 44pt touch target
+    minHeight: 44,
+    minWidth: 44,
+    justifyContent: 'center',
   },
   backText: {
-    fontSize: 16,
+    fontSize: 17, // iOS HIG: Standard navigation button text
     marginLeft: 4,
   },
   headerTitle: {
-    fontSize: 18,
+    fontSize: 17, // iOS HIG: Standard navigation title
     fontWeight: '600',
   },
   headerSpacer: {
-    width: 60,
+    width: 44, // Match headerBackButton minimum width for symmetry
   },
   content: {
     flex: 1,
-    paddingHorizontal: 20,
+    paddingHorizontal: 16, // iOS HIG: Standard content margins
   },
   matchInfo: {
     padding: 16,
-    borderRadius: 8,
+    borderRadius: 12, // iOS HIG: Standard corner radius
     borderWidth: 1,
-    marginBottom: 20,
+    marginBottom: 16, // Consistent spacing
   },
   matchInfoTitle: {
-    fontSize: 16,
+    fontSize: 17, // iOS HIG: Body text size
     fontWeight: '600',
     marginBottom: 8,
   },
   matchInfoText: {
-    fontSize: 14,
+    fontSize: 15, // iOS HIG: Subheadline text size
     marginBottom: 4,
   },
   playersTitle: {
-    fontSize: 14,
+    fontSize: 15, // Consistent with matchInfoText
     fontWeight: '500',
   },
   playerName: {
-    fontSize: 14,
+    fontSize: 15, // Consistent with other text
     marginLeft: 8,
     marginTop: 2,
   },
@@ -283,14 +287,19 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    paddingHorizontal: 40,
+    paddingHorizontal: 32, // Better balance for error states
   },
   backButton: {
     marginTop: 16,
     padding: 12,
+    // iOS HIG: Minimum touch target
+    minHeight: 44,
+    minWidth: 44,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   backButtonText: {
-    fontSize: 16,
+    fontSize: 17, // iOS HIG: Standard button text size
     fontWeight: '500',
   },
 });

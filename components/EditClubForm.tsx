@@ -12,7 +12,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useColorScheme } from '@/hooks/useColorScheme';
 import { Colors } from '@/constants/Colors';
-import { CompactStyles } from '@/constants/CompactStyles';
+import { IOSTypography, IOSSpacing, IOSBorderRadius, IOSColors, IOSShadows, IOSStyles } from '@/constants/IOSDesign';
 import { supabase } from '@/lib/supabase';
 
 interface EditClubFormProps {
@@ -173,30 +173,28 @@ export function EditClubForm({ club, onClose, onSuccess }: EditClubFormProps) {
       flexDirection: 'row',
       alignItems: 'center',
       justifyContent: 'space-between',
-      paddingHorizontal: CompactStyles.header.paddingHorizontal,
-      paddingVertical: CompactStyles.header.paddingVertical,
+      paddingHorizontal: IOSSpacing.contentMargin,
+      paddingVertical: IOSSpacing.medium,
       borderBottomWidth: 0,
-      borderBottomColor: colors.tabIconDefault + '20',
     },
     backButton: {
-      padding: 8,
+      ...IOSStyles.backButton,
     },
     headerTitle: {
-      fontSize: 18,
-      fontWeight: '600',
+      ...IOSStyles.headerTitle,
       color: colors.text,
       flex: 1,
-      textAlign: 'center',
-      marginRight: 40, // Balance the back button
+      marginRight: IOSSpacing.minimumTouchTarget,
     },
     scrollContainer: {
       flex: 1,
     },
     form: {
-      padding: CompactStyles.scrollContent.paddingHorizontal,
+      ...IOSStyles.contentContainer,
+      paddingTop: IOSSpacing.comfortable,
     },
     sectionHeader: {
-      marginBottom: 20,
+      marginBottom: IOSSpacing.comfortable,
       alignItems: 'center',
     },
     clubIcon: {
@@ -206,91 +204,87 @@ export function EditClubForm({ club, onClose, onSuccess }: EditClubFormProps) {
       backgroundColor: colors.tint + '20',
       alignItems: 'center',
       justifyContent: 'center',
-      marginBottom: 12,
+      marginBottom: IOSSpacing.medium,
     },
     sectionTitle: {
-      fontSize: 16,
+      ...IOSTypography.callout,
       fontWeight: '600',
       color: colors.text,
       textAlign: 'center',
     },
     sectionSubtitle: {
-      fontSize: 14,
+      ...IOSTypography.footnote,
       color: colors.tabIconDefault,
       textAlign: 'center',
-      marginTop: 4,
+      marginTop: IOSSpacing.extraTight,
     },
     fieldContainer: {
-      marginBottom: CompactStyles.inputGroup.marginBottom,
+      ...IOSStyles.section,
     },
     label: {
-      fontSize: CompactStyles.label.fontSize,
-      fontWeight: '500',
+      ...IOSTypography.subheadline,
+      fontWeight: '600',
       color: colors.text,
-      marginBottom: CompactStyles.label.marginBottom,
+      marginBottom: IOSSpacing.tight,
     },
     input: {
-      borderWidth: 1,
-      borderColor: colors.tabIconDefault + '40',
-      borderRadius: CompactStyles.input.borderRadius,
-      paddingHorizontal: CompactStyles.input.paddingHorizontal,
-      paddingVertical: CompactStyles.input.paddingVertical,
-      fontSize: CompactStyles.input.fontSize,
+      ...IOSStyles.textInput,
+      borderColor: colors.tabIconDefault + '30',
       color: colors.text,
       backgroundColor: colors.background,
+      height: IOSSpacing.inputHeight + 4,
     },
     inputFocused: {
       borderColor: colors.tint,
       borderWidth: 2,
     },
     inputError: {
-      borderColor: '#ff4444',
+      borderColor: IOSColors.destructive,
+      borderWidth: 1.5,
     },
     textArea: {
       height: 100,
       textAlignVertical: 'top',
+      paddingTop: IOSSpacing.medium,
     },
     errorText: {
-      color: '#ff4444',
-      fontSize: CompactStyles.errorText.fontSize,
-      marginTop: CompactStyles.errorText.marginTop,
+      ...IOSStyles.errorText,
     },
     characterCount: {
-      fontSize: 12,
+      ...IOSTypography.caption1,
       color: colors.tabIconDefault,
       textAlign: 'right',
-      marginTop: 4,
+      marginTop: IOSSpacing.extraTight,
     },
     characterCountNearLimit: {
-      color: '#FF9800',
+      color: IOSColors.systemOrange,
     },
     characterCountOverLimit: {
-      color: '#ff4444',
+      color: IOSColors.destructive,
     },
     buttonContainer: {
       flexDirection: 'row',
       justifyContent: 'space-between',
-      marginTop: 32,
-      marginBottom: 20,
+      marginTop: IOSSpacing.extraLoose,
+      marginBottom: IOSSpacing.comfortable,
+      gap: IOSSpacing.medium,
     },
     button: {
+      ...IOSStyles.primaryButton,
       flex: 1,
-      paddingVertical: CompactStyles.button.paddingVertical,
-      borderRadius: CompactStyles.button.borderRadius,
-      alignItems: 'center',
-      marginHorizontal: CompactStyles.smallMargin,
     },
     cancelButton: {
-      backgroundColor: colors.tabIconDefault + '20',
+      backgroundColor: IOSColors.systemGray5,
+      ...IOSShadows.subtle,
     },
     saveButton: {
       backgroundColor: colors.tint,
     },
     saveButtonDisabled: {
-      backgroundColor: colors.tabIconDefault,
+      backgroundColor: IOSColors.systemGray,
     },
     buttonText: {
-      fontSize: CompactStyles.buttonText.fontSize,
+      ...IOSTypography.body,
       fontWeight: '600',
     },
     cancelButtonText: {
@@ -300,28 +294,30 @@ export function EditClubForm({ club, onClose, onSuccess }: EditClubFormProps) {
       color: '#ffffff',
     },
     generalError: {
-      backgroundColor: '#ff4444',
-      padding: 12,
-      borderRadius: 8,
-      marginBottom: 16,
+      backgroundColor: IOSColors.destructive,
+      padding: IOSSpacing.medium,
+      borderRadius: IOSBorderRadius.medium,
+      marginBottom: IOSSpacing.standard,
+      ...IOSShadows.subtle,
     },
     generalErrorText: {
+      ...IOSTypography.footnote,
       color: '#ffffff',
-      fontSize: 14,
       textAlign: 'center',
+      fontWeight: '500',
     },
     locationInfo: {
       flexDirection: 'row',
       alignItems: 'center',
-      backgroundColor: colors.tabIconDefault + '10',
-      padding: 12,
-      borderRadius: 8,
-      marginBottom: 20,
+      backgroundColor: IOSColors.systemGray6,
+      padding: IOSSpacing.medium,
+      borderRadius: IOSBorderRadius.medium,
+      marginBottom: IOSSpacing.comfortable,
     },
     locationText: {
-      fontSize: 14,
+      ...IOSTypography.footnote,
       color: colors.tabIconDefault,
-      marginLeft: 8,
+      marginLeft: IOSSpacing.tight,
       flex: 1,
     },
   });
@@ -340,7 +336,7 @@ export function EditClubForm({ club, onClose, onSuccess }: EditClubFormProps) {
           <Ionicons name="close" size={24} color={colors.text} />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Edit Club</Text>
-        <View style={{ width: 40 }} />
+        <View style={{ width: IOSSpacing.minimumTouchTarget }} />
       </View>
 
       <ScrollView style={styles.scrollContainer}>

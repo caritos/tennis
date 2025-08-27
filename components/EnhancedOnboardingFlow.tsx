@@ -337,7 +337,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   progressContainer: {
-    paddingHorizontal: 20,
+    paddingHorizontal: 16,
     paddingVertical: 16,
   },
   progressBar: {
@@ -350,13 +350,13 @@ const styles = StyleSheet.create({
     borderRadius: 2,
   },
   progressText: {
-    fontSize: 12,
+    fontSize: 11,
     opacity: 0.7,
     textAlign: 'center',
   },
   stepContainer: {
     flex: 1,
-    paddingHorizontal: 20,
+    paddingHorizontal: 16,
     justifyContent: 'space-between',
   },
   stepContent: {
@@ -402,23 +402,23 @@ const styles = StyleSheet.create({
     marginBottom: 32,
   },
   welcomeTitle: {
-    fontSize: 32,
+    fontSize: 34,
     fontWeight: 'bold',
     textAlign: 'center',
     marginBottom: 8,
   },
   welcomeSubtitle: {
-    fontSize: 20,
+    fontSize: 28,
     textAlign: 'center',
     marginBottom: 16,
     opacity: 0.8,
   },
   welcomeDescription: {
-    fontSize: 16,
+    fontSize: 17,
     textAlign: 'center',
     lineHeight: 24,
     marginBottom: 40,
-    paddingHorizontal: 20,
+    paddingHorizontal: 16,
     opacity: 0.8,
   },
   featureList: {
@@ -432,7 +432,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
   },
   featureText: {
-    fontSize: 16,
+    fontSize: 17,
     marginLeft: 16,
     flex: 1,
   },
@@ -505,10 +505,11 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     marginBottom: 12,
     gap: 8,
+    minHeight: 50,
   },
   primaryButtonText: {
     color: 'white',
-    fontSize: 16,
+    fontSize: 17,
     fontWeight: '600',
   },
   secondaryButton: {
@@ -518,9 +519,10 @@ const styles = StyleSheet.create({
     paddingHorizontal: 24,
     borderRadius: 12,
     borderWidth: 1,
+    minHeight: 50,
   },
   secondaryButtonText: {
-    fontSize: 16,
+    fontSize: 17,
     fontWeight: '500',
   },
 });

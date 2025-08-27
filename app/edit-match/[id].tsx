@@ -306,7 +306,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingHorizontal: 16,
+    paddingHorizontal: 16, // iOS HIG: Standard content margins
     paddingVertical: 12,
     paddingTop: 60, // Account for status bar
     borderBottomWidth: 1,
@@ -315,14 +315,19 @@ const styles = StyleSheet.create({
   backButton: {
     padding: 8,
     borderRadius: 8,
+    // iOS HIG: Minimum 44pt touch target
+    minHeight: 44,
+    minWidth: 44,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   headerTitle: {
-    fontSize: 18,
+    fontSize: 17, // iOS HIG: Standard navigation title
     fontWeight: '600',
     textAlign: 'center',
   },
   headerSpacer: {
-    width: 40, // Match the back button width for centering
+    width: 44, // Match the back button minimum width for centering
   },
   centered: {
     justifyContent: 'center',
@@ -331,13 +336,13 @@ const styles = StyleSheet.create({
   notification: {
     position: 'absolute',
     top: 50,
-    left: 20,
-    right: 20,
+    left: 16, // iOS HIG: Standard content margins
+    right: 16,
     flexDirection: 'row',
     alignItems: 'center',
     paddingVertical: 12,
     paddingHorizontal: 16,
-    borderRadius: 8,
+    borderRadius: 12, // iOS HIG: Standard corner radius
     shadowColor: '#000',
     shadowOffset: {
       width: 0,
@@ -358,7 +363,7 @@ const styles = StyleSheet.create({
   },
   notificationText: {
     color: 'white',
-    fontSize: 14,
+    fontSize: 15, // iOS HIG: Body text
     fontWeight: '500',
     flex: 1,
   },
@@ -367,13 +372,13 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   errorText: {
-    fontSize: 18,
+    fontSize: 20, // iOS HIG: Title 3
     fontWeight: '600',
     textAlign: 'center',
     marginBottom: 8,
   },
   errorSubtext: {
-    fontSize: 14,
+    fontSize: 15, // iOS HIG: Body text
     textAlign: 'center',
   },
 });
