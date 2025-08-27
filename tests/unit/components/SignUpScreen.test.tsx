@@ -5,8 +5,6 @@ import { SignUpScreen } from '../../../components/SignUpScreen';
 describe('SignUpScreen', () => {
   const mockOnBack = jest.fn();
   const mockOnEmailSignUp = jest.fn();
-  const mockOnAppleSignUp = jest.fn();
-  const mockOnGoogleSignUp = jest.fn();
   const mockOnSignInPress = jest.fn();
   const mockOnTermsPress = jest.fn();
   const mockOnPrivacyPress = jest.fn();
@@ -21,8 +19,6 @@ describe('SignUpScreen', () => {
         <SignUpScreen 
           onBack={mockOnBack}
           onEmailSignUp={mockOnEmailSignUp}
-          onAppleSignUp={mockOnAppleSignUp}
-          onGoogleSignUp={mockOnGoogleSignUp}
           onSignInPress={mockOnSignInPress}
           onTermsPress={mockOnTermsPress}
           onPrivacyPress={mockOnPrivacyPress}
@@ -38,8 +34,6 @@ describe('SignUpScreen', () => {
         <SignUpScreen 
           onBack={mockOnBack}
           onEmailSignUp={mockOnEmailSignUp}
-          onAppleSignUp={mockOnAppleSignUp}
-          onGoogleSignUp={mockOnGoogleSignUp}
           onSignInPress={mockOnSignInPress}
           onTermsPress={mockOnTermsPress}
           onPrivacyPress={mockOnPrivacyPress}
@@ -55,8 +49,6 @@ describe('SignUpScreen', () => {
         <SignUpScreen 
           onBack={mockOnBack}
           onEmailSignUp={mockOnEmailSignUp}
-          onAppleSignUp={mockOnAppleSignUp}
-          onGoogleSignUp={mockOnGoogleSignUp}
           onSignInPress={mockOnSignInPress}
           onTermsPress={mockOnTermsPress}
           onPrivacyPress={mockOnPrivacyPress}
@@ -71,8 +63,6 @@ describe('SignUpScreen', () => {
         <SignUpScreen 
           onBack={mockOnBack}
           onEmailSignUp={mockOnEmailSignUp}
-          onAppleSignUp={mockOnAppleSignUp}
-          onGoogleSignUp={mockOnGoogleSignUp}
           onSignInPress={mockOnSignInPress}
           onTermsPress={mockOnTermsPress}
           onPrivacyPress={mockOnPrivacyPress}
@@ -89,8 +79,6 @@ describe('SignUpScreen', () => {
         <SignUpScreen 
           onBack={mockOnBack}
           onEmailSignUp={mockOnEmailSignUp}
-          onAppleSignUp={mockOnAppleSignUp}
-          onGoogleSignUp={mockOnGoogleSignUp}
           onSignInPress={mockOnSignInPress}
           onTermsPress={mockOnTermsPress}
           onPrivacyPress={mockOnPrivacyPress}
@@ -106,8 +94,6 @@ describe('SignUpScreen', () => {
         <SignUpScreen 
           onBack={mockOnBack}
           onEmailSignUp={mockOnEmailSignUp}
-          onAppleSignUp={mockOnAppleSignUp}
-          onGoogleSignUp={mockOnGoogleSignUp}
           onSignInPress={mockOnSignInPress}
           onTermsPress={mockOnTermsPress}
           onPrivacyPress={mockOnPrivacyPress}
@@ -126,8 +112,6 @@ describe('SignUpScreen', () => {
         <SignUpScreen 
           onBack={mockOnBack}
           onEmailSignUp={mockOnEmailSignUp}
-          onAppleSignUp={mockOnAppleSignUp}
-          onGoogleSignUp={mockOnGoogleSignUp}
           onSignInPress={mockOnSignInPress}
           onTermsPress={mockOnTermsPress}
           onPrivacyPress={mockOnPrivacyPress}
@@ -145,8 +129,6 @@ describe('SignUpScreen', () => {
         <SignUpScreen 
           onBack={mockOnBack}
           onEmailSignUp={mockOnEmailSignUp}
-          onAppleSignUp={mockOnAppleSignUp}
-          onGoogleSignUp={mockOnGoogleSignUp}
           onSignInPress={mockOnSignInPress}
           onTermsPress={mockOnTermsPress}
           onPrivacyPress={mockOnPrivacyPress}
@@ -159,51 +141,13 @@ describe('SignUpScreen', () => {
       expect(mockOnEmailSignUp).toHaveBeenCalledTimes(1);
     });
 
-    it('should call onAppleSignUp when Apple button is pressed', () => {
-      render(
-        <SignUpScreen 
-          onBack={mockOnBack}
-          onEmailSignUp={mockOnEmailSignUp}
-          onAppleSignUp={mockOnAppleSignUp}
-          onGoogleSignUp={mockOnGoogleSignUp}
-          onSignInPress={mockOnSignInPress}
-          onTermsPress={mockOnTermsPress}
-          onPrivacyPress={mockOnPrivacyPress}
-        />
-      );
 
-      const appleButton = screen.getByRole('button', { name: /continue with apple/i });
-      fireEvent.press(appleButton);
-
-      expect(mockOnAppleSignUp).toHaveBeenCalledTimes(1);
-    });
-
-    it('should call onGoogleSignUp when Google button is pressed', () => {
-      render(
-        <SignUpScreen 
-          onBack={mockOnBack}
-          onEmailSignUp={mockOnEmailSignUp}
-          onAppleSignUp={mockOnAppleSignUp}
-          onGoogleSignUp={mockOnGoogleSignUp}
-          onSignInPress={mockOnSignInPress}
-          onTermsPress={mockOnTermsPress}
-          onPrivacyPress={mockOnPrivacyPress}
-        />
-      );
-
-      const googleButton = screen.getByRole('button', { name: /continue with google/i });
-      fireEvent.press(googleButton);
-
-      expect(mockOnGoogleSignUp).toHaveBeenCalledTimes(1);
-    });
 
     it('should call onSignInPress when sign in link is pressed', () => {
       render(
         <SignUpScreen 
           onBack={mockOnBack}
           onEmailSignUp={mockOnEmailSignUp}
-          onAppleSignUp={mockOnAppleSignUp}
-          onGoogleSignUp={mockOnGoogleSignUp}
           onSignInPress={mockOnSignInPress}
           onTermsPress={mockOnTermsPress}
           onPrivacyPress={mockOnPrivacyPress}
@@ -221,8 +165,6 @@ describe('SignUpScreen', () => {
         <SignUpScreen 
           onBack={mockOnBack}
           onEmailSignUp={mockOnEmailSignUp}
-          onAppleSignUp={mockOnAppleSignUp}
-          onGoogleSignUp={mockOnGoogleSignUp}
           onSignInPress={mockOnSignInPress}
           onTermsPress={mockOnTermsPress}
           onPrivacyPress={mockOnPrivacyPress}
@@ -240,8 +182,6 @@ describe('SignUpScreen', () => {
         <SignUpScreen 
           onBack={mockOnBack}
           onEmailSignUp={mockOnEmailSignUp}
-          onAppleSignUp={mockOnAppleSignUp}
-          onGoogleSignUp={mockOnGoogleSignUp}
           onSignInPress={mockOnSignInPress}
           onTermsPress={mockOnTermsPress}
           onPrivacyPress={mockOnPrivacyPress}
@@ -261,8 +201,6 @@ describe('SignUpScreen', () => {
         <SignUpScreen 
           onBack={mockOnBack}
           onEmailSignUp={mockOnEmailSignUp}
-          onAppleSignUp={mockOnAppleSignUp}
-          onGoogleSignUp={mockOnGoogleSignUp}
           onSignInPress={mockOnSignInPress}
           onTermsPress={mockOnTermsPress}
           onPrivacyPress={mockOnPrivacyPress}
@@ -283,8 +221,6 @@ describe('SignUpScreen', () => {
         <SignUpScreen 
           onBack={mockOnBack}
           onEmailSignUp={mockOnEmailSignUp}
-          onAppleSignUp={mockOnAppleSignUp}
-          onGoogleSignUp={mockOnGoogleSignUp}
           onSignInPress={mockOnSignInPress}
           onTermsPress={mockOnTermsPress}
           onPrivacyPress={mockOnPrivacyPress}
@@ -314,8 +250,6 @@ describe('SignUpScreen', () => {
         <SignUpScreen 
           onBack={mockOnBack}
           onEmailSignUp={mockOnEmailSignUp}
-          onAppleSignUp={mockOnAppleSignUp}
-          onGoogleSignUp={mockOnGoogleSignUp}
           onSignInPress={mockOnSignInPress}
           onTermsPress={mockOnTermsPress}
           onPrivacyPress={mockOnPrivacyPress}
@@ -331,8 +265,6 @@ describe('SignUpScreen', () => {
         <SignUpScreen 
           onBack={mockOnBack}
           onEmailSignUp={mockOnEmailSignUp}
-          onAppleSignUp={mockOnAppleSignUp}
-          onGoogleSignUp={mockOnGoogleSignUp}
           onSignInPress={mockOnSignInPress}
           onTermsPress={mockOnTermsPress}
           onPrivacyPress={mockOnPrivacyPress}
@@ -348,8 +280,6 @@ describe('SignUpScreen', () => {
         <SignUpScreen 
           onBack={mockOnBack}
           onEmailSignUp={mockOnEmailSignUp}
-          onAppleSignUp={mockOnAppleSignUp}
-          onGoogleSignUp={mockOnGoogleSignUp}
           onSignInPress={mockOnSignInPress}
           onTermsPress={mockOnTermsPress}
           onPrivacyPress={mockOnPrivacyPress}
@@ -373,8 +303,6 @@ describe('SignUpScreen', () => {
         <SignUpScreen 
           onBack={mockOnBack}
           onEmailSignUp={mockOnEmailSignUp}
-          onAppleSignUp={mockOnAppleSignUp}
-          onGoogleSignUp={mockOnGoogleSignUp}
           onSignInPress={mockOnSignInPress}
           onTermsPress={mockOnTermsPress}
           onPrivacyPress={mockOnPrivacyPress}
@@ -389,8 +317,6 @@ describe('SignUpScreen', () => {
         <SignUpScreen 
           onBack={mockOnBack}
           onEmailSignUp={mockOnEmailSignUp}
-          onAppleSignUp={mockOnAppleSignUp}
-          onGoogleSignUp={mockOnGoogleSignUp}
           onSignInPress={mockOnSignInPress}
           onTermsPress={mockOnTermsPress}
           onPrivacyPress={mockOnPrivacyPress}
@@ -410,9 +336,7 @@ describe('SignUpScreen', () => {
           <SignUpScreen 
             onBack={mockOnBack}
             onEmailSignUp={mockOnEmailSignUp}
-            onAppleSignUp={mockOnAppleSignUp}
-            onGoogleSignUp={mockOnGoogleSignUp}
-            onSignInPress={mockOnSignInPress}
+                onSignInPress={mockOnSignInPress}
             onTermsPress={mockOnTermsPress}
             onPrivacyPress={mockOnPrivacyPress}
           />
@@ -429,8 +353,6 @@ describe('SignUpScreen', () => {
         <SignUpScreen 
           onBack={errorCallback}
           onEmailSignUp={mockOnEmailSignUp}
-          onAppleSignUp={mockOnAppleSignUp}
-          onGoogleSignUp={mockOnGoogleSignUp}
           onSignInPress={mockOnSignInPress}
           onTermsPress={mockOnTermsPress}
           onPrivacyPress={mockOnPrivacyPress}
@@ -449,8 +371,6 @@ describe('SignUpScreen', () => {
         <SignUpScreen 
           onBack={mockOnBack}
           onEmailSignUp={mockOnEmailSignUp}
-          onAppleSignUp={mockOnAppleSignUp}
-          onGoogleSignUp={mockOnGoogleSignUp}
           onSignInPress={mockOnSignInPress}
           onTermsPress={mockOnTermsPress}
           onPrivacyPress={mockOnPrivacyPress}
@@ -474,8 +394,6 @@ describe('SignUpScreen', () => {
         <SignUpScreen 
           onBack={mockOnBack}
           onEmailSignUp={mockOnEmailSignUp}
-          onAppleSignUp={mockOnAppleSignUp}
-          onGoogleSignUp={mockOnGoogleSignUp}
           onSignInPress={mockOnSignInPress}
           onTermsPress={mockOnTermsPress}
           onPrivacyPress={mockOnPrivacyPress}
@@ -493,8 +411,6 @@ describe('SignUpScreen', () => {
         <SignUpScreen 
           onBack={mockOnBack}
           onEmailSignUp={mockOnEmailSignUp}
-          onAppleSignUp={mockOnAppleSignUp}
-          onGoogleSignUp={mockOnGoogleSignUp}
           onSignInPress={mockOnSignInPress}
           onTermsPress={mockOnTermsPress}
           onPrivacyPress={mockOnPrivacyPress}
