@@ -60,6 +60,50 @@ export interface CreateCounterChallengeData {
   message?: string;
 }
 
+export interface ChallengeGroup {
+  id: string;
+  club_id: string;
+  created_by: string;
+  match_type: 'singles' | 'doubles';
+  message?: string;
+  proposed_date?: string;
+  proposed_time?: string;
+  status: 'pending' | 'accepted' | 'declined' | 'expired' | 'completed';
+  expires_at?: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface ChallengeGroupPlayer {
+  id: string;
+  challenge_group_id: string;
+  player_id: string;
+  role: 'challenger' | 'challenged';
+  status: 'pending' | 'accepted' | 'declined';
+  contacts_shared: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface CreateChallengeGroupData {
+  club_id: string;
+  created_by: string;
+  match_type: 'singles' | 'doubles';
+  challenger_team_ids: string[]; // For doubles: 2 players, for singles: 1 player
+  challenged_team_ids: string[]; // For doubles: 2 players, for singles: 1 player
+  proposed_date?: string;
+  proposed_time?: string;
+  message?: string;
+  expires_at?: string;
+}
+
+export interface ChallengeGroupWithPlayers extends ChallengeGroup {
+  players: (ChallengeGroupPlayer & {
+    player_name: string;
+    player_phone?: string;
+  })[];
+}
+
 class ChallengeService {
   private static instance: ChallengeService | null = null;
 
@@ -71,7 +115,93 @@ class ChallengeService {
   }
 
   /**
-   * Create a new challenge
+   * Create a new challenge group (supports both singles and doubles)
+   */
+  public async createChallengeGroup(challengeData: CreateChallengeGroupData): Promise<string> {
+    const challengeGroupId = generateUUID();
+    
+    // Set expiration to 7 days from now if not provided
+    const expiresAt = challengeData.expires_at || new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString();
+    
+    try {
+      // Validate team sizes based on match type
+      if (challengeData.match_type === 'singles') {
+        if (challengeData.challenger_team_ids.length !== 1 || challengeData.challenged_team_ids.length !== 1) {
+          throw new Error('Singles matches require exactly 1 player per team');
+        }
+      } else if (challengeData.match_type === 'doubles') {
+        if (challengeData.challenger_team_ids.length !== 2 || challengeData.challenged_team_ids.length !== 2) {
+          throw new Error('Doubles matches require exactly 2 players per team');
+        }
+      }
+
+      // Create the challenge group
+      const challengeGroup: Omit<ChallengeGroup, 'created_at' | 'updated_at'> = {
+        id: challengeGroupId,
+        club_id: challengeData.club_id,
+        created_by: challengeData.created_by,
+        match_type: challengeData.match_type,
+        message: challengeData.message,
+        proposed_date: challengeData.proposed_date,
+        proposed_time: challengeData.proposed_time,
+        status: 'pending',
+        expires_at: expiresAt,
+      };
+
+      const { error: challengeError } = await supabase
+        .from('challenge_groups')
+        .insert([challengeGroup]);
+
+      if (challengeError) {
+        console.error('❌ Failed to create challenge group:', challengeError);
+        throw challengeError;
+      }
+
+      // Add challenger team players
+      for (const playerId of challengeData.challenger_team_ids) {
+        const { error: playerError } = await supabase
+          .from('challenge_group_players')
+          .insert([{
+            challenge_group_id: challengeGroupId,
+            player_id: playerId,
+            role: 'challenger',
+            status: playerId === challengeData.created_by ? 'accepted' : 'pending', // Creator auto-accepts
+          }]);
+
+        if (playerError) {
+          console.error('❌ Failed to add challenger player:', playerError);
+          throw playerError;
+        }
+      }
+
+      // Add challenged team players
+      for (const playerId of challengeData.challenged_team_ids) {
+        const { error: playerError } = await supabase
+          .from('challenge_group_players')
+          .insert([{
+            challenge_group_id: challengeGroupId,
+            player_id: playerId,
+            role: 'challenged',
+            status: 'pending',
+          }]);
+
+        if (playerError) {
+          console.error('❌ Failed to add challenged player:', playerError);
+          throw playerError;
+        }
+      }
+
+      console.log('✅ Challenge group created successfully:', challengeGroupId);
+      return challengeGroupId;
+
+    } catch (error) {
+      console.error('❌ Failed to create challenge group:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Create a new challenge (legacy method - for backward compatibility)
    */
   public async createChallenge(challengeData: CreateChallengeData): Promise<string> {
     // Generate unique challenge ID
@@ -760,6 +890,78 @@ class ChallengeService {
 
   /**
    * Get a challenge by ID in format needed for match recording screen
+   */
+  /**
+   * Get challenge group by ID with all players
+   */
+  public async getChallengeGroupById(challengeGroupId: string): Promise<{
+    id: string;
+    match_type: 'singles' | 'doubles';
+    proposed_date: string;
+    club_id: string;
+    club_name?: string;
+    players: Array<{
+      id: string;
+      full_name: string;
+      phone?: string;
+      role: 'challenger' | 'challenged';
+      status: 'pending' | 'accepted' | 'declined';
+    }>;
+    status: string;
+  } | null> {
+    try {
+      // Get challenge group details
+      const { data: challengeGroup, error: groupError } = await supabase
+        .from('challenge_groups')
+        .select(`
+          *,
+          club:clubs!challenge_groups_club_id_fkey(name)
+        `)
+        .eq('id', challengeGroupId)
+        .single();
+
+      if (groupError || !challengeGroup) {
+        console.error('❌ Failed to get challenge group by ID:', groupError);
+        return null;
+      }
+
+      // Get all players in the challenge group
+      const { data: players, error: playersError } = await supabase
+        .from('challenge_group_players')
+        .select(`
+          *,
+          player:users!challenge_group_players_player_id_fkey(full_name, phone)
+        `)
+        .eq('challenge_group_id', challengeGroupId);
+
+      if (playersError) {
+        console.error('❌ Failed to get challenge group players:', playersError);
+        return null;
+      }
+
+      return {
+        id: challengeGroup.id,
+        match_type: challengeGroup.match_type,
+        proposed_date: challengeGroup.proposed_date,
+        club_id: challengeGroup.club_id,
+        club_name: challengeGroup.club?.name,
+        players: (players || []).map((p: any) => ({
+          id: p.player_id,
+          full_name: p.player?.full_name || 'Unknown Player',
+          phone: p.player?.phone,
+          role: p.role,
+          status: p.status,
+        })),
+        status: challengeGroup.status
+      };
+    } catch (error) {
+      console.error('❌ Failed to get challenge group by ID:', error);
+      return null;
+    }
+  }
+
+  /**
+   * Get challenge by ID (legacy method)
    */
   public async getChallengeById(challengeId: string): Promise<{
     id: string;

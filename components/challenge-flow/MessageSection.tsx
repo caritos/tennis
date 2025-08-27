@@ -46,18 +46,18 @@ export default MessageSection;
 
 const styles = StyleSheet.create({
   section: {
-    marginBottom: 24,
+    marginBottom: 20, // iOS HIG consistent spacing
   },
   sectionLabel: {
-    fontSize: 16,
+    fontSize: 17, // iOS HIG body font size
     fontWeight: '600',
     marginBottom: 12,
   },
   messageInput: {
     borderWidth: 1,
-    borderRadius: 8,
-    padding: 12,
-    fontSize: 16,
+    borderRadius: 12, // iOS HIG rounded corner radius
+    padding: 16, // Increased padding for better touch experience
+    fontSize: 17, // iOS HIG body font size
     minHeight: 80,
     textAlignVertical: 'top',
   },

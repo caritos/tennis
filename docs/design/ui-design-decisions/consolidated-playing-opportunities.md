@@ -1,5 +1,8 @@
 # Consolidated Playing Opportunities UI Pattern
 
+## IOS Hig
+Must conform to IOS Human Interface Guidelines
+
 ## Decision Summary
 Combined "Open Invites" and "Active Challenges" sections into a unified "Playing Opportunities" section in the club details overview tab.
 

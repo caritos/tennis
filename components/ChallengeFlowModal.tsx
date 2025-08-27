@@ -12,7 +12,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { ThemedText } from './ThemedText';
 import { useColorScheme } from '@/hooks/useColorScheme';
 import { Colors } from '@/constants/Colors';
-import { challengeService, CreateChallengeData } from '@/services/challengeService';
+import { challengeService, CreateChallengeData, CreateChallengeGroupData } from '@/services/challengeService';
 import { useNotification } from '@/contexts/NotificationContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/lib/supabase';
@@ -180,43 +180,49 @@ const ChallengeFlowModal: React.FC<ChallengeFlowModalProps> = ({
       expiresAt.setDate(expiresAt.getDate() + 7);
 
       if (matchType === 'singles') {
-        // Single challenge for singles
-        const challengeData: CreateChallengeData = {
+        // Challenge group for singles (1-to-1)
+        const challengeData: CreateChallengeGroupData = {
           club_id: clubId,
-          challenger_id: user.id,
-          challenged_id: selectedPlayers[0].id,
+          created_by: user.id,
           match_type: matchType,
+          challenger_team_ids: [user.id], // Just the current user
+          challenged_team_ids: [selectedPlayers[0].id], // Just the challenged player
           proposed_date: selectedTime !== 'flexible' ? selectedTime : undefined,
           message: message.trim() || undefined,
           expires_at: expiresAt.toISOString(),
         };
 
-        await challengeService.createChallenge(challengeData);
+        await challengeService.createChallengeGroup(challengeData);
 
         showSuccess(
           'Challenge Sent!',
           `Your ${matchType} challenge has been sent to ${selectedPlayers[0].full_name}.`
         );
       } else {
-        // Multiple challenges for doubles (send to each player individually)
-        for (const player of selectedPlayers) {
-          const challengeData: CreateChallengeData = {
-            club_id: clubId,
-            challenger_id: user.id,
-            challenged_id: player.id,
-            match_type: matchType,
-            proposed_date: selectedTime !== 'flexible' ? selectedTime : undefined,
-            message: message.trim() || undefined,
-            expires_at: expiresAt.toISOString(),
-          };
-
-          await challengeService.createChallenge(challengeData);
+        // Challenge group for doubles (2-to-2)
+        // For doubles, we need to determine teams
+        // Current approach: user + first selected player vs. remaining selected players
+        if (selectedPlayers.length !== 3) {
+          throw new Error('Doubles requires exactly 3 other players to be selected');
         }
+
+        const challengeData: CreateChallengeGroupData = {
+          club_id: clubId,
+          created_by: user.id,
+          match_type: matchType,
+          challenger_team_ids: [user.id, selectedPlayers[0].id], // User + first selected player
+          challenged_team_ids: [selectedPlayers[1].id, selectedPlayers[2].id], // Remaining players
+          proposed_date: selectedTime !== 'flexible' ? selectedTime : undefined,
+          message: message.trim() || undefined,
+          expires_at: expiresAt.toISOString(),
+        };
+
+        await challengeService.createChallengeGroup(challengeData);
 
         const playerNames = selectedPlayers.map(p => p.full_name).join(', ');
         showSuccess(
-          'Invites Sent!',
-          `Your doubles invitation has been sent to: ${playerNames}.`
+          'Challenge Sent!',
+          `Your doubles challenge has been sent to: ${playerNames}.`
         );
       }
 
@@ -237,10 +243,7 @@ const ChallengeFlowModal: React.FC<ChallengeFlowModalProps> = ({
   };
 
   const getModalTitle = () => {
-    if (matchType === 'doubles') {
-      return 'Doubles Challenge';
-    }
-    return targetPlayerName ? `Challenge ${targetPlayerName}` : 'Challenge';
+    return 'Challenge Match';
   };
 
   const canSubmit = () => {
@@ -252,7 +255,8 @@ const ChallengeFlowModal: React.FC<ChallengeFlowModalProps> = ({
       selectedPlayers,
       canSubmit: result,
       targetPlayerId,
-      targetPlayerName
+      targetPlayerName,
+      note: matchType === 'doubles' ? 'Doubles requires 3 other players (total 4 including you)' : 'Singles requires 1 other player'
     });
     
     return result;
@@ -316,7 +320,6 @@ const ChallengeFlowModal: React.FC<ChallengeFlowModalProps> = ({
           matchType={matchType}
           canSubmit={canSubmit()}
           isSubmitting={isSubmitting}
-          onCancel={onClose}
           onSubmit={handleSubmit}
           colors={colors}
         />
@@ -340,21 +343,26 @@ const styles = StyleSheet.create({
   },
   backButton: {
     padding: 8,
+    // iOS HIG compliant touch target (minimum 44x44 points)
+    minHeight: 44,
+    minWidth: 44,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   headerTitle: {
     flex: 1,
-    fontSize: 18,
+    fontSize: 17, // iOS HIG standard font size for navigation titles
     fontWeight: '600',
     textAlign: 'center',
     marginHorizontal: 16,
   },
   headerSpacer: {
-    width: 40,
+    width: 44, // Match backButton minimum width for symmetry
   },
   content: {
     flex: 1,
   },
   formContainer: {
-    padding: 20,
+    padding: 16, // iOS HIG recommended 16pt margins
   },
 });

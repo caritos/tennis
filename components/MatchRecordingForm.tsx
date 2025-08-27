@@ -670,6 +670,18 @@ export function MatchRecordingForm(componentProps: MatchRecordingFormProps) {
   const validateForm = (): boolean => {
     const errors: string[] = [];
 
+    // For challenge matches (when players prop is provided)
+    if (players.length >= 2) {
+      const requiredWinners = matchType === 'singles' ? 1 : 2;
+      if (reportedPlayerIds.length !== requiredWinners) {
+        errors.push(`Please select exactly ${requiredWinners} winner${requiredWinners > 1 ? 's' : ''}`);
+      }
+      // Skip other validations for challenge matches since players are pre-filled
+      setValidationErrors(errors);
+      return errors.length === 0;
+    }
+
+    // Regular match validation (non-challenge matches)
     if (!selectedOpponent && !opponentSearchText.trim()) {
       errors.push('Please select or enter an opponent');
     }
@@ -724,28 +736,57 @@ export function MatchRecordingForm(componentProps: MatchRecordingFormProps) {
       return;
     }
 
-    // Use the new tennis sets format
-    const scoreString = formatScoreString(tennisSets);
-    console.log('🎾 Final scoreString to save:', scoreString);
-    
-    const matchData: CreateMatchData = {
-      club_id: effectiveClubId,
-      player1_id: user.id, // Use actual user ID from auth context
-      player2_id: selectedOpponent?.id?.startsWith('new-player') ? null : selectedOpponent?.id || null,
-      opponent2_name: selectedOpponent?.id?.startsWith('new-player') ? selectedOpponent.name : null,
-      player3_id: selectedPartner?.id?.startsWith('new-player') ? null : selectedPartner?.id || null,
-      partner3_name: selectedPartner?.id?.startsWith('new-player') ? selectedPartner?.name : null,
-      player4_id: selectedOpponentPartner?.id?.startsWith('new-player') ? null : selectedOpponentPartner?.id || null,
-      partner4_name: selectedOpponentPartner?.id?.startsWith('new-player') ? selectedOpponentPartner?.name : null,
-      scores: scoreString,
-      match_type: matchType,
-      date: matchDate,
-      notes: notes.trim() || undefined,
-    };
+    let matchData: CreateMatchData;
+
+    // For challenge matches with winner selection
+    if (players.length >= 2) {
+      const winnerId = reportedPlayerIds[0];
+      const currentUser = user;
+      const otherPlayer = players.find(p => p.id !== currentUser?.id);
+      
+      if (!otherPlayer) {
+        setValidationErrors(['Unable to identify other player']);
+        return;
+      }
+
+      // Determine winner and loser
+      const isCurrentUserWinner = winnerId === currentUser.id;
+      
+      matchData = {
+        club_id: effectiveClubId,
+        player1_id: currentUser.id,
+        player2_id: otherPlayer.id,
+        // For challenge matches, we don't store detailed scores, just winner info
+        scores: isCurrentUserWinner ? '6-4,6-4' : '4-6,4-6', // Simple placeholder scores
+        match_type: matchType,
+        date: matchDate,
+        notes: notes.trim() || undefined,
+      };
+    } else {
+      // Regular match with detailed scoring
+      const scoreString = formatScoreString(tennisSets);
+      console.log('🎾 Final scoreString to save:', scoreString);
+      
+      matchData = {
+        club_id: effectiveClubId,
+        player1_id: user.id, // Use actual user ID from auth context
+        player2_id: selectedOpponent?.id?.startsWith('new-player') ? null : selectedOpponent?.id || null,
+        opponent2_name: selectedOpponent?.id?.startsWith('new-player') ? selectedOpponent.name : null,
+        player3_id: selectedPartner?.id?.startsWith('new-player') ? null : selectedPartner?.id || null,
+        partner3_name: selectedPartner?.id?.startsWith('new-player') ? selectedPartner?.name : null,
+        player4_id: selectedOpponentPartner?.id?.startsWith('new-player') ? null : selectedOpponentPartner?.id || null,
+        partner4_name: selectedOpponentPartner?.id?.startsWith('new-player') ? selectedOpponentPartner?.name : null,
+        scores: scoreString,
+        match_type: matchType,
+        date: matchDate,
+        notes: notes.trim() || undefined,
+      };
+    }
 
     // Prepare report data if any players are reported
+    // For challenge matches, reportedPlayerIds is used for winner selection, not reporting
     let reportData = undefined;
-    if (showReporting && reportedPlayerIds.length > 0 && reportType && reportDescription.trim()) {
+    if (showReporting && players.length < 2 && reportedPlayerIds.length > 0 && reportType && reportDescription.trim()) {
       reportData = {
         playerIds: reportedPlayerIds,
         type: reportType,
@@ -1366,8 +1407,64 @@ export function MatchRecordingForm(componentProps: MatchRecordingFormProps) {
           />
         </View>
 
+        {/* Winner Selection for Challenge Matches */}
+        {players.length >= 2 && (() => {
+          // For challenge matches, show winner selection for all players
+          const winnerCount = matchType === 'singles' ? 1 : 2;
+          
+          return (
+            <View style={styles.section}>
+              <Text style={styles.sectionTitle}>Match Winners</Text>
+              <Text style={[styles.reportSubtitle, { color: colors.tabIconDefault, marginBottom: 16 }]}>
+                Select exactly {winnerCount} player{winnerCount > 1 ? 's' : ''} who won the match
+              </Text>
+              
+              <View style={styles.reportPlayersSection}>
+                {players.map((player) => (
+                  <TouchableOpacity
+                    key={player.id}
+                    style={styles.playerCheckbox}
+                    onPress={() => {
+                      setReportedPlayerIds(prev => {
+                        const newSelection = prev.includes(player.id) 
+                          ? prev.filter(id => id !== player.id)
+                          : prev.length < winnerCount 
+                            ? [...prev, player.id]
+                            : [...prev.slice(1), player.id]; // Replace oldest selection if at limit
+                        return newSelection;
+                      });
+                    }}
+                  >
+                    <View style={[
+                      styles.checkbox,
+                      {
+                        borderColor: colors.tint,
+                        backgroundColor: reportedPlayerIds.includes(player.id) ? colors.tint : 'transparent'
+                      }
+                    ]}>
+                      {reportedPlayerIds.includes(player.id) && (
+                        <Ionicons name="checkmark" size={14} color="white" />
+                      )}
+                    </View>
+                    <Text style={[styles.playerName, { color: colors.text }]}>
+                      {player.full_name}
+                      {player.id === user?.id && ' (You)'}
+                    </Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
+              
+              {reportedPlayerIds.length !== winnerCount && (
+                <Text style={[styles.errorText, { fontSize: 14, marginTop: 8 }]}>
+                  Please select exactly {winnerCount} player{winnerCount > 1 ? 's' : ''} who won the match
+                </Text>
+              )}
+            </View>
+          );
+        })()}
+
         {/* Tennis Score Entry */}
-        {(() => {
+        {players.length < 2 && (() => {
           // Calculate player names safely
           const player1Name = matchType === 'doubles' ? 
             (selectedPartner?.name ? `You & ${selectedPartner.name}` : "You & [Partner not selected]") : 
@@ -1452,8 +1549,8 @@ export function MatchRecordingForm(componentProps: MatchRecordingFormProps) {
           />
         </View>
 
-        {/* Report Player Section - Only show if enabled */}
-        {showReporting && (players.length > 0 || invitationId) && (() => {
+        {/* Report Player Section - Only show if enabled and NOT a challenge match */}
+        {showReporting && players.length < 2 && (players.length > 0 || invitationId) && (() => {
           // Build available players list for reporting from both props and internal state
           const getAvailablePlayersForReporting = () => {
             // For challenge matches, use players prop

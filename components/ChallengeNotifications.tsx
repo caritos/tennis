@@ -7,6 +7,7 @@ import {
   ActivityIndicator,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { useRouter } from 'expo-router';
 import { ThemedText } from './ThemedText';
 import { ThemedView } from './ThemedView';
 import { useColorScheme } from '@/hooks/useColorScheme';
@@ -28,12 +29,11 @@ const ChallengeNotifications: React.FC<ChallengeNotificationsProps> = ({
 }) => {
   const colorScheme = useColorScheme();
   const colors = Colors[colorScheme ?? 'light'];
-  const { showSuccess, showError } = useNotification();
-  const { user } = useAuth();
+  const { showError } = useNotification();
+  const router = useRouter();
 
   const [receivedChallenges, setReceivedChallenges] = useState<ChallengeWithUsers[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [processingChallenge, setProcessingChallenge] = useState<string | null>(null);
 
   useEffect(() => {
     loadChallenges();
@@ -60,44 +60,9 @@ const ChallengeNotifications: React.FC<ChallengeNotificationsProps> = ({
     }
   };
 
-  const handleAcceptChallenge = async (challengeId: string, challengerName: string) => {
-    try {
-      setProcessingChallenge(challengeId);
-      await challengeService.acceptChallenge(challengeId, userId);
-      
-      showSuccess(
-        'Challenge Accepted!',
-        `You accepted ${challengerName}'s challenge. Contact info has been shared.`
-      );
-      
-      await loadChallenges();
-      onRefresh?.();
-    } catch (error) {
-      console.error('Failed to accept challenge:', error);
-      showError('Error', 'Failed to accept challenge');
-    } finally {
-      setProcessingChallenge(null);
-    }
-  };
-
-  const handleDeclineChallenge = async (challengeId: string, challengerName: string) => {
-    try {
-      setProcessingChallenge(challengeId);
-      await challengeService.declineChallenge(challengeId, userId);
-      
-      showSuccess(
-        'Challenge Declined',
-        `You declined ${challengerName}'s challenge.`
-      );
-      
-      await loadChallenges();
-      onRefresh?.();
-    } catch (error) {
-      console.error('Failed to decline challenge:', error);
-      showError('Error', 'Failed to decline challenge');
-    } finally {
-      setProcessingChallenge(null);
-    }
+  const handleViewChallenge = () => {
+    // Navigate to the Matches tab where users can accept/decline challenges
+    router.push('/(tabs)/matches');
   };
 
   const getTimingText = (proposedDate?: string) => {
@@ -114,7 +79,6 @@ const ChallengeNotifications: React.FC<ChallengeNotificationsProps> = ({
   };
 
   const renderChallenge = (challenge: ChallengeWithUsers) => {
-    const isProcessing = processingChallenge === challenge.id;
     const timingText = getTimingText(challenge.proposed_date);
     
     return (
@@ -143,32 +107,10 @@ const ChallengeNotifications: React.FC<ChallengeNotificationsProps> = ({
 
         <View style={styles.challengeActions}>
           <TouchableOpacity
-            style={[styles.declineButton, { borderColor: colors.tabIconDefault }]}
-            onPress={() => handleDeclineChallenge(challenge.id, challenge.challenger_name)}
-            disabled={isProcessing}
+            style={[styles.viewButton, { backgroundColor: colors.tint }]}
+            onPress={handleViewChallenge}
           >
-            <ThemedText style={[styles.declineButtonText, { color: colors.text }]}>
-              Decline
-            </ThemedText>
-          </TouchableOpacity>
-
-          <TouchableOpacity
-            style={[
-              styles.acceptButton,
-              { backgroundColor: colors.tint },
-              isProcessing && { opacity: 0.6 }
-            ]}
-            onPress={() => handleAcceptChallenge(challenge.id, challenge.challenger_name)}
-            disabled={isProcessing}
-          >
-            {isProcessing ? (
-              <View style={styles.processingContent}>
-                <ActivityIndicator size="small" color="white" />
-                <ThemedText style={styles.acceptButtonText}>Processing...</ThemedText>
-              </View>
-            ) : (
-              <ThemedText style={styles.acceptButtonText}>Accept</ThemedText>
-            )}
+            <ThemedText style={styles.viewButtonText}>View</ThemedText>
           </TouchableOpacity>
         </View>
       </View>
@@ -283,36 +225,20 @@ const styles = StyleSheet.create({
   },
   challengeActions: {
     flexDirection: 'row',
-    gap: 12,
+    justifyContent: 'center',
   },
-  declineButton: {
-    flex: 1,
+  viewButton: {
     alignItems: 'center',
     justifyContent: 'center',
-    paddingVertical: 10,
-    borderWidth: 1,
-    borderRadius: 8,
+    paddingVertical: 12,
+    paddingHorizontal: 32,
+    borderRadius: 12, // iOS HIG rounded corner radius
+    minWidth: 120,
   },
-  declineButtonText: {
-    fontSize: 14,
-    fontWeight: '600',
-  },
-  acceptButton: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: 10,
-    borderRadius: 8,
-  },
-  acceptButtonText: {
+  viewButtonText: {
     color: 'white',
-    fontSize: 14,
+    fontSize: 17, // iOS HIG button font size
     fontWeight: '600',
-  },
-  processingContent: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
   },
   loadingContainer: {
     flexDirection: 'row',

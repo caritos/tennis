@@ -63,10 +63,10 @@ export default TimingOptions;
 
 const styles = StyleSheet.create({
   section: {
-    marginBottom: 24,
+    marginBottom: 20, // iOS HIG consistent spacing
   },
   sectionLabel: {
-    fontSize: 16,
+    fontSize: 17, // iOS HIG body font size
     fontWeight: '600',
     marginBottom: 12,
   },
@@ -81,9 +81,11 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
     paddingHorizontal: 16,
     borderWidth: 1,
-    borderRadius: 8,
+    borderRadius: 12, // iOS HIG rounded corner radius
     gap: 8,
     minWidth: '48%',
+    // iOS HIG compliant touch target
+    minHeight: 44,
   },
   radioCircle: {
     width: 20,
@@ -99,7 +101,7 @@ const styles = StyleSheet.create({
     borderRadius: 5,
   },
   timingLabel: {
-    fontSize: 16,
+    fontSize: 17, // iOS HIG body font size
     fontWeight: '500',
   },
 });
