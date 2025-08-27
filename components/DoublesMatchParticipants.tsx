@@ -5,9 +5,12 @@ import { ThemedView } from './ThemedView';
 import { useColorScheme } from '@/hooks/useColorScheme';
 import { Colors } from '@/constants/Colors';
 import { InvitationResponse } from '@/services/matchInvitationService';
+import { getRatingTier, getInitialRating } from '@/utils/eloRating';
 
 interface DoublesMatchParticipantsProps {
   creatorName: string;
+  creatorEloRating?: number;
+  creatorGamesPlayed?: number;
   responses: InvitationResponse[];
   matchType: 'singles' | 'doubles';
   isMatched: boolean;
@@ -19,6 +22,8 @@ interface DoublesMatchParticipantsProps {
 
 export const DoublesMatchParticipants: React.FC<DoublesMatchParticipantsProps> = ({
   creatorName,
+  creatorEloRating,
+  creatorGamesPlayed,
   responses,
   matchType,
   isMatched,
@@ -38,16 +43,36 @@ export const DoublesMatchParticipants: React.FC<DoublesMatchParticipantsProps> =
   const hasUserResponded = currentUserId && responses.some(r => r.user_id === currentUserId);
   const isUserCreator = currentUserId && currentUserId === creatorId;
   const canJoin = currentUserId && !hasUserResponded && !isUserCreator && onJoinMatch && !isMatched && !isJoining;
+
+  // Helper function to format ELO rating display
+  const formatEloRating = (rating?: number, gamesPlayed?: number) => {
+    if (!rating) {
+      return { rating: getInitialRating(), tier: 'New Player', color: '#2196F3', provisionalText: ' (New)' };
+    }
+    
+    const { tier, color } = getRatingTier(rating);
+    const isProvisional = (gamesPlayed || 0) < 5;
+    const provisionalText = isProvisional ? ' (Provisional)' : '';
+    
+    return { rating, tier, color, provisionalText };
+  };
   
-  // For doubles, show all players without team assignments
+  // For doubles, show up to 4 players (first-come-first-serve)
   if (matchType === 'doubles') {
+    const creatorEloInfo = formatEloRating(creatorEloRating, creatorGamesPlayed);
     const allPlayers = [
-      { name: creatorName, isOrganizer: true },
-      ...confirmedResponses.map(r => ({ name: r.user_name || 'Unknown Player', isOrganizer: false }))
+      { 
+        name: creatorName, 
+        isOrganizer: true,
+        eloInfo: creatorEloInfo
+      },
+      ...confirmedResponses.slice(0, 3).map(r => ({ 
+        name: r.user_name || 'Unknown Player', 
+        isOrganizer: false,
+        eloInfo: formatEloRating(r.user_elo_rating, r.user_games_played)
+      }))
     ];
     
-    const additionalInterested = confirmedResponses.slice(3); // Beyond the 4 needed
-
     return (
       <View style={styles.doublesContainer}>
         {/* Match Status */}
@@ -72,6 +97,9 @@ export const DoublesMatchParticipants: React.FC<DoublesMatchParticipantsProps> =
                     Organizer
                   </ThemedText>
                 )}
+                <ThemedText style={[styles.eloRating, { color: player.eloInfo.color }]}>
+                  {player.eloInfo.rating} • {player.eloInfo.tier}{player.eloInfo.provisionalText}
+                </ThemedText>
               </View>
             ))}
             
@@ -104,22 +132,6 @@ export const DoublesMatchParticipants: React.FC<DoublesMatchParticipantsProps> =
           </View>
 
         </View>
-
-        {/* Additional Interested Players */}
-        {additionalInterested.length > 0 && (
-          <View style={styles.waitingSection}>
-            <ThemedText style={[styles.waitingLabel, { color: colors.tabIconDefault }]}>
-              Also interested:
-            </ThemedText>
-            <View style={styles.waitingPlayers}>
-              {additionalInterested.map((response, index) => (
-                <ThemedText key={index} style={[styles.waitingPlayerName, { color: colors.tabIconDefault }]}>
-                  {response.user_name || 'Unknown Player'}
-                </ThemedText>
-              ))}
-            </View>
-          </View>
-        )}
       </View>
     );
   }
@@ -143,6 +155,9 @@ export const DoublesMatchParticipants: React.FC<DoublesMatchParticipantsProps> =
           <ThemedText style={[styles.organizerBadge, { color: colors.tabIconDefault }]}>
             (Organizer)
           </ThemedText>
+          <ThemedText style={[styles.eloRating, { color: formatEloRating(creatorEloRating, creatorGamesPlayed).color }]}>
+            {formatEloRating(creatorEloRating, creatorGamesPlayed).rating} • {formatEloRating(creatorEloRating, creatorGamesPlayed).tier}{formatEloRating(creatorEloRating, creatorGamesPlayed).provisionalText}
+          </ThemedText>
         </View>
 
         <View style={styles.vsContainer}>
@@ -155,6 +170,9 @@ export const DoublesMatchParticipants: React.FC<DoublesMatchParticipantsProps> =
           <View style={styles.playerSlot}>
             <ThemedText style={[styles.playerName, { color: colors.text }]}>
               {confirmedResponses[0].user_name || 'Unknown Player'}
+            </ThemedText>
+            <ThemedText style={[styles.eloRating, { color: formatEloRating(confirmedResponses[0].user_elo_rating, confirmedResponses[0].user_games_played).color }]}>
+              {formatEloRating(confirmedResponses[0].user_elo_rating, confirmedResponses[0].user_games_played).rating} • {formatEloRating(confirmedResponses[0].user_elo_rating, confirmedResponses[0].user_games_played).tier}{formatEloRating(confirmedResponses[0].user_elo_rating, confirmedResponses[0].user_games_played).provisionalText}
             </ThemedText>
           </View>
         ) : canJoin || isJoining ? (
@@ -177,21 +195,6 @@ export const DoublesMatchParticipants: React.FC<DoublesMatchParticipantsProps> =
         )}
       </View>
 
-      {/* Additional interested players for singles */}
-      {confirmedResponses.length > 1 && (
-        <View style={styles.waitingSection}>
-          <ThemedText style={[styles.waitingLabel, { color: colors.tabIconDefault }]}>
-            Also interested:
-          </ThemedText>
-          <View style={styles.waitingPlayers}>
-            {confirmedResponses.slice(1).map((response, index) => (
-              <ThemedText key={index} style={[styles.waitingPlayerName, { color: colors.tabIconDefault }]}>
-                {response.user_name || 'Unknown Player'}
-              </ThemedText>
-            ))}
-          </View>
-        </View>
-      )}
     </View>
   );
 };
@@ -212,17 +215,17 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   statusTitle: {
-    fontSize: 14,
+    fontSize: 15,  // iOS HIG: Body text
     fontWeight: '600',
   },
   matchedBadge: {
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 12,
+    paddingHorizontal: 12,  // iOS HIG: Better touch spacing
+    paddingVertical: 6,  // iOS HIG: Better touch spacing
+    borderRadius: 14,  // iOS HIG: Pill shape for badges
   },
   matchedText: {
     color: 'white',
-    fontSize: 12,
+    fontSize: 13,  // iOS HIG: Caption 1
     fontWeight: '600',
   },
   playersGrid: {
@@ -232,7 +235,7 @@ const styles = StyleSheet.create({
     marginBottom: 6,
   },
   gridTitle: {
-    fontSize: 13,
+    fontSize: 13,  // iOS HIG: Caption 1
     fontWeight: '600',
     textAlign: 'center',
     marginBottom: 8,
@@ -252,19 +255,19 @@ const styles = StyleSheet.create({
     flex: 1,
     minWidth: '45%',
     borderWidth: 1,
-    borderRadius: 6,
-    padding: 8, // Increased padding
+    borderRadius: 12,  // iOS HIG: Standard corner radius
+    padding: 12,  // iOS HIG: Better touch targets
     alignItems: 'center',
-    minHeight: 36, // Increased minimum height
+    minHeight: 44,  // iOS HIG: Minimum touch target height
     justifyContent: 'center',
   },
   playerName: {
-    fontSize: 14,
+    fontSize: 15,  // iOS HIG: Body text
     fontWeight: '500',
     textAlign: 'center',
   },
   organizerBadge: {
-    fontSize: 11,
+    fontSize: 12,  // iOS HIG: Caption 2
     marginTop: 2,
   },
   emptySlot: {
@@ -272,10 +275,10 @@ const styles = StyleSheet.create({
     minWidth: '45%',
     borderWidth: 1,
     borderStyle: 'dashed',
-    borderRadius: 6,
-    padding: 8, // Increased padding to match playerSlot
+    borderRadius: 12,  // iOS HIG: Standard corner radius
+    padding: 12,  // iOS HIG: Consistent padding
     alignItems: 'center',
-    minHeight: 36, // Increased minimum height to match playerSlot
+    minHeight: 44,  // iOS HIG: Minimum touch target height
     justifyContent: 'center',
   },
   clickableSlot: {
@@ -283,11 +286,11 @@ const styles = StyleSheet.create({
     borderWidth: 2,
   },
   emptySlotText: {
-    fontSize: 12,
+    fontSize: 13,  // iOS HIG: Caption 1
     textAlign: 'center',
   },
   teamsNote: {
-    fontSize: 11,
+    fontSize: 12,  // iOS HIG: Caption 2
     textAlign: 'center',
     fontStyle: 'italic',
     marginTop: 4,
@@ -298,7 +301,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 8,
   },
   vsText: {
-    fontSize: 12,
+    fontSize: 13,  // iOS HIG: Caption 1
     fontWeight: '600',
   },
   singlesPlayers: {
@@ -307,23 +310,9 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     marginBottom: 16,
   },
-  waitingSection: {
-    marginTop: 8,
-    paddingTop: 8,
-    borderTopWidth: 1,
-    borderTopColor: '#f0f0f0',
-  },
-  waitingLabel: {
-    fontSize: 12,
+  eloRating: {
+    fontSize: 13,  // iOS HIG: Caption 1
+    marginTop: 2,
     fontWeight: '500',
-    marginBottom: 4,
-  },
-  waitingPlayers: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 8,
-  },
-  waitingPlayerName: {
-    fontSize: 12,
   },
 });

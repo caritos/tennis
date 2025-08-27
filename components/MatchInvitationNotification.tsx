@@ -167,10 +167,6 @@ export function MatchInvitationNotification({
         const timeSince = new Date(invitation.created_at);
         const timeAgo = getTimeAgo(timeSince);
         const dateStr = formatDate(invitation.date);
-        const timeStr = invitation.time ? ` at ${invitation.time}` : '';
-        const responseText = invitation.responses_count > 0 
-          ? ` (${invitation.responses_count} interested)` 
-          : '';
 
         return (
           <ThemedView 
@@ -193,7 +189,7 @@ export function MatchInvitationNotification({
                     New {invitation.match_type} invitation
                   </ThemedText>
                   <ThemedText style={[styles.message, { color: colors.textSecondary }]}>
-                    {invitation.creator_name} is looking for a {invitation.match_type} partner on {dateStr}{timeStr}{responseText}
+                    {invitation.creator_name} is looking for {invitation.match_type === 'singles' ? 'a singles partner' : 'players for a doubles match'} on {dateStr}
                   </ThemedText>
                   <ThemedText style={[styles.timeAgo, { color: colors.tabIconDefault }]}>
                     {timeAgo}

@@ -93,6 +93,7 @@ export default function RecordMatchScreen() {
         clubId={clubId || undefined}
         invitationId={invitationId}
         showReporting={!!invitationId}
+        winnerSectionTitle={invitationId ? "Match Winner" : "Match Winners"}
       />
       
       {/* Notification Banner */}

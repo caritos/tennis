@@ -24,6 +24,8 @@ export interface InvitationResponse {
   status: 'interested' | 'confirmed' | 'declined';
   created_at: string;
   user_name?: string; // Joined from users table
+  user_elo_rating?: number; // Joined from users table
+  user_games_played?: number; // Joined from users table
 }
 
 export interface CreateInvitationData {
@@ -159,7 +161,7 @@ export class MatchInvitationService {
         .from('invitation_responses')
         .select(`
           *,
-          user:users!invitation_responses_user_id_fkey(full_name)
+          user:users!invitation_responses_user_id_fkey(full_name, elo_rating, games_played)
         `)
         .eq('invitation_id', invitationId)
         .order('created_at', { ascending: true });
@@ -172,7 +174,9 @@ export class MatchInvitationService {
       // Map joined data to expected format
       return (responses || []).map((response: any) => ({
         ...response,
-        user_name: response.user?.full_name
+        user_name: response.user?.full_name,
+        user_elo_rating: response.user?.elo_rating,
+        user_games_played: response.user?.games_played
       }));
     } catch (error) {
       console.error('❌ Failed to get invitation responses:', error);

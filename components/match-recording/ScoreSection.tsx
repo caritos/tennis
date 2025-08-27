@@ -103,24 +103,24 @@ const styles = StyleSheet.create({
   placeholderContainer: {
     borderWidth: 1,
     borderStyle: 'dashed',
-    borderRadius: 12,
+    borderRadius: 12,  // iOS HIG: Standard corner radius
     padding: 24,
     alignItems: 'center',
     marginVertical: 20,
   },
   placeholderTitle: {
-    fontSize: 16,
+    fontSize: 17,  // iOS HIG: Headline
     fontWeight: '600',
     marginBottom: 8,
     textAlign: 'center',
   },
   placeholderText: {
-    fontSize: 14,
+    fontSize: 15,  // iOS HIG: Body text
     textAlign: 'center',
-    lineHeight: 20,
+    lineHeight: 22,  // iOS HIG: Better line height for body
   },
   debugText: {
-    fontSize: 12,
+    fontSize: 13,  // iOS HIG: Caption 1
     marginTop: 10,
     fontFamily: 'monospace',
   },

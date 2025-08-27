@@ -49,6 +49,7 @@ interface MatchRecordingFormProps {
   showReporting?: boolean;
   isSubmitting?: boolean;
   invitationId?: string;
+  winnerSectionTitle?: string; // Custom title for winner selection section
 }
 
 // Legacy interface - can be removed after migration
@@ -77,7 +78,8 @@ export function MatchRecordingForm(componentProps: MatchRecordingFormProps) {
     players = [],
     showReporting = false,
     isSubmitting = false,
-    invitationId
+    invitationId,
+    winnerSectionTitle = 'Match Winners'
   } = props;
 
   // All state hooks
@@ -819,7 +821,7 @@ export function MatchRecordingForm(componentProps: MatchRecordingFormProps) {
       marginBottom: CompactStyles.sectionMargin,
     },
     sectionTitle: {
-      fontSize: 16,
+      fontSize: 17,  // iOS HIG: Headline
       fontWeight: '600',
       color: colors.text,
       marginBottom: CompactStyles.smallMargin,
@@ -1075,6 +1077,9 @@ export function MatchRecordingForm(componentProps: MatchRecordingFormProps) {
     reportPlayersSection: {
       marginBottom: 16,
     },
+    reportNotesSection: {
+      marginBottom: 20,
+    },
     reportLabel: {
       fontSize: 14,
       fontWeight: '500',
@@ -1115,10 +1120,10 @@ export function MatchRecordingForm(componentProps: MatchRecordingFormProps) {
     },
     reportTextInput: {
       borderWidth: 1,
-      borderRadius: 8,
+      borderRadius: 12,  // iOS HIG: Standard corner radius
       padding: 12,
-      fontSize: 14,
-      minHeight: 80,
+      fontSize: 15,  // iOS HIG: Body text
+      minHeight: 88,  // iOS HIG: 2x minimum touch target for multiline
       textAlignVertical: 'top',
       marginBottom: 8,
     },
@@ -1416,7 +1421,7 @@ export function MatchRecordingForm(componentProps: MatchRecordingFormProps) {
           
           return (
             <View style={styles.section}>
-              <Text style={styles.sectionTitle}>Match Winners</Text>
+              <Text style={styles.sectionTitle}>{winnerSectionTitle}</Text>
               <Text style={[styles.reportSubtitle, { color: colors.tabIconDefault, marginBottom: 16 }]}>
                 Select exactly {winnerCount} player{winnerCount > 1 ? 's' : ''} who won the match
               </Text>
@@ -1537,22 +1542,8 @@ export function MatchRecordingForm(componentProps: MatchRecordingFormProps) {
           }
         })()}
 
-        {/* Notes */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Notes (Optional)</Text>
-          <TextInput
-            style={styles.notesInput}
-            value={notes}
-            onChangeText={setNotes}
-            placeholder="Great competitive match!"
-            placeholderTextColor={colors.tabIconDefault}
-            multiline
-            testID="notes-input"
-          />
-        </View>
-
-        {/* Report Player Section - Only show if enabled and NOT a challenge match */}
-        {showReporting && players.length < 2 && (players.length > 0 || invitationId) && (() => {
+        {/* Report Player Section - Show if enabled and we have player data */}
+        {showReporting && (() => {
           // Build available players list for reporting from both props and internal state
           const getAvailablePlayersForReporting = () => {
             // For challenge matches, use players prop
@@ -1620,6 +1611,21 @@ export function MatchRecordingForm(componentProps: MatchRecordingFormProps) {
                 <Text style={[styles.reportSubtitle, { color: colors.tabIconDefault }]}>
                   Only report serious issues that violate community guidelines
                 </Text>
+
+                {/* Notes Section */}
+                <View style={styles.reportNotesSection}>
+                  <Text style={styles.reportLabel}>Notes (Optional)</Text>
+                  <TextInput
+                    style={[styles.reportTextInput, { borderColor: colors.tabIconDefault + '30', color: colors.text }]}
+                    value={notes}
+                    onChangeText={setNotes}
+                    placeholder="Great competitive match!"
+                    placeholderTextColor={colors.tabIconDefault}
+                    multiline
+                    numberOfLines={3}
+                    testID="notes-input"
+                  />
+                </View>
 
                 {/* Section 1: Select player(s) to report */}
                 <View style={styles.reportPlayersSection}>

@@ -387,7 +387,14 @@ export default function ClubMatches({
                     />
 
                     {/* Contact Information for Match Invitation Participants */}
-                    {currentUserId && (match.player1_id === currentUserId || (match.responses || []).some((r: any) => r.user_id === currentUserId)) && (
+                    {(() => {
+                      const requiredPlayers = match.match_type === 'singles' ? 2 : 4;
+                      const totalPlayers = 1 + (match.responses || []).length; // creator + responses
+                      const isMatchConfirmed = totalPlayers >= requiredPlayers;
+                      const isUserParticipant = currentUserId && (match.player1_id === currentUserId || (match.responses || []).some((r: any) => r.user_id === currentUserId));
+                      
+                      return isMatchConfirmed && isUserParticipant;
+                    })() && (
                       <View style={[styles.contactInfo, { backgroundColor: colors.background, borderColor: colors.border }]}>
                         <View style={styles.contactHeader}>
                           <Ionicons name="call" size={16} color={colors.tint} />

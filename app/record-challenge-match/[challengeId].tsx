@@ -295,6 +295,7 @@ export default function RecordChallengeMatchScreen() {
           matchType={currentChallenge.match_type}
           players={players}
           showReporting={true}
+          winnerSectionTitle="Match Winners"
           isSubmitting={isSubmitting}
         />
       </ScrollView>

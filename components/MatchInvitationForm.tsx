@@ -6,10 +6,15 @@ import { ThemedText } from './ThemedText';
 import { ThemedView } from './ThemedView';
 import { useColorScheme } from '@/hooks/useColorScheme';
 import { Colors } from '@/constants/Colors';
-import { CalendarDatePicker } from './CalendarDatePicker';
 import { matchInvitationService, CreateInvitationData } from '@/services/matchInvitationService';
+import { TimingOptions } from './challenge-flow/TimingOptions';
+import { MatchTypeSelection } from './challenge-flow/MatchTypeSelection';
+import { MessageSection } from './challenge-flow/MessageSection';
+import { FormActions } from './challenge-flow/FormActions';
 import { supabase } from '@/lib/supabase';
 import { useNotification } from '@/contexts/NotificationContext';
+
+type TimeOption = 'today' | 'tomorrow' | 'weekend' | 'next_week' | 'flexible';
 
 interface MatchInvitationFormProps {
   clubId: string;
@@ -29,31 +34,54 @@ const MatchInvitationForm: React.FC<MatchInvitationFormProps> = ({
   const { showSuccess, showError } = useNotification();
 
   const [matchType, setMatchType] = useState<'singles' | 'doubles'>('singles');
-  // Default to tomorrow's date in YYYY-MM-DD format (fix timezone issue)
-  const tomorrow = new Date();
-  tomorrow.setDate(tomorrow.getDate() + 1);
-  // Use local timezone instead of UTC for date string
-  const tomorrowStr = `${tomorrow.getFullYear()}-${String(tomorrow.getMonth() + 1).padStart(2, '0')}-${String(tomorrow.getDate()).padStart(2, '0')}`;
-  const [selectedDate, setSelectedDate] = useState<string>(tomorrowStr);
-  const [time, setTime] = useState('');
-  const [location, setLocation] = useState('Location TBD');
-  const [notes, setNotes] = useState('');
+  const [selectedTiming, setSelectedTiming] = useState<TimeOption>('tomorrow');
+  const [message, setMessage] = useState(''); // Renamed from notes to match MessageSection
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // Helper function to convert timing option to date string
+  const getDateFromTiming = (timing: TimeOption): string => {
+    const today = new Date();
+    let targetDate = new Date(today);
+    
+    switch (timing) {
+      case 'today':
+        // Keep today's date
+        break;
+      case 'tomorrow':
+        targetDate.setDate(today.getDate() + 1);
+        break;
+      case 'weekend':
+        // Next Saturday
+        const daysUntilSaturday = (6 - today.getDay()) % 7 || 7;
+        targetDate.setDate(today.getDate() + daysUntilSaturday);
+        break;
+      case 'next_week':
+        // Next Monday (or today if it's Monday)
+        const daysUntilNextWeek = 7 - today.getDay() + 1;
+        targetDate.setDate(today.getDate() + daysUntilNextWeek);
+        break;
+      case 'flexible':
+        // Default to tomorrow for flexible
+        targetDate.setDate(today.getDate() + 1);
+        break;
+    }
+    
+    // Return in YYYY-MM-DD format
+    return `${targetDate.getFullYear()}-${String(targetDate.getMonth() + 1).padStart(2, '0')}-${String(targetDate.getDate()).padStart(2, '0')}`;
+  };
 
   const handleSubmit = async () => {
     if (isSubmitting) return;
-
-    // Validate required fields
-    if (!selectedDate) {
-      showError('Date Required', 'Please select a date for your match invitation.');
-      return;
-    }
 
     try {
       setIsSubmitting(true);
       console.log('🎾 MatchInvitationForm: Starting invitation creation...');
 
-      // Validate date format (selectedDate is already a string in YYYY-MM-DD format)
+      // Convert timing option to date string
+      const selectedDate = getDateFromTiming(selectedTiming);
+      console.log('🎾 MatchInvitationForm: Converted timing to date:', { selectedTiming, selectedDate });
+
+      // Validate date format
       const validDate = new Date(selectedDate + 'T00:00:00');
       if (isNaN(validDate.getTime())) {
         console.error('❌ MatchInvitationForm: Invalid date:', selectedDate);
@@ -65,10 +93,8 @@ const MatchInvitationForm: React.FC<MatchInvitationFormProps> = ({
         club_id: clubId,
         creator_id: creatorId,
         match_type: matchType,
-        date: selectedDate, // Already in YYYY-MM-DD format
-        time: time || undefined,
-        location: location.trim() || undefined,
-        notes: notes.trim() || undefined,
+        date: selectedDate, // Converted from timing option
+        notes: message.trim() || undefined, // Using message instead of notes
       };
 
       console.log('🎾 MatchInvitationForm: Creating invitation with data:', invitationData);
@@ -92,17 +118,13 @@ const MatchInvitationForm: React.FC<MatchInvitationFormProps> = ({
           month: 'short',
           day: 'numeric'
         });
-        const timeStr = time ? ` at ${time}` : '';
-
         await matchInvitationService.createClubNotification(clubId, {
           type: 'invitation_created',
           title: `New ${matchType} invitation`,
-          message: `${creatorName} is looking for a ${matchType} partner on ${dateStr}${timeStr}`,
+          message: `${creatorName} is looking for ${matchType === 'singles' ? 'a singles partner' : 'players for a doubles match'} on ${dateStr}`,
           invitation_id: createdInvitation.id,
           match_type: matchType,
-          date: selectedDate,
-          time: time,
-          location: location,
+          date: selectedDate, // Using converted date
           creator_name: creatorName
         });
 
@@ -136,27 +158,8 @@ const MatchInvitationForm: React.FC<MatchInvitationFormProps> = ({
     }
   };
 
-  const formatDate = (dateString: string) => {
-    if (!dateString) return '';
-    
-    // Fix timezone issue: parse date in local timezone, not UTC
-    const date = new Date(dateString + 'T00:00:00');
-    const today = new Date();
-    const tomorrow = new Date(today);
-    tomorrow.setDate(tomorrow.getDate() + 1);
-
-    if (date.toDateString() === today.toDateString()) {
-      return 'Today';
-    } else if (date.toDateString() === tomorrow.toDateString()) {
-      return 'Tomorrow';
-    } else {
-      return date.toLocaleDateString('en-US', { 
-        weekday: 'short', 
-        month: 'short', 
-        day: 'numeric' 
-      });
-    }
-  };
+  // Form validation
+  const canSubmit = true; // Always allow submission for invitations
 
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
@@ -172,160 +175,40 @@ const MatchInvitationForm: React.FC<MatchInvitationFormProps> = ({
       <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
         <View style={styles.formContainer}>
           {/* Match Type */}
-          <View style={styles.section}>
-            <ThemedText style={styles.sectionLabel}>Match Type</ThemedText>
-            <View style={styles.radioGroup}>
-              <TouchableOpacity
-                style={[
-                  styles.radioOption,
-                  { borderColor: colors.tabIconDefault },
-                  matchType === 'singles' && { 
-                    borderColor: colors.tint,
-                    backgroundColor: colors.tint + '10'
-                  }
-                ]}
-                onPress={() => setMatchType('singles')}
-              >
-                <View style={[
-                  styles.radioCircle,
-                  { borderColor: colors.tabIconDefault },
-                  matchType === 'singles' && { borderColor: colors.tint }
-                ]}>
-                  {matchType === 'singles' && (
-                    <View style={[styles.radioFill, { backgroundColor: colors.tint }]} />
-                  )}
-                </View>
-                <ThemedText style={styles.radioLabel}>Singles</ThemedText>
-              </TouchableOpacity>
+          <MatchTypeSelection
+            matchType={matchType}
+            onMatchTypeChange={setMatchType}
+            colors={colors}
+          />
 
-              <TouchableOpacity
-                style={[
-                  styles.radioOption,
-                  { borderColor: colors.tabIconDefault },
-                  matchType === 'doubles' && { 
-                    borderColor: colors.tint,
-                    backgroundColor: colors.tint + '10'
-                  }
-                ]}
-                onPress={() => setMatchType('doubles')}
-              >
-                <View style={[
-                  styles.radioCircle,
-                  { borderColor: colors.tabIconDefault },
-                  matchType === 'doubles' && { borderColor: colors.tint }
-                ]}>
-                  {matchType === 'doubles' && (
-                    <View style={[styles.radioFill, { backgroundColor: colors.tint }]} />
-                  )}
-                </View>
-                <ThemedText style={styles.radioLabel}>Doubles</ThemedText>
-              </TouchableOpacity>
-            </View>
-          </View>
+          {/* Timing Options */}
+          <TimingOptions
+            selectedTime={selectedTiming}
+            onTimeChange={setSelectedTiming}
+            colors={colors}
+          />
 
-          {/* Date & Time */}
-          <View style={styles.section}>
-            <View style={styles.dateTimeContainer}>
-              <View style={styles.dateContainer}>
-                <ThemedText style={styles.inputLabel}>Date</ThemedText>
-                <CalendarDatePicker
-                  selectedDate={selectedDate}
-                  onDateChange={(date) => {
-                    // Ensure we never set selectedDate to undefined
-                    if (date) {
-                      setSelectedDate(date);
-                    }
-                  }}
-                />
-              </View>
 
-              <View style={styles.timeContainer}>
-                <ThemedText style={styles.inputLabel}>Time (Optional)</ThemedText>
-                <TextInput
-                  style={[
-                    styles.timeInput,
-                    {
-                      borderColor: colors.tabIconDefault,
-                      color: colors.text,
-                      backgroundColor: colors.background,
-                    },
-                  ]}
-                  value={time}
-                  onChangeText={setTime}
-                  placeholder="6:00 PM"
-                  placeholderTextColor={colors.tabIconDefault}
-                />
-              </View>
-            </View>
-          </View>
 
-          {/* Location */}
-          <View style={styles.section}>
-            <ThemedText style={styles.sectionLabel}>Location</ThemedText>
-            <TextInput
-              style={[
-                styles.locationInput,
-                {
-                  borderColor: colors.tabIconDefault,
-                  color: colors.text,
-                  backgroundColor: colors.background,
-                },
-              ]}
-              value={location}
-              onChangeText={setLocation}
-              placeholder="Location TBD"
-              placeholderTextColor={colors.tabIconDefault}
-            />
-          </View>
+          {/* Message */}
+          <MessageSection
+            message={message}
+            matchType={matchType}
+            onMessageChange={setMessage}
+            colors={colors}
+          />
 
-          {/* Notes */}
-          <View style={styles.section}>
-            <ThemedText style={styles.sectionLabel}>Notes</ThemedText>
-            <TextInput
-              style={[
-                styles.notesInput,
-                {
-                  borderColor: colors.tabIconDefault,
-                  color: colors.text,
-                  backgroundColor: colors.background,
-                },
-              ]}
-              value={notes}
-              onChangeText={setNotes}
-              placeholder="Looking for competitive singles match. Intermediate level preferred."
-              placeholderTextColor={colors.tabIconDefault}
-              multiline
-              numberOfLines={4}
-              textAlignVertical="top"
-            />
-          </View>
-
-          {/* Footer Buttons */}
-          <View style={styles.footer}>
-            <TouchableOpacity
-              style={[styles.cancelButton, { borderColor: colors.tabIconDefault }]}
-              onPress={onClose}
-              disabled={isSubmitting}
-            >
-              <ThemedText style={[styles.cancelButtonText, { color: colors.text }]}>
-                Cancel
-              </ThemedText>
-            </TouchableOpacity>
-
-            <TouchableOpacity
-              style={[
-                styles.postButton,
-                { backgroundColor: colors.tint },
-                isSubmitting && { opacity: 0.6 }
-              ]}
-              onPress={handleSubmit}
-              disabled={isSubmitting}
-            >
-              <ThemedText style={styles.postButtonText}>
-                {isSubmitting ? 'Posting...' : 'Post'}
-              </ThemedText>
-            </TouchableOpacity>
-          </View>
+          {/* Form Actions */}
+          <FormActions
+            matchType={matchType}
+            canSubmit={canSubmit}
+            isSubmitting={isSubmitting}
+            onSubmit={handleSubmit}
+            onCancel={onClose}
+            submitButtonText="Post"
+            submittingText="Posting..."
+            colors={colors}
+          />
         </View>
       </ScrollView>
     </SafeAreaView>
@@ -402,70 +285,5 @@ const styles = StyleSheet.create({
   radioLabel: {
     fontSize: 16,
     fontWeight: '500',
-  },
-  dateTimeContainer: {
-    gap: 16,
-  },
-  dateContainer: {
-    flex: 1,
-  },
-  timeContainer: {
-    flex: 1,
-  },
-  inputLabel: {
-    fontSize: 14,
-    fontWeight: '500',
-    marginBottom: 8,
-    opacity: 0.8,
-  },
-  timeInput: {
-    borderWidth: 1,
-    borderRadius: 8,
-    padding: 12,
-    fontSize: 16,
-  },
-  locationInput: {
-    borderWidth: 1,
-    borderRadius: 8,
-    padding: 12,
-    fontSize: 16,
-  },
-  notesInput: {
-    borderWidth: 1,
-    borderRadius: 8,
-    padding: 12,
-    fontSize: 16,
-    minHeight: 100,
-  },
-  footer: {
-    flexDirection: 'row',
-    paddingHorizontal: 20,
-    paddingVertical: 16,
-    paddingTop: 24,
-    gap: 12,
-  },
-  cancelButton: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: 12,
-    borderWidth: 1,
-    borderRadius: 8,
-  },
-  cancelButtonText: {
-    fontSize: 16,
-    fontWeight: '500',
-  },
-  postButton: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: 12,
-    borderRadius: 8,
-  },
-  postButtonText: {
-    color: 'white',
-    fontSize: 16,
-    fontWeight: '600',
   },
 });

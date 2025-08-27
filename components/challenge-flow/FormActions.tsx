@@ -7,6 +7,9 @@ interface FormActionsProps {
   canSubmit: boolean;
   isSubmitting: boolean;
   onSubmit: () => void;
+  onCancel?: () => void; // Optional cancel button
+  submitButtonText?: string; // Custom submit button text
+  submittingText?: string; // Custom submitting text
   colors: any;
 }
 
@@ -15,34 +18,47 @@ const FormActions = React.memo(function FormActions({
   canSubmit,
   isSubmitting,
   onSubmit,
+  onCancel,
+  submitButtonText = 'Send Challenge',
+  submittingText = 'Sending...',
   colors,
 }: FormActionsProps) {
-  const getSubmitButtonText = () => {
-    return 'Send Challenge';
-  };
 
   return (
     <View style={[styles.footer, { borderTopColor: colors.tabIconDefault + '30' }]}>
+      {onCancel && (
+        <TouchableOpacity
+          style={[styles.cancelButton, { borderColor: colors.tabIconDefault }]}
+          onPress={onCancel}
+          disabled={isSubmitting}
+        >
+          <ThemedText style={[styles.cancelButtonText, { color: colors.text }]}>
+            Cancel
+          </ThemedText>
+        </TouchableOpacity>
+      )}
+      
       <TouchableOpacity
         style={[
           styles.submitButton,
+          onCancel ? styles.submitButtonWithCancel : styles.submitButtonFullWidth,
           { backgroundColor: colors.tint },
           (!canSubmit || isSubmitting) && { opacity: 0.6 }
         ]}
         onPress={onSubmit}
         disabled={!canSubmit || isSubmitting}
         accessibilityRole="button"
-        accessibilityLabel={isSubmitting ? "Sending challenge" : getSubmitButtonText()}
+        accessibilityLabel={isSubmitting ? submittingText : submitButtonText}
         accessibilityState={{ disabled: !canSubmit || isSubmitting }}
       >
         {isSubmitting ? (
           <View style={styles.submitButtonContent}>
             <ActivityIndicator size="small" color="white" />
-            <ThemedText style={styles.submitButtonText}>Sending...</ThemedText>
+            <ThemedText style={styles.submitButtonText}>{submittingText}</ThemedText>
           </View>
         ) : (
           <ThemedText style={styles.submitButtonText}>
-            {getSubmitButtonText()}
+            {submitButtonText}
           </ThemedText>
         )}
       </TouchableOpacity>
@@ -54,12 +70,25 @@ export default FormActions;
 
 const styles = StyleSheet.create({
   footer: {
+    flexDirection: 'row',
     paddingHorizontal: 20,
     paddingVertical: 16,
     borderTopWidth: 1,
+    gap: 12,
+  },
+  cancelButton: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 12,
+    borderWidth: 1,
+    borderRadius: 8,
+  },
+  cancelButtonText: {
+    fontSize: 16,
+    fontWeight: '500',
   },
   submitButton: {
-    width: '100%',
     alignItems: 'center',
     justifyContent: 'center',
     paddingVertical: 16,
@@ -74,6 +103,12 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.1,
     shadowRadius: 4,
     elevation: 2,
+  },
+  submitButtonFullWidth: {
+    width: '100%',
+  },
+  submitButtonWithCancel: {
+    flex: 1,
   },
   submitButtonText: {
     color: 'white',
