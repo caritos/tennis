@@ -233,77 +233,93 @@ export function CreateClubForm({ onSuccess, onCancel }: CreateClubFormProps) {
     },
     input: {
       borderWidth: 1,
-      borderColor: colors.tabIconDefault + '40',
-      borderRadius: CompactStyles.input.borderRadius,
+      borderColor: colors.tabIconDefault + '30',
+      borderRadius: 10, // More rounded for iOS feel
       paddingHorizontal: CompactStyles.input.paddingHorizontal,
-      paddingVertical: CompactStyles.input.paddingVertical,
-      fontSize: CompactStyles.input.fontSize,
+      paddingVertical: 14, // Slightly more padding for better touch target
+      fontSize: 17, // iOS standard body text size
       color: colors.text,
       backgroundColor: colors.background,
+      // iOS-style shadow for depth
+      shadowColor: '#000',
+      shadowOffset: {
+        width: 0,
+        height: 1,
+      },
+      shadowOpacity: 0.05,
+      shadowRadius: 2,
+      elevation: 1,
     },
     inputError: {
-      borderColor: '#ff4444',
+      borderColor: '#ff3b30', // iOS system red
+      borderWidth: 1.5, // Slightly thicker for emphasis
     },
     textArea: {
       height: 60,
       textAlignVertical: 'top',
     },
     errorText: {
-      color: '#ff4444',
-      fontSize: CompactStyles.errorText.fontSize,
-      marginTop: CompactStyles.errorText.marginTop,
+      color: '#ff3b30', // iOS system red
+      fontSize: 14, // Slightly smaller than input text
+      marginTop: 6,
+      fontWeight: '500', // Medium weight for better readability
     },
     buttonContainer: {
-      flexDirection: 'row',
-      justifyContent: 'space-between',
       marginTop: 24,
       marginBottom: 20,
     },
     button: {
-      flex: 1,
-      paddingVertical: CompactStyles.button.paddingVertical,
-      borderRadius: CompactStyles.button.borderRadius,
+      width: '100%',
+      paddingVertical: 16, // iOS standard button height
+      borderRadius: 12, // More rounded for iOS feel
       alignItems: 'center',
-      marginHorizontal: CompactStyles.smallMargin,
-    },
-    cancelButton: {
-      backgroundColor: colors.tabIconDefault + '20',
+      justifyContent: 'center',
+      minHeight: 50, // Ensure proper touch target size
+      // iOS-style shadow
+      shadowColor: '#000',
+      shadowOffset: {
+        width: 0,
+        height: 2,
+      },
+      shadowOpacity: 0.1,
+      shadowRadius: 4,
+      elevation: 2,
     },
     createButton: {
       backgroundColor: colors.tint,
     },
     createButtonDisabled: {
-      backgroundColor: colors.tabIconDefault,
+      backgroundColor: colors.tabIconDefault + '80',
+      shadowOpacity: 0, // Remove shadow when disabled
+      elevation: 0,
     },
     buttonText: {
-      fontSize: CompactStyles.buttonText.fontSize,
+      fontSize: 17, // iOS standard body text size
       fontWeight: '600',
-    },
-    cancelButtonText: {
-      color: colors.text,
     },
     createButtonText: {
       color: '#ffffff',
     },
     generalError: {
-      backgroundColor: '#ff4444',
-      padding: 12,
-      borderRadius: 8,
+      backgroundColor: '#ff3b30', // iOS system red
+      padding: 16,
+      borderRadius: 10,
       marginBottom: 16,
+      // iOS-style shadow
+      shadowColor: '#000',
+      shadowOffset: {
+        width: 0,
+        height: 1,
+      },
+      shadowOpacity: 0.1,
+      shadowRadius: 3,
+      elevation: 1,
     },
     generalErrorText: {
       color: '#ffffff',
-      fontSize: 14,
+      fontSize: 15, // Slightly larger for better readability
       textAlign: 'center',
-    },
-    locationPreview: {
-      marginTop: 8,
-      padding: 12,
-      borderRadius: 8,
-    },
-    locationPreviewText: {
-      fontSize: 14,
-      textAlign: 'center',
+      fontWeight: '500',
     },
   });
 
@@ -334,11 +350,29 @@ export function CreateClubForm({ onSuccess, onCancel }: CreateClubFormProps) {
             <TextInput
               style={[styles.input, errors.name && styles.inputError]}
               placeholder="Riverside Tennis Club"
+              placeholderTextColor={colors.tabIconDefault + '80'}
               value={formData.name}
               onChangeText={(text) => handleInputChange('name', text)}
               accessibilityLabel="Club Name"
+              accessibilityHint="Enter the name of your tennis club"
+              returnKeyType="next"
+              onSubmitEditing={() => {
+                // Focus next field (description)
+                // Will be handled by refs in a future update
+              }}
+              blurOnSubmit={false}
+              autoCapitalize="words"
+              autoCorrect={true}
             />
-            {errors.name && <Text style={styles.errorText} role="alert">{errors.name}</Text>}
+            {errors.name && (
+              <Text 
+                style={styles.errorText} 
+                accessibilityRole="alert"
+                accessibilityLiveRegion="assertive"
+              >
+                {errors.name}
+              </Text>
+            )}
           </View>
 
           <View style={styles.fieldContainer}>
@@ -346,12 +380,26 @@ export function CreateClubForm({ onSuccess, onCancel }: CreateClubFormProps) {
             <TextInput
               style={[styles.input, styles.textArea, errors.description && styles.inputError]}
               placeholder="A friendly community club for players of all levels..."
+              placeholderTextColor={colors.tabIconDefault + '80'}
               value={formData.description}
               onChangeText={(text) => handleInputChange('description', text)}
               multiline
-              accessibilityLabel="Description"
+              accessibilityLabel="Club Description"
+              accessibilityHint="Describe your tennis club and what makes it special"
+              returnKeyType="next"
+              blurOnSubmit={false}
+              autoCapitalize="sentences"
+              autoCorrect={true}
             />
-            {errors.description && <Text style={styles.errorText}>{errors.description}</Text>}
+            {errors.description && (
+              <Text 
+                style={styles.errorText}
+                accessibilityRole="alert"
+                accessibilityLiveRegion="assertive"
+              >
+                {errors.description}
+              </Text>
+            )}
           </View>
 
           <View style={styles.fieldContainer}>
@@ -359,42 +407,50 @@ export function CreateClubForm({ onSuccess, onCancel }: CreateClubFormProps) {
             <TextInput
               style={[styles.input, errors.zipCode && styles.inputError]}
               placeholder="94102"
+              placeholderTextColor={colors.tabIconDefault + '80'}
               value={formData.zipCode}
               onChangeText={(text) => handleInputChange('zipCode', text)}
-              keyboardType="numeric"
+              keyboardType="number-pad"
               accessibilityLabel="Zip Code"
+              accessibilityHint="Enter the zip code where your club is located"
+              returnKeyType="done"
+              onSubmitEditing={handleSubmit}
+              maxLength={10} // Support 5+4 format
+              autoCapitalize="none"
+              autoCorrect={false}
             />
-            {errors.zipCode && <Text style={styles.errorText}>{errors.zipCode}</Text>}
-            {formData.zipCode.trim() && validateZipCode(formData.zipCode.trim()) && (
-              <View style={[styles.locationPreview, { backgroundColor: colors.tabIconDefault + '10' }]}>
-                <Text style={[styles.locationPreviewText, { color: colors.tabIconDefault }]}>
-                  📍 Club will be listed as: {getLocationFromZipCode(formData.zipCode.trim())}
-                </Text>
-              </View>
+            {errors.zipCode && (
+              <Text 
+                style={styles.errorText}
+                accessibilityRole="alert"
+                accessibilityLiveRegion="assertive"
+              >
+                {errors.zipCode}
+              </Text>
             )}
           </View>
 
 
           <View style={styles.buttonContainer}>
-        <TouchableOpacity style={[styles.button, styles.cancelButton]} onPress={onCancel}>
-          <Text style={[styles.buttonText, styles.cancelButtonText]}>Cancel</Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity
-          style={[
-            styles.button,
-            styles.createButton,
-            isSubmitting && styles.createButtonDisabled
-          ]}
-          onPress={handleSubmit}
-          disabled={isSubmitting}
-        >
-          {isSubmitting ? (
-            <Text style={[styles.buttonText, styles.createButtonText]}>Creating Club...</Text>
-          ) : (
-            <Text style={[styles.buttonText, styles.createButtonText]}>Create Club</Text>
-          )}
-        </TouchableOpacity>
+            <TouchableOpacity
+              style={[
+                styles.button,
+                styles.createButton,
+                isSubmitting && styles.createButtonDisabled
+              ]}
+              onPress={handleSubmit}
+              disabled={isSubmitting}
+              accessibilityRole="button"
+              accessibilityLabel={isSubmitting ? "Creating Club" : "Create Club"}
+              accessibilityHint={isSubmitting ? "Please wait while your club is being created" : "Tap to create your tennis club"}
+              accessibilityState={{ disabled: isSubmitting }}
+            >
+              {isSubmitting ? (
+                <Text style={[styles.buttonText, styles.createButtonText]}>Creating Club...</Text>
+              ) : (
+                <Text style={[styles.buttonText, styles.createButtonText]}>Create Club</Text>
+              )}
+            </TouchableOpacity>
           </View>
         </View>
       </ScrollView>
