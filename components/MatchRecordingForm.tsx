@@ -1494,7 +1494,7 @@ export function MatchRecordingForm(componentProps: MatchRecordingFormProps) {
           const availablePlayersForReporting = getAvailablePlayersForReporting();
           
           return (
-          <View style={styles.section}>
+            <View style={styles.section}>
             <TouchableOpacity
               style={styles.reportSectionHeader}
               onPress={() => {
