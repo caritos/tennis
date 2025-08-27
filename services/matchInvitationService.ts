@@ -559,8 +559,8 @@ export class MatchInvitationService {
             date,
             time,
             notes,
-            creator:users!match_invitations_creator_id_fkey(full_name),
-            club:clubs!match_invitations_club_id_fkey(name)
+            creator:users!creator_id(full_name),
+            club:clubs!club_id(name)
           )
         `)
         .eq('user_id', userId)

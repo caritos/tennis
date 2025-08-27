@@ -125,70 +125,43 @@ export function AuthProvider({ children }: AuthProviderProps) {
         .single();
 
       if (error && error.code === 'PGRST116') {
-        // Profile doesn't exist yet - create it now
-        console.log('👋 AuthContext: Profile not found, creating user profile in database');
-        console.log('🔍 AuthContext: authUser.user_metadata:', authUser.user_metadata);
-        console.log('🔍 AuthContext: phone from metadata:', authUser.user_metadata?.phone);
+        // Profile doesn't exist yet - create it using PostgreSQL function
+        console.log('👋 AuthContext: Profile not found, creating user profile via database function');
         
         try {
-          const profileData = {
-            id: authUser.id,
-            email: authUser.email || '',
-            full_name: authUser.user_metadata?.full_name || authUser.email?.split('@')[0] || 'User',
-            phone: authUser.user_metadata?.phone || '',
-            role: 'player'
-          };
-          
-          console.log('🔍 AuthContext: Creating profile with data:', profileData);
-          
-          // Try to insert the user profile (we know it doesn't exist)
-          const { data: insertedProfile, error: insertError } = await supabase
-            .from('users')
-            .insert(profileData)
-            .select()
-            .single();
+          const { data: result, error: functionError } = await supabase.rpc(
+            'create_user_profile_from_auth',
+            {
+              p_user_id: authUser.id,
+              p_email: authUser.email || '',
+              p_full_name: authUser.user_metadata?.full_name || authUser.email?.split('@')[0] || 'User',
+              p_phone: authUser.user_metadata?.phone || ''
+            }
+          );
 
-          if (insertError) {
-            console.error('❌ AuthContext: Failed to insert user profile:', insertError);
-            throw insertError;
+          if (functionError) {
+            console.error('❌ AuthContext: Profile function error:', functionError);
+            throw functionError;
           }
 
-          if (insertedProfile) {
-            console.log('✅ AuthContext: User profile inserted successfully');
+          if (result?.success) {
+            const profileData = result.user_profile;
+            console.log('✅ AuthContext:', result.message);
             
-            // Now add the rating fields with a separate update (workaround for schema cache issue)
-            try {
-              const { error: updateError } = await supabase
-                .from('users')
-                .update({
-                  elo_rating: 1200,
-                  games_played: 0
-                })
-                .eq('id', authUser.id);
-              
-              if (updateError) {
-                console.warn('⚠️ AuthContext: Failed to update rating fields (non-critical):', updateError);
-              } else {
-                console.log('✅ AuthContext: Rating fields updated successfully');
-              }
-            } catch (updateErr) {
-              console.warn('⚠️ AuthContext: Rating update failed (non-critical):', updateErr);
-            }
-            
-            // Create user profile from inserted data
+            // Create user profile from function result
             const userProfile: UserProfile = {
-              ...insertedProfile,
+              ...profileData,
               user_metadata: {
-                full_name: insertedProfile.full_name,
-                phone: insertedProfile.phone
+                full_name: profileData.full_name,
+                phone: profileData.phone
               }
             };
             setUser(userProfile);
-            setIsFirstTimeUser(true);
+            setIsFirstTimeUser(result.is_new_user);
             setIsOnboardingComplete(false);
           } else {
-            console.error('❌ AuthContext: No profile returned from upsert');
-            throw new Error('No profile returned from upsert');
+            console.error('❌ AuthContext: Profile function failed:', result?.error);
+            throw new Error(result?.error || 'Profile creation failed');
           }
           
         } catch (createError) {

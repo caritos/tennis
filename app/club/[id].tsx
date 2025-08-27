@@ -120,7 +120,7 @@ export default function ClubDetailScreen() {
       
       // Get member count
       const { count: memberCount } = await supabase
-        .from('club_memberships')
+        .from('club_members')
         .select('*', { count: 'exact', head: true })
         .eq('club_id', id);
       
@@ -254,22 +254,10 @@ export default function ClubDetailScreen() {
 
       console.log(`🔍 ClubDetails: Filtered invitations - Total: ${matchInvitations?.length || 0}, Active (not past): ${activeInvitations.length}, Past: ${pastInvitations.length}`);
 
-      // Update past invitations to 'expired' status in background (non-blocking)
+      // Log past invitations (status update removed due to constraint issues)
       if (pastInvitations.length > 0) {
         const pastInvitationIds = pastInvitations.map(inv => inv.id);
-        console.log(`🕰️ ClubDetails: Marking ${pastInvitations.length} past invitations as expired:`, pastInvitationIds);
-        
-        supabase
-          .from('match_invitations')
-          .update({ status: 'expired' })
-          .in('id', pastInvitationIds)
-          .then(({ error }) => {
-            if (error) {
-              console.error('Failed to mark past invitations as expired:', error);
-            } else {
-              console.log(`✅ ClubDetails: Successfully marked ${pastInvitations.length} past invitations as expired`);
-            }
-          });
+        console.log(`🕰️ ClubDetails: Found ${pastInvitations.length} past invitations (auto-filtered):`, pastInvitationIds);
       }
 
       // Fetch responses for each active invitation
@@ -322,22 +310,10 @@ export default function ClubDetailScreen() {
 
       console.log(`🔍 ClubDetails: Player count filtering - Viable: ${viableInvitations.length}, Failed to convene: ${failedInvitations.length}`);
 
-      // Mark failed invitations as expired in background (non-blocking)
+      // Log failed invitations (status update removed due to constraint issues)
       if (failedInvitations.length > 0) {
         const failedIds = failedInvitations.map(inv => inv.id);
-        console.log(`👥 ClubDetails: Marking ${failedInvitations.length} failed invitations as expired:`, failedIds);
-        
-        supabase
-          .from('match_invitations')
-          .update({ status: 'expired' })
-          .in('id', failedIds)
-          .then(({ error }) => {
-            if (error) {
-              console.error('Failed to mark failed invitations as expired:', error);
-            } else {
-              console.log(`✅ ClubDetails: Successfully marked ${failedInvitations.length} failed invitations as expired`);
-            }
-          });
+        console.log(`👥 ClubDetails: Found ${failedInvitations.length} failed invitations (auto-filtered):`, failedIds);
       }
       
       // Process completed matches
@@ -447,7 +423,7 @@ export default function ClubDetailScreen() {
       
       // Load club members
       const { data: membersData } = await supabase
-        .from('club_memberships')
+        .from('club_members')
         .select(`
           joined_at,
           user:users (*)

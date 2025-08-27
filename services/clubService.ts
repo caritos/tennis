@@ -86,7 +86,7 @@ export class ClubService {
 
       // Add creator as club member
       const { error: memberError } = await supabase
-        .from('club_memberships')
+        .from('club_members')
         .insert({
           club_id: clubId,
           user_id: clubData.creator_id,
@@ -100,26 +100,7 @@ export class ClubService {
         console.log('✅ Creator added as club member');
       }
 
-      // Create notifications for nearby users using PostgreSQL function
-      try {
-        const { data: notificationResult, error: notificationError } = await supabase.rpc(
-          'create_club_creation_notifications',
-          {
-            p_club_id: clubId,
-            p_club_lat: clubData.lat,
-            p_club_lng: clubData.lng
-          }
-        );
-
-        if (notificationError) {
-          console.error('⚠️ Failed to create club notifications:', notificationError);
-        } else {
-          console.log('✅ Club notifications created:', notificationResult);
-        }
-      } catch (notificationErr) {
-        console.error('⚠️ Club notification function failed:', notificationErr);
-        // Don't throw - club creation was successful
-      }
+      // Club creation notifications removed - no notifications sent when clubs are created
 
       return club;
 
@@ -134,7 +115,7 @@ export class ClubService {
 
     try {
       const { error } = await supabase
-        .from('club_memberships')
+        .from('club_members')
         .insert({
           club_id: clubId,
           user_id: userId,
@@ -182,7 +163,7 @@ export class ClubService {
 
     try {
       const { error } = await supabase
-        .from('club_memberships')
+        .from('club_members')
         .delete()
         .eq('club_id', clubId)
         .eq('user_id', userId);
@@ -203,7 +184,7 @@ export class ClubService {
   async getUserClubs(userId: string): Promise<Club[]> {
     try {
       const { data: clubs, error } = await supabase
-        .from('club_memberships')
+        .from('club_members')
         .select(`
           clubs (
             id,
@@ -279,7 +260,7 @@ export class ClubService {
   async isClubMember(clubId: string, userId: string): Promise<boolean> {
     try {
       const { data, error } = await supabase
-        .from('club_memberships')
+        .from('club_members')
         .select('club_id')
         .eq('club_id', clubId)
         .eq('user_id', userId)

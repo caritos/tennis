@@ -7,12 +7,11 @@ import { ThemedView } from './ThemedView';
 import { useColorScheme } from '@/hooks/useColorScheme';
 import { Colors } from '@/constants/Colors';
 import { matchInvitationService, CreateInvitationData } from '@/services/matchInvitationService';
-import { TimingOptions } from './challenge-flow/TimingOptions';
-import { MatchTypeSelection } from './challenge-flow/MatchTypeSelection';
-import { MessageSection } from './challenge-flow/MessageSection';
-import { FormActions } from './challenge-flow/FormActions';
+import TimingOptions from './challenge-flow/TimingOptions';
+import MatchTypeSelection from './challenge-flow/MatchTypeSelection';
+import MessageSection from './challenge-flow/MessageSection';
+import FormActions from './challenge-flow/FormActions';
 import { supabase } from '@/lib/supabase';
-import { useNotification } from '@/contexts/NotificationContext';
 
 type TimeOption = 'today' | 'tomorrow' | 'weekend' | 'next_week' | 'flexible';
 
@@ -31,7 +30,6 @@ const MatchInvitationForm: React.FC<MatchInvitationFormProps> = ({
 }) => {
   const colorScheme = useColorScheme();
   const colors = Colors[colorScheme ?? 'light'];
-  const { showSuccess, showError } = useNotification();
 
   const [matchType, setMatchType] = useState<'singles' | 'doubles'>('singles');
   const [selectedTiming, setSelectedTiming] = useState<TimeOption>('tomorrow');
@@ -85,7 +83,6 @@ const MatchInvitationForm: React.FC<MatchInvitationFormProps> = ({
       const validDate = new Date(selectedDate + 'T00:00:00');
       if (isNaN(validDate.getTime())) {
         console.error('❌ MatchInvitationForm: Invalid date:', selectedDate);
-        showError('Invalid Date', 'Please select a valid date for your match invitation.');
         return;
       }
 
@@ -134,10 +131,7 @@ const MatchInvitationForm: React.FC<MatchInvitationFormProps> = ({
         // Don't fail the whole process if notification creation fails
       }
 
-      showSuccess(
-        'Looking to Play Posted!',
-        `Your ${matchType} invitation has been posted to the club.`
-      );
+      console.log('Match invitation posted successfully:', invitationId);
 
       if (onSuccess) {
         console.log('🔄 MatchInvitationForm: Calling onSuccess callback');
@@ -148,10 +142,7 @@ const MatchInvitationForm: React.FC<MatchInvitationFormProps> = ({
       onClose();
     } catch (error) {
       console.error('❌ MatchInvitationForm: Failed to create invitation:', error);
-      showError(
-        'Failed to Post',
-        'Something went wrong. Please try again.'
-      );
+      // Error logged for debugging
     } finally {
       console.log('🔄 MatchInvitationForm: Setting isSubmitting to false');
       setIsSubmitting(false);

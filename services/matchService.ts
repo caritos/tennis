@@ -797,7 +797,7 @@ export const getClubLeaderboard = async (clubId: string): Promise<RankedPlayer[]
 
     // Get all club members with their ELO ratings
     const { data: members, error: membersError } = await supabase
-      .from('club_memberships')
+      .from('club_members')
       .select(`
         user:users (id, full_name, elo_rating, games_played)
       `)

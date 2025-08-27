@@ -524,7 +524,7 @@ export function MatchRecordingForm(componentProps: MatchRecordingFormProps) {
       
       // Get all club members except current user
       const { data: members, error } = await supabase
-        .from('club_memberships')
+        .from('club_members')
         .select(`
           user:users (
             id,
@@ -1648,23 +1648,16 @@ export function MatchRecordingForm(componentProps: MatchRecordingFormProps) {
                       key={player.id}
                       style={styles.playerCheckbox}
                       onPress={() => {
-                        if (matchType === 'singles') {
-                          // Singles: radio button behavior
-                          setReportTargetPlayerIds(
-                            reportTargetPlayerIds.includes(player.id) ? [] : [player.id]
-                          );
-                        } else {
-                          // Doubles: checkbox behavior
-                          setReportTargetPlayerIds(prev => 
-                            prev.includes(player.id) 
-                              ? prev.filter(id => id !== player.id)
-                              : [...prev, player.id]
-                          );
-                        }
+                        // Always use checkbox behavior for all match types
+                        setReportTargetPlayerIds(prev => 
+                          prev.includes(player.id) 
+                            ? prev.filter(id => id !== player.id)
+                            : [...prev, player.id]
+                        );
                       }}
                     >
                       <View style={[
-                        matchType === 'singles' ? styles.radioButton : styles.checkbox,
+                        styles.checkbox,
                         {
                           borderColor: colors.tint,
                           backgroundColor: reportTargetPlayerIds.includes(player.id) ? colors.tint : 'transparent'
@@ -1673,7 +1666,7 @@ export function MatchRecordingForm(componentProps: MatchRecordingFormProps) {
                         {reportTargetPlayerIds.includes(player.id) && (
                           <Ionicons 
                             name="checkmark" 
-                            size={matchType === 'singles' ? 10 : 14} 
+                            size={14} 
                             color="white" 
                           />
                         )}

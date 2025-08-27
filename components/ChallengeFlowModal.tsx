@@ -13,15 +13,14 @@ import { ThemedText } from './ThemedText';
 import { useColorScheme } from '@/hooks/useColorScheme';
 import { Colors } from '@/constants/Colors';
 import { challengeService, CreateChallengeData, CreateChallengeGroupData } from '@/services/challengeService';
-import { useNotification } from '@/contexts/NotificationContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/lib/supabase';
 import { CalendarDatePicker } from './CalendarDatePicker';
-import { MatchTypeSelection } from './challenge-flow/MatchTypeSelection';
-import { PlayerSelection } from './challenge-flow/PlayerSelection';
-import { TimingOptions } from './challenge-flow/TimingOptions';
-import { MessageSection } from './challenge-flow/MessageSection';
-import { FormActions } from './challenge-flow/FormActions';
+import MatchTypeSelection from './challenge-flow/MatchTypeSelection';
+import PlayerSelection from './challenge-flow/PlayerSelection';
+import TimingOptions from './challenge-flow/TimingOptions';
+import MessageSection from './challenge-flow/MessageSection';
+import FormActions from './challenge-flow/FormActions';
 
 interface Player {
   id: string;
@@ -49,7 +48,6 @@ const ChallengeFlowModal: React.FC<ChallengeFlowModalProps> = ({
 }) => {
   const colorScheme = useColorScheme();
   const colors = Colors[colorScheme ?? 'light'];
-  const { showSuccess, showError } = useNotification();
   const { user } = useAuth();
 
   // Form data
@@ -99,7 +97,7 @@ const ChallengeFlowModal: React.FC<ChallengeFlowModalProps> = ({
 
       // Get all club members except the current user from Supabase
       const { data: members, error } = await supabase
-        .from('club_memberships')
+        .from('club_members')
         .select(`
           user:users (
             id,
@@ -126,7 +124,7 @@ const ChallengeFlowModal: React.FC<ChallengeFlowModalProps> = ({
       setAvailablePlayers(players);
     } catch (error) {
       console.error('Failed to load players:', error);
-      showError('Error', 'Failed to load club members');
+      // Error logged for debugging
     } finally {
       setIsLoadingPlayers(false);
     }
@@ -194,10 +192,7 @@ const ChallengeFlowModal: React.FC<ChallengeFlowModalProps> = ({
 
         await challengeService.createChallengeGroup(challengeData);
 
-        showSuccess(
-          'Challenge Sent!',
-          `Your ${matchType} challenge has been sent to ${selectedPlayers[0].full_name}.`
-        );
+        console.log('Challenge sent successfully to single player:', selectedPlayers[0].full_name);
       } else {
         // Challenge group for doubles (2-to-2)
         // For doubles, we need to determine teams
@@ -220,10 +215,7 @@ const ChallengeFlowModal: React.FC<ChallengeFlowModalProps> = ({
         await challengeService.createChallengeGroup(challengeData);
 
         const playerNames = selectedPlayers.map(p => p.full_name).join(', ');
-        showSuccess(
-          'Challenge Sent!',
-          `Your doubles challenge has been sent to: ${playerNames}.`
-        );
+        console.log('Challenge sent successfully to doubles players:', playerNames);
       }
 
       if (onSuccess) {
@@ -233,10 +225,7 @@ const ChallengeFlowModal: React.FC<ChallengeFlowModalProps> = ({
       onClose();
     } catch (error) {
       console.error('Failed to create challenge:', error);
-      showError(
-        'Failed to Send Challenge',
-        'Something went wrong. Please try again.'
-      );
+      // Error logged for debugging
     } finally {
       setIsSubmitting(false);
     }

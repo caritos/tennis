@@ -52,7 +52,7 @@ export function PlayerStatsDisplay({ stats, loading, error }: PlayerStatsDisplay
         </View>
         <View style={styles.statItem}>
           <ThemedText style={[styles.statValue, { color: colors.tint }]}>
-            {stats.winPercentage}%
+            {Math.round(stats.winPercentage)}%
           </ThemedText>
           <ThemedText style={styles.statLabel}>Win Rate</ThemedText>
         </View>
@@ -76,7 +76,7 @@ export function PlayerStatsDisplay({ stats, loading, error }: PlayerStatsDisplay
             </ThemedText>
             {stats.singlesRecord.wins + stats.singlesRecord.losses > 0 && (
               <ThemedText style={styles.matchTypePercentage}>
-                ({stats.singlesRecord.winPercentage}%)
+                ({Math.round(stats.singlesRecord.winPercentage)}%)
               </ThemedText>
             )}
           </View>
@@ -88,7 +88,7 @@ export function PlayerStatsDisplay({ stats, loading, error }: PlayerStatsDisplay
             </ThemedText>
             {stats.doublesRecord.wins + stats.doublesRecord.losses > 0 && (
               <ThemedText style={styles.matchTypePercentage}>
-                ({stats.doublesRecord.winPercentage}%)
+                ({Math.round(stats.doublesRecord.winPercentage)}%)
               </ThemedText>
             )}
           </View>
@@ -186,11 +186,14 @@ const styles = StyleSheet.create({
   statItem: {
     alignItems: 'center',
     flex: 1,
+    paddingVertical: 4,  // Ensure container has enough vertical space
   },
   statValue: {
     fontSize: 28,  // iOS HIG: Title 1
     fontWeight: 'bold',
+    lineHeight: 36,  // Proper line height to prevent clipping
     marginBottom: 4,
+    paddingTop: 2,  // Small top padding to ensure full glyph visibility
   },
   statLabel: {
     fontSize: 11,  // iOS HIG: Caption 2

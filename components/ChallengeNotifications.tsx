@@ -13,7 +13,6 @@ import { ThemedView } from './ThemedView';
 import { useColorScheme } from '@/hooks/useColorScheme';
 import { Colors } from '@/constants/Colors';
 import { challengeService, ChallengeWithUsers } from '@/services/challengeService';
-import { useNotification } from '@/contexts/NotificationContext';
 import { useAuth } from '@/contexts/AuthContext';
 
 interface ChallengeNotificationsProps {
@@ -29,7 +28,6 @@ const ChallengeNotifications: React.FC<ChallengeNotificationsProps> = ({
 }) => {
   const colorScheme = useColorScheme();
   const colors = Colors[colorScheme ?? 'light'];
-  const { showError } = useNotification();
   const router = useRouter();
 
   const [receivedChallenges, setReceivedChallenges] = useState<ChallengeWithUsers[]>([]);
@@ -54,7 +52,7 @@ const ChallengeNotifications: React.FC<ChallengeNotificationsProps> = ({
       setReceivedChallenges(pendingChallenges);
     } catch (error) {
       console.error('Failed to load challenges:', error);
-      showError('Error', 'Failed to load challenge notifications');
+      // Error logged for debugging - notification box will handle display of any relevant info
     } finally {
       setIsLoading(false);
     }

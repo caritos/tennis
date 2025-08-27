@@ -284,8 +284,8 @@ class ChallengeService {
         .from('challenges')
         .select(`
           *,
-          challenger:users!challenges_challenger_id_fkey(full_name, phone),
-          challenged:users!challenges_challenged_id_fkey(full_name, phone)
+          challenger:users!challenger_id(full_name, phone),
+          challenged:users!challenged_id(full_name, phone)
         `)
         .eq('club_id', clubId)
         .neq('status', 'expired')
@@ -319,8 +319,8 @@ class ChallengeService {
         .from('challenges')
         .select(`
           *,
-          challenger:users!challenges_challenger_id_fkey(full_name, phone),
-          challenged:users!challenges_challenged_id_fkey(full_name, phone)
+          challenger:users!challenger_id(full_name, phone),
+          challenged:users!challenged_id(full_name, phone)
         `)
         .eq('challenger_id', userId)
         .neq('status', 'expired')
@@ -354,8 +354,8 @@ class ChallengeService {
         .from('challenges')
         .select(`
           *,
-          challenger:users!challenges_challenger_id_fkey(full_name, phone),
-          challenged:users!challenges_challenged_id_fkey(full_name, phone)
+          challenger:users!challenger_id(full_name, phone),
+          challenged:users!challenged_id(full_name, phone)
         `)
         .eq('challenged_id', userId)
         .neq('status', 'expired')
@@ -389,8 +389,8 @@ class ChallengeService {
         .from('challenges')
         .select(`
           *,
-          challenger:users!challenges_challenger_id_fkey(full_name, phone),
-          challenged:users!challenges_challenged_id_fkey(full_name, phone)
+          challenger:users!challenger_id(full_name, phone),
+          challenged:users!challenged_id(full_name, phone)
         `)
         .eq('id', challengeId)
         .single();
@@ -431,8 +431,8 @@ class ChallengeService {
           challenged_id,
           match_type,
           status,
-          challenger:users!challenges_challenger_id_fkey(full_name, phone),
-          challenged:users!challenges_challenged_id_fkey(full_name, phone)
+          challenger:users!challenger_id(full_name, phone),
+          challenged:users!challenged_id(full_name, phone)
         `)
         .eq('id', challengeId)
         .eq('challenged_id', userId)
@@ -978,8 +978,8 @@ class ChallengeService {
         .from('challenges')
         .select(`
           *,
-          challenger:users!challenges_challenger_id_fkey(full_name, phone),
-          challenged:users!challenges_challenged_id_fkey(full_name, phone),
+          challenger:users!challenger_id(full_name, phone),
+          challenged:users!challenged_id(full_name, phone),
           club:clubs!challenges_club_id_fkey(name)
         `)
         .eq('id', challengeId)
