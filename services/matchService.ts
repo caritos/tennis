@@ -797,9 +797,9 @@ export const getClubLeaderboard = async (clubId: string): Promise<RankedPlayer[]
 
     // Get all club members with their ELO ratings
     const { data: members, error: membersError } = await supabase
-      .from('club_members')
+      .from('club_memberships')
       .select(`
-        users (id, full_name, elo_rating, games_played)
+        user:users (id, full_name, elo_rating, games_played)
       `)
       .eq('club_id', clubId);
 
@@ -822,16 +822,16 @@ export const getClubLeaderboard = async (clubId: string): Promise<RankedPlayer[]
 
     // Initialize all members in the stats map
     (members || []).forEach((member: any) => {
-      if (member.users) {
-        playerStats.set(member.users.id, {
-          id: member.users.id,
-          name: member.users.full_name,
+      if (member.user) {
+        playerStats.set(member.user.id, {
+          id: member.user.id,
+          name: member.user.full_name,
           wins: 0,
           losses: 0,
           totalMatches: 0,
           winRate: 0,
-          eloRating: member.users.elo_rating || 1200,
-          gamesPlayed: member.users.games_played || 0,
+          eloRating: member.user.elo_rating || 1200,
+          gamesPlayed: member.user.games_played || 0,
         });
       }
     });

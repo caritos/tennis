@@ -87,7 +87,7 @@ const ChallengeFlowModalSimple: React.FC<ChallengeFlowModalProps> = ({
     
     try {
       const { data: players, error } = await supabase
-        .from('club_members')
+        .from('club_memberships')
         .select(`
           user_id,
           users!inner(id, full_name)
@@ -102,7 +102,7 @@ const ChallengeFlowModalSimple: React.FC<ChallengeFlowModalProps> = ({
 
       const playersList = (players || []).map((member: any) => ({
         id: member.user_id,
-        full_name: member.users.full_name
+        full_name: member.user.full_name
       }));
 
       setAvailablePlayers(playersList);

@@ -73,7 +73,7 @@ class RealtimeService {
     // First, get user's clubs to subscribe to their activities
     try {
       const { data: userClubs, error } = await supabase
-        .from('club_members')
+        .from('club_memberships')
         .select('club_id')
         .eq('user_id', userId);
 

@@ -99,9 +99,9 @@ const ChallengeFlowModal: React.FC<ChallengeFlowModalProps> = ({
 
       // Get all club members except the current user from Supabase
       const { data: members, error } = await supabase
-        .from('club_members')
+        .from('club_memberships')
         .select(`
-          users!club_members_user_id_fkey (
+          user:users (
             id,
             full_name
           )
@@ -116,10 +116,10 @@ const ChallengeFlowModal: React.FC<ChallengeFlowModalProps> = ({
 
       // Transform the joined data to Player format
       const players: Player[] = (members || [])
-        .filter(member => member.users) // Filter out null users
+        .filter(member => member.user) // Filter out null users
         .map(member => ({
-          id: (member.users as any).id,
-          full_name: (member.users as any).full_name
+          id: (member.user as any).id,
+          full_name: (member.user as any).full_name
         }))
         .sort((a, b) => a.full_name.localeCompare(b.full_name));
 

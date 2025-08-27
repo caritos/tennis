@@ -56,7 +56,7 @@ export default function ClubRankingsScreen() {
       
       // Get member count from Supabase
       const { count: memberCount, error: countError } = await supabase
-        .from('club_members')
+        .from('club_memberships')
         .select('*', { count: 'exact', head: true })
         .eq('club_id', id);
       

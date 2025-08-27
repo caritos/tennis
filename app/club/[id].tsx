@@ -119,7 +119,7 @@ export default function ClubDetailScreen() {
       
       // Get member count
       const { count: memberCount } = await supabase
-        .from('club_members')
+        .from('club_memberships')
         .select('*', { count: 'exact', head: true })
         .eq('club_id', id);
       
@@ -446,10 +446,10 @@ export default function ClubDetailScreen() {
       
       // Load club members
       const { data: membersData } = await supabase
-        .from('club_members')
+        .from('club_memberships')
         .select(`
           joined_at,
-          users (*)
+          user:users (*)
         `)
         .eq('club_id', id)
         .order('joined_at', { ascending: false });
@@ -457,14 +457,14 @@ export default function ClubDetailScreen() {
       // Process members data and add ranking information
       // Use the fresh leaderboard data instead of relying on state
       const processedMembers = (membersData || [])
-        .filter((member: any) => member.users != null) // Filter out members with deleted user accounts
+        .filter((member: any) => member.user != null) // Filter out members with deleted user accounts
         .map((member: any) => {
           // Find ranking for this member - only players in the leaderboard array have played matches
-          const rankedPlayer = leaderboard.find(rankedPlayer => rankedPlayer.id === member.users.id);
-          console.log(`🎾 ClubDetails: Processing member ${member.users?.full_name || 'Unknown User'}, found ranking:`, rankedPlayer?.rating || 'unranked');
+          const rankedPlayer = leaderboard.find(rankedPlayer => rankedPlayer.id === member.user.id);
+          console.log(`🎾 ClubDetails: Processing member ${member.user?.full_name || 'Unknown User'}, found ranking:`, rankedPlayer?.rating || 'unranked');
           
           return {
-            ...member.users,
+            ...member.user,
             joined_at: member.joined_at,
             match_count: rankedPlayer?.stats.totalMatches || 0,
             wins: rankedPlayer?.stats.wins || 0,

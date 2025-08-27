@@ -521,9 +521,9 @@ export function MatchRecordingForm(componentProps: MatchRecordingFormProps) {
       
       // Get all club members except current user
       const { data: members, error } = await supabase
-        .from('club_members')
+        .from('club_memberships')
         .select(`
-          users (
+          user:users (
             id,
             full_name
           )
@@ -538,10 +538,10 @@ export function MatchRecordingForm(componentProps: MatchRecordingFormProps) {
       }
       
       const playerList: Player[] = (members || [])
-        .filter(m => m.users)
+        .filter(m => m.user)
         .map((member: any) => ({
-          id: member.users.id,
-          name: member.users.full_name || 'Unknown'
+          id: member.user.id,
+          name: member.user.full_name || 'Unknown'
         }));
       
       console.log('📋 Loaded club members from Supabase:', playerList);

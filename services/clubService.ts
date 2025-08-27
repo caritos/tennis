@@ -86,7 +86,7 @@ export class ClubService {
 
       // Add creator as club member
       const { error: memberError } = await supabase
-        .from('club_members')
+        .from('club_memberships')
         .insert({
           club_id: clubId,
           user_id: clubData.creator_id,
@@ -134,7 +134,7 @@ export class ClubService {
 
     try {
       const { error } = await supabase
-        .from('club_members')
+        .from('club_memberships')
         .insert({
           club_id: clubId,
           user_id: userId,
@@ -182,7 +182,7 @@ export class ClubService {
 
     try {
       const { error } = await supabase
-        .from('club_members')
+        .from('club_memberships')
         .delete()
         .eq('club_id', clubId)
         .eq('user_id', userId);
@@ -203,7 +203,7 @@ export class ClubService {
   async getUserClubs(userId: string): Promise<Club[]> {
     try {
       const { data: clubs, error } = await supabase
-        .from('club_members')
+        .from('club_memberships')
         .select(`
           clubs (
             id,
@@ -279,7 +279,7 @@ export class ClubService {
   async isClubMember(clubId: string, userId: string): Promise<boolean> {
     try {
       const { data, error } = await supabase
-        .from('club_members')
+        .from('club_memberships')
         .select('club_id')
         .eq('club_id', clubId)
         .eq('user_id', userId)
