@@ -9,6 +9,17 @@ jest.mock('@/lib/supabase', () => ({
     auth: {
       signUp: jest.fn(),
     },
+    from: jest.fn(() => ({
+      upsert: jest.fn(() => ({
+        eq: jest.fn(() => ({
+          select: jest.fn(() => Promise.resolve({ data: null, error: null })),
+        })),
+      })),
+      insert: jest.fn(() => Promise.resolve({ data: null, error: null })),
+      select: jest.fn(() => ({
+        eq: jest.fn(() => Promise.resolve({ data: null, error: null })),
+      })),
+    })),
   },
 }));
 
@@ -46,7 +57,7 @@ describe('SignUp - Phone Number Integration', () => {
 
   describe('Phone number in signup data', () => {
     it('should include phone number in user_metadata when signing up', async () => {
-      const { getByPlaceholderText, getByText } = render(<SignUpPage />);
+      const { getByPlaceholderText, getByText, getByTestId } = render(<SignUpPage />);
 
       // Fill out the form
       fireEvent.changeText(getByPlaceholderText('Enter your full name'), 'Test User');
@@ -79,7 +90,7 @@ describe('SignUp - Phone Number Integration', () => {
     });
 
     it('should include trimmed phone number in user_metadata', async () => {
-      const { getByPlaceholderText, getByText } = render(<SignUpPage />);
+      const { getByPlaceholderText, getByText, getByTestId } = render(<SignUpPage />);
 
       // Fill out form with phone that has whitespace
       fireEvent.changeText(getByPlaceholderText('Enter your full name'), 'Test User');
@@ -185,7 +196,7 @@ describe('SignUp - Phone Number Integration', () => {
         fireEvent.changeText(getByTestId('confirm-password-input'), 'password123');
         
         // Agree to terms
-        const checkbox = getByText('I agree to the Terms of Service');
+        const checkbox = getByTestId('terms-checkbox');
         fireEvent.press(checkbox);
 
         // Submit form
