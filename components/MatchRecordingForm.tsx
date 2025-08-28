@@ -138,7 +138,7 @@ export function MatchRecordingForm(componentProps: MatchRecordingFormProps) {
   const [showReportingSection, setShowReportingSection] = useState(false);
   const [reportedPlayerIds, setReportedPlayerIds] = useState<string[]>([]); // For winner selection in challenge matches
   const [reportTargetPlayerIds, setReportTargetPlayerIds] = useState<string[]>([]); // For player reporting
-  const [reportType, setReportType] = useState('');
+  const [reportTypes, setReportTypes] = useState<string[]>([]);
   const [reportDescription, setReportDescription] = useState('');
 
   // All useEffect hooks
@@ -790,10 +790,10 @@ export function MatchRecordingForm(componentProps: MatchRecordingFormProps) {
     // For challenge matches, reportedPlayerIds is used for winner selection, not reporting
     // reportTargetPlayerIds is used for actual player reporting
     let reportData = undefined;
-    if (showReporting && reportTargetPlayerIds.length > 0 && reportType && reportDescription.trim()) {
+    if (showReporting && reportTargetPlayerIds.length > 0 && reportTypes.length > 0 && reportDescription.trim()) {
       reportData = {
         playerIds: reportTargetPlayerIds,
-        type: reportType,
+        types: reportTypes,
         description: reportDescription.trim()
       };
     }
@@ -1679,41 +1679,45 @@ export function MatchRecordingForm(componentProps: MatchRecordingFormProps) {
                 </View>
 
                 {/* Section 2: Reason for report */}
-                {reportTargetPlayerIds.length > 0 && (
-                  <View style={styles.reportTypeSection}>
-                    <Text style={styles.reportLabel}>Reason for report:</Text>
-                    {[
-                      { key: 'no_show', label: 'No-show' },
-                      { key: 'unsportsmanlike', label: 'Unsportsmanlike' },
-                      { key: 'inappropriate', label: 'Inappropriate' },
-                      { key: 'other', label: 'Other' }
-                    ].map((type) => (
-                      <TouchableOpacity
-                        key={type.key}
-                        style={styles.playerCheckbox}
-                        onPress={() => setReportType(type.key)}
-                      >
-                        <View style={[
-                          styles.radioButton,
-                          {
-                            borderColor: colors.tint,
-                            backgroundColor: reportType === type.key ? colors.tint : 'transparent'
-                          }
-                        ]}>
-                          {reportType === type.key && (
-                            <Ionicons name="checkmark" size={10} color="white" />
-                          )}
-                        </View>
-                        <Text style={[styles.playerName, { color: colors.text }]}>
-                          {type.label}
-                        </Text>
-                      </TouchableOpacity>
-                    ))}
-                  </View>
-                )}
+                <View style={styles.reportTypeSection}>
+                  <Text style={styles.reportLabel}>Reason for report (optional):</Text>
+                  {[
+                    { key: 'no_show', label: 'Player did not show up' },
+                    { key: 'unsportsmanlike', label: 'Bad sportsmanship' },
+                    { key: 'inappropriate', label: 'Inappropriate behavior' },
+                    { key: 'cheating', label: 'Cheating/dishonest line calls' },
+                    { key: 'aggressive', label: 'Aggressive or threatening' },
+                    { key: 'other', label: 'Other issue' }
+                  ].map((type) => (
+                    <TouchableOpacity
+                      key={type.key}
+                      style={styles.playerCheckbox}
+                      onPress={() => setReportTypes(prev => 
+                        prev.includes(type.key)
+                          ? prev.filter(t => t !== type.key)
+                          : [...prev, type.key]
+                      )}
+                    >
+                      <View style={[
+                        styles.checkbox,
+                        {
+                          borderColor: colors.tint,
+                          backgroundColor: reportTypes.includes(type.key) ? colors.tint : 'transparent'
+                        }
+                      ]}>
+                        {reportTypes.includes(type.key) && (
+                          <Ionicons name="checkmark" size={14} color="white" />
+                        )}
+                      </View>
+                      <Text style={[styles.playerName, { color: colors.text }]}>
+                        {type.label}
+                      </Text>
+                    </TouchableOpacity>
+                  ))}
+                </View>
 
                 {/* Section 3: Description */}
-                {reportType && (
+                {reportTypes.length > 0 && (
                   <View style={styles.reportDescriptionSection}>
                     <Text style={styles.reportLabel}>
                       Description:

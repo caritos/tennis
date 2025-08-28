@@ -30,7 +30,7 @@ function createMigration() {
     execSync(command, { stdio: 'inherit' });
     
     console.log('✅ Migration created successfully!');
-    console.log(`📁 Check supabase/migrations/ for the new migration file`);
+    console.log(`📁 Check database/migrations/ for the new migration file`);
     
   } catch (error) {
     if (error.message.includes('Docker')) {
