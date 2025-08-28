@@ -175,7 +175,7 @@ export default function SignUpPage() {
       
     } catch (error: any) {
       console.error('Failed to sign up:', error);
-      setError(error.message || 'Failed to create account');
+      setError(getAuthErrorMessage(error));
       setIsLoading(false);
     }
   };

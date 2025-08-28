@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { router } from 'expo-router';
 import { EmailSignInForm } from '@/components/EmailSignInForm';
 import { useAuth } from '@/contexts/AuthContext';
+import { isAbortError } from '@/utils/errorHandling';
 
 export default function EmailSignInPage() {
   const [isLoading, setIsLoading] = useState(false);
@@ -29,7 +30,13 @@ export default function EmailSignInPage() {
       console.log('✅ User signed in successfully');
       router.replace('/');
       
-    } catch (error) {
+    } catch (error: any) {
+      // Ignore abort errors - they happen when component unmounts
+      if (isAbortError(error)) {
+        console.log('⚠️ Sign in aborted (component unmounted)');
+        return;
+      }
+      
       console.error('❌ Failed to sign in:', error);
       setIsLoading(false);
       throw error; // Let the form handle the error display

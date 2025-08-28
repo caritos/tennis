@@ -37,10 +37,17 @@ export const supabase = createClient<Database>(config.supabase.url, config.supab
         return response;
       } catch (error) {
         clearTimeout(timeoutId);
+        
+        // Don't log abort errors - they happen when components unmount
+        if ((error as Error)?.name === 'AbortError' || (error as Error)?.message === 'Aborted') {
+          throw error;
+        }
+        
         // Don't log network errors to reduce noise
         if ((error as Error)?.message?.includes('Network request failed')) {
           throw error;
         }
+        
         console.error('Supabase fetch error:', error);
         throw error;
       }

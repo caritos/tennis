@@ -17,7 +17,7 @@ interface ClubOverviewProps {
   onViewAllMembers: () => void;
   onRecordMatch: () => void;
   onInvitePlayers: () => void;
-  onViewAllMatches: () => void;
+  onViewAllMatches: (matchId?: string) => void;
   onEditClub?: () => void;
 }
 

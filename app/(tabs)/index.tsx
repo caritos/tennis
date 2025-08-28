@@ -17,6 +17,7 @@ import { useLocation } from '@/hooks/useLocation';
 import { useAuth } from '@/contexts/AuthContext';
 import { useOnboarding } from '@/contexts/OnboardingContext';
 import { getUserClubs, getClubsByLocation, joinClub, calculateDistance } from '@/services/clubService';
+import { getAuthErrorMessage } from '@/utils/errorHandling';
 
 export default function ClubScreen() {
   const colorScheme = useColorScheme();
@@ -164,7 +165,7 @@ export default function ClubScreen() {
         setJoinedClubIds(prev => [...prev, club.id]);
         setMyClubs(prev => [...prev, club]);
       } else {
-        setError(`Failed to join ${club.name}. ${error.message}`);
+        setError(`Failed to join ${club.name}. ${getAuthErrorMessage(error)}`);
       }
     } finally {
       setJoiningClubId(null);

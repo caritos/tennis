@@ -68,22 +68,81 @@ export class MatchInvitationService {
     };
 
     try {
-      const { data, error } = await supabase
+      console.log('🔍 Creating invitation in database...');
+      
+      // Add timeout to prevent hanging
+      const insertPromise = supabase
         .from('match_invitations')
         .insert(invitation)
         .select()
         .single();
 
+      const timeoutPromise = new Promise((_, reject) => {
+        setTimeout(() => {
+          reject(new Error('Database operation timed out after 10 seconds'));
+        }, 10000);
+      });
+
+      const { data, error } = await Promise.race([insertPromise, timeoutPromise]) as any;
+
       if (error) {
-        console.error('❌ Failed to create invitation:', error);
+        console.error('❌ Failed to create invitation via direct insert:', error);
+        console.error('❌ Error code:', error.code);
+        console.error('❌ Error hint:', error.hint);
+        console.error('❌ Error details:', error.details);
         console.error('❌ Invitation data being sent:', invitation);
-        throw new Error(`Failed to create match invitation: ${error.message || JSON.stringify(error)}`);
+        
+        // Try using PostgreSQL function as fallback for RLS issues
+        console.log('🔄 Attempting to create invitation via PostgreSQL function...');
+        
+        try {
+          const { data: functionResult, error: functionError } = await supabase.rpc('create_match_invitation', {
+            p_club_id: invitation.club_id,
+            p_creator_id: invitation.creator_id,
+            p_match_type: invitation.match_type,
+            p_date: invitation.date,
+            p_time: invitation.time || null,
+            p_location: invitation.location || null,
+            p_notes: invitation.notes || null
+          });
+
+          if (functionError) {
+            console.error('❌ PostgreSQL function also failed:', functionError);
+            throw new Error(`Both direct insert and PostgreSQL function failed. Last error: ${functionError.message}`);
+          }
+
+          if (functionResult?.success) {
+            console.log('✅ Match invitation created via PostgreSQL function:', functionResult.invitation.id);
+            return functionResult.invitation as MatchInvitation;
+          } else {
+            throw new Error(functionResult?.error || 'PostgreSQL function returned failure');
+          }
+        } catch (fallbackError) {
+          console.error('❌ PostgreSQL function fallback failed:', fallbackError);
+          
+          // Check for common RLS issues in original error
+          if (error.code === '42501' || error.message?.includes('permission denied') || error.message?.includes('policy')) {
+            throw new Error('Permission denied: You may not be a member of this club or have insufficient permissions to create match invitations.');
+          }
+          
+          throw new Error(`Failed to create match invitation: ${error.message || JSON.stringify(error)}`);
+        }
       }
 
-      console.log('✅ Match invitation created:', invitation.id);
+      if (!data) {
+        throw new Error('No data returned from database after insertion');
+      }
+
+      console.log('✅ Match invitation created via direct insert:', invitation.id);
       return data as MatchInvitation;
     } catch (error) {
       console.error('❌ Failed to create invitation (catch block):', error);
+      
+      // Check if it's a timeout error
+      if (error instanceof Error && error.message.includes('timed out')) {
+        throw new Error('The request timed out. Please check your internet connection and try again.');
+      }
+      
       if (error instanceof Error) {
         throw error;
       } else {

@@ -2,6 +2,7 @@ import React, { createContext, useContext, useEffect, useState, ReactNode } from
 import { User } from '@supabase/supabase-js';
 import { supabase } from '@/lib/supabase';
 import { AuthErrorHandler } from '@/services/authErrorHandler';
+import { isAbortError } from '@/utils/errorHandling';
 
 interface UserProfile {
   id: string;
@@ -41,6 +42,8 @@ export function AuthProvider({ children }: AuthProviderProps) {
   const [isOnboardingComplete, setIsOnboardingComplete] = useState(false);
 
   useEffect(() => {
+    let isMounted = true;
+    
     // Get initial session
     const getInitialSession = async () => {
       console.log('🔐 AuthContext: Getting initial session...');
@@ -58,8 +61,10 @@ export function AuthProvider({ children }: AuthProviderProps) {
         } else if (session?.user) {
           console.log('✅ AuthContext: Found existing session for:', session.user.email);
           
-          // Load full user profile
-          await loadUserProfile(session.user);
+          // Load full user profile only if component is still mounted
+          if (isMounted) {
+            await loadUserProfile(session.user);
+          }
         } else {
           console.log('📭 AuthContext: No existing session');
         }
@@ -71,7 +76,9 @@ export function AuthProvider({ children }: AuthProviderProps) {
           await AuthErrorHandler.getInstance().handleAuthError(error);
         }
       } finally {
-        setIsLoading(false);
+        if (isMounted) {
+          setIsLoading(false);
+        }
       }
     };
 
@@ -97,6 +104,12 @@ export function AuthProvider({ children }: AuthProviderProps) {
         try {
           await loadUserProfile(session.user);
         } catch (error: any) {
+          // Ignore abort errors - they happen when component unmounts
+          if (isAbortError(error)) {
+            console.log('⚠️ AuthContext: Profile load aborted during auth state change (component unmounted)');
+            return;
+          }
+          
           console.error('❌ AuthContext: Error loading profile:', error);
           if (AuthErrorHandler.isAuthError(error)) {
             await AuthErrorHandler.getInstance().handleAuthError(error);
@@ -112,9 +125,11 @@ export function AuthProvider({ children }: AuthProviderProps) {
     });
 
     return () => {
+      isMounted = false;
       subscription.unsubscribe();
     };
   }, []);
+
 
   const loadUserProfile = async (authUser: User) => {
     try {
@@ -181,6 +196,12 @@ export function AuthProvider({ children }: AuthProviderProps) {
           setIsOnboardingComplete(false);
         }
       } else if (error) {
+        // Ignore abort errors - they happen when component unmounts
+        if (isAbortError(error)) {
+          console.log('⚠️ AuthContext: Profile query aborted (component unmounted)');
+          return;
+        }
+        
         console.error('❌ AuthContext: Profile load failed:', error);
         setIsFirstTimeUser(false);
         setIsOnboardingComplete(false);
@@ -200,7 +221,13 @@ export function AuthProvider({ children }: AuthProviderProps) {
         setIsFirstTimeUser(false);
         setIsOnboardingComplete(true);
       }
-    } catch (error) {
+    } catch (error: any) {
+      // Ignore abort errors - they happen when component unmounts
+      if (isAbortError(error)) {
+        console.log('⚠️ AuthContext: Profile load aborted (component unmounted)');
+        return;
+      }
+      
       console.error('❌ AuthContext: Profile load failed:', error);
       setIsFirstTimeUser(false);
       setIsOnboardingComplete(false);

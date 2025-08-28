@@ -66,12 +66,12 @@ export default function ClubMatches({
   onFilterDateChange,
   onFilterInvolvementChange,
   onClaimMatch,
-  onRecordMatch,
+  onRecordMatch: _onRecordMatch,
   onJoinInvitation,
   joiningInvitations,
   currentUserId,
   highlightMatchId,
-  onHighlightCleared,
+  onHighlightCleared: _onHighlightCleared,
 }: ClubMatchesProps) {
   const scrollViewRef = useRef<ScrollView>(null);
   const matchHeightsRef = useRef<Map<string, number>>(new Map());

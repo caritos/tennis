@@ -11,7 +11,7 @@ import { supabase } from '@/lib/supabase';
 interface UpcomingMatchesNotificationProps {
   clubId: string;
   userId?: string;
-  onViewDetails?: () => void;
+  onViewDetails?: (matchId?: string) => void;
 }
 
 interface ConfirmedPlayer {

@@ -6,7 +6,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { ThemedText } from '@/components/ThemedText';
 import { useColorScheme } from '@/hooks/useColorScheme';
 import { Colors } from '@/constants/Colors';
-import { IOSTypography, IOSSpacing, IOSBorderRadius, IOSColors, IOSShadows, IOSStyles } from '@/constants/IOSDesign';
+import { IOSTypography, IOSSpacing, IOSColors, IOSStyles } from '@/constants/IOSDesign';
 import { Club , supabase } from '@/lib/supabase';
 import { useAuth } from '@/contexts/AuthContext';
 import { RankedPlayer } from '@/components/ClubRankings';
@@ -35,13 +35,13 @@ export default function ClubDetailScreen() {
   
   const [club, setClub] = useState<Club | null>(null);
   const [memberCount, setMemberCount] = useState(0);
-  const [rankings, setRankings] = useState<RankedPlayer[]>([]);
-  const [recentMatches, setRecentMatches] = useState<any[]>([]);
+  const [_rankings, _setRankings] = useState<RankedPlayer[]>([]);
+  const [_recentMatches, _setRecentMatches] = useState<any[]>([]);
   const [allMatches, setAllMatches] = useState<any[]>([]);
   const [clubMembers, setClubMembers] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [isCreator, setIsCreator] = useState(false);
+  const [_isCreator, _setIsCreator] = useState(false);
   const [showChallengeModal, setShowChallengeModal] = useState(false);
   const [challengeTarget, setChallengeTarget] = useState<{ id: string; name: string } | null>(null);
   const [pendingChallenges, setPendingChallenges] = useState<Set<string>>(new Set());
@@ -55,7 +55,7 @@ export default function ClubDetailScreen() {
   const [showInviteForm, setShowInviteForm] = useState(false);
   const [unreadChallengeCount, setUnreadChallengeCount] = useState(0);
   const [highlightMatchId, setHighlightMatchId] = useState<string | null>(null);
-  const highlightClearTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const highlightClearTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Set active tab from query parameter
   useEffect(() => {

@@ -1,9 +1,38 @@
 import { AuthError } from '@supabase/supabase-js';
 
 /**
+ * Helper function to detect abort errors in any form
+ */
+export function isAbortError(error: any): boolean {
+  if (!error) return false;
+  
+  // Direct abort error
+  if (error.name === 'AbortError' || error.message === 'Aborted') {
+    return true;
+  }
+  
+  // Wrapped abort error in details
+  if (error.details && typeof error.details === 'string') {
+    return error.details.includes('Error: Aborted') || error.details.includes('AbortError');
+  }
+  
+  // Nested abort error
+  if (error.details && error.details.message === 'Aborted') {
+    return true;
+  }
+  
+  return false;
+}
+
+/**
  * Convert Supabase auth errors to user-friendly messages
  */
 export function getAuthErrorMessage(error: AuthError | Error): string {
+  // Handle abort errors first - these should be user-friendly
+  if (isAbortError(error)) {
+    return 'Please try again. The request was interrupted.';
+  }
+  
   const message = error.message.toLowerCase();
   
   // Common auth error patterns from Supabase tutorial

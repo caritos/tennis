@@ -712,6 +712,29 @@ export type Database = {
         }
         Returns: Json
       }
+      debug_match_invitations: {
+        Args: { p_club_id: string; p_user_id?: string }
+        Returns: Json
+      }
+      get_club_match_invitations: {
+        Args: { p_club_id: string; p_user_id?: string }
+        Returns: {
+          club_id: string
+          created_at: string
+          creator_full_name: string
+          creator_id: string
+          creator_phone: string
+          date: string
+          id: string
+          location: string
+          match_type: string
+          notes: string
+          response_count: number
+          responses: Json
+          status: string
+          time: string
+        }[]
+      }
       is_admin: {
         Args: Record<PropertyKey, never>
         Returns: boolean

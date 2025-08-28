@@ -35,6 +35,7 @@ const MatchInvitationForm: React.FC<MatchInvitationFormProps> = ({
   const [selectedTiming, setSelectedTiming] = useState<TimeOption>('tomorrow');
   const [message, setMessage] = useState(''); // Renamed from notes to match MessageSection
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   // Helper function to convert timing option to date string
   const getDateFromTiming = (timing: TimeOption): string => {
@@ -73,6 +74,7 @@ const MatchInvitationForm: React.FC<MatchInvitationFormProps> = ({
 
     try {
       setIsSubmitting(true);
+      setError(null); // Clear any previous errors
       console.log('🎾 MatchInvitationForm: Starting invitation creation...');
 
       // Convert timing option to date string
@@ -131,7 +133,7 @@ const MatchInvitationForm: React.FC<MatchInvitationFormProps> = ({
         // Don't fail the whole process if notification creation fails
       }
 
-      console.log('Match invitation posted successfully:', invitationId);
+      console.log('Match invitation posted successfully:', createdInvitation.id);
 
       if (onSuccess) {
         console.log('🔄 MatchInvitationForm: Calling onSuccess callback');
@@ -142,7 +144,13 @@ const MatchInvitationForm: React.FC<MatchInvitationFormProps> = ({
       onClose();
     } catch (error) {
       console.error('❌ MatchInvitationForm: Failed to create invitation:', error);
-      // Error logged for debugging
+      
+      // Show user-friendly error message
+      if (error instanceof Error) {
+        setError(error.message);
+      } else {
+        setError('Failed to create match invitation. Please try again.');
+      }
     } finally {
       console.log('🔄 MatchInvitationForm: Setting isSubmitting to false');
       setIsSubmitting(false);
@@ -162,6 +170,17 @@ const MatchInvitationForm: React.FC<MatchInvitationFormProps> = ({
         <ThemedText style={styles.headerTitle}>Looking to Play</ThemedText>
         <View style={styles.headerSpacer} />
       </View>
+
+      {/* Error Message */}
+      {error && (
+        <View style={[styles.errorContainer, { backgroundColor: '#ffebee', borderColor: '#f44336' }]}>
+          <Ionicons name="alert-circle" size={20} color="#f44336" />
+          <ThemedText style={[styles.errorText, { color: '#f44336' }]}>{error}</ThemedText>
+          <TouchableOpacity onPress={() => setError(null)} style={styles.errorDismiss}>
+            <Ionicons name="close" size={16} color="#f44336" />
+          </TouchableOpacity>
+        </View>
+      )}
 
       <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
         <View style={styles.formContainer}>
@@ -232,6 +251,23 @@ const styles = StyleSheet.create({
   },
   headerSpacer: {
     width: 40,
+  },
+  errorContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 12,
+    marginHorizontal: 16,
+    marginBottom: 8,
+    borderRadius: 8,
+    borderWidth: 1,
+  },
+  errorText: {
+    flex: 1,
+    marginLeft: 8,
+    fontSize: 14,
+  },
+  errorDismiss: {
+    padding: 4,
   },
   scrollView: {
     flex: 1,

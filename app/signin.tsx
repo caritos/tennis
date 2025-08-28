@@ -9,7 +9,7 @@ import { useColorScheme } from '@/hooks/useColorScheme';
 import { Colors } from '@/constants/Colors';
 import { supabase } from '@/lib/supabase';
 // import { initializeDatabase } from '@/database/database'; // Removed - using Supabase only
-import { getAuthErrorMessage, logError } from '@/utils/errorHandling';
+import { getAuthErrorMessage, logError, isAbortError } from '@/utils/errorHandling';
 
 export default function SignInPage() {
   const [isLoading, setIsLoading] = useState(false);
@@ -42,7 +42,10 @@ export default function SignInPage() {
       });
       
       if (error) {
-        logError('email-signin', error);
+        // Don't log abort errors - they happen when component unmounts
+        if (!isAbortError(error)) {
+          logError('email-signin', error);
+        }
         throw new Error(getAuthErrorMessage(error));
       }
       
@@ -60,8 +63,14 @@ export default function SignInPage() {
       setIsLoading(false);
       
     } catch (error: any) {
+      // Ignore abort errors - they happen when component unmounts
+      if (isAbortError(error)) {
+        console.log('⚠️ Sign in aborted (component unmounted)');
+        return;
+      }
+      
       console.error('Failed to sign in:', error);
-      setError(error.message || 'Failed to sign in');
+      setError(getAuthErrorMessage(error));
       setIsLoading(false);
     }
   };
