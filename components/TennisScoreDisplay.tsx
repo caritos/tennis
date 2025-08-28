@@ -8,6 +8,13 @@ import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { useAuth } from '@/contexts/AuthContext';
 
+// Helper function to create readable match IDs for easy identification
+const getReadableMatchId = (matchId: string): string => {
+  // Take first 6 characters after any dashes and format as "M-ABC123"
+  const cleanId = matchId.replace(/-/g, '').toUpperCase().slice(0, 6);
+  return `M-${cleanId}`;
+};
+
 interface TennisScoreDisplayProps {
   player1Name: string;
   player2Name: string;
@@ -169,9 +176,18 @@ export function TennisScoreDisplay({
       {/* Compact header with club name and date */}
       {(clubName || matchDate) && (
         <View style={[styles.clubHeader, { borderBottomColor: colors.tabIconDefault + '20' }]}>
-          <ThemedText style={[styles.clubHeaderText, { color: colors.tabIconDefault }]}>
-            {clubName}{clubName && matchDate && ' • '}{matchDate && formatMatchDate(matchDate)}
-          </ThemedText>
+          <View style={styles.clubHeaderContent}>
+            <ThemedText style={[styles.clubHeaderText, { color: colors.tabIconDefault }]}>
+              {clubName}{clubName && matchDate && ' • '}{matchDate && formatMatchDate(matchDate)}
+            </ThemedText>
+            {matchId && (
+              <View style={[styles.matchIdBadge, { backgroundColor: colors.tabIconDefault + '10', borderColor: colors.tabIconDefault + '40' }]}>
+                <ThemedText style={[styles.matchIdText, { color: colors.tabIconDefault }]}>
+                  {getReadableMatchId(matchId)}
+                </ThemedText>
+              </View>
+            )}
+          </View>
         </View>
       )}
 
@@ -562,5 +578,21 @@ const styles = StyleSheet.create({
   notesText: {
     fontSize: 16,
     lineHeight: 22,
+  },
+  clubHeaderContent: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  matchIdBadge: {
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+    borderRadius: 12,
+    borderWidth: 1,
+  },
+  matchIdText: {
+    fontSize: 10,
+    fontWeight: '700',
+    letterSpacing: 0.5,
   },
 });

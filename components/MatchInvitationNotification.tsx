@@ -8,6 +8,13 @@ import { Colors } from '@/constants/Colors';
 import { supabase } from '@/lib/supabase';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
+// Helper function to create readable match IDs for easy identification
+const getReadableMatchId = (matchId: string): string => {
+  // Take first 6 characters after any dashes and format as "M-ABC123"
+  const cleanId = matchId.replace(/-/g, '').toUpperCase().slice(0, 6);
+  return `M-${cleanId}`;
+};
+
 interface ActiveInvitation {
   id: string;
   match_type: 'singles' | 'doubles';
@@ -21,7 +28,7 @@ interface ActiveInvitation {
 
 interface MatchInvitationNotificationProps {
   clubId: string;
-  onViewDetails?: () => void;
+  onViewDetails?: (matchId?: string) => void;
 }
 
 export function MatchInvitationNotification({ 
@@ -189,7 +196,7 @@ export function MatchInvitationNotification({
                     New {invitation.match_type} invitation
                   </ThemedText>
                   <ThemedText style={[styles.message, { color: colors.textSecondary }]}>
-                    {invitation.creator_name} is looking for {invitation.match_type === 'singles' ? 'a singles partner' : 'players for a doubles match'} on {dateStr}
+                    {invitation.creator_name} is looking for {invitation.match_type === 'singles' ? 'a singles partner' : 'players for a doubles match'} on {dateStr} ({getReadableMatchId(invitation.id)})
                   </ThemedText>
                   <ThemedText style={[styles.timeAgo, { color: colors.tabIconDefault }]}>
                     {timeAgo}
@@ -208,10 +215,13 @@ export function MatchInvitationNotification({
               {onViewDetails && (
                 <TouchableOpacity
                   style={[styles.actionButton, { borderColor: colors.tint }]}
-                  onPress={handleViewDetails}
+                  onPress={() => {
+                    console.log('🎯 MatchInvitationNotification: View Detail button pressed for invitation:', invitation.id);
+                    onViewDetails?.(invitation.id);
+                  }}
                 >
                   <ThemedText style={[styles.actionButtonText, { color: colors.tint }]}>
-                    View Match Detail
+                    View Match {getReadableMatchId(invitation.id)}
                   </ThemedText>
                   <Ionicons name="arrow-forward" size={14} color={colors.tint} />
                 </TouchableOpacity>

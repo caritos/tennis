@@ -1,5 +1,5 @@
-import React, { useEffect, useState, useCallback } from 'react';
-import { View, ScrollView, StyleSheet, TouchableOpacity, ActivityIndicator, Modal } from 'react-native';
+import React, { useEffect, useState, useCallback, useRef } from 'react';
+import { View, StyleSheet, TouchableOpacity, ActivityIndicator, Modal } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useLocalSearchParams, router, useFocusEffect } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
@@ -18,14 +18,20 @@ import MatchInvitationForm from '@/components/MatchInvitationForm';
 import { getClubLeaderboard } from '@/services/matchService';
 import { challengeService } from '@/services/challengeService';
 import { matchInvitationService } from '@/services/matchInvitationService';
+import { getClubMatchInvitations, debugMatchInvitations } from '@/services/matchInvitationFunctions';
 
 type TabType = 'overview' | 'members' | 'matches';
 
 export default function ClubDetailScreen() {
-  const { id, tab } = useLocalSearchParams();
+  const { id, tab, matchId } = useLocalSearchParams();
   const colorScheme = useColorScheme();
   const colors = Colors[colorScheme ?? 'light'];
   const { user } = useAuth();
+  
+  // Debug URL parameters
+  useEffect(() => {
+    console.log('🎯 URL Parameters changed:', { id, tab, matchId });
+  }, [id, tab, matchId]);
   
   const [club, setClub] = useState<Club | null>(null);
   const [memberCount, setMemberCount] = useState(0);
@@ -41,8 +47,15 @@ export default function ClubDetailScreen() {
   const [pendingChallenges, setPendingChallenges] = useState<Set<string>>(new Set());
   const [joiningInvitations, setJoiningInvitations] = useState<Set<string>>(new Set());
   const [activeTab, setActiveTab] = useState<TabType>('overview');
+  
+  // Debug tab changes
+  useEffect(() => {
+    console.log('🎯 Active tab changed to:', activeTab);
+  }, [activeTab]);
   const [showInviteForm, setShowInviteForm] = useState(false);
   const [unreadChallengeCount, setUnreadChallengeCount] = useState(0);
+  const [highlightMatchId, setHighlightMatchId] = useState<string | null>(null);
+  const highlightClearTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   // Set active tab from query parameter
   useEffect(() => {
@@ -54,6 +67,56 @@ export default function ClubDetailScreen() {
       setActiveTab('overview');
     }
   }, [tab]);
+
+  // Handle deep linking to specific match
+  useEffect(() => {
+    if (matchId && typeof matchId === 'string' && allMatches.length > 0) {
+      console.log('🎯 Deep linking to match:', matchId);
+      console.log('🎯 Available matches:', allMatches.map(m => m.id));
+      
+      // Check if the target match exists in the loaded matches
+      const targetMatch = allMatches.find(match => match.id === matchId);
+      if (!targetMatch) {
+        console.warn('🎯 Target match not found in loaded matches:', matchId);
+        return;
+      }
+      
+      console.log('🎯 Found target match:', targetMatch);
+      
+      // Switch to matches tab if not already there
+      if (activeTab !== 'matches') {
+        console.log('🎯 Switching to matches tab...');
+        setActiveTab('matches');
+      }
+      
+      // Clear any existing highlight timeout
+      if (highlightClearTimeoutRef.current) {
+        clearTimeout(highlightClearTimeoutRef.current);
+        highlightClearTimeoutRef.current = null;
+      }
+      
+      // Small delay to ensure tab switch is complete before highlighting
+      const highlightTimeout = setTimeout(() => {
+        console.log('🎯 Setting highlight for match:', matchId);
+        setHighlightMatchId(matchId);
+        
+        // Clear highlight after 15 seconds
+        highlightClearTimeoutRef.current = setTimeout(() => {
+          console.log('🎯 Clearing highlight after 15 seconds');
+          setHighlightMatchId(null);
+          highlightClearTimeoutRef.current = null;
+        }, 15000);
+      }, 300);
+      
+      return () => {
+        clearTimeout(highlightTimeout);
+        if (highlightClearTimeoutRef.current) {
+          clearTimeout(highlightClearTimeoutRef.current);
+          highlightClearTimeoutRef.current = null;
+        }
+      };
+    }
+  }, [matchId, activeTab, allMatches.length]);
   const [memberSortBy, setMemberSortBy] = useState<'name' | 'wins' | 'matches' | 'joined' | 'ranking'>('name');
   const [memberFilterBy, setMemberFilterBy] = useState<'all' | 'active' | 'new'>('all');
   const [matchFilterType, setMatchFilterType] = useState<'all' | 'singles' | 'doubles'>('all');
@@ -217,16 +280,28 @@ export default function ClubDetailScreen() {
         .order('created_at', { ascending: false });
 
       // Also load active match invitations (looking to play) with responses
-      const { data: matchInvitations } = await supabase
-        .from('match_invitations')
-        .select(`
-          *,
-          creator:users!creator_id(full_name, phone)
-        `)
-        .eq('club_id', id)
-        .eq('status', 'active')
-        .order('date', { ascending: true })
-        .order('created_at', { ascending: false });
+      // First run debug function to understand any issues
+      const { data: debugInfo, error: debugError } = await debugMatchInvitations(id, user?.id);
+      if (debugInfo && !debugError) {
+        console.log('🔍 Match invitations debug info:', debugInfo);
+      }
+      
+      // Use the new function to get match invitations reliably
+      const { data: functionInvitations, error: invitationError } = await getClubMatchInvitations(id, user?.id);
+      if (invitationError) {
+        console.error('❌ Error getting match invitations:', invitationError);
+      }
+      
+      // Convert function response to expected format
+      const matchInvitations = functionInvitations?.map(inv => ({
+        ...inv,
+        creator: {
+          full_name: inv.creator_full_name,
+          phone: inv.creator_phone
+        },
+        // Parse responses from JSON
+        responses: inv.responses || []
+      }));
 
       // Filter out past invitations (dates before today)
       const today = new Date();
@@ -260,31 +335,8 @@ export default function ClubDetailScreen() {
         console.log(`🕰️ ClubDetails: Found ${pastInvitations.length} past invitations (auto-filtered):`, pastInvitationIds);
       }
 
-      // Fetch responses for each active invitation
-      const invitationsWithResponses = await Promise.all(
-        activeInvitations.map(async (invitation: any) => {
-          const { data: responses } = await supabase
-            .from('invitation_responses')
-            .select(`
-              id,
-              user_id,
-              status,
-              user:users!invitation_responses_user_id_fkey(full_name, phone)
-            `)
-            .eq('invitation_id', invitation.id);
-
-          return {
-            ...invitation,
-            responses: (responses || []).map((response: any) => ({
-              id: response.id,
-              user_id: response.user_id,
-              user_name: response.user?.full_name || 'Unknown Player',
-              user_phone: response.user?.phone,
-              status: response.status
-            }))
-          };
-        })
-      );
+      // No need to fetch responses separately - they're already included from our function
+      const invitationsWithResponses = activeInvitations;
 
       // Filter out invitations that are for today/past and don't have enough players to convene
       const viableInvitations = [];
@@ -292,15 +344,20 @@ export default function ClubDetailScreen() {
       
       invitationsWithResponses.forEach((invitation: any) => {
         const requiredPlayers = invitation.match_type === 'singles' ? 2 : 4;
-        const currentPlayers = 1 + (invitation.responses || []).length; // Creator + responses
+        const currentPlayers = 1 + invitation.response_count; // Creator + response count from function
         const invitationDate = new Date(invitation.date + 'T00:00:00');
         const isToday = invitationDate.toDateString() === today.toDateString();
+        const isTargetMatch = matchId && matchId === invitation.id;
         
         // If it's a future date, always show it (players can still join)
         // If it's today and has enough players, show it (match can happen)  
         // If it's today and doesn't have enough players, hide it (match can't happen)
-        if (invitationDate > today || (isToday && currentPlayers >= requiredPlayers)) {
+        // EXCEPTION: Always show if it's the target match for deep linking
+        if (invitationDate > today || (isToday && currentPlayers >= requiredPlayers) || isTargetMatch) {
           viableInvitations.push(invitation);
+          if (isTargetMatch) {
+            console.log('🎯 Including target match in viable invitations despite filtering rules');
+          }
         } else if (isToday && currentPlayers < requiredPlayers) {
           failedInvitations.push(invitation);
         } else {
@@ -653,7 +710,10 @@ export default function ClubDetailScreen() {
             styles.tab,
             activeTab === 'overview' && { borderBottomColor: colors.tint, borderBottomWidth: 2 }
           ]}
-          onPress={() => setActiveTab('overview')}
+          onPress={() => {
+            console.log('🎯 Overview tab pressed, switching from', activeTab, 'to overview');
+            setActiveTab('overview');
+          }}
         >
           <View style={styles.tabContent}>
             <ThemedText style={[styles.tabText, activeTab === 'overview' && { color: colors.tint }]}>
@@ -693,7 +753,6 @@ export default function ClubDetailScreen() {
       </View>
 
       <>
-        <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
         {/* Overview Tab */}
         {activeTab === 'overview' && (
           <ClubOverview
@@ -704,7 +763,19 @@ export default function ClubDetailScreen() {
             onViewAllMembers={() => setActiveTab('members')}
             onRecordMatch={handleRecordMatch}
             onInvitePlayers={() => setShowInviteForm(true)}
-            onViewAllMatches={() => setActiveTab('matches')}
+            onViewAllMatches={(matchId?: string) => {
+              console.log('🎯 onViewAllMatches called with matchId:', matchId);
+              if (matchId) {
+                // Navigate with matchId parameter for deep linking
+                const targetUrl = `/club/${id}?tab=matches&matchId=${matchId}`;
+                console.log('🎯 Navigating to:', targetUrl);
+                router.push(targetUrl);
+              } else {
+                // Just switch to matches tab without specific match
+                console.log('🎯 Switching to matches tab without specific match');
+                setActiveTab('matches');
+              }
+            }}
             onEditClub={handleEditClub}
           />
         )}
@@ -730,9 +801,9 @@ export default function ClubDetailScreen() {
             matches={allMatches}
             club={club}
             colors={colors}
-            filterType={matchFilterType}
-            filterDate={matchFilterDate}
-            filterInvolvement={matchFilterInvolvement}
+            filterType={highlightMatchId ? 'all' : matchFilterType}
+            filterDate={highlightMatchId ? 'all' : matchFilterDate}
+            filterInvolvement={highlightMatchId ? 'all' : matchFilterInvolvement}
             onFilterTypeChange={setMatchFilterType}
             onFilterDateChange={setMatchFilterDate}
             onFilterInvolvementChange={setMatchFilterInvolvement}
@@ -741,9 +812,10 @@ export default function ClubDetailScreen() {
             onJoinInvitation={handleJoinInvitation}
             joiningInvitations={joiningInvitations}
             currentUserId={user?.id}
+            highlightMatchId={highlightMatchId}
+            onHighlightCleared={() => setHighlightMatchId(null)}
           />
         )}
-        </ScrollView>
 
         {/* Challenge Modal */}
         <ChallengeFlowModalSimple
@@ -815,9 +887,6 @@ const styles = StyleSheet.create({
   editText: {
     fontSize: 14,
     marginLeft: 4,
-  },
-  scrollView: {
-    flex: 1,
   },
   section: {
     paddingHorizontal: 20,
