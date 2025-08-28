@@ -40,13 +40,13 @@ interface ChallengeGroupData {
   proposed_date: string;
   club_id: string;
   club_name?: string;
-  players: Array<{
+  players: {
     id: string;
     full_name: string;
     phone?: string;
     role: 'challenger' | 'challenged';
     status: 'pending' | 'accepted' | 'declined';
-  }>;
+  }[];
   status: string;
 }
 
@@ -120,7 +120,7 @@ export default function RecordChallengeMatchScreen() {
     try {
       setIsSubmitting(true);
 
-      let players: Array<{ id: string; full_name: string; phone?: string }> = [];
+      let players: { id: string; full_name: string; phone?: string }[] = [];
       let challengeIdForMatch: string;
       let challengeGroupIdForMatch: string | undefined;
 
