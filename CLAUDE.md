@@ -35,6 +35,7 @@ Play Serve is a React Native tennis community app built with Expo, focusing on c
 ## Key Documentation
 
 ### **Development Guidelines**
+- **Real-Time Architecture**: `/docs/development/real-time-architecture.md`
 - **Production Stability**: `/docs/development/production-stability-requirements.md`
 - **Workflow Architecture**: `/docs/development/expo-workflow-explanation.md`
 - **Content Management**: `/docs/development/single-source-of-truth-system.md`
@@ -71,7 +72,7 @@ Play Serve is a React Native tennis community app built with Expo, focusing on c
 > "All data operations go through Supabase"
 
 - **Supabase PostgreSQL**: All data is stored and accessed via Supabase
-- **Real-time Subscriptions**: Live updates for challenges, notifications, and matches
+- **Real-time Subscriptions**: Live UI updates using Supabase subscriptions (NO manual refresh patterns)
 - **Contact Sharing**: Phone numbers shared through Supabase notifications system
 - **Challenge System**: Singles (2 players) and doubles (4 players) contact coordination
 - **User Sync**: Authentication and user data managed entirely through Supabase
@@ -85,6 +86,39 @@ Play Serve is a React Native tennis community app built with Expo, focusing on c
 - **Systematic approach** - Trace issues through the entire stack (UI → Service → Database → Policies)
 
 Focus on understanding and solving underlying issues rather than quick patches.
+
+### **Real-Time First Development**
+> "Use Supabase subscriptions instead of manual refresh patterns"
+
+- **Live UI Updates**: All components use real-time subscriptions for data changes
+- **No Manual Refresh**: Avoid `onRefresh` props, `refreshTrigger`, or focus-based reloading
+- **Automatic Sync**: Multi-device synchronization handled by Supabase subscriptions
+- **Filtered Subscriptions**: Use specific filters (`club_id=eq.${id}`) for performance
+- **Cleanup Required**: Always unsubscribe in `useEffect` cleanup functions
+
+**Pattern Example**:
+```typescript
+// ✅ Use real-time subscriptions
+useEffect(() => {
+  loadData();
+  
+  const subscription = supabase
+    .channel(`component_${id}`)
+    .on('postgres_changes', {
+      event: '*', schema: 'public', table: 'table_name',
+      filter: `club_id=eq.${id}`
+    }, () => loadData())
+    .subscribe();
+    
+  return () => subscription.unsubscribe();
+}, [id]);
+
+// ❌ Avoid manual refresh patterns
+const onSuccess = () => {
+  setShowModal(false);
+  refreshParentData(); // Don't do this
+};
+```
 
 ## Common Commands
 

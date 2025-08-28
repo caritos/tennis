@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -11,18 +11,13 @@ import {
   Keyboard,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import RadioGroup from 'react-native-radio-buttons-group';
 import { Colors } from '@/constants/Colors';
 import { useColorScheme } from '@/hooks/useColorScheme';
 import { useAuth } from '@/contexts/AuthContext';
 import { CompactStyles } from '@/constants/CompactStyles';
 import { CreateMatchData } from '../services/matchService';
-import { isValidTennisScore, validateSetScore } from '../utils/tennisScore';
+import { isValidTennisScore } from '../utils/tennisScore';
 import MatchTypeSelector from './match-recording/MatchTypeSelector';
-import PlayerSearchField from './match-recording/PlayerSearchField';
-import MatchDateSection from './match-recording/MatchDateSection';
-import ScoreSection from './match-recording/ScoreSection';
-import NotesSection from './match-recording/NotesSection';
 import { CalendarDatePicker } from './CalendarDatePicker';
 import { TennisScoreEntry } from './TennisScoreEntry';
 import { TennisSet } from '@/types/tennis';
@@ -84,10 +79,8 @@ export function MatchRecordingForm(componentProps: MatchRecordingFormProps) {
 
   // All state hooks
   const [matchType, setMatchType] = useState<'singles' | 'doubles'>(propMatchType || initialData?.match_type || 'singles');
-  const [matchTypeRadioId, setMatchTypeRadioId] = useState(propMatchType || initialData?.match_type || 'singles');
   
   // State for invitation data
-  const [invitationData, setInvitationData] = useState<any>(null);
   const [loadingInvitation, setLoadingInvitation] = useState(!!invitationId);
   const [effectiveClubId, setEffectiveClubId] = useState<string | undefined>(clubId);
   
@@ -131,7 +124,6 @@ export function MatchRecordingForm(componentProps: MatchRecordingFormProps) {
   const [tennisSets, setTennisSets] = useState<TennisSet[]>([]);
   const [validationErrors, setValidationErrors] = useState<string[]>([]);
   const [clubMembers, setClubMembers] = useState<Player[]>([]);
-  const [loadingMembers, setLoadingMembers] = useState(true);
   const [notes, setNotes] = useState(initialData?.notes || '');
 
   // Reporting-related state
@@ -178,7 +170,6 @@ export function MatchRecordingForm(componentProps: MatchRecordingFormProps) {
       }
 
       console.log('🎾 Loaded invitation data:', invitation);
-      setInvitationData(invitation);
       
       // Set effective club ID from invitation if not already provided
       if (invitation.club_id && !clubId) {
@@ -188,7 +179,6 @@ export function MatchRecordingForm(componentProps: MatchRecordingFormProps) {
       // Set match type from invitation
       if (invitation.match_type) {
         setMatchType(invitation.match_type);
-        setMatchTypeRadioId(invitation.match_type);
       }
       
       // Set match date from invitation
@@ -460,24 +450,6 @@ export function MatchRecordingForm(componentProps: MatchRecordingFormProps) {
       }
     }
   }, [isEditing, initialData, clubMembers.length]); // Simplified dependencies
-
-  // Radio button configuration for match type
-  const matchTypeRadioButtons = useMemo(() => [
-    {
-      id: 'singles',
-      label: 'Singles',
-      value: 'singles',
-      color: colors.tint,
-      labelStyle: { color: colors.text, fontSize: 16 },
-    },
-    {
-      id: 'doubles', 
-      label: 'Doubles',
-      value: 'doubles',
-      color: colors.tint,
-      labelStyle: { color: colors.text, fontSize: 16 },
-    }
-  ], [colors.tint, colors.text]);
   
   console.log('🔧 MatchRecordingForm props type:', typeof componentProps);
   console.log('🔧 MatchRecordingForm raw props:', componentProps);
@@ -499,7 +471,6 @@ export function MatchRecordingForm(componentProps: MatchRecordingFormProps) {
   // Handle match type selection
   const handleMatchTypeChange = (matchType: 'singles' | 'doubles') => {
     setMatchType(matchType);
-    setMatchTypeRadioId(matchType);
     
     // Clear doubles fields when switching to singles
     if (matchType === 'singles') {
@@ -552,8 +523,6 @@ export function MatchRecordingForm(componentProps: MatchRecordingFormProps) {
     } catch (error) {
       console.error('Failed to load club members:', error);
       setClubMembers([]);
-    } finally {
-      setLoadingMembers(false);
     }
   };
 
@@ -1555,7 +1524,22 @@ export function MatchRecordingForm(componentProps: MatchRecordingFormProps) {
           }
         })()}
 
-        {/* Report Player Section - Show if enabled and we have player data */}
+        {/* Notes Section (Optional) - Separate from reporting */}
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Notes (Optional)</Text>
+          <TextInput
+            style={[styles.notesInput, { borderColor: colors.tabIconDefault, color: colors.text }]}
+            value={notes}
+            onChangeText={setNotes}
+            placeholder="Great competitive match!"
+            placeholderTextColor={colors.tabIconDefault}
+            multiline
+            numberOfLines={3}
+            testID="notes-input"
+          />
+        </View>
+
+        {/* Report Issues Section (Optional) - Show if enabled and we have player data */}
         {showReporting && (() => {
           // Build available players list for reporting from both props and internal state
           const getAvailablePlayersForReporting = () => {
@@ -1604,13 +1588,13 @@ export function MatchRecordingForm(componentProps: MatchRecordingFormProps) {
                 setShowReportingSection(!showReportingSection);
                 // For singles matches, automatically select the opponent when opening
                 if (!showReportingSection && matchType === 'singles' && availablePlayersForReporting.length > 0) {
-                  setReportedPlayerIds([availablePlayersForReporting[0].id]);
+                  setReportTargetPlayerIds([availablePlayersForReporting[0].id]);
                 }
               }}
               activeOpacity={0.7}
             >
               <Text style={styles.reportSectionTitle}>
-                Report Player Issue
+                Report Issues (Optional)
               </Text>
               <Ionicons
                 name={showReportingSection ? 'chevron-up' : 'chevron-down'}
@@ -1621,25 +1605,6 @@ export function MatchRecordingForm(componentProps: MatchRecordingFormProps) {
 
             {showReportingSection && (
               <View style={styles.reportContent}>
-                <Text style={[styles.reportSubtitle, { color: colors.tabIconDefault }]}>
-                  Only report serious issues that violate community guidelines
-                </Text>
-
-                {/* Notes Section */}
-                <View style={styles.reportNotesSection}>
-                  <Text style={styles.reportLabel}>Notes (Optional)</Text>
-                  <TextInput
-                    style={[styles.reportTextInput, { borderColor: colors.tabIconDefault + '30', color: colors.text }]}
-                    value={notes}
-                    onChangeText={setNotes}
-                    placeholder="Great competitive match!"
-                    placeholderTextColor={colors.tabIconDefault}
-                    multiline
-                    numberOfLines={3}
-                    testID="notes-input"
-                  />
-                </View>
-
                 {/* Section 1: Select player(s) to report */}
                 <View style={styles.reportPlayersSection}>
                   <Text style={styles.reportLabel}>Select player(s) to report:</Text>
@@ -1678,16 +1643,14 @@ export function MatchRecordingForm(componentProps: MatchRecordingFormProps) {
                   ))}
                 </View>
 
-                {/* Section 2: Reason for report */}
+                {/* Section 2: Reason for report - matching wireframe exactly */}
                 <View style={styles.reportTypeSection}>
-                  <Text style={styles.reportLabel}>Reason for report (optional):</Text>
+                  <Text style={styles.reportLabel}>Reason for report:</Text>
                   {[
-                    { key: 'no_show', label: 'Player did not show up' },
-                    { key: 'unsportsmanlike', label: 'Bad sportsmanship' },
-                    { key: 'inappropriate', label: 'Inappropriate behavior' },
-                    { key: 'cheating', label: 'Cheating/dishonest line calls' },
-                    { key: 'aggressive', label: 'Aggressive or threatening' },
-                    { key: 'other', label: 'Other issue' }
+                    { key: 'no_show', label: 'No-show' },
+                    { key: 'unsportsmanlike', label: 'Unsportsmanlike' },
+                    { key: 'other', label: 'Other' },
+                    { key: 'inappropriate', label: 'Inappropriate' }
                   ].map((type) => (
                     <TouchableOpacity
                       key={type.key}
@@ -1717,26 +1680,24 @@ export function MatchRecordingForm(componentProps: MatchRecordingFormProps) {
                 </View>
 
                 {/* Section 3: Description */}
-                {reportTypes.length > 0 && (
-                  <View style={styles.reportDescriptionSection}>
-                    <Text style={styles.reportLabel}>
-                      Description:
-                    </Text>
-                    <TextInput
-                      style={[styles.reportTextInput, { borderColor: colors.tabIconDefault + '30', color: colors.text }]}
-                      placeholder="Provide more details about what happened..."
-                      placeholderTextColor={colors.tabIconDefault}
-                      value={reportDescription}
-                      onChangeText={setReportDescription}
-                      multiline
-                      numberOfLines={3}
-                      maxLength={300}
-                    />
-                    <Text style={[styles.characterCount, { color: colors.tabIconDefault }]}>
-                      {reportDescription.length}/300 characters
-                    </Text>
-                  </View>
-                )}
+                <View style={styles.reportDescriptionSection}>
+                  <Text style={styles.reportLabel}>
+                    Description:
+                  </Text>
+                  <TextInput
+                    style={[styles.reportTextInput, { borderColor: colors.tabIconDefault + '30', color: colors.text }]}
+                    placeholder="Provide more details about what happened..."
+                    placeholderTextColor={colors.tabIconDefault}
+                    value={reportDescription}
+                    onChangeText={setReportDescription}
+                    multiline
+                    numberOfLines={3}
+                    maxLength={300}
+                  />
+                  <Text style={[styles.characterCount, { color: colors.tabIconDefault }]}>
+                    {reportDescription.length}/300 characters
+                  </Text>
+                </View>
               </View>
             )}
           </View>

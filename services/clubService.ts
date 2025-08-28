@@ -311,6 +311,38 @@ export class ClubService {
     }
   }
 
+  /**
+   * Get all members of a club
+   */
+  public async getClubMembers(clubId: string): Promise<any[]> {
+    try {
+      const { data: membersData, error } = await supabase
+        .from('club_members')
+        .select(`
+          joined_at,
+          user:users (*)
+        `)
+        .eq('club_id', clubId)
+        .order('joined_at', { ascending: false });
+
+      if (error) {
+        console.error('Failed to get club members:', error);
+        return [];
+      }
+
+      // Process members data
+      return (membersData || [])
+        .filter((member: any) => member.user != null)
+        .map((member: any) => ({
+          ...member.user,
+          joined_at: member.joined_at
+        }));
+    } catch (error) {
+      console.error('Error getting club members:', error);
+      return [];
+    }
+  }
+
   calculateDistance(lat1: number, lng1: number, lat2: number, lng2: number): number {
     const R = 6371; // Earth's radius in kilometers
     const dLat = this.deg2rad(lat2 - lat1);
@@ -339,6 +371,7 @@ export const getUserClubs = (userId: string) => clubService.getUserClubs(userId)
 export const getClubsByLocation = (userLat: number, userLng: number, maxClubs?: number) => 
   clubService.getClubsByLocation(userLat, userLng, maxClubs);
 export const getAllClubs = () => clubService.getAllClubs();
+export const getClubMembers = (clubId: string) => clubService.getClubMembers(clubId);
 export const isClubMember = (clubId: string, userId: string) => clubService.isClubMember(clubId, userId);
 export const calculateDistance = (lat1: number, lng1: number, lat2: number, lng2: number) => 
   clubService.calculateDistance(lat1, lng1, lat2, lng2);

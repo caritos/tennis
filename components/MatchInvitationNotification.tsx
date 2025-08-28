@@ -69,8 +69,32 @@ export function MatchInvitationNotification({
   useEffect(() => {
     if (clubId) {
       loadInvitationNotifications();
+      
+      // Set up real-time subscription for new invitations
+      const subscription = supabase
+        .channel(`match_invitations_${clubId}`)
+        .on(
+          'postgres_changes',
+          { 
+            event: '*', 
+            schema: 'public', 
+            table: 'match_invitations',
+            filter: `club_id=eq.${clubId}`
+          },
+          (payload) => {
+            console.log('🔔 Match invitation change detected:', payload);
+            // Reload notifications when invitations change
+            loadInvitationNotifications();
+          }
+        )
+        .subscribe();
+
+      // Cleanup subscription on unmount
+      return () => {
+        subscription.unsubscribe();
+      };
     }
-  }, [clubId]);
+  }, [clubId]); // Remove refreshTrigger, only depend on clubId
 
   const loadInvitationNotifications = async () => {
     try {

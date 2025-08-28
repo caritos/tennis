@@ -9,6 +9,11 @@ import { useAuth } from '@/contexts/AuthContext';
 jest.mock('@/lib/supabase', () => ({
   supabase: {
     from: jest.fn(),
+    channel: jest.fn(() => ({
+      on: jest.fn().mockReturnThis(),
+      subscribe: jest.fn(() => ({ unsubscribe: jest.fn() })),
+      unsubscribe: jest.fn(),
+    })),
   }
 }));
 

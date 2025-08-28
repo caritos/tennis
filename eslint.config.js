@@ -25,5 +25,21 @@ module.exports = defineConfig([
         allowNamedExports: false
       }],
     }
+  },
+  {
+    files: ['**/*.test.{js,jsx,ts,tsx}', '**/__tests__/**/*'],
+    languageOptions: {
+      globals: {
+        jest: 'readonly',
+        describe: 'readonly',
+        it: 'readonly',
+        test: 'readonly',
+        expect: 'readonly',
+        beforeEach: 'readonly',
+        afterEach: 'readonly',
+        beforeAll: 'readonly',
+        afterAll: 'readonly',
+      }
+    }
   }
 ]);

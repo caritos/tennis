@@ -9,7 +9,8 @@ This directory contains development guides, coding standards, and development pr
 - **[GitHub Issues Setup](github-issues-setup.md)** - Issue tracking and project management setup
 - **[Automated Checks](automated-checks.md)** - Continuous integration and quality assurance
 
-### Code Standards
+### Architecture & Patterns
+- **[Real-Time Architecture](real-time-architecture.md)** - Supabase real-time subscriptions for live UI updates
 - **[Button Style Guide](button-style-guide.md)** - UI button component standards and patterns
 - **[Shared Components](shared-components.md)** - Reusable component library documentation
 
@@ -25,6 +26,7 @@ This directory contains development guides, coding standards, and development pr
 
 ## 🎯 Key Principles
 
+- **Real-Time First** - Use Supabase subscriptions instead of manual refresh patterns
 - **Test-Driven Development (TDD)** - Write tests first
 - **Component-First Architecture** - Reusable, maintainable components
 - **Automated Quality** - Git hooks prevent low-quality commits

@@ -40,6 +40,43 @@ export const UpcomingMatchesNotification: React.FC<UpcomingMatchesNotificationPr
   useEffect(() => {
     if (userId) {
       loadUpcomingMatches();
+
+      // Set up real-time subscription for match invitation changes
+      const subscription = supabase
+        .channel(`upcoming_matches_${clubId}_${userId}`)
+        .on(
+          'postgres_changes',
+          {
+            event: '*',
+            schema: 'public',
+            table: 'match_invitations',
+            filter: `club_id=eq.${clubId}`
+          },
+          (payload) => {
+            console.log('🔔 Match invitation change detected:', payload);
+            // Reload upcoming matches when invitations change
+            loadUpcomingMatches();
+          }
+        )
+        .on(
+          'postgres_changes',
+          {
+            event: '*',
+            schema: 'public',
+            table: 'invitation_responses'
+          },
+          (payload) => {
+            console.log('🔔 Invitation response change detected:', payload);
+            // Reload upcoming matches when responses change
+            loadUpcomingMatches();
+          }
+        )
+        .subscribe();
+
+      // Cleanup subscription on unmount
+      return () => {
+        subscription.unsubscribe();
+      };
     }
   }, [clubId, userId]);
 

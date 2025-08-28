@@ -26,6 +26,30 @@ export function ContactSharingNotification({ onViewAll }: ContactSharingNotifica
   useEffect(() => {
     if (user?.id) {
       loadContactSharingNotifications();
+
+      // Set up real-time subscription for notification changes
+      const subscription = supabase
+        .channel(`contact_notifications_${user.id}`)
+        .on(
+          'postgres_changes',
+          {
+            event: '*',
+            schema: 'public',
+            table: 'notifications',
+            filter: `user_id=eq.${user.id}`
+          },
+          (payload) => {
+            console.log('🔔 Contact notification change detected:', payload);
+            // Reload notifications when they change
+            loadContactSharingNotifications();
+          }
+        )
+        .subscribe();
+
+      // Cleanup subscription on unmount
+      return () => {
+        subscription.unsubscribe();
+      };
     }
   }, [user?.id]);
 

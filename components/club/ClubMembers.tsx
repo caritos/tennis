@@ -1,6 +1,5 @@
 import React from 'react';
 import { View, TouchableOpacity, StyleSheet, ScrollView } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
 import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
 
@@ -17,25 +16,19 @@ interface ClubMember {
 interface ClubMembersProps {
   members: ClubMember[];
   colors: any;
-  user: any;
-  pendingChallenges: Set<string>;
   sortBy: 'name' | 'wins' | 'matches' | 'joined' | 'ranking';
   filterBy: 'all' | 'active' | 'new';
   onSortChange: (sort: 'name' | 'wins' | 'matches' | 'joined' | 'ranking') => void;
   onFilterChange: (filter: 'all' | 'active' | 'new') => void;
-  onChallengePress: (memberId: string, memberName: string) => void;
 }
 
 export default function ClubMembers({
   members,
   colors,
-  user,
-  pendingChallenges,
   sortBy,
   filterBy,
   onSortChange,
   onFilterChange,
-  onChallengePress,
 }: ClubMembersProps) {
   // Filter members
   const filteredMembers = members.filter(member => {
@@ -201,28 +194,6 @@ export default function ClubMembers({
                         </ThemedText>
                       </View>
                     </View>
-                    {user && user.id !== member.id && (
-                      <TouchableOpacity
-                        style={[
-                          styles.challengeButton,
-                          {
-                            backgroundColor: pendingChallenges.has(member.id) ? colors.textSecondary : colors.tint,
-                            opacity: pendingChallenges.has(member.id) ? 0.6 : 1
-                          }
-                        ]}
-                        onPress={() => onChallengePress(member.id, member.full_name)}
-                        disabled={pendingChallenges.has(member.id)}
-                      >
-                        <Ionicons
-                          name={pendingChallenges.has(member.id) ? "hourglass-outline" : "tennisball"}
-                          size={14}
-                          color="white"
-                        />
-                        <ThemedText style={styles.challengeButtonText}>
-                          {pendingChallenges.has(member.id) ? 'Pending' : 'Challenge'}
-                        </ThemedText>
-                      </TouchableOpacity>
-                    )}
                   </View>
 
                   <View style={styles.memberStatsContainer}>
@@ -392,19 +363,6 @@ const styles = StyleSheet.create({
   },
   memberJoinedDate: {
     fontSize: 12,
-  },
-  challengeButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-    paddingHorizontal: 10,
-    paddingVertical: 6,
-    borderRadius: 16,
-  },
-  challengeButtonText: {
-    fontSize: 12,
-    fontWeight: '600',
-    color: '#fff',
   },
   memberStatsContainer: {
     gap: 8,

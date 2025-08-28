@@ -14,17 +14,16 @@ import { useColorScheme } from '@/hooks/useColorScheme';
 import { Colors } from '@/constants/Colors';
 import { challengeService, ChallengeWithUsers } from '@/services/challengeService';
 import { useAuth } from '@/contexts/AuthContext';
+import { supabase } from '@/lib/supabase';
 
 interface ChallengeNotificationsProps {
   userId: string;
   clubId?: string; // Optional: if provided, only show challenges from this club
-  onRefresh?: () => void;
 }
 
 const ChallengeNotifications: React.FC<ChallengeNotificationsProps> = ({
   userId,
   clubId,
-  onRefresh,
 }) => {
   const colorScheme = useColorScheme();
   const colors = Colors[colorScheme ?? 'light'];
@@ -35,6 +34,30 @@ const ChallengeNotifications: React.FC<ChallengeNotificationsProps> = ({
 
   useEffect(() => {
     loadChallenges();
+
+    // Set up real-time subscription for challenge changes
+    const subscription = supabase
+      .channel(`challenges_${userId}`)
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'challenges',
+          filter: clubId ? `club_id=eq.${clubId}` : undefined
+        },
+        (payload) => {
+          console.log('🔔 Challenge change detected:', payload);
+          // Reload challenges when they change
+          loadChallenges();
+        }
+      )
+      .subscribe();
+
+    // Cleanup subscription on unmount
+    return () => {
+      subscription.unsubscribe();
+    };
   }, [userId, clubId]);
 
   const loadChallenges = async () => {

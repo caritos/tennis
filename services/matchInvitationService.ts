@@ -37,6 +37,7 @@ export interface CreateInvitationData {
   location?: string;
   notes?: string;
   expires_at?: string;
+  targeted_players?: string[]; // IDs of specific players to challenge
 }
 
 /**
@@ -60,9 +61,12 @@ export class MatchInvitationService {
   public async createInvitation(invitationData: CreateInvitationData): Promise<MatchInvitation> {
     const invitationId = generateUUID();
     
+    // Extract targeted_players before creating the invitation object
+    const { targeted_players, ...invitationFields } = invitationData;
+    
     const invitation: MatchInvitation = {
       id: invitationId,
-      ...invitationData,
+      ...invitationFields,
       status: 'active',
       created_at: new Date().toISOString(),
     };
@@ -134,6 +138,42 @@ export class MatchInvitationService {
       }
 
       console.log('✅ Match invitation created via direct insert:', invitation.id);
+      
+      // If there are targeted players, create notifications for them
+      if (targeted_players && targeted_players.length > 0) {
+        console.log('🔔 Creating notifications for targeted players:', targeted_players);
+        
+        // Create individual notifications for each targeted player
+        for (const playerId of targeted_players) {
+          try {
+            const { error: notifError } = await supabase
+              .from('notifications')
+              .insert({
+                id: generateUUID(),
+                user_id: playerId,
+                type: 'challenge_received',
+                title: `You've been challenged!`,
+                message: `You've been challenged to a ${invitation.match_type} match on ${invitation.date}`,
+                metadata: {
+                  invitation_id: invitation.id,
+                  club_id: invitation.club_id,
+                  creator_id: invitation.creator_id,
+                  match_type: invitation.match_type,
+                  is_targeted: true
+                },
+                created_at: new Date().toISOString(),
+                read: false
+              });
+              
+            if (notifError) {
+              console.warn('⚠️ Failed to create notification for player:', playerId, notifError);
+            }
+          } catch (notifErr) {
+            console.warn('⚠️ Error creating notification for player:', playerId, notifErr);
+          }
+        }
+      }
+      
       return data as MatchInvitation;
     } catch (error) {
       console.error('❌ Failed to create invitation (catch block):', error);

@@ -87,4 +87,10 @@ export const supabase = {
   realtime: realtimeMock,
   storage: storageMock,
   rpc: jest.fn(() => Promise.resolve({ data: null, error: null })),
+  // Add channel method directly on supabase object for real-time subscriptions
+  channel: jest.fn(() => ({
+    on: jest.fn().mockReturnThis(),
+    subscribe: jest.fn(() => ({ unsubscribe: jest.fn() })),
+    unsubscribe: jest.fn(),
+  })),
 };

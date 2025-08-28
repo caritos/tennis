@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, StyleSheet, TouchableOpacity, TextInput, ScrollView } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
@@ -10,8 +10,8 @@ import { matchInvitationService, CreateInvitationData } from '@/services/matchIn
 import TimingOptions from './challenge-flow/TimingOptions';
 import MatchTypeSelection from './challenge-flow/MatchTypeSelection';
 import MessageSection from './challenge-flow/MessageSection';
-import FormActions from './challenge-flow/FormActions';
 import { supabase } from '@/lib/supabase';
+import { getClubMembers } from '@/services/clubService';
 
 type TimeOption = 'today' | 'tomorrow' | 'weekend' | 'next_week' | 'flexible';
 
@@ -36,6 +36,11 @@ const MatchInvitationForm: React.FC<MatchInvitationFormProps> = ({
   const [message, setMessage] = useState(''); // Renamed from notes to match MessageSection
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [inviteType, setInviteType] = useState<'open' | 'specific' | 'quick'>('open');
+  const [selectedPlayers, setSelectedPlayers] = useState<string[]>([]);
+  const [clubMembers, setClubMembers] = useState<any[]>([]);
+  const [showPlayerSelection, setShowPlayerSelection] = useState(false);
+  const [playerSearchQuery, setPlayerSearchQuery] = useState('');
 
   // Helper function to convert timing option to date string
   const getDateFromTiming = (timing: TimeOption): string => {
@@ -88,12 +93,17 @@ const MatchInvitationForm: React.FC<MatchInvitationFormProps> = ({
         return;
       }
 
+      // Create invitation data based on invite type
       const invitationData: CreateInvitationData = {
         club_id: clubId,
         creator_id: creatorId,
         match_type: matchType,
-        date: selectedDate, // Converted from timing option
-        notes: message.trim() || undefined, // Using message instead of notes
+        date: selectedDate,
+        notes: message.trim() || undefined,
+        // Add targeted_players for specific invitations
+        ...(inviteType === 'specific' && selectedPlayers.length > 0 && {
+          targeted_players: selectedPlayers
+        })
       };
 
       console.log('🎾 MatchInvitationForm: Creating invitation with data:', invitationData);
@@ -117,10 +127,24 @@ const MatchInvitationForm: React.FC<MatchInvitationFormProps> = ({
           month: 'short',
           day: 'numeric'
         });
+        
+        // Different notification message for targeted vs open invitations
+        let notificationMessage;
+        if (inviteType === 'specific' && selectedPlayers.length > 0) {
+          // Get selected player names for the notification
+          const selectedPlayerNames = clubMembers
+            .filter(m => selectedPlayers.includes(m.id))
+            .map(m => m.full_name)
+            .join(', ');
+          notificationMessage = `${creatorName} challenged ${selectedPlayerNames} to a ${matchType} match on ${dateStr}`;
+        } else {
+          notificationMessage = `${creatorName} is looking for ${matchType === 'singles' ? 'a singles partner' : 'players for a doubles match'} on ${dateStr}`;
+        }
+        
         await matchInvitationService.createClubNotification(clubId, {
-          type: 'invitation_created',
-          title: `New ${matchType} invitation`,
-          message: `${creatorName} is looking for ${matchType === 'singles' ? 'a singles partner' : 'players for a doubles match'} on ${dateStr}`,
+          type: inviteType === 'specific' ? 'challenge_created' : 'invitation_created',
+          title: inviteType === 'specific' ? `New ${matchType} challenge` : `New ${matchType} invitation`,
+          message: notificationMessage,
           invitation_id: createdInvitation.id,
           match_type: matchType,
           date: selectedDate, // Using converted date
@@ -157,8 +181,81 @@ const MatchInvitationForm: React.FC<MatchInvitationFormProps> = ({
     }
   };
 
+  // Load club members when component mounts
+  useEffect(() => {
+    const loadMembers = async () => {
+      try {
+        const members = await getClubMembers(clubId);
+        // Filter out the current user
+        const otherMembers = members.filter(m => m.id !== creatorId);
+        setClubMembers(otherMembers);
+        
+        // If we have the current user's rating, we can use it for quick match
+        const { data: currentUserData } = await supabase
+          .from('users')
+          .select('elo_rating')
+          .eq('id', creatorId)
+          .single();
+          
+        if (currentUserData?.elo_rating) {
+          setCurrentUserRating(currentUserData.elo_rating);
+        }
+      } catch (error) {
+        console.error('Failed to load club members:', error);
+      }
+    };
+    loadMembers();
+  }, [clubId, creatorId]);
+
+  const [currentUserRating, setCurrentUserRating] = useState<number | null>(null);
+
+  // Toggle player selection
+  const togglePlayerSelection = (playerId: string) => {
+    setSelectedPlayers(prev => {
+      const newSelection = prev.includes(playerId)
+        ? prev.filter(id => id !== playerId)
+        : [...prev, playerId];
+      
+      // For singles, only allow 1 player selection
+      // For doubles, allow up to 3 players
+      const maxPlayers = matchType === 'singles' ? 1 : 3;
+      return newSelection.slice(0, maxPlayers);
+    });
+  };
+
+  // Filter members based on search query
+  const filteredMembers = clubMembers.filter(member => {
+    const searchLower = playerSearchQuery.toLowerCase();
+    const nameLower = (member.full_name || '').toLowerCase();
+    return nameLower.includes(searchLower);
+  });
+
+  // Get selected member details
+  const selectedMemberDetails = clubMembers.filter(m => selectedPlayers.includes(m.id));
+
+  // Get suggested players for quick match (similar skill level)
+  const getSuggestedPlayers = () => {
+    if (!currentUserRating || clubMembers.length === 0) return [];
+    
+    // Sort players by rating difference from current user
+    const playersWithRating = clubMembers
+      .filter(m => m.eloRating || m.elo_rating) // Some might have eloRating, some elo_rating
+      .map(m => ({
+        ...m,
+        rating: m.eloRating || m.elo_rating || 1200,
+        ratingDiff: Math.abs((m.eloRating || m.elo_rating || 1200) - currentUserRating)
+      }))
+      .sort((a, b) => a.ratingDiff - b.ratingDiff);
+    
+    // Return top suggestions based on match type
+    const maxSuggestions = matchType === 'singles' ? 3 : 6;
+    return playersWithRating.slice(0, maxSuggestions);
+  };
+
+  const suggestedPlayers = inviteType === 'quick' ? getSuggestedPlayers() : [];
+
   // Form validation
-  const canSubmit = true; // Always allow submission for invitations
+  const canSubmit = inviteType === 'open' || selectedPlayers.length > 0;
 
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
@@ -184,12 +281,304 @@ const MatchInvitationForm: React.FC<MatchInvitationFormProps> = ({
 
       <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
         <View style={styles.formContainer}>
-          {/* Match Type */}
+          {/* Match Type - FIRST */}
           <MatchTypeSelection
             matchType={matchType}
-            onMatchTypeChange={setMatchType}
+            onMatchTypeChange={(type) => {
+              setMatchType(type);
+              // Reset player selection if switching from doubles to singles
+              if (type === 'singles' && selectedPlayers.length > 1) {
+                setSelectedPlayers(selectedPlayers.slice(0, 1));
+              }
+              // Reset to 'open' if Quick Match was selected but switching to doubles
+              if (type === 'doubles' && inviteType === 'quick') {
+                setInviteType('open');
+                setSelectedPlayers([]);
+              }
+            }}
             colors={colors}
           />
+
+          {/* Invite Type Selection - SECOND */}
+          <View style={styles.section}>
+            <ThemedText style={[styles.sectionTitle, { color: colors.text }]}>
+              Who do you want to play with?
+            </ThemedText>
+            <View style={styles.inviteTypeContainer}>
+              <TouchableOpacity
+                style={[
+                  styles.inviteTypeButton,
+                  inviteType === 'open' && { backgroundColor: colors.tint },
+                  { borderColor: colors.tint }
+                ]}
+                onPress={() => {
+                  setInviteType('open');
+                  setSelectedPlayers([]);
+                }}
+              >
+                <Ionicons 
+                  name="people-outline" 
+                  size={20} 
+                  color={inviteType === 'open' ? '#fff' : colors.tint} 
+                />
+                <ThemedText style={[
+                  styles.inviteTypeText,
+                  { color: inviteType === 'open' ? '#fff' : colors.tint }
+                ]}>
+                  Anyone Available
+                </ThemedText>
+                <ThemedText style={[
+                  styles.inviteTypeSubtext,
+                  { color: inviteType === 'open' ? '#fff' : colors.textSecondary }
+                ]}>
+                  Post to entire club
+                </ThemedText>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={[
+                  styles.inviteTypeButton,
+                  inviteType === 'specific' && { backgroundColor: colors.tint },
+                  { borderColor: colors.tint }
+                ]}
+                onPress={() => {
+                  setInviteType('specific');
+                  setSelectedPlayers([]);
+                }}
+              >
+                <Ionicons 
+                  name="person-outline" 
+                  size={20} 
+                  color={inviteType === 'specific' ? '#fff' : colors.tint} 
+                />
+                <ThemedText style={[
+                  styles.inviteTypeText,
+                  { color: inviteType === 'specific' ? '#fff' : colors.tint }
+                ]}>
+                  Specific Players
+                </ThemedText>
+                <ThemedText style={[
+                  styles.inviteTypeSubtext,
+                  { color: inviteType === 'specific' ? '#fff' : colors.textSecondary }
+                ]}>
+                  Challenge members directly
+                </ThemedText>
+              </TouchableOpacity>
+
+              {/* Only show Quick Match for singles */}
+              {matchType === 'singles' && (
+                <TouchableOpacity
+                  style={[
+                    styles.inviteTypeButton,
+                    inviteType === 'quick' && { backgroundColor: colors.tint },
+                    { borderColor: colors.tint }
+                  ]}
+                  onPress={() => {
+                    setInviteType('quick');
+                    setSelectedPlayers([]);
+                  }}
+                >
+                  <Ionicons 
+                    name="flash-outline" 
+                    size={20} 
+                    color={inviteType === 'quick' ? '#fff' : colors.tint} 
+                  />
+                  <ThemedText style={[
+                    styles.inviteTypeText,
+                    { color: inviteType === 'quick' ? '#fff' : colors.tint }
+                  ]}>
+                    Quick Match
+                  </ThemedText>
+                  <ThemedText style={[
+                    styles.inviteTypeSubtext,
+                    { color: inviteType === 'quick' ? '#fff' : colors.textSecondary }
+                  ]}>
+                    Match with similar skill level
+                  </ThemedText>
+                </TouchableOpacity>
+              )}
+            </View>
+          </View>
+
+          {/* Quick Match Suggestions (shown when quick match selected) */}
+          {inviteType === 'quick' && (
+            <View style={styles.section}>
+              <ThemedText style={[styles.sectionTitle, { color: colors.text }]}>
+                Suggested Opponents
+              </ThemedText>
+              {!currentUserRating ? (
+                <View style={[styles.infoBox, { backgroundColor: colors.textSecondary + '10', borderColor: colors.textSecondary + '30' }]}>
+                  <Ionicons name="information-circle-outline" size={20} color={colors.textSecondary} />
+                  <ThemedText style={[styles.infoText, { color: colors.textSecondary }]}>
+                    Play a few matches first to establish your skill rating
+                  </ThemedText>
+                </View>
+              ) : suggestedPlayers.length === 0 ? (
+                <View style={[styles.infoBox, { backgroundColor: colors.textSecondary + '10', borderColor: colors.textSecondary + '30' }]}>
+                  <ThemedText style={[styles.infoText, { color: colors.textSecondary }]}>
+                    No players with similar skill level found
+                  </ThemedText>
+                </View>
+              ) : (
+                <View>
+                  <ThemedText style={[styles.yourRatingText, { color: colors.textSecondary }]}>
+                    Your rating: {currentUserRating}
+                  </ThemedText>
+                  <View style={styles.suggestedList}>
+                    {suggestedPlayers.map((player: any) => (
+                      <TouchableOpacity
+                        key={player.id}
+                        style={[
+                          styles.suggestedPlayerItem,
+                          selectedPlayers.includes(player.id) && { backgroundColor: colors.tint + '20' },
+                          { borderColor: selectedPlayers.includes(player.id) ? colors.tint : colors.textSecondary + '30' }
+                        ]}
+                        onPress={() => togglePlayerSelection(player.id)}
+                      >
+                        <View style={styles.suggestedPlayerInfo}>
+                          <ThemedText style={[styles.playerName, { color: colors.text }]}>
+                            {player.full_name}
+                          </ThemedText>
+                          <View style={styles.ratingRow}>
+                            <ThemedText style={[styles.playerRating, { color: colors.textSecondary }]}>
+                              Rating: {player.rating}
+                            </ThemedText>
+                            <ThemedText style={[styles.ratingDiffText, { 
+                              color: player.ratingDiff < 50 ? '#4CAF50' : 
+                                     player.ratingDiff < 100 ? '#FF9800' : 
+                                     colors.textSecondary 
+                            }]}>
+                              {player.ratingDiff < 50 ? '• Great match!' : 
+                               player.ratingDiff < 100 ? '• Good match' : 
+                               '• Challenge'}
+                            </ThemedText>
+                          </View>
+                        </View>
+                        <View style={[
+                          styles.selectButton,
+                          { backgroundColor: selectedPlayers.includes(player.id) ? colors.tint : 'transparent',
+                            borderColor: colors.tint }
+                        ]}>
+                          <ThemedText style={[
+                            styles.selectButtonText,
+                            { color: selectedPlayers.includes(player.id) ? '#fff' : colors.tint }
+                          ]}>
+                            {selectedPlayers.includes(player.id) ? 'Selected' : 'Select'}
+                          </ThemedText>
+                        </View>
+                      </TouchableOpacity>
+                    ))}
+                  </View>
+                </View>
+              )}
+            </View>
+          )}
+
+          {/* Player Selection (shown when specific players selected) - THIRD */}
+          {inviteType === 'specific' && (
+            <View style={styles.section}>
+              <ThemedText style={[styles.sectionTitle, { color: colors.text }]}>
+                Select Players ({selectedPlayers.length}/{matchType === 'singles' ? 1 : 3})
+              </ThemedText>
+              
+              {/* Search Input */}
+              <View style={[styles.searchContainer, { backgroundColor: colors.card, borderColor: colors.textSecondary + '30' }]}>
+                <Ionicons name="search" size={20} color={colors.textSecondary} />
+                <TextInput
+                  style={[styles.searchInput, { color: colors.text }]}
+                  placeholder="Search players by name..."
+                  placeholderTextColor={colors.textSecondary}
+                  value={playerSearchQuery}
+                  onChangeText={setPlayerSearchQuery}
+                  autoCapitalize="none"
+                  autoCorrect={false}
+                />
+                {playerSearchQuery.length > 0 && (
+                  <TouchableOpacity onPress={() => setPlayerSearchQuery('')}>
+                    <Ionicons name="close-circle" size={20} color={colors.textSecondary} />
+                  </TouchableOpacity>
+                )}
+              </View>
+
+              {/* Selected Players Display */}
+              {selectedPlayers.length > 0 && (
+                <View style={styles.selectedPlayersContainer}>
+                  <ThemedText style={[styles.selectedLabel, { color: colors.textSecondary }]}>
+                    Selected:
+                  </ThemedText>
+                  <View style={styles.selectedChips}>
+                    {selectedMemberDetails.map(member => (
+                      <View key={member.id} style={[styles.selectedChip, { backgroundColor: colors.tint }]}>
+                        <ThemedText style={[styles.selectedChipText, { color: '#fff' }]}>
+                          {member.full_name}
+                        </ThemedText>
+                        <TouchableOpacity onPress={() => togglePlayerSelection(member.id)}>
+                          <Ionicons name="close-circle" size={18} color="#fff" />
+                        </TouchableOpacity>
+                      </View>
+                    ))}
+                  </View>
+                </View>
+              )}
+
+              {/* Player List */}
+              <ScrollView 
+                style={[styles.playerList, { borderColor: colors.textSecondary + '30' }]}
+                showsVerticalScrollIndicator={true}
+                nestedScrollEnabled={true}
+              >
+                {filteredMembers.length === 0 ? (
+                  <View style={styles.noResultsContainer}>
+                    <ThemedText style={[styles.noResultsText, { color: colors.textSecondary }]}>
+                      {playerSearchQuery ? 'No players found matching your search' : 'No club members available'}
+                    </ThemedText>
+                  </View>
+                ) : (
+                  filteredMembers.map(member => {
+                    const isSelected = selectedPlayers.includes(member.id);
+                    const isDisabled = !isSelected && selectedPlayers.length >= (matchType === 'singles' ? 1 : 3);
+                    
+                    return (
+                      <TouchableOpacity
+                        key={member.id}
+                        style={[
+                          styles.playerItem,
+                          isSelected && { backgroundColor: colors.tint + '20' },
+                          isDisabled && { opacity: 0.5 },
+                          { borderColor: colors.textSecondary + '30' }
+                        ]}
+                        onPress={() => !isDisabled && togglePlayerSelection(member.id)}
+                        disabled={isDisabled}
+                      >
+                        <View style={styles.playerInfo}>
+                          <ThemedText style={[styles.playerName, { color: colors.text }]}>
+                            {member.full_name}
+                          </ThemedText>
+                          <View style={styles.playerMeta}>
+                            {member.eloRating && (
+                              <ThemedText style={[styles.playerRating, { color: colors.textSecondary }]}>
+                                Rating: {member.eloRating}
+                              </ThemedText>
+                            )}
+                            {member.match_count > 0 && (
+                              <ThemedText style={[styles.playerStats, { color: colors.textSecondary }]}>
+                                • {member.match_count} matches
+                              </ThemedText>
+                            )}
+                          </View>
+                        </View>
+                        <Ionicons
+                          name={isSelected ? 'checkbox' : 'square-outline'}
+                          size={24}
+                          color={isSelected ? colors.tint : colors.textSecondary}
+                        />
+                      </TouchableOpacity>
+                    );
+                  })
+                )}
+              </ScrollView>
+            </View>
+          )}
 
           {/* Timing Options */}
           <TimingOptions
@@ -208,17 +597,22 @@ const MatchInvitationForm: React.FC<MatchInvitationFormProps> = ({
             colors={colors}
           />
 
-          {/* Form Actions */}
-          <FormActions
-            matchType={matchType}
-            canSubmit={canSubmit}
-            isSubmitting={isSubmitting}
-            onSubmit={handleSubmit}
-            onCancel={onClose}
-            submitButtonText="Post"
-            submittingText="Posting..."
-            colors={colors}
-          />
+          {/* Submit Button */}
+          <View style={styles.submitContainer}>
+            <TouchableOpacity
+              style={[
+                styles.submitButton,
+                { backgroundColor: canSubmit ? colors.tint : colors.textSecondary },
+                !canSubmit && { opacity: 0.6 }
+              ]}
+              onPress={handleSubmit}
+              disabled={!canSubmit || isSubmitting}
+            >
+              <ThemedText style={styles.submitButtonText}>
+                {isSubmitting ? 'Posting...' : 'Post'}
+              </ThemedText>
+            </TouchableOpacity>
+          </View>
         </View>
       </ScrollView>
     </SafeAreaView>
@@ -277,6 +671,179 @@ const styles = StyleSheet.create({
   },
   section: {
     marginBottom: 24,
+  },
+  sectionTitle: {
+    fontSize: 16,
+    fontWeight: '600',
+    marginBottom: 12,
+  },
+  inviteTypeContainer: {
+    gap: 12,
+  },
+  inviteTypeButton: {
+    flexDirection: 'column',
+    alignItems: 'center',
+    padding: 16,
+    borderRadius: 12,
+    borderWidth: 1,
+    gap: 8,
+  },
+  inviteTypeText: {
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  inviteTypeSubtext: {
+    fontSize: 12,
+  },
+  playerList: {
+    maxHeight: 200,
+    borderWidth: 1,
+    borderRadius: 8,
+    padding: 8,
+  },
+  playerItem: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    padding: 12,
+    borderRadius: 8,
+    marginBottom: 8,
+    borderWidth: 1,
+  },
+  playerInfo: {
+    flex: 1,
+  },
+  playerName: {
+    fontSize: 16,
+    fontWeight: '500',
+  },
+  playerRating: {
+    fontSize: 12,
+    marginTop: 2,
+  },
+  searchContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    borderRadius: 8,
+    borderWidth: 1,
+    marginBottom: 12,
+    gap: 8,
+  },
+  searchInput: {
+    flex: 1,
+    fontSize: 16,
+    paddingVertical: 0,
+  },
+  selectedPlayersContainer: {
+    marginBottom: 12,
+  },
+  selectedLabel: {
+    fontSize: 12,
+    fontWeight: '600',
+    marginBottom: 8,
+  },
+  selectedChips: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+  },
+  selectedChip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 16,
+    gap: 6,
+  },
+  selectedChipText: {
+    fontSize: 14,
+    fontWeight: '500',
+  },
+  playerMeta: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 4,
+    gap: 8,
+  },
+  playerStats: {
+    fontSize: 12,
+  },
+  noResultsContainer: {
+    padding: 24,
+    alignItems: 'center',
+  },
+  noResultsText: {
+    fontSize: 14,
+    textAlign: 'center',
+  },
+  submitContainer: {
+    marginTop: 20,
+    marginBottom: 20,
+  },
+  submitButton: {
+    paddingVertical: 16,
+    paddingHorizontal: 32,
+    borderRadius: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  submitButtonText: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#fff',
+  },
+  infoBox: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 12,
+    borderRadius: 8,
+    borderWidth: 1,
+    gap: 8,
+  },
+  infoText: {
+    flex: 1,
+    fontSize: 14,
+  },
+  yourRatingText: {
+    fontSize: 14,
+    fontWeight: '600',
+    marginBottom: 12,
+  },
+  suggestedList: {
+    gap: 8,
+  },
+  suggestedPlayerItem: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    padding: 12,
+    borderRadius: 8,
+    borderWidth: 1,
+  },
+  suggestedPlayerInfo: {
+    flex: 1,
+  },
+  ratingRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 4,
+    gap: 12,
+  },
+  ratingDiffText: {
+    fontSize: 12,
+    fontWeight: '600',
+  },
+  selectButton: {
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 16,
+    borderWidth: 1,
+  },
+  selectButtonText: {
+    fontSize: 14,
+    fontWeight: '600',
   },
   sectionLabel: {
     fontSize: 16,

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   View,
   StyleSheet,
@@ -6,7 +6,6 @@ import {
   Modal,
   TouchableOpacity,
   TextInput,
-  Alert,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
@@ -54,15 +53,7 @@ const ChallengeFlowModalSimple: React.FC<ChallengeFlowModalProps> = ({
   const [showPlayerPicker, setShowPlayerPicker] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // Initialize form
-  useEffect(() => {
-    if (isVisible) {
-      resetForm();
-      loadAvailablePlayers();
-    }
-  }, [isVisible, clubId, targetPlayerId, targetPlayerName]);
-
-  const resetForm = () => {
+  const resetForm = useCallback(() => {
     setMatchType('singles');
     // Default to tomorrow's date
     const tomorrow = new Date();
@@ -78,9 +69,9 @@ const ChallengeFlowModalSimple: React.FC<ChallengeFlowModalProps> = ({
       setSelectedPlayer({ id: targetPlayerId, full_name: targetPlayerName });
       setNotes(`Hey ${targetPlayerName}! Want to play a match?`);
     }
-  };
+  }, [targetPlayerId, targetPlayerName]);
 
-  const loadAvailablePlayers = async () => {
+  const loadAvailablePlayers = useCallback(async () => {
     if (!user) return;
     
     try {
@@ -88,7 +79,7 @@ const ChallengeFlowModalSimple: React.FC<ChallengeFlowModalProps> = ({
         .from('club_members')
         .select(`
           user_id,
-          users!inner(id, full_name)
+          user:users(id, full_name)
         `)
         .eq('club_id', clubId)
         .neq('user_id', user.id); // Exclude current user
@@ -107,7 +98,15 @@ const ChallengeFlowModalSimple: React.FC<ChallengeFlowModalProps> = ({
     } catch (error) {
       console.error('Error loading players:', error);
     }
-  };
+  }, [user, clubId]);
+
+  // Initialize form
+  useEffect(() => {
+    if (isVisible) {
+      resetForm();
+      loadAvailablePlayers();
+    }
+  }, [isVisible, resetForm, loadAvailablePlayers]);
 
   const handleSubmit = async () => {
     if (isSubmitting) return;
@@ -329,7 +328,7 @@ const ChallengeFlowModalSimple: React.FC<ChallengeFlowModalProps> = ({
               {availablePlayers.map((player) => (
                 <TouchableOpacity
                   key={player.id}
-                  style={[styles.playerItem, { borderBottomColor: colors.border }]}
+                  style={[styles.playerItem, { borderBottomColor: colors.tabIconDefault + '30' }]}
                   onPress={() => {
                     setSelectedPlayer(player);
                     setShowPlayerPicker(false);

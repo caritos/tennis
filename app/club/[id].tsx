@@ -10,7 +10,6 @@ import { IOSTypography, IOSSpacing, IOSColors, IOSStyles } from '@/constants/IOS
 import { Club , supabase } from '@/lib/supabase';
 import { useAuth } from '@/contexts/AuthContext';
 import { RankedPlayer } from '@/components/ClubRankings';
-import ChallengeFlowModalSimple from '@/components/ChallengeFlowModalSimple';
 import ClubOverview from '@/components/club/ClubOverview';
 import ClubMembers from '@/components/club/ClubMembers';
 import ClubMatches from '@/components/club/ClubMatches';
@@ -42,9 +41,6 @@ export default function ClubDetailScreen() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [_isCreator, _setIsCreator] = useState(false);
-  const [showChallengeModal, setShowChallengeModal] = useState(false);
-  const [challengeTarget, setChallengeTarget] = useState<{ id: string; name: string } | null>(null);
-  const [pendingChallenges, setPendingChallenges] = useState<Set<string>>(new Set());
   const [joiningInvitations, setJoiningInvitations] = useState<Set<string>>(new Set());
   const [activeTab, setActiveTab] = useState<TabType>('overview');
   
@@ -57,16 +53,39 @@ export default function ClubDetailScreen() {
   const [highlightMatchId, setHighlightMatchId] = useState<string | null>(null);
   const highlightClearTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  // Set active tab from query parameter
+  // Set active tab from query parameter (only on initial load)
+  const [hasInitializedFromURL, setHasInitializedFromURL] = useState(false);
+  const [isManualNavigation, setIsManualNavigation] = useState(false);
+  
   useEffect(() => {
-    if (tab === 'matches') {
-      setActiveTab('matches');
-    } else if (tab === 'members') {
-      setActiveTab('members');
-    } else if (tab === 'overview') {
-      setActiveTab('overview');
+    console.log('🔧 URL Parameter effect triggered:', { 
+      tab, 
+      hasInitializedFromURL, 
+      isManualNavigation, 
+      shouldRun: !hasInitializedFromURL && !isManualNavigation 
+    });
+    
+    if (!hasInitializedFromURL && !isManualNavigation) {
+      console.log('🔧 URL Parameter effect running - setting tab based on URL');
+      if (tab === 'matches') {
+        console.log('🔧 Setting tab to matches from URL');
+        setActiveTab('matches');
+      } else if (tab === 'members') {
+        console.log('🔧 Setting tab to members from URL');
+        setActiveTab('members');
+      } else if (tab === 'overview') {
+        console.log('🔧 Setting tab to overview from URL');
+        setActiveTab('overview');
+      } else {
+        console.log('🔧 No URL tab specified, defaulting to overview');
+        setActiveTab('overview');
+      }
+      setHasInitializedFromURL(true);
+      console.log('🔧 URL Parameter effect completed, hasInitializedFromURL set to true');
+    } else {
+      console.log('🔧 URL Parameter effect skipped');
     }
-  }, [tab]);
+  }, [tab, hasInitializedFromURL, isManualNavigation]);
 
   // Handle deep linking to specific match
   useEffect(() => {
@@ -125,24 +144,78 @@ export default function ClubDetailScreen() {
 
   useEffect(() => {
     loadClubDetails();
+
+    // Set up real-time subscriptions for club data
+    if (id && typeof id === 'string') {
+      const subscriptions = [
+        // Club details changes
+        supabase
+          .channel(`club_${id}`)
+          .on(
+            'postgres_changes',
+            {
+              event: '*',
+              schema: 'public',
+              table: 'clubs',
+              filter: `id=eq.${id}`
+            },
+            (payload) => {
+              console.log('🔔 Club details change detected:', payload);
+              loadClubDetails();
+            }
+          )
+          .subscribe(),
+
+        // Club members changes  
+        supabase
+          .channel(`club_members_${id}`)
+          .on(
+            'postgres_changes',
+            {
+              event: '*',
+              schema: 'public',
+              table: 'club_members',
+              filter: `club_id=eq.${id}`
+            },
+            (payload) => {
+              console.log('🔔 Club members change detected:', payload);
+              loadClubDetails();
+            }
+          )
+          .subscribe(),
+
+        // Matches changes
+        supabase
+          .channel(`matches_${id}`)
+          .on(
+            'postgres_changes',
+            {
+              event: '*',
+              schema: 'public',
+              table: 'matches',
+              filter: `club_id=eq.${id}`
+            },
+            (payload) => {
+              console.log('🔔 Matches change detected:', payload);
+              loadClubDetails();
+            }
+          )
+          .subscribe()
+      ];
+
+      // Cleanup subscriptions on unmount
+      return () => {
+        subscriptions.forEach(sub => sub.unsubscribe());
+      };
+    }
   }, [id]);
 
-  // Refresh data when screen comes into focus (e.g., returning from match recording)
+  // Minimal focus refresh - real-time subscriptions handle most updates
   useFocusEffect(
     useCallback(() => {
-      console.log('🎾 ClubDetails: Screen focused, clearing cache and refreshing data...');
-      // Clear cached data to force fresh load
-      setRankings([]);
-      setClubMembers([]);
-      setRecentMatches([]);
-      setAllMatches([]);
-      
-      // Small delay to ensure state is cleared before loading fresh data
-      const refreshTimer = setTimeout(() => {
-        loadClubDetails();
-      }, 100);
-      
-      return () => clearTimeout(refreshTimer);
+      console.log('🎾 ClubDetails: Screen focused - real-time subscriptions active');
+      // Most updates now handled by real-time subscriptions
+      // Only refresh if data seems stale or on first focus
     }, [id])
   );
 
@@ -178,7 +251,7 @@ export default function ClubDetailScreen() {
       
       // Check if current user is the creator
       if (user?.id && (clubData as any).creator_id === user.id) {
-        setIsCreator(true);
+        _setIsCreator(true);
       }
       
       // Get member count
@@ -194,10 +267,10 @@ export default function ClubDetailScreen() {
       try {
         leaderboard = await getClubLeaderboard(id);
         console.log('🎾 ClubDetails: Fresh rankings loaded:', leaderboard.length, leaderboard.map(r => ({ id: r.id, rating: r.rating })));
-        setRankings(leaderboard);
+        _setRankings(leaderboard);
       } catch (error) {
         console.error('Failed to load rankings:', error);
-        setRankings([]);
+        _setRankings([]);
       }
       
       // Get recent matches for this club
@@ -263,7 +336,7 @@ export default function ClubDetailScreen() {
       }) || [];
       
       console.log('ClubDetails: Setting processed matches:', processedMatches.length, processedMatches);
-      setRecentMatches(processedMatches);
+      _setRecentMatches(processedMatches);
       
       // Load all matches for the matches tab
       const { data: allMatchesData } = await supabase
@@ -531,7 +604,7 @@ export default function ClubDetailScreen() {
         }
       });
       
-      setPendingChallenges(pending);
+      // Removed: setPendingChallenges(pending);
     } catch (error) {
       console.error('Failed to load pending challenges:', error);
     }
@@ -565,23 +638,7 @@ export default function ClubDetailScreen() {
     });
   };
 
-  const handleChallengePlayer = (playerId: string, playerName: string) => {
-    console.log('🎯 Challenge Player Called:', { playerId, playerName });
-    setChallengeTarget({ id: playerId, name: playerName });
-    setShowChallengeModal(true);
-  };
 
-  const handleChallengeSuccess = () => {
-    // Refresh rankings and pending challenges
-    loadClubDetails();
-    loadPendingChallenges();
-    loadChallengeCount();
-  };
-
-  const handleViewAllMatches = () => {
-    // Switch to matches tab
-    setActiveTab('matches');
-  };
 
   const handleEditClub = () => {
     // Navigate to edit club screen
@@ -706,6 +763,7 @@ export default function ClubDetailScreen() {
       {/* Tabs */}
       <View style={[styles.tabContainer, { borderBottomColor: colors.tabIconDefault + '30' }]}>
         <TouchableOpacity
+          testID="tab-overview"
           style={[
             styles.tab,
             activeTab === 'overview' && { borderBottomColor: colors.tint, borderBottomWidth: 2 }
@@ -713,6 +771,9 @@ export default function ClubDetailScreen() {
           onPress={() => {
             console.log('🎯 Overview tab pressed, switching from', activeTab, 'to overview');
             setActiveTab('overview');
+            // Prevent URL parameter effect from overriding manual navigation
+            setIsManualNavigation(true);
+            setHasInitializedFromURL(true);
           }}
         >
           <View style={styles.tabContent}>
@@ -728,11 +789,21 @@ export default function ClubDetailScreen() {
         </TouchableOpacity>
         
         <TouchableOpacity
+          testID="tab-members"
           style={[
             styles.tab,
             activeTab === 'members' && { borderBottomColor: colors.tint, borderBottomWidth: 2 }
           ]}
-          onPress={() => setActiveTab('members')}
+          onPress={() => {
+            console.log('🎯 Members tab pressed, switching from', activeTab, 'to members');
+            console.log('🎯 Before state changes:', { hasInitializedFromURL, isManualNavigation });
+            setActiveTab('members');
+            console.log('🎯 Active tab changed to members');
+            // Prevent URL parameter effect from overriding manual navigation
+            setIsManualNavigation(true);
+            setHasInitializedFromURL(true);
+            console.log('🎯 Manual navigation flags set - no router replace needed');
+          }}
         >
           <ThemedText style={[styles.tabText, activeTab === 'members' && { color: colors.tint }]}>
             Members ({memberCount})
@@ -740,11 +811,18 @@ export default function ClubDetailScreen() {
         </TouchableOpacity>
         
         <TouchableOpacity
+          testID="tab-matches"
           style={[
             styles.tab,
             activeTab === 'matches' && { borderBottomColor: colors.tint, borderBottomWidth: 2 }
           ]}
-          onPress={() => setActiveTab('matches')}
+          onPress={() => {
+            console.log('🎯 Matches tab pressed, switching from', activeTab, 'to matches');
+            setActiveTab('matches');
+            // Prevent URL parameter effect from overriding manual navigation
+            setIsManualNavigation(true);
+            setHasInitializedFromURL(true);
+          }}
         >
           <ThemedText style={[styles.tabText, activeTab === 'matches' && { color: colors.tint }]}>
             Matches
@@ -785,13 +863,10 @@ export default function ClubDetailScreen() {
           <ClubMembers
             members={clubMembers}
             colors={colors}
-            user={user}
-            pendingChallenges={pendingChallenges}
             sortBy={memberSortBy}
             filterBy={memberFilterBy}
             onSortChange={setMemberSortBy}
             onFilterChange={setMemberFilterBy}
-            onChallengePress={(playerId, playerName) => handleChallengePlayer(playerId, playerName)}
           />
         )}
 
@@ -817,19 +892,6 @@ export default function ClubDetailScreen() {
           />
         )}
 
-        {/* Challenge Modal */}
-        <ChallengeFlowModalSimple
-          clubId={id as string}
-          targetPlayerId={challengeTarget?.id}
-          targetPlayerName={challengeTarget?.name}
-          isVisible={showChallengeModal}
-          onClose={() => {
-            setShowChallengeModal(false);
-            setChallengeTarget(null);
-          }}
-          onSuccess={handleChallengeSuccess}
-        />
-
         {/* Match Invitation Modal */}
         {user && (
           <Modal
@@ -847,6 +909,7 @@ export default function ClubDetailScreen() {
               onSuccess={() => {
                 console.log('🔄 ClubDetailScreen: Invitation created successfully, closing modal');
                 setShowInviteForm(false);
+                // No need to manually refresh - real-time subscriptions handle this
               }}
             />
           </Modal>
