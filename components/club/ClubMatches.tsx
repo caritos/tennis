@@ -96,8 +96,9 @@ export default function ClubMatches({
         match.player4_id === currentUserId;
       if (!isUserInvolved) return false;
     } else if (filterInvolvement === 'incomplete') {
-      // Show matches that need more players (have empty slots)
+      // Show matches that need more players AND the current user can join (not creator)
       let isIncomplete = false;
+      let canCurrentUserJoin = false;
       
       if (match.isInvitation) {
         // For invitation matches, count responses + creator to determine if incomplete
@@ -106,11 +107,18 @@ export default function ClubMatches({
         
         const requiredPlayers = match.match_type === 'singles' ? 2 : 4;
         isIncomplete = totalConfirmedPlayers < requiredPlayers;
+        
+        // Check if current user can join (not the creator and hasn't responded)
+        const isCreator = currentUserId === match.player1_id;
+        const hasUserResponded = currentUserId && match.responses?.some(r => r.user_id === currentUserId);
+        canCurrentUserJoin = currentUserId && !isCreator && !hasUserResponded;
       } else {
         // For regular matches, check player ID/name slots
         if (match.match_type === 'singles') {
           // For singles: incomplete if player2 slot is completely empty (no ID and no name)
           isIncomplete = !match.player2_id && !match.opponent2_name;
+          // Check if current user can join (not player1 and slot is empty)
+          canCurrentUserJoin = currentUserId && currentUserId !== match.player1_id && isIncomplete;
         } else {
           // For doubles: incomplete if ANY position is completely empty (no ID and no name)
           const player2Missing = !match.player2_id && !match.opponent2_name;
@@ -118,10 +126,15 @@ export default function ClubMatches({
           const player4Missing = !match.player4_id && !match.partner4_name;
           
           isIncomplete = player2Missing || player3Missing || player4Missing;
+          // Check if current user can join (not already in the match and there's an empty slot)
+          const isAlreadyInMatch = currentUserId === match.player1_id || currentUserId === match.player2_id || 
+                                   currentUserId === match.player3_id || currentUserId === match.player4_id;
+          canCurrentUserJoin = currentUserId && !isAlreadyInMatch && isIncomplete;
         }
       }
       
-      if (!isIncomplete) return false;
+      // Only show if the match is incomplete AND the current user can join
+      if (!isIncomplete || !canCurrentUserJoin) return false;
     }
     
     // Filter by date
@@ -427,8 +440,10 @@ export default function ClubMatches({
                       matchType={match.match_type}
                       isMatched={(() => {
                         const requiredPlayers = match.match_type === 'singles' ? 2 : 4;
-                        const totalPlayers = 1 + (match.responses || []).filter((r: any) => r.status === 'confirmed' || r.status === 'interested').length;
-                        return totalPlayers >= requiredPlayers;
+                        // Count creator + all confirmed/interested responses (not pending)
+                        const confirmedResponses = (match.responses || []).filter((r: any) => r.status === 'confirmed' || r.status === 'interested');
+                        const totalConfirmedPlayers = 1 + confirmedResponses.length;
+                        return totalConfirmedPlayers >= requiredPlayers;
                       })()}
                       onJoinMatch={onJoinInvitation ? () => onJoinInvitation(match.id) : undefined}
                       isJoining={joiningInvitations?.has(match.id) || false}
@@ -439,9 +454,11 @@ export default function ClubMatches({
                     {/* Contact Information for Match Invitation Participants */}
                     {(() => {
                       const requiredPlayers = match.match_type === 'singles' ? 2 : 4;
-                      const totalPlayers = 1 + (match.responses || []).length; // creator + responses
-                      const isMatchConfirmed = totalPlayers >= requiredPlayers;
-                      const isUserParticipant = currentUserId && (match.player1_id === currentUserId || (match.responses || []).some((r: any) => r.user_id === currentUserId));
+                      // Count creator + confirmed/interested responses for contact sharing
+                      const confirmedResponses = (match.responses || []).filter((r: any) => r.status === 'confirmed' || r.status === 'interested');
+                      const totalConfirmedPlayers = 1 + confirmedResponses.length;
+                      const isMatchConfirmed = totalConfirmedPlayers >= requiredPlayers;
+                      const isUserParticipant = currentUserId && (match.player1_id === currentUserId || confirmedResponses.some((r: any) => r.user_id === currentUserId));
                       
                       return isMatchConfirmed && isUserParticipant;
                     })() && (
@@ -472,10 +489,12 @@ export default function ClubMatches({
                     {/* Record Match Result Button - Show when enough players have joined */}
                     {(() => {
                       const requiredPlayers = match.match_type === 'singles' ? 2 : 4;
-                      const totalPlayers = 1 + (match.responses || []).length; // creator + responses
-                      const canRecordMatch = totalPlayers >= requiredPlayers;
+                      // Count creator + confirmed/interested responses for match recording
+                      const confirmedResponses = (match.responses || []).filter((r: any) => r.status === 'confirmed' || r.status === 'interested');
+                      const totalConfirmedPlayers = 1 + confirmedResponses.length;
+                      const canRecordMatch = totalConfirmedPlayers >= requiredPlayers;
                       
-                      return canRecordMatch && currentUserId && (match.player1_id === currentUserId || (match.responses || []).some((r: any) => r.user_id === currentUserId)) && (
+                      return canRecordMatch && currentUserId && (match.player1_id === currentUserId || confirmedResponses.some((r: any) => r.user_id === currentUserId)) && (
                         <TouchableOpacity
                           style={[styles.invitationRecordButton, { backgroundColor: '#4A90E2' }]}
                           onPress={() => {

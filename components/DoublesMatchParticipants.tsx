@@ -39,10 +39,12 @@ export const DoublesMatchParticipants: React.FC<DoublesMatchParticipantsProps> =
   const currentPlayers = responses.length + 1; // +1 for creator
   const confirmedResponses = responses.filter(r => r.status === 'confirmed' || r.status === 'interested');
   
-  // Check if current user has already responded or is the creator
+  // Check if current user has already responded (any response, including undefined status)
   const hasUserResponded = currentUserId && responses.some(r => r.user_id === currentUserId);
   const isUserCreator = currentUserId && currentUserId === creatorId;
   const canJoin = currentUserId && !hasUserResponded && !isUserCreator && onJoinMatch && !isMatched && !isJoining;
+
+
 
   // Helper function to format ELO rating display
   const formatEloRating = (rating?: number, gamesPlayed?: number) => {
