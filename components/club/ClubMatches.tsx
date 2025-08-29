@@ -51,8 +51,7 @@ interface ClubMatchesProps {
   onJoinInvitation?: (invitationId: string) => void;
   joiningInvitations?: Set<string>;
   currentUserId?: string;
-  highlightMatchId?: string | null;
-  onHighlightCleared?: () => void;
+  targetMatchId?: string | null; // For scrolling to specific match
 }
 
 export default function ClubMatches({
@@ -70,12 +69,9 @@ export default function ClubMatches({
   onJoinInvitation,
   joiningInvitations,
   currentUserId,
-  highlightMatchId,
-  onHighlightCleared: _onHighlightCleared,
+  targetMatchId,
 }: ClubMatchesProps) {
   const scrollViewRef = useRef<ScrollView>(null);
-  const matchHeightsRef = useRef<Map<string, number>>(new Map());
-  const filtersHeightRef = useRef<number>(280); // Default filter section height
   
   // Helper function for readable match IDs
   const getReadableMatchId = (matchId: string): string => {
@@ -85,12 +81,6 @@ export default function ClubMatches({
 
   // Filter and sort matches based on type, involvement, and date
   const filteredMatches = matches.filter(match => {
-    // Business logic exception: always show the target match when deep linking
-    const isTargetMatch = highlightMatchId && highlightMatchId === match.id;
-    if (isTargetMatch) {
-      console.log('🎯 ClubMatches: Including target match despite filtering rules:', match.id);
-      return true;
-    }
 
     // Filter by match type
     if (filterType !== 'all' && match.match_type !== filterType) {
@@ -160,104 +150,27 @@ export default function ClubMatches({
     }
   });
 
-  // Store match heights as they render
-  const handleMatchLayout = (matchId: string, height: number) => {
-    matchHeightsRef.current.set(matchId, height);
-    console.log(`📏 Match ${getReadableMatchId(matchId)} measured height:`, height);
-  };
+  // Removed height measurement functions (issue #133)
 
-  // Store filters height
-  const handleFiltersLayout = (height: number) => {
-    filtersHeightRef.current = height;
-    console.log('📏 Filters section measured height:', height);
-  };
-
-  // Scroll to highlighted match when it changes
+  // Simple scroll-to-match functionality (no highlighting)
   useEffect(() => {
-    if (highlightMatchId && filteredMatches.length > 0) {
-      console.log('🔍 DEEP LINK DEBUG: Looking for match:', highlightMatchId);
-      console.log('🔍 DEEP LINK DEBUG: Readable ID we want:', getReadableMatchId(highlightMatchId));
-      console.log('🔍 DEEP LINK DEBUG: Total filtered matches:', filteredMatches.length);
-      
-      // Find the index of the highlighted match in the filtered matches
-      const targetIndex = filteredMatches.findIndex(match => match.id === highlightMatchId);
-      
+    if (targetMatchId && filteredMatches.length > 0) {
+      const targetIndex = filteredMatches.findIndex(match => match.id === targetMatchId);
       if (targetIndex >= 0) {
-        console.log('🎯 ClubMatches: Found target match at filtered index:', targetIndex);
-        console.log('🎯 ClubMatches: Target match details:', {
-          id: getReadableMatchId(filteredMatches[targetIndex].id),
-          fullId: filteredMatches[targetIndex].id,
-          type: filteredMatches[targetIndex].match_type,
-          isInvitation: filteredMatches[targetIndex].isInvitation,
-          isChallenge: filteredMatches[targetIndex].isChallenge
-        });
+        // Simple scroll with estimated heights
+        const estimatedItemHeight = 200; // Average match item height
+        const filtersHeight = 280;
+        const targetPosition = filtersHeight + (targetIndex * estimatedItemHeight);
         
-        // Calculate scroll position using actual measured heights
-        let totalHeight = filtersHeightRef.current; // Start with filters height
-        
-        // Add up actual heights of matches before our target
-        for (let i = 0; i < targetIndex; i++) {
-          const match = filteredMatches[i];
-          const measuredHeight = matchHeightsRef.current.get(match.id);
-          if (measuredHeight) {
-            totalHeight += measuredHeight;
-            console.log(`  - Match ${i} (${getReadableMatchId(match.id)}): ${measuredHeight}px (measured)`);
-          } else {
-            // Use more accurate estimates based on match type
-            let estimatedHeight = 120;
-            if (match.isInvitation) {
-              estimatedHeight = 160; // Invitations tend to be taller due to participant grids
-            } else if (match.isChallenge) {
-              estimatedHeight = 140; // Challenges are medium height
-            }
-            totalHeight += estimatedHeight;
-            console.log(`  - Match ${i} (${getReadableMatchId(match.id)}): ${estimatedHeight}px (estimated)`);
-          }
-        }
-        
-        // Add half of target match height to center it
-        const targetMatchHeight = matchHeightsRef.current.get(filteredMatches[targetIndex].id) || 140;
-        const targetScrollPosition = Math.max(0, totalHeight - (targetMatchHeight / 2));
-        
-        console.log('🎯 ClubMatches: Scroll calculation details:');
-        console.log('  - Filters height:', filtersHeightRef.current);
-        console.log('  - Matches before target:', targetIndex);
-        console.log('  - Total height to target:', totalHeight);
-        console.log('  - Target match height:', targetMatchHeight);
-        console.log('  - Final scroll position:', targetScrollPosition);
-        
-        // Use multiple scroll strategies for maximum reliability
         setTimeout(() => {
-          if (scrollViewRef.current) {
-            console.log('🎯 ClubMatches: Attempting enhanced scroll to position:', targetScrollPosition);
-            
-            // Strategy 1: Multiple scroll attempts with different timing
-            const scrollAttempts = [
-              { delay: 0, animated: true },
-              { delay: 300, animated: false },
-              { delay: 600, animated: true },
-            ];
-            
-            scrollAttempts.forEach(({ delay, animated }, attemptIndex) => {
-              setTimeout(() => {
-                if (scrollViewRef.current) {
-                  console.log(`🎯 ClubMatches: Scroll attempt ${attemptIndex + 1} to position:`, targetScrollPosition, `(animated: ${animated})`);
-                  scrollViewRef.current.scrollTo({
-                    y: targetScrollPosition,
-                    animated: animated
-                  });
-                }
-              }, delay);
-            });
-          }
-        }, 1200); // Increased delay to ensure all layouts are measured
-      } else {
-        console.warn('🎯 ClubMatches: Target match not found in filtered list!');
-        console.warn('🎯 ClubMatches: Looking for ID:', highlightMatchId);
-        console.warn('🎯 ClubMatches: Available IDs:', filteredMatches.map(m => m.id));
+          scrollViewRef.current?.scrollTo({
+            y: targetPosition,
+            animated: true
+          });
+        }, 500); // Small delay to ensure renders complete
       }
     }
-  }, [highlightMatchId, filteredMatches]);
+  }, [targetMatchId, filteredMatches]);
 
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
@@ -283,7 +196,6 @@ export default function ClubMatches({
       {/* Filter Controls */}
       <ThemedView 
         style={[styles.filtersCard, { backgroundColor: colors.card }]}
-        onLayout={(event) => handleFiltersLayout(event.nativeEvent.layout.height)}
       >
         <View style={styles.filterSection}>
           <ThemedText style={[styles.filterLabel, { color: colors.textSecondary }]}>
@@ -386,21 +298,11 @@ export default function ClubMatches({
             {filteredMatches.map((match, index) => (
               <View
                 key={match.id}
-                onLayout={(event) => handleMatchLayout(match.id, event.nativeEvent.layout.height)}
                 style={[
                   styles.matchItem,
                   index !== filteredMatches.length - 1 && styles.matchItemBorder,
                   { borderColor: colors.border },
-                  highlightMatchId === match.id && {
-                    borderColor: colors.tint,
-                    borderWidth: 3,
-                    backgroundColor: `${colors.tint}15`,
-                    shadowColor: colors.tint,
-                    shadowOffset: { width: 0, height: 2 },
-                    shadowOpacity: 0.3,
-                    shadowRadius: 4,
-                    elevation: 5,
-                  }
+                  // Removed highlighting styles (issue #133)
                 ]}
               >
                 {match.isChallenge ? (

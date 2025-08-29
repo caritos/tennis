@@ -8,6 +8,7 @@ import ClubDetailsPage from '@/app/club/[id]';
 jest.mock('expo-router', () => ({
   useLocalSearchParams: jest.fn(),
   useRouter: jest.fn(),
+  useFocusEffect: jest.fn(),
 }));
 
 jest.mock('@/contexts/AuthContext', () => ({

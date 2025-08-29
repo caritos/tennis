@@ -50,8 +50,7 @@ export default function ClubDetailScreen() {
   }, [activeTab]);
   const [showInviteForm, setShowInviteForm] = useState(false);
   const [unreadChallengeCount, setUnreadChallengeCount] = useState(0);
-  const [highlightMatchId, setHighlightMatchId] = useState<string | null>(null);
-  const highlightClearTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const [targetMatchId, setTargetMatchId] = useState<string | null>(null);
 
   // Set active tab from query parameter (only on initial load)
   const [hasInitializedFromURL, setHasInitializedFromURL] = useState(false);
@@ -89,7 +88,7 @@ export default function ClubDetailScreen() {
 
   // Handle deep linking to specific match
   useEffect(() => {
-    if (matchId && typeof matchId === 'string' && allMatches.length > 0) {
+    if (matchId && typeof matchId === 'string' && allMatches.length > 0 && !isManualNavigation) {
       console.log('🎯 Deep linking to match:', matchId);
       console.log('🎯 Available matches:', allMatches.map(m => m.id));
       
@@ -102,40 +101,16 @@ export default function ClubDetailScreen() {
       
       console.log('🎯 Found target match:', targetMatch);
       
-      // Switch to matches tab if not already there
+      // Switch to matches tab if not already there (only when not manually navigating)
       if (activeTab !== 'matches') {
-        console.log('🎯 Switching to matches tab...');
+        console.log('🎯 Switching to matches tab for deep link...');
         setActiveTab('matches');
       }
       
-      // Clear any existing highlight timeout
-      if (highlightClearTimeoutRef.current) {
-        clearTimeout(highlightClearTimeoutRef.current);
-        highlightClearTimeoutRef.current = null;
-      }
-      
-      // Small delay to ensure tab switch is complete before highlighting
-      const highlightTimeout = setTimeout(() => {
-        console.log('🎯 Setting highlight for match:', matchId);
-        setHighlightMatchId(matchId);
-        
-        // Clear highlight after 15 seconds
-        highlightClearTimeoutRef.current = setTimeout(() => {
-          console.log('🎯 Clearing highlight after 15 seconds');
-          setHighlightMatchId(null);
-          highlightClearTimeoutRef.current = null;
-        }, 15000);
-      }, 300);
-      
-      return () => {
-        clearTimeout(highlightTimeout);
-        if (highlightClearTimeoutRef.current) {
-          clearTimeout(highlightClearTimeoutRef.current);
-          highlightClearTimeoutRef.current = null;
-        }
-      };
+      // Set target match for scrolling (no visual highlighting)
+      setTargetMatchId(matchId);
     }
-  }, [matchId, activeTab, allMatches.length]);
+  }, [matchId, activeTab, allMatches.length, isManualNavigation]);
   const [memberSortBy, setMemberSortBy] = useState<'name' | 'wins' | 'matches' | 'joined' | 'ranking'>('name');
   const [memberFilterBy, setMemberFilterBy] = useState<'all' | 'active' | 'new'>('all');
   const [matchFilterType, setMatchFilterType] = useState<'all' | 'singles' | 'doubles'>('all');
@@ -393,8 +368,8 @@ export default function ClubDetailScreen() {
         }
         
         // Check if invitation has enough players to convene
-        const requiredPlayers = invitation.match_type === 'singles' ? 2 : 4;
-        const currentPlayers = 1; // Creator is always counted as 1 player
+        // const requiredPlayers = invitation.match_type === 'singles' ? 2 : 4;
+        // const currentPlayers = 1; // Creator is always counted as 1 player
         // Note: We'll count actual responses after they're loaded
         
         activeInvitations.push(invitation);
@@ -876,9 +851,9 @@ export default function ClubDetailScreen() {
             matches={allMatches}
             club={club}
             colors={colors}
-            filterType={highlightMatchId ? 'all' : matchFilterType}
-            filterDate={highlightMatchId ? 'all' : matchFilterDate}
-            filterInvolvement={highlightMatchId ? 'all' : matchFilterInvolvement}
+            filterType={matchFilterType}
+            filterDate={matchFilterDate}
+            filterInvolvement={matchFilterInvolvement}
             onFilterTypeChange={setMatchFilterType}
             onFilterDateChange={setMatchFilterDate}
             onFilterInvolvementChange={setMatchFilterInvolvement}
@@ -887,8 +862,7 @@ export default function ClubDetailScreen() {
             onJoinInvitation={handleJoinInvitation}
             joiningInvitations={joiningInvitations}
             currentUserId={user?.id}
-            highlightMatchId={highlightMatchId}
-            onHighlightCleared={() => setHighlightMatchId(null)}
+            targetMatchId={targetMatchId}
           />
         )}
 
