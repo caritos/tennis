@@ -3,7 +3,6 @@ import {
   View,
   StyleSheet,
   TouchableOpacity,
-  ScrollView,
   ActivityIndicator,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
@@ -154,7 +153,7 @@ const ChallengeNotifications: React.FC<ChallengeNotificationsProps> = ({
   }
 
   return (
-    <ThemedView style={styles.container}>
+    <ThemedView style={[styles.container, { backgroundColor: colors.card }]}>
       <View style={styles.header}>
         <ThemedText style={styles.sectionLabel}>Challenges</ThemedText>
         <View style={[styles.badge, { backgroundColor: colors.tint }]}>
@@ -162,13 +161,9 @@ const ChallengeNotifications: React.FC<ChallengeNotificationsProps> = ({
         </View>
       </View>
 
-      <ScrollView 
-        style={styles.challengesList} 
-        showsVerticalScrollIndicator={false}
-        nestedScrollEnabled={true}
-      >
+      <View style={styles.challengesList}>
         {receivedChallenges.map(renderChallenge)}
-      </ScrollView>
+      </View>
     </ThemedView>
   );
 };
@@ -177,8 +172,14 @@ export default ChallengeNotifications;
 
 const styles = StyleSheet.create({
   container: {
-    paddingHorizontal: 20,
-    paddingVertical: 16,
+    marginHorizontal: 16,
+    marginVertical: 8,
+    padding: 16,
+    borderRadius: 12,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.08,
+    shadowRadius: 4,
+    elevation: 3,
   },
   header: {
     flexDirection: 'row',
@@ -204,7 +205,7 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   challengesList: {
-    maxHeight: 300,
+    // No maxHeight constraint - let it expand naturally in parent ScrollView
   },
   challengeCard: {
     borderWidth: 1,
