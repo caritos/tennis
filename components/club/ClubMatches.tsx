@@ -425,7 +425,11 @@ export default function ClubMatches({
                         created_at: r.created_at || new Date().toISOString()
                       }))}
                       matchType={match.match_type}
-                      isMatched={false}
+                      isMatched={(() => {
+                        const requiredPlayers = match.match_type === 'singles' ? 2 : 4;
+                        const totalPlayers = 1 + (match.responses || []).filter((r: any) => r.status === 'confirmed' || r.status === 'interested').length;
+                        return totalPlayers >= requiredPlayers;
+                      })()}
                       onJoinMatch={onJoinInvitation ? () => onJoinInvitation(match.id) : undefined}
                       isJoining={joiningInvitations?.has(match.id) || false}
                       currentUserId={currentUserId}
