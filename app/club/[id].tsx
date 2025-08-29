@@ -819,14 +819,18 @@ export default function ClubDetailScreen() {
             onViewAllMatches={(matchId?: string) => {
               console.log('🎯 onViewAllMatches called with matchId:', matchId);
               if (matchId) {
-                // Navigate with matchId parameter for deep linking
-                const targetUrl = `/club/${id}?tab=matches&matchId=${matchId}`;
-                console.log('🎯 Navigating to:', targetUrl);
-                router.push(targetUrl);
+                // Switch to matches tab and set target match for scrolling
+                console.log('🎯 Switching to matches tab with target match:', matchId);
+                setActiveTab('matches');
+                setTargetMatchId(matchId);
+                setIsManualNavigation(true);
+                setHasInitializedFromURL(true);
               } else {
                 // Just switch to matches tab without specific match
                 console.log('🎯 Switching to matches tab without specific match');
                 setActiveTab('matches');
+                setIsManualNavigation(true);
+                setHasInitializedFromURL(true);
               }
             }}
             onEditClub={handleEditClub}
