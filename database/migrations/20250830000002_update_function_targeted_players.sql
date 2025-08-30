@@ -1,6 +1,7 @@
--- CREATE MATCH INVITATION FUNCTION
--- This function bypasses RLS policies to reliably create match invitations
+-- Drop existing function to avoid parameter conflicts
+DROP FUNCTION IF EXISTS create_match_invitation(uuid, uuid, text, date, text, text, text);
 
+-- Recreate function with targeted_players parameter
 CREATE OR REPLACE FUNCTION create_match_invitation(
   p_club_id uuid,
   p_creator_id uuid,
@@ -81,7 +82,7 @@ BEGIN
     v_invitation_id,
     p_club_id,
     p_creator_id,
-    p_match_type::match_type_enum,
+    p_match_type,
     p_date,
     p_time,
     p_location,
@@ -92,7 +93,7 @@ BEGIN
   ) RETURNING * INTO v_invitation_record;
   
   -- Log the creation for debugging
-  RAISE LOG 'Match invitation created: % by user % in club %', v_invitation_id, p_creator_id, p_club_id;
+  RAISE LOG 'Match invitation created: % by user % in club % with targeted players: %', v_invitation_id, p_creator_id, p_club_id, p_targeted_players;
   
   -- Create notifications for appropriate recipients based on invitation type
   INSERT INTO notifications (
@@ -170,12 +171,4 @@ END;
 $$;
 
 -- Grant execute permission to authenticated users
-GRANT EXECUTE ON FUNCTION create_match_invitation TO authenticated;
-
--- Test function (optional)
--- SELECT create_match_invitation(
---   '2a60487e-c69c-4a47-858e-d87a7ea6373d'::uuid, 
---   'be01afa0-28ba-4d6d-b256-d9503cdf607f'::uuid,
---   'singles',
---   '2025-08-28'::date
--- );
+GRANT EXECUTE ON FUNCTION create_match_invitation(uuid, uuid, text, date, text, text, text, uuid[]) TO authenticated;

@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { View, TouchableOpacity, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { router } from 'expo-router';
+import { router, useFocusEffect } from 'expo-router';
 import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
 import { Colors } from '@/constants/Colors';
@@ -25,6 +25,7 @@ export function ContactSharingNotification({ onViewAll }: ContactSharingNotifica
 
   useEffect(() => {
     if (user?.id) {
+      console.log('📝 ContactSharingNotification: Setting up subscription for user:', user.id);
       loadContactSharingNotifications();
 
       // Set up real-time subscription for notification changes
@@ -39,19 +40,51 @@ export function ContactSharingNotification({ onViewAll }: ContactSharingNotifica
             filter: `user_id=eq.${user.id}`
           },
           (payload) => {
-            console.log('🔔 Contact notification change detected:', payload);
+            console.log('🔔 Contact notification change detected - Full payload:', JSON.stringify(payload, null, 2));
+            console.log('🔔 Payload event type:', payload.eventType);
+            console.log('🔔 Payload table:', payload.table);
+            console.log('🔔 New record:', payload.new);
+            console.log('🔔 Old record:', payload.old);
+            
             // Reload notifications when they change
+            console.log('🔄 Reloading contact sharing notifications due to real-time change');
             loadContactSharingNotifications();
           }
         )
-        .subscribe();
+        .subscribe((status, err) => {
+          console.log('📡 Contact notification subscription status:', status);
+          if (err) {
+            console.error('❌ Contact notification subscription error:', err);
+          }
+        });
+
+      console.log('📡 Contact notification subscription created:', subscription);
 
       // Cleanup subscription on unmount
       return () => {
+        console.log('🧹 Cleaning up contact notification subscription');
         subscription.unsubscribe();
       };
+    } else {
+      console.log('📝 ContactSharingNotification: No user ID, skipping subscription setup');
     }
   }, [user?.id]);
+
+  // Handle race condition: refresh notifications when component becomes focused
+  // This catches cases where real-time subscription hasn't processed new notifications yet
+  useFocusEffect(
+    React.useCallback(() => {
+      if (user?.id) {
+        console.log('🎯 ContactSharingNotification: Component focused, checking for new notifications');
+        // Small delay to allow any pending real-time events to process first
+        setTimeout(() => {
+          console.log('🎯 ContactSharingNotification: Focus effect timeout triggered, loading notifications');
+          loadContactSharingNotifications();
+        }, 100);
+      }
+    }, [user?.id])
+  );
+
 
   const loadContactSharingNotifications = async () => {
     if (!user?.id) {
@@ -63,29 +96,68 @@ export function ContactSharingNotification({ onViewAll }: ContactSharingNotifica
       setIsLoading(true);
       console.log(`📝 ContactSharingNotification: Loading notifications for user ${user.id}`);
       
+      const loadStart = Date.now();
+      
       // Get contact sharing notifications from Supabase
+      console.log('📝 ContactSharingNotification: Querying notifications table with:', {
+        user_id: user.id,
+        is_read: false,
+        types: ['challenge', 'match_invitation']
+      });
+      
+      // First, let's check ALL notifications for this user to see what's there
+      console.log('🔍 ContactSharingNotification: Checking ALL notifications for user (debug)');
+      const { data: debugAllNotifications, error: debugError } = await supabase
+        .from('notifications')
+        .select('*')
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: false })
+        .limit(10);
+      
+      if (debugError) {
+        console.error('❌ Debug query failed:', debugError);
+      } else {
+        console.log('🔍 ALL notifications for user (last 10):', debugAllNotifications?.map(n => ({
+          id: n.id,
+          type: n.type,
+          title: n.title,
+          is_read: n.is_read,
+          created_at: n.created_at,
+          action_type: n.action_type
+        })));
+      }
+      
       const { data: allNotifications, error } = await supabase
         .from('notifications')
         .select('*')
         .eq('user_id', user.id)
         .eq('is_read', false)
-        .eq('type', 'challenge')
+        .in('type', ['challenge', 'match_invitation'])
         .order('created_at', { ascending: false });
+
+      const loadTime = Date.now() - loadStart;
+      console.log(`📝 ContactSharingNotification: Query completed in ${loadTime}ms`);
 
       if (error) {
         console.error('❌ ContactSharingNotification: Failed to load notifications:', error);
         return;
       }
       
-      console.log(`📝 ContactSharingNotification: Found ${allNotifications?.length || 0} challenge notifications:`, allNotifications);
+      console.log(`📝 ContactSharingNotification: Found ${allNotifications?.length || 0} total notifications (challenge + match_invitation):`, allNotifications?.map(n => ({ id: n.id, type: n.type, title: n.title, created_at: n.created_at })));
       
-      // Filter for contact sharing notifications (titles contain specific text)
-      const contactNotifications = (allNotifications || []).filter(n => 
-        n.title.includes('Contact Info Shared') || n.title.includes('All 4 Players Ready')
-      );
+      // Filter for contact sharing and match invitation notifications
+      console.log('📝 ContactSharingNotification: Filtering for contact sharing and match invitation notifications');
+      const contactNotifications = (allNotifications || []).filter(n => {
+        const isContactSharing = n.title.includes('Contact Info Shared') || n.title.includes('All 4 Players Ready');
+        const isMatchInvitation = n.title.includes('Match Available') || n.title.includes('New ') && (n.title.includes('Singles') || n.title.includes('Doubles'));
+        const shouldShow = isContactSharing || isMatchInvitation;
+        console.log(`📝 ContactSharingNotification: Checking notification "${n.title}" - isContactSharing: ${isContactSharing}, isMatchInvitation: ${isMatchInvitation}, shouldShow: ${shouldShow}`);
+        return shouldShow;
+      });
       
-      console.log(`📝 ContactSharingNotification: Filtered to ${contactNotifications.length} contact sharing notifications:`, contactNotifications);
+      console.log(`📝 ContactSharingNotification: Filtered to ${contactNotifications.length} contact sharing notifications:`, contactNotifications?.map(n => ({ id: n.id, type: n.type, title: n.title })));
       
+      console.log(`📝 ContactSharingNotification: Setting ${contactNotifications.length} notifications in state`);
       setNotifications(contactNotifications);
     } catch (error) {
       console.error('❌ ContactSharingNotification: Failed to load notifications:', error);
@@ -121,8 +193,26 @@ export function ContactSharingNotification({ onViewAll }: ContactSharingNotifica
     handleMarkAsRead(notification.id);
     
     // Navigate to club matches tab where challenges appear alongside invitations
-    if (notification.action_type === 'view_match' && notification.related_id) {
-      if (notification.type === 'challenge') {
+    if (notification.action_type === 'join_match' && notification.action_data) {
+      // Handle match invitation notifications
+      if (notification.type === 'match_invitation') {
+        try {
+          console.log('🔍 ContactSharingNotification: Handling match invitation notification:', notification.action_data);
+          const actionData = typeof notification.action_data === 'string' ? 
+            JSON.parse(notification.action_data) : notification.action_data;
+          
+          if (actionData?.clubId) {
+            console.log('🔗 ContactSharingNotification: Navigating to club page matches tab:', actionData.clubId);
+            router.push(`/club/${actionData.clubId}?tab=matches`);
+          } else {
+            console.log('⚠️ ContactSharingNotification: No clubId in action_data, navigating to clubs tab');
+            router.push('/(tabs)');
+          }
+        } catch (error) {
+          console.error('❌ ContactSharingNotification: Failed to parse match invitation action_data:', error);
+          router.push('/(tabs)');
+        }
+      } else if (notification.type === 'challenge') {
         try {
           console.log('🔍 ContactSharingNotification: Getting challenge data for ID:', notification.related_id);
           const challengeData = await challengeService.getChallengeById(notification.related_id);
@@ -131,6 +221,26 @@ export function ContactSharingNotification({ onViewAll }: ContactSharingNotifica
           if (challengeData?.club_id) {
             console.log('🔗 ContactSharingNotification: Navigating to club page matches tab:', challengeData.club_id);
             // Navigate to the club page with matches tab selected
+            router.push(`/club/${challengeData.club_id}?tab=matches`);
+          } else {
+            console.log('⚠️ ContactSharingNotification: No club_id found, navigating to clubs tab');
+            router.push('/(tabs)');
+          }
+        } catch (error) {
+          console.error('❌ ContactSharingNotification: Failed to get challenge club ID:', error);
+          router.push('/(tabs)');
+        }
+      }
+    } else if (notification.action_type === 'view_match' && notification.related_id) {
+      // Handle legacy challenge notifications with view_match action type
+      if (notification.type === 'challenge') {
+        try {
+          console.log('🔍 ContactSharingNotification: Getting challenge data for ID:', notification.related_id);
+          const challengeData = await challengeService.getChallengeById(notification.related_id);
+          console.log('🔍 ContactSharingNotification: Challenge data retrieved:', challengeData);
+          
+          if (challengeData?.club_id) {
+            console.log('🔗 ContactSharingNotification: Navigating to club page matches tab:', challengeData.club_id);
             router.push(`/club/${challengeData.club_id}?tab=matches`);
           } else {
             console.log('⚠️ ContactSharingNotification: No club_id found, navigating to clubs tab');

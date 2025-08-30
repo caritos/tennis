@@ -1,5 +1,6 @@
--- CREATE MATCH INVITATION FUNCTION
--- This function bypasses RLS policies to reliably create match invitations
+-- HOTFIX: Add notification creation to match invitation function
+-- This fixes the issue where creating match invitations doesn't notify club members
+-- Run this in Supabase SQL Editor
 
 CREATE OR REPLACE FUNCTION create_match_invitation(
   p_club_id uuid,
@@ -8,8 +9,7 @@ CREATE OR REPLACE FUNCTION create_match_invitation(
   p_date date,
   p_time text DEFAULT NULL,
   p_location text DEFAULT NULL,
-  p_notes text DEFAULT NULL,
-  p_targeted_players uuid[] DEFAULT NULL
+  p_notes text DEFAULT NULL
 )
 RETURNS jsonb
 SECURITY DEFINER -- Run with elevated privileges to bypass RLS
@@ -20,7 +20,6 @@ DECLARE
   v_invitation_record match_invitations%ROWTYPE;
   v_club_exists boolean := false;
   v_user_is_member boolean := false;
-  notification_count integer;
 BEGIN
   -- Generate UUID for the invitation
   v_invitation_id := gen_random_uuid();
@@ -75,7 +74,6 @@ BEGIN
     location,
     notes,
     status,
-    targeted_players,
     created_at
   ) VALUES (
     v_invitation_id,
@@ -87,14 +85,13 @@ BEGIN
     p_location,
     p_notes,
     'active',
-    p_targeted_players,
     now()
   ) RETURNING * INTO v_invitation_record;
   
   -- Log the creation for debugging
   RAISE LOG 'Match invitation created: % by user % in club %', v_invitation_id, p_creator_id, p_club_id;
   
-  -- Create notifications for appropriate recipients based on invitation type
+  -- Create notifications for all club members including the creator
   INSERT INTO notifications (
     id,
     user_id,
@@ -110,44 +107,20 @@ BEGIN
   SELECT 
     gen_random_uuid(),
     cm.user_id,
-    CASE 
-      WHEN p_targeted_players IS NOT NULL THEN 'match_challenge'
-      ELSE 'match_invitation'
-    END,
-    CASE 
-      WHEN p_targeted_players IS NOT NULL THEN '⚔️ New ' || INITCAP(p_match_type) || ' Challenge'
-      ELSE '🎾 New ' || INITCAP(p_match_type) || ' Match Available'
-    END,
-    u.full_name || 
-    CASE 
-      WHEN p_targeted_players IS NOT NULL THEN ' challenged you to ' || p_match_type || ' on ' || p_date
-      ELSE ' is looking to play ' || p_match_type || ' on ' || p_date
-    END ||
+    'match_invitation',
+    '🎾 New ' || INITCAP(p_match_type) || ' Match Available',
+    u.full_name || ' is looking to play ' || p_match_type || ' on ' || p_date || 
     CASE WHEN p_time IS NOT NULL THEN ' at ' || p_time ELSE '' END ||
     CASE WHEN p_location IS NOT NULL THEN ' at ' || p_location ELSE '' END,
     v_invitation_id,
-    'view_match', -- Use valid action_type value
+    'join_match',
     jsonb_build_object('invitationId', v_invitation_id, 'clubId', p_club_id),
     p_date + INTERVAL '1 day', -- Expire after match date
     now()
   FROM club_members cm
   INNER JOIN users u ON u.id = p_creator_id -- Get creator name for notification
   WHERE cm.club_id = p_club_id 
-    AND cm.user_id IN (SELECT id FROM users WHERE id = cm.user_id) -- Ensure user still exists
-    AND (
-      p_targeted_players IS NULL OR -- For open invitations, notify all members
-      cm.user_id = ANY(p_targeted_players) OR -- For targeted invitations, notify targeted players
-      cm.user_id = p_creator_id -- Always notify the creator
-    );
-  
-  -- Log notification creation for debugging
-  GET DIAGNOSTICS notification_count = ROW_COUNT;
-  RAISE LOG 'Created % notifications for match invitation % in club %', notification_count, v_invitation_id, p_club_id;
-  
-  -- If no notifications were created, that's a problem
-  IF notification_count = 0 THEN
-    RAISE LOG 'WARNING: No notifications were created for match invitation % in club %', v_invitation_id, p_club_id;
-  END IF;
+    AND cm.user_id IN (SELECT id FROM users WHERE id = cm.user_id); -- Ensure user still exists
   
   -- Return success with the created invitation data
   RETURN jsonb_build_object(
@@ -171,11 +144,3 @@ $$;
 
 -- Grant execute permission to authenticated users
 GRANT EXECUTE ON FUNCTION create_match_invitation TO authenticated;
-
--- Test function (optional)
--- SELECT create_match_invitation(
---   '2a60487e-c69c-4a47-858e-d87a7ea6373d'::uuid, 
---   'be01afa0-28ba-4d6d-b256-d9503cdf607f'::uuid,
---   'singles',
---   '2025-08-28'::date
--- );

@@ -19,7 +19,9 @@ RETURNS TABLE(
   creator_full_name text,
   creator_phone text,
   response_count bigint,
-  responses json
+  responses json,
+  targeted_players uuid[],
+  targeted_player_names text[]
 )
 LANGUAGE plpgsql
 SECURITY DEFINER
@@ -49,7 +51,18 @@ BEGIN
     u.full_name as creator_full_name,
     u.phone as creator_phone,
     COALESCE(response_counts.response_count, 0) as response_count,
-    COALESCE(responses.responses, '[]'::json) as responses
+    COALESCE(responses.responses, '[]'::json) as responses,
+    mi.targeted_players,
+    CASE 
+      WHEN mi.targeted_players IS NOT NULL THEN 
+        ARRAY(
+          SELECT u_targeted.full_name 
+          FROM users u_targeted 
+          WHERE u_targeted.id = ANY(mi.targeted_players)
+          ORDER BY u_targeted.full_name
+        )
+      ELSE NULL
+    END as targeted_player_names
   FROM match_invitations mi
   LEFT JOIN users u ON mi.creator_id = u.id
   LEFT JOIN (

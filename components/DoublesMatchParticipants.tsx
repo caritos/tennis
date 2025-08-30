@@ -11,6 +11,7 @@ interface DoublesMatchParticipantsProps {
   creatorName: string;
   creatorEloRating?: number;
   creatorGamesPlayed?: number;
+  creatorPhone?: string;
   responses: InvitationResponse[];
   matchType: 'singles' | 'doubles';
   isMatched: boolean;
@@ -18,19 +19,24 @@ interface DoublesMatchParticipantsProps {
   isJoining?: boolean;
   currentUserId?: string;
   creatorId?: string;
+  targetedPlayers?: string[]; // Array of user IDs for targeted invitations
+  targetedPlayerNames?: string[]; // Array of player names for targeted invitations
 }
 
 export const DoublesMatchParticipants: React.FC<DoublesMatchParticipantsProps> = ({
   creatorName,
   creatorEloRating,
   creatorGamesPlayed,
+  creatorPhone,
   responses,
   matchType,
   isMatched,
   onJoinMatch,
   isJoining,
   currentUserId,
-  creatorId
+  creatorId,
+  targetedPlayers,
+  targetedPlayerNames
 }) => {
   const colorScheme = useColorScheme();
   const colors = Colors[colorScheme ?? 'light'];
@@ -43,6 +49,10 @@ export const DoublesMatchParticipants: React.FC<DoublesMatchParticipantsProps> =
   const hasUserResponded = currentUserId && responses.some(r => r.user_id === currentUserId);
   const isUserCreator = currentUserId && currentUserId === creatorId;
   const canJoin = currentUserId && !hasUserResponded && !isUserCreator && onJoinMatch && !isMatched && !isJoining;
+
+  // Check if user should see contact info (when match is confirmed and user is participating)
+  const isUserParticipating = currentUserId && (isUserCreator || hasUserResponded);
+  const shouldShowContact = isMatched && isUserParticipating;
 
 
 
@@ -69,7 +79,7 @@ export const DoublesMatchParticipants: React.FC<DoublesMatchParticipantsProps> =
         eloInfo: creatorEloInfo
       },
       ...confirmedResponses.slice(0, 3).map(r => ({ 
-        name: r.user_name || 'Unknown Player', 
+        name: r.full_name || r.user_name || 'Unknown Player', 
         isOrganizer: false,
         eloInfo: formatEloRating(r.user_elo_rating, r.user_games_played)
       }))
@@ -100,13 +110,26 @@ export const DoublesMatchParticipants: React.FC<DoublesMatchParticipantsProps> =
                   </ThemedText>
                 )}
                 <ThemedText style={[styles.eloRating, { color: player.eloInfo.color }]}>
-                  {player.eloInfo.rating} • {player.eloInfo.tier}{player.eloInfo.provisionalText}
+                  {player.eloInfo.rating} • {player.eloInfo.tier}
                 </ThemedText>
+                {shouldShowContact && (
+                  <ThemedText style={[styles.contactNumber, { color: colors.textSecondary }]}>
+                    {player.isOrganizer ? creatorPhone : 
+                     confirmedResponses[index - 1]?.user_phone || confirmedResponses[index - 1]?.full_phone}
+                  </ThemedText>
+                )}
               </View>
             ))}
             
             {/* Empty slots for remaining players */}
             {Array.from({ length: Math.max(0, 4 - allPlayers.length) }).map((_, index) => {
+              const remainingSlots = 4 - allPlayers.length;
+              const playersNeeded = remainingSlots > 1 ? `${remainingSlots} players` : '1 player';
+              
+              // Check if there are pending responses that might indicate specific players were invited
+              const pendingResponses = confirmedResponses.length < (matchType === 'singles' ? 1 : 3); // Responses needed beyond creator
+              const hasAnyResponses = responses.length > 0;
+              
               if (canJoin || isJoining) {
                 return (
                   <TouchableOpacity 
@@ -122,10 +145,44 @@ export const DoublesMatchParticipants: React.FC<DoublesMatchParticipantsProps> =
                   </TouchableOpacity>
                 );
               } else {
+                // Show more specific messaging based on invitation context
+                let displayText = '';
+                
+                // Check if this is a targeted invitation
+                const isTargetedInvitation = targetedPlayers && targetedPlayers.length > 0;
+                
+                if (index === 0 && isTargetedInvitation && targetedPlayerNames) {
+                  // For targeted invitations, show specific player names
+                  const remainingTargetedPlayers = targetedPlayerNames.filter(name => {
+                    // Check if this targeted player has already responded
+                    return !confirmedResponses.some(response => 
+                      response.full_name === name || response.user_name === name
+                    );
+                  });
+                  
+                  if (remainingTargetedPlayers.length > 0) {
+                    const waitingForText = remainingTargetedPlayers.length === 1 
+                      ? `Waiting for ${remainingTargetedPlayers[0]} to respond`
+                      : `Waiting for ${remainingTargetedPlayers.join(', ')} to respond`;
+                    displayText = waitingForText;
+                  } else {
+                    displayText = `Looking for ${playersNeeded}`;
+                  }
+                } else if (index === 0 && hasAnyResponses && pendingResponses) {
+                  // If there are responses but still need more players, show waiting message
+                  displayText = `Waiting for ${playersNeeded}`;
+                } else if (index === 0) {
+                  // First empty slot shows general "looking for" message
+                  displayText = `Looking for ${playersNeeded}`;
+                } else {
+                  // Subsequent slots show "Open slot"
+                  displayText = 'Open slot';
+                }
+                
                 return (
                   <View key={`empty-${index}`} style={[styles.emptySlot, { borderColor: colors.tabIconDefault + '50' }]}>
                     <ThemedText style={[styles.emptySlotText, { color: colors.tabIconDefault }]}>
-                      Waiting for player...
+                      {displayText}
                     </ThemedText>
                   </View>
                 );
@@ -154,28 +211,32 @@ export const DoublesMatchParticipants: React.FC<DoublesMatchParticipantsProps> =
           <ThemedText style={[styles.playerName, { color: colors.text }]}>
             {creatorName}
           </ThemedText>
-          <ThemedText style={[styles.organizerBadge, { color: colors.tabIconDefault }]}>
-            (Organizer)
+          <ThemedText style={[styles.organizerBadge, { color: colors.tint }]}>
+            Organizer
           </ThemedText>
           <ThemedText style={[styles.eloRating, { color: formatEloRating(creatorEloRating, creatorGamesPlayed).color }]}>
-            {formatEloRating(creatorEloRating, creatorGamesPlayed).rating} • {formatEloRating(creatorEloRating, creatorGamesPlayed).tier}{formatEloRating(creatorEloRating, creatorGamesPlayed).provisionalText}
+            {formatEloRating(creatorEloRating, creatorGamesPlayed).rating} • {formatEloRating(creatorEloRating, creatorGamesPlayed).tier}
           </ThemedText>
-        </View>
-
-        <View style={styles.vsContainer}>
-          <ThemedText style={[styles.vsText, { color: colors.tabIconDefault }]}>
-            VS
-          </ThemedText>
+          {shouldShowContact && creatorPhone && (
+            <ThemedText style={[styles.contactNumber, { color: colors.textSecondary }]}>
+              {creatorPhone}
+            </ThemedText>
+          )}
         </View>
 
         {confirmedResponses.length > 0 ? (
           <View style={styles.playerSlot}>
             <ThemedText style={[styles.playerName, { color: colors.text }]}>
-              {confirmedResponses[0].user_name || 'Unknown Player'}
+              {confirmedResponses[0].full_name || confirmedResponses[0].user_name || 'Unknown Player'}
             </ThemedText>
             <ThemedText style={[styles.eloRating, { color: formatEloRating(confirmedResponses[0].user_elo_rating, confirmedResponses[0].user_games_played).color }]}>
-              {formatEloRating(confirmedResponses[0].user_elo_rating, confirmedResponses[0].user_games_played).rating} • {formatEloRating(confirmedResponses[0].user_elo_rating, confirmedResponses[0].user_games_played).tier}{formatEloRating(confirmedResponses[0].user_elo_rating, confirmedResponses[0].user_games_played).provisionalText}
+              {formatEloRating(confirmedResponses[0].user_elo_rating, confirmedResponses[0].user_games_played).rating} • {formatEloRating(confirmedResponses[0].user_elo_rating, confirmedResponses[0].user_games_played).tier}
             </ThemedText>
+            {shouldShowContact && (confirmedResponses[0].user_phone || confirmedResponses[0].full_phone) && (
+              <ThemedText style={[styles.contactNumber, { color: colors.textSecondary }]}>
+                {confirmedResponses[0].user_phone || confirmedResponses[0].full_phone}
+              </ThemedText>
+            )}
           </View>
         ) : canJoin || isJoining ? (
           <TouchableOpacity 
@@ -191,7 +252,27 @@ export const DoublesMatchParticipants: React.FC<DoublesMatchParticipantsProps> =
         ) : (
           <View style={[styles.emptySlot, { borderColor: colors.tabIconDefault + '50' }]}>
             <ThemedText style={[styles.emptySlotText, { color: colors.tabIconDefault }]}>
-              Waiting for opponent...
+              {(() => {
+                // Check if this is a targeted invitation for singles
+                const isTargetedInvitation = targetedPlayers && targetedPlayers.length > 0;
+                
+                if (isTargetedInvitation && targetedPlayerNames && targetedPlayerNames.length > 0) {
+                  // For targeted singles invitations, show specific player name
+                  const remainingTargetedPlayers = targetedPlayerNames.filter(name => {
+                    // Check if this targeted player has already responded
+                    return !confirmedResponses.some(response => 
+                      response.full_name === name || response.user_name === name
+                    );
+                  });
+                  
+                  if (remainingTargetedPlayers.length > 0) {
+                    return `Waiting for ${remainingTargetedPlayers[0]} to respond`;
+                  }
+                }
+                
+                // Default messaging for open invitations
+                return responses.length > 0 ? 'Waiting for 1 player' : 'Looking for 1 player';
+              })()}
             </ThemedText>
           </View>
         )}
@@ -246,21 +327,17 @@ const styles = StyleSheet.create({
     marginBottom: 12, // Increased margin for better separation
   },
   playersContainer: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 8,
-    justifyContent: 'space-between',
-    marginBottom: 16, // Increased margin to prevent overlap
-    minHeight: 64, // Ensure minimum height for 2 rows of cards
+    flexDirection: 'column',
+    marginBottom: 16,
   },
   playerSlot: {
-    flex: 1,
-    minWidth: '45%',
+    width: '100%',
+    marginBottom: 8,
     borderWidth: 1,
     borderRadius: 12,  // iOS HIG: Standard corner radius
-    padding: 12,  // iOS HIG: Better touch targets
+    padding: 12,  // Increased padding for better spacing in full width
     alignItems: 'center',
-    minHeight: 44,  // iOS HIG: Minimum touch target height
+    minHeight: 60,  // Reduced since we have full width now
     justifyContent: 'center',
   },
   playerName: {
@@ -273,14 +350,14 @@ const styles = StyleSheet.create({
     marginTop: 2,
   },
   emptySlot: {
-    flex: 1,
-    minWidth: '45%',
+    width: '100%',
+    marginBottom: 8,
     borderWidth: 1,
     borderStyle: 'dashed',
     borderRadius: 12,  // iOS HIG: Standard corner radius
-    padding: 12,  // iOS HIG: Consistent padding
+    padding: 12,  // Consistent with playerSlot padding
     alignItems: 'center',
-    minHeight: 44,  // iOS HIG: Minimum touch target height
+    minHeight: 60,  // Match playerSlot height for consistency
     justifyContent: 'center',
   },
   clickableSlot: {
@@ -297,24 +374,18 @@ const styles = StyleSheet.create({
     fontStyle: 'italic',
     marginTop: 4,
   },
-  vsContainer: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingHorizontal: 8,
-  },
-  vsText: {
-    fontSize: 13,  // iOS HIG: Caption 1
-    fontWeight: '600',
-  },
   singlesPlayers: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
+    flexDirection: 'column',
     marginBottom: 16,
   },
   eloRating: {
     fontSize: 13,  // iOS HIG: Caption 1
     marginTop: 2,
     fontWeight: '500',
+  },
+  contactNumber: {
+    fontSize: 12,  // iOS HIG: Caption 2
+    marginTop: 4,
+    textAlign: 'center',
   },
 });

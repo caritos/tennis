@@ -88,18 +88,37 @@ export default function ClubDetailScreen() {
 
   // Handle deep linking to specific match
   useEffect(() => {
+    console.log('🔍 Deep linking effect triggered:', {
+      matchId,
+      matchIdType: typeof matchId,
+      allMatchesCount: allMatches.length,
+      isManualNavigation,
+      activeTab
+    });
+    
     if (matchId && typeof matchId === 'string' && allMatches.length > 0 && !isManualNavigation) {
       console.log('🎯 Deep linking to match:', matchId);
-      console.log('🎯 Available matches:', allMatches.map(m => m.id));
+      console.log('🎯 Available matches IDs:', allMatches.map(m => ({ 
+        id: m.id, 
+        type: m.isInvitation ? 'invitation' : m.isChallenge ? 'challenge' : 'match',
+        matchType: m.match_type 
+      })));
       
       // Check if the target match exists in the loaded matches
       const targetMatch = allMatches.find(match => match.id === matchId);
       if (!targetMatch) {
-        console.warn('🎯 Target match not found in loaded matches:', matchId);
+        console.warn('❌ Target match not found in loaded matches:', matchId);
+        console.warn('❌ Looking for ID:', matchId);
+        console.warn('❌ In these IDs:', allMatches.map(m => m.id));
         return;
       }
       
-      console.log('🎯 Found target match:', targetMatch);
+      console.log('✅ Found target match:', {
+        id: targetMatch.id,
+        type: targetMatch.match_type,
+        isInvitation: targetMatch.isInvitation,
+        date: targetMatch.date
+      });
       
       // Switch to matches tab if not already there (only when not manually navigating)
       if (activeTab !== 'matches') {
@@ -108,7 +127,10 @@ export default function ClubDetailScreen() {
       }
       
       // Set target match for scrolling (no visual highlighting)
+      console.log('🎯 Setting targetMatchId for scrolling:', matchId);
       setTargetMatchId(matchId);
+    } else {
+      console.log('🔍 Deep linking conditions not met');
     }
   }, [matchId, activeTab, allMatches.length, isManualNavigation]);
   const [memberSortBy, setMemberSortBy] = useState<'name' | 'wins' | 'matches' | 'joined' | 'ranking'>('name');
@@ -466,6 +488,12 @@ export default function ClubDetailScreen() {
       }) || [];
 
       // Process match invitations (looking to play) as upcoming matches - only viable ones
+      console.log('🎯 Processing invitations for display:', viableInvitations.map(inv => ({
+        id: inv.id,
+        creator_name: inv.creator?.full_name,
+        match_type: inv.match_type,
+        date: inv.date
+      })));
       const processedInvitations = viableInvitations.map((invitation: any) => ({
         id: invitation.id,
         player1_name: invitation.creator?.full_name || 'Unknown Player',
@@ -866,7 +894,15 @@ export default function ClubDetailScreen() {
             onJoinInvitation={handleJoinInvitation}
             joiningInvitations={joiningInvitations}
             currentUserId={user?.id}
-            targetMatchId={targetMatchId}
+            targetMatchId={(() => {
+              console.log('🎯 ClubDetailScreen: Passing targetMatchId to ClubMatches:', {
+                targetMatchId,
+                type: typeof targetMatchId,
+                length: targetMatchId?.length,
+                allMatchesLength: allMatches?.length
+              });
+              return targetMatchId;
+            })()}
           />
         )}
 
@@ -884,10 +920,43 @@ export default function ClubDetailScreen() {
                 console.log('🔄 ClubDetailScreen: Closing invite form modal');
                 setShowInviteForm(false);
               }}
-              onSuccess={() => {
-                console.log('🔄 ClubDetailScreen: Invitation created successfully, closing modal');
+              onSuccess={async (invitationId: string) => {
+                console.log('🔄 ClubDetailScreen: Invitation created successfully, navigating to matches tab with ID:', invitationId);
+                console.log('🔄 ClubDetailScreen: Invitation ID type:', typeof invitationId);
+                console.log('🔄 ClubDetailScreen: Invitation ID length:', invitationId?.length);
                 setShowInviteForm(false);
-                // No need to manually refresh - real-time subscriptions handle this
+                
+                // Reload matches data to include the new invitation before navigating
+                console.log('🔄 ClubDetailScreen: Refreshing matches data before navigation...');
+                await loadClubDetails();
+                
+                console.log('🔄 ClubDetailScreen: After loadClubDetails, allMatches length:', allMatches?.length);
+                console.log('🔄 ClubDetailScreen: Looking for invitation with ID:', invitationId);
+                
+                // Check if the new invitation is in the loaded data
+                const foundInvitation = allMatches?.find(match => match.id === invitationId);
+                if (foundInvitation) {
+                  console.log('✅ ClubDetailScreen: Found newly created invitation in allMatches:', {
+                    id: foundInvitation.id,
+                    match_type: foundInvitation.match_type,
+                    isInvitation: foundInvitation.isInvitation,
+                    date: foundInvitation.date
+                  });
+                } else {
+                  console.warn('⚠️ ClubDetailScreen: Newly created invitation NOT found in allMatches!');
+                  console.warn('⚠️ ClubDetailScreen: Available match IDs:', allMatches?.slice(0, 5).map(m => ({
+                    id: m.id, 
+                    type: m.match_type, 
+                    isInvitation: m.isInvitation
+                  })));
+                }
+                
+                // Navigate to matches tab and highlight the new invitation
+                console.log('🔄 ClubDetailScreen: Setting active tab to matches and navigating...');
+                setActiveTab('matches');
+                // Update URL to reflect the new tab and match
+                router.replace(`/club/${id}?tab=matches&matchId=${invitationId}`);
+                console.log('🔄 ClubDetailScreen: Navigation completed with matchId:', invitationId);
               }}
             />
           </Modal>

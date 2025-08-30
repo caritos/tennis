@@ -13,6 +13,7 @@ This directory contains development guides, coding standards, and development pr
 - **[Real-Time Architecture](real-time-architecture.md)** - Supabase real-time subscriptions for live UI updates
 - **[Button Style Guide](button-style-guide.md)** - UI button component standards and patterns
 - **[Shared Components](shared-components.md)** - Reusable component library documentation
+- **[Database Common Issues](database-common-issues.md)** - Recurring database problems and their solutions
 
 ### Data & Privacy
 - **[Data Deletion](data-deletion.md)** - User data deletion and privacy compliance

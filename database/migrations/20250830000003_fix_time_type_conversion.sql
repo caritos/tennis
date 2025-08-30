@@ -1,5 +1,4 @@
--- CREATE MATCH INVITATION FUNCTION
--- This function bypasses RLS policies to reliably create match invitations
+-- Fix time type conversion in create_match_invitation function
 
 CREATE OR REPLACE FUNCTION create_match_invitation(
   p_club_id uuid,
@@ -21,6 +20,7 @@ DECLARE
   v_club_exists boolean := false;
   v_user_is_member boolean := false;
   notification_count integer;
+  v_time_value time := NULL;
 BEGIN
   -- Generate UUID for the invitation
   v_invitation_id := gen_random_uuid();
@@ -39,6 +39,18 @@ BEGIN
       'success', false,
       'error', 'Invalid match_type. Must be either singles or doubles'
     );
+  END IF;
+  
+  -- Convert text time to TIME type if provided
+  IF p_time IS NOT NULL AND p_time != '' THEN
+    BEGIN
+      v_time_value := p_time::time;
+    EXCEPTION
+      WHEN OTHERS THEN
+        -- If time conversion fails, set to NULL
+        v_time_value := NULL;
+        RAISE LOG 'Warning: Could not convert time value "%" to TIME type', p_time;
+    END;
   END IF;
   
   -- Check if club exists
@@ -81,9 +93,9 @@ BEGIN
     v_invitation_id,
     p_club_id,
     p_creator_id,
-    p_match_type::match_type_enum,
+    p_match_type,
     p_date,
-    p_time,
+    v_time_value, -- Use converted TIME value
     p_location,
     p_notes,
     'active',
@@ -92,7 +104,7 @@ BEGIN
   ) RETURNING * INTO v_invitation_record;
   
   -- Log the creation for debugging
-  RAISE LOG 'Match invitation created: % by user % in club %', v_invitation_id, p_creator_id, p_club_id;
+  RAISE LOG 'Match invitation created: % by user % in club % with targeted players: %', v_invitation_id, p_creator_id, p_club_id, p_targeted_players;
   
   -- Create notifications for appropriate recipients based on invitation type
   INSERT INTO notifications (
@@ -123,7 +135,7 @@ BEGIN
       WHEN p_targeted_players IS NOT NULL THEN ' challenged you to ' || p_match_type || ' on ' || p_date
       ELSE ' is looking to play ' || p_match_type || ' on ' || p_date
     END ||
-    CASE WHEN p_time IS NOT NULL THEN ' at ' || p_time ELSE '' END ||
+    CASE WHEN p_time IS NOT NULL AND p_time != '' THEN ' at ' || p_time ELSE '' END ||
     CASE WHEN p_location IS NOT NULL THEN ' at ' || p_location ELSE '' END,
     v_invitation_id,
     'view_match', -- Use valid action_type value
@@ -170,12 +182,4 @@ END;
 $$;
 
 -- Grant execute permission to authenticated users
-GRANT EXECUTE ON FUNCTION create_match_invitation TO authenticated;
-
--- Test function (optional)
--- SELECT create_match_invitation(
---   '2a60487e-c69c-4a47-858e-d87a7ea6373d'::uuid, 
---   'be01afa0-28ba-4d6d-b256-d9503cdf607f'::uuid,
---   'singles',
---   '2025-08-28'::date
--- );
+GRANT EXECUTE ON FUNCTION create_match_invitation(uuid, uuid, text, date, text, text, text, uuid[]) TO authenticated;

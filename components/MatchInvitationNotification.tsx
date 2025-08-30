@@ -68,6 +68,7 @@ export function MatchInvitationNotification({
 
   useEffect(() => {
     if (clubId) {
+      console.log('🎯 MatchInvitationNotification: Setting up for club:', clubId);
       loadInvitationNotifications();
       
       // Set up real-time subscription for new invitations
@@ -82,17 +83,30 @@ export function MatchInvitationNotification({
             filter: `club_id=eq.${clubId}`
           },
           (payload) => {
-            console.log('🔔 Match invitation change detected:', payload);
+            console.log('🔔 MatchInvitationNotification: Match invitation change detected - Full payload:', JSON.stringify(payload, null, 2));
+            console.log('🔔 MatchInvitationNotification: Event type:', payload.eventType);
+            console.log('🔔 MatchInvitationNotification: New record:', payload.new);
+            console.log('🔄 MatchInvitationNotification: Reloading invitations due to real-time change');
             // Reload notifications when invitations change
             loadInvitationNotifications();
           }
         )
-        .subscribe();
+        .subscribe((status, err) => {
+          console.log('📡 MatchInvitationNotification: Subscription status:', status);
+          if (err) {
+            console.error('❌ MatchInvitationNotification: Subscription error:', err);
+          }
+        });
+
+      console.log('📡 MatchInvitationNotification: Subscription created:', subscription);
 
       // Cleanup subscription on unmount
       return () => {
+        console.log('🧹 MatchInvitationNotification: Cleaning up subscription');
         subscription.unsubscribe();
       };
+    } else {
+      console.log('🎯 MatchInvitationNotification: No clubId provided');
     }
   }, [clubId]); // Remove refreshTrigger, only depend on clubId
 

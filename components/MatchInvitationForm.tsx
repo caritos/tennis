@@ -7,9 +7,7 @@ import { ThemedView } from './ThemedView';
 import { useColorScheme } from '@/hooks/useColorScheme';
 import { Colors } from '@/constants/Colors';
 import { matchInvitationService, CreateInvitationData } from '@/services/matchInvitationService';
-import TimingOptions from './challenge-flow/TimingOptions';
-import MatchTypeSelection from './challenge-flow/MatchTypeSelection';
-import MessageSection from './challenge-flow/MessageSection';
+// Removed challenge-flow imports - components deleted
 import { supabase } from '@/lib/supabase';
 import { getClubMembers } from '@/services/clubService';
 
@@ -19,7 +17,7 @@ interface MatchInvitationFormProps {
   clubId: string;
   creatorId: string;
   onClose: () => void;
-  onSuccess?: () => void;
+  onSuccess?: (invitationId: string) => void;
 }
 
 const MatchInvitationForm: React.FC<MatchInvitationFormProps> = ({
@@ -160,8 +158,8 @@ const MatchInvitationForm: React.FC<MatchInvitationFormProps> = ({
       console.log('Match invitation posted successfully:', createdInvitation.id);
 
       if (onSuccess) {
-        console.log('🔄 MatchInvitationForm: Calling onSuccess callback');
-        onSuccess();
+        console.log('🔄 MatchInvitationForm: Calling onSuccess callback with invitation ID:', createdInvitation.id);
+        onSuccess(createdInvitation.id);
       }
       
       console.log('🔄 MatchInvitationForm: Closing form');
@@ -282,22 +280,74 @@ const MatchInvitationForm: React.FC<MatchInvitationFormProps> = ({
       <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
         <View style={styles.formContainer}>
           {/* Match Type - FIRST */}
-          <MatchTypeSelection
-            matchType={matchType}
-            onMatchTypeChange={(type) => {
-              setMatchType(type);
-              // Reset player selection if switching from doubles to singles
-              if (type === 'singles' && selectedPlayers.length > 1) {
-                setSelectedPlayers(selectedPlayers.slice(0, 1));
-              }
-              // Reset to 'open' if Quick Match was selected but switching to doubles
-              if (type === 'doubles' && inviteType === 'quick') {
-                setInviteType('open');
-                setSelectedPlayers([]);
-              }
-            }}
-            colors={colors}
-          />
+          <View style={styles.section}>
+            <ThemedText style={[styles.sectionLabel, { color: colors.text }]}>Match Type</ThemedText>
+            <View style={styles.radioGroup}>
+              <TouchableOpacity
+                style={[
+                  styles.radioOption,
+                  { borderColor: colors.tabIconDefault },
+                  matchType === 'singles' && { 
+                    borderColor: colors.tint,
+                    backgroundColor: colors.tint + '10'
+                  }
+                ]}
+                onPress={() => {
+                  setMatchType('singles');
+                  // Reset player selection if switching from doubles to singles
+                  if (selectedPlayers.length > 1) {
+                    setSelectedPlayers(selectedPlayers.slice(0, 1));
+                  }
+                  // Reset to 'open' if Quick Match was selected but switching to singles
+                  if (inviteType === 'quick') {
+                    setInviteType('open');
+                    setSelectedPlayers([]);
+                  }
+                }}
+              >
+                <View style={[
+                  styles.radioCircle,
+                  { borderColor: colors.tabIconDefault },
+                  matchType === 'singles' && { borderColor: colors.tint }
+                ]}>
+                  {matchType === 'singles' && (
+                    <View style={[styles.radioFill, { backgroundColor: colors.tint }]} />
+                  )}
+                </View>
+                <ThemedText style={[styles.radioLabel, { color: colors.text }]}>Singles</ThemedText>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={[
+                  styles.radioOption,
+                  { borderColor: colors.tabIconDefault },
+                  matchType === 'doubles' && { 
+                    borderColor: colors.tint,
+                    backgroundColor: colors.tint + '10'
+                  }
+                ]}
+                onPress={() => {
+                  setMatchType('doubles');
+                  // Reset to 'open' if Quick Match was selected but switching to doubles
+                  if (inviteType === 'quick') {
+                    setInviteType('open');
+                    setSelectedPlayers([]);
+                  }
+                }}
+              >
+                <View style={[
+                  styles.radioCircle,
+                  { borderColor: colors.tabIconDefault },
+                  matchType === 'doubles' && { borderColor: colors.tint }
+                ]}>
+                  {matchType === 'doubles' && (
+                    <View style={[styles.radioFill, { backgroundColor: colors.tint }]} />
+                  )}
+                </View>
+                <ThemedText style={[styles.radioLabel, { color: colors.text }]}>Doubles</ThemedText>
+              </TouchableOpacity>
+            </View>
+          </View>
 
           {/* Invite Type Selection - SECOND */}
           <View style={styles.section}>
@@ -581,21 +631,55 @@ const MatchInvitationForm: React.FC<MatchInvitationFormProps> = ({
           )}
 
           {/* Timing Options */}
-          <TimingOptions
-            selectedTime={selectedTiming}
-            onTimeChange={setSelectedTiming}
-            colors={colors}
-          />
+          <View style={styles.section}>
+            <ThemedText style={[styles.sectionLabel, { color: colors.text }]}>When would you like to play?</ThemedText>
+            <View style={styles.timingOptions}>
+              {[
+                { key: 'tomorrow', label: 'Tomorrow' },
+                { key: 'weekend', label: 'This Weekend' },
+                { key: 'next_week', label: 'Next Week' },
+                { key: 'flexible', label: 'Flexible' }
+              ].map((option) => (
+                <TouchableOpacity
+                  key={option.key}
+                  style={[
+                    styles.timingOption,
+                    { borderColor: colors.tabIconDefault, backgroundColor: colors.card },
+                    selectedTiming === option.key && { 
+                      borderColor: colors.tint,
+                      backgroundColor: colors.tint + '20'
+                    }
+                  ]}
+                  onPress={() => setSelectedTiming(option.key as TimeOption)}
+                >
+                  <ThemedText style={[
+                    styles.timingOptionText,
+                    { color: colors.text },
+                    selectedTiming === option.key && { color: colors.tint }
+                  ]}>
+                    {option.label}
+                  </ThemedText>
+                </TouchableOpacity>
+              ))}
+            </View>
+          </View>
 
 
 
           {/* Message */}
-          <MessageSection
-            message={message}
-            matchType={matchType}
-            onMessageChange={setMessage}
-            colors={colors}
-          />
+          <View style={styles.section}>
+            <ThemedText style={[styles.sectionLabel, { color: colors.text }]}>Add a message (optional)</ThemedText>
+            <TextInput
+              style={[styles.textArea, { borderColor: colors.tabIconDefault, color: colors.text, backgroundColor: colors.card }]}
+              value={message}
+              onChangeText={setMessage}
+              placeholder={matchType === 'singles' ? 'Let your opponent know your skill level, preferences, or any specific requests...' : 'Let everyone know your skill level, preferences, or any specific requests...'}
+              placeholderTextColor={colors.tabIconDefault}
+              multiline={true}
+              numberOfLines={3}
+              textAlignVertical="top"
+            />
+          </View>
 
           {/* Submit Button */}
           <View style={styles.submitContainer}>
@@ -879,5 +963,31 @@ const styles = StyleSheet.create({
   radioLabel: {
     fontSize: 16,
     fontWeight: '500',
+  },
+  timingOptions: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 12,
+  },
+  timingOption: {
+    flex: 1,
+    minWidth: '45%',
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    borderWidth: 1,
+    borderRadius: 8,
+    alignItems: 'center',
+  },
+  timingOptionText: {
+    fontSize: 14,
+    fontWeight: '500',
+  },
+  textArea: {
+    borderWidth: 1,
+    borderRadius: 8,
+    paddingHorizontal: 12,
+    paddingVertical: 12,
+    fontSize: 16,
+    minHeight: 80,
   },
 });

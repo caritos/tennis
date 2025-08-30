@@ -1,4 +1,4 @@
-import React, { useRef, useEffect } from 'react';
+import React, { useRef, useEffect, useState } from 'react';
 import { View, TouchableOpacity, StyleSheet, ScrollView } from 'react-native';
 import { router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
@@ -34,6 +34,8 @@ interface ClubMatch extends Match {
     status: 'interested' | 'confirmed' | 'declined';
     created_at?: string;
   }[];
+  targeted_players?: string[]; // Array of user IDs for targeted invitations
+  targeted_player_names?: string[]; // Array of player names for targeted invitations
 }
 
 interface ClubMatchesProps {
@@ -72,6 +74,8 @@ export default function ClubMatches({
   targetMatchId,
 }: ClubMatchesProps) {
   const scrollViewRef = useRef<ScrollView>(null);
+  const matchRefs = useRef<{ [key: string]: View | null }>({});
+  const [isLayoutComplete, setIsLayoutComplete] = useState(false);
   
   // Helper function for readable match IDs
   const getReadableMatchId = (matchId: string): string => {
@@ -167,23 +171,191 @@ export default function ClubMatches({
 
   // Simple scroll-to-match functionality (no highlighting)
   useEffect(() => {
+    console.log('📜 ClubMatches scroll effect triggered:', {
+      targetMatchId,
+      targetMatchIdType: typeof targetMatchId,
+      targetMatchIdLength: targetMatchId?.length,
+      filteredMatchesCount: filteredMatches.length,
+      allMatchesIDs: filteredMatches.map(m => ({
+        id: m.id, 
+        idType: typeof m.id,
+        idLength: m.id?.length,
+        type: m.match_type,
+        isInvitation: m.isInvitation 
+      }))
+    });
+    
     if (targetMatchId && filteredMatches.length > 0) {
-      const targetIndex = filteredMatches.findIndex(match => match.id === targetMatchId);
+      console.log('🔍 ClubMatches: Starting detailed match search...');
+      console.log('🔍 ClubMatches: Looking for exact match ID:', `'${targetMatchId}'`);
+      
+      // Try different comparison methods to debug the issue
+      const exactMatch = filteredMatches.find(match => match.id === targetMatchId);
+      const trimmedMatch = filteredMatches.find(match => match.id.trim() === targetMatchId.trim());
+      const indexMatch = filteredMatches.findIndex(match => match.id === targetMatchId);
+      
+      console.log('🔍 ClubMatches: Search results:', {
+        exactMatch: exactMatch ? { id: exactMatch.id, type: exactMatch.match_type, isInvitation: exactMatch.isInvitation } : null,
+        trimmedMatch: trimmedMatch ? { id: trimmedMatch.id, type: trimmedMatch.match_type, isInvitation: trimmedMatch.isInvitation } : null,
+        indexMatch: indexMatch
+      });
+      
+      const targetIndex = indexMatch;
+      console.log('📜 ClubMatches: Final target index:', targetIndex);
+      
       if (targetIndex >= 0) {
-        // Simple scroll with estimated heights
-        const estimatedItemHeight = 200; // Average match item height
-        const filtersHeight = 280;
-        const targetPosition = filtersHeight + (targetIndex * estimatedItemHeight);
+        const targetMatch = filteredMatches[targetIndex];
+        let targetPosition = 0;
+        console.log('✅ ClubMatches: Found target match to scroll to:', {
+          id: targetMatch.id,
+          index: targetIndex,
+          type: targetMatch.match_type,
+          isInvitation: targetMatch.isInvitation,
+          date: targetMatch.date
+        });
+        
+        // Get the actual position of the target match using refs
+        const targetMatchRef = matchRefs.current[targetMatch.id];
+        
+        if (targetMatchRef && isLayoutComplete) {
+          console.log('📍 ClubMatches: Using actual measured position for target match');
+          
+          // First get current scroll position for debugging
+          setTimeout(() => {
+            scrollViewRef.current?.measureLayout(
+              scrollViewRef.current as any,
+              (x, y, width, height) => {
+                console.log('📊 ClubMatches: ScrollView current measurements:', { x, y, width, height });
+              },
+              () => {}
+            );
+          }, 50);
+          
+          targetMatchRef.measureLayout(
+            scrollViewRef.current as any,
+            (x, y, width, height) => {
+              // Add a small offset to account for visual comfort and headers
+              const SCROLL_OFFSET = 50; // Pixels to scroll above the target match
+              const targetPosition = Math.max(0, y - SCROLL_OFFSET);
+              
+              console.log('📍 ClubMatches: Measured target match position:', {
+                x, y, width, height,
+                rawTargetPosition: y,
+                targetPositionWithOffset: targetPosition,
+                scrollOffset: SCROLL_OFFSET
+              });
+              
+              // Get current scroll position for comparison
+              setTimeout(() => {
+                // Use a longer delay to ensure proper rendering
+                scrollViewRef.current?.scrollTo({
+                  y: targetPosition,
+                  animated: true
+                });
+                console.log('✅ ClubMatches: Scroll command executed to measured position with offset:', targetPosition);
+                
+                // Add verification after scroll completes
+                setTimeout(() => {
+                  console.log('🔍 ClubMatches: Scroll should be complete now. Target was at index:', targetIndex);
+                  console.log('🔍 ClubMatches: If you still need to scroll manually, the issue may be with ScrollView behavior or timing');
+                }, 1000);
+              }, 200); // Increased delay
+            },
+            (error) => {
+              console.warn('❌ ClubMatches: Failed to measure target match position:', error);
+              // Fallback to estimated position
+              const fallbackPosition = 280 + (targetIndex * 250); // Rough estimate as fallback
+              setTimeout(() => {
+                scrollViewRef.current?.scrollTo({
+                  y: fallbackPosition,
+                  animated: true
+                });
+                console.log('🔄 ClubMatches: Using fallback scroll position:', fallbackPosition);
+              }, 200);
+            }
+          );
+          return; // Exit early when using measured position
+        } else {
+          console.log('⏳ ClubMatches: Layout not complete or ref not available, using estimated position');
+          // Fallback to improved estimation while layout completes
+          const filtersHeight = 280;
+          let accumulatedHeight = filtersHeight;
+          
+          for (let i = 0; i < targetIndex; i++) {
+            const match = filteredMatches[i];
+            let itemHeight;
+            
+            if (match.isInvitation) {
+              itemHeight = 350;
+            } else if (match.isChallenge) {
+              itemHeight = 280;
+            } else {
+              itemHeight = 160;
+            }
+            
+            accumulatedHeight += itemHeight;
+          }
+          
+          targetPosition = accumulatedHeight;
+        }
+        
+        console.log('📜 ClubMatches: Final calculated scroll position:', targetPosition, 'for target match at index:', targetIndex);
+        console.log('📜 ClubMatches: Target match details:', {
+          id: targetMatch.id,
+          type: targetMatch.isInvitation ? 'invitation' : targetMatch.isChallenge ? 'challenge' : 'completed',
+          match_type: targetMatch.match_type
+        });
+        
+        // Add the same offset for estimated position
+        const SCROLL_OFFSET = 50;
+        const finalTargetPosition = Math.max(0, targetPosition - SCROLL_OFFSET);
         
         setTimeout(() => {
           scrollViewRef.current?.scrollTo({
-            y: targetPosition,
+            y: finalTargetPosition,
             animated: true
           });
-        }, 500); // Small delay to ensure renders complete
+          console.log('✅ ClubMatches: Scroll command executed to estimated position with offset:', finalTargetPosition);
+          console.log('✅ ClubMatches: Original estimated position was:', targetPosition);
+          
+          // Add verification for estimated scroll too
+          setTimeout(() => {
+            console.log('🔍 ClubMatches: Estimated scroll should be complete now. Target was at index:', targetIndex);
+          }, 1000);
+        }, 500); // Keep original delay for estimation
+      } else {
+        console.warn('⚠️ ClubMatches: Target match not found in filtered matches!');
+        console.warn('⚠️ ClubMatches: Target ID:', `'${targetMatchId}'`);
+        console.warn('⚠️ ClubMatches: Available match details:');
+        filteredMatches.forEach((match, idx) => {
+          console.warn(`  [${idx}] ID: '${match.id}' | Type: ${match.match_type} | IsInvitation: ${match.isInvitation} | Date: ${match.date}`);
+        });
       }
+    } else if (targetMatchId) {
+      console.log('⏳ ClubMatches: Waiting for matches to load, targetMatchId:', targetMatchId);
+    } else {
+      console.log('📜 ClubMatches: No targetMatchId provided');
     }
-  }, [targetMatchId, filteredMatches]);
+  }, [targetMatchId, filteredMatches, isLayoutComplete]);
+
+  // Track when layout is complete
+  useEffect(() => {
+    if (filteredMatches.length > 0) {
+      // Reset layout complete when matches change
+      setIsLayoutComplete(false);
+      
+      // Longer delay to ensure all items are rendered and measured
+      const timer = setTimeout(() => {
+        setIsLayoutComplete(true);
+        console.log('📏 ClubMatches: Layout marked as complete for', filteredMatches.length, 'matches');
+        console.log('📏 ClubMatches: Available match refs:', Object.keys(matchRefs.current).length);
+      }, 600); // Increased delay for better reliability
+      
+      return () => clearTimeout(timer);
+    } else {
+      setIsLayoutComplete(false);
+    }
+  }, [filteredMatches.length]);
 
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
@@ -311,12 +483,20 @@ export default function ClubMatches({
             {filteredMatches.map((match, index) => (
               <View
                 key={match.id}
+                ref={(ref) => {
+                  if (ref) {
+                    matchRefs.current[match.id] = ref;
+                  }
+                }}
                 style={[
                   styles.matchItem,
                   index !== filteredMatches.length - 1 && styles.matchItemBorder,
                   { borderColor: colors.border },
                   // Removed highlighting styles (issue #133)
                 ]}
+                onLayout={() => {
+                  console.log(`📏 ClubMatches: Match ${match.id} layout complete`);
+                }}
               >
                 {match.isChallenge ? (
                   // Display challenge match
@@ -428,11 +608,18 @@ export default function ClubMatches({
                     {/* Grid-style participant display */}
                     <DoublesMatchParticipants
                       creatorName={match.player1_name}
+                      creatorPhone={match.player1_phone}
+                      creatorEloRating={match.creator_elo_rating}
+                      creatorGamesPlayed={match.creator_games_played}
                       responses={(match.responses || []).map(r => ({
                         id: r.id,
                         invitation_id: r.invitation_id || match.id,
                         user_id: r.user_id || r.id,
                         user_name: r.user_name,
+                        full_name: r.full_name,
+                        user_phone: r.user_phone,
+                        user_elo_rating: r.user_elo_rating,
+                        user_games_played: r.user_games_played,
                         message: '',
                         status: r.status,
                         created_at: r.created_at || new Date().toISOString()
@@ -449,6 +636,8 @@ export default function ClubMatches({
                       isJoining={joiningInvitations?.has(match.id) || false}
                       currentUserId={currentUserId}
                       creatorId={match.player1_id}
+                      targetedPlayers={match.targeted_players}
+                      targetedPlayerNames={match.targeted_player_names}
                     />
 
                     {/* Contact Information for Match Invitation Participants */}
