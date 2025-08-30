@@ -538,29 +538,6 @@ export default function ClubMatches({
                       </ThemedText>
                     )}
                     
-                    {/* Contact Information for Challenge Participants */}
-                    {currentUserId && (match.player1_id === currentUserId || match.player2_id === currentUserId) && (
-                      <View style={[styles.contactInfo, { backgroundColor: colors.background, borderColor: colors.border }]}>
-                        <View style={styles.contactHeader}>
-                          <Ionicons name="call" size={16} color={colors.tint} />
-                          <ThemedText style={[styles.contactTitle, { color: colors.text }]}>
-                            Contact Information
-                          </ThemedText>
-                        </View>
-                        <View style={styles.contactList}>
-                          {match.player1_phone && (
-                            <ThemedText style={[styles.contactItem, { color: colors.textSecondary }]}>
-                              {match.player1_name}: {match.player1_phone}
-                            </ThemedText>
-                          )}
-                          {match.player2_phone && (
-                            <ThemedText style={[styles.contactItem, { color: colors.textSecondary }]}>
-                              {match.player2_name}: {match.player2_phone}
-                            </ThemedText>
-                          )}
-                        </View>
-                      </View>
-                    )}
                     
                     <TouchableOpacity
                       style={[styles.challengeRecordButton, { backgroundColor: '#FF6B35' }]}
@@ -640,40 +617,6 @@ export default function ClubMatches({
                       targetedPlayerNames={match.targeted_player_names}
                     />
 
-                    {/* Contact Information for Match Invitation Participants */}
-                    {(() => {
-                      const requiredPlayers = match.match_type === 'singles' ? 2 : 4;
-                      // Count creator + confirmed/interested responses for contact sharing
-                      const confirmedResponses = (match.responses || []).filter((r: any) => r.status === 'confirmed' || r.status === 'interested');
-                      const totalConfirmedPlayers = 1 + confirmedResponses.length;
-                      const isMatchConfirmed = totalConfirmedPlayers >= requiredPlayers;
-                      const isUserParticipant = currentUserId && (match.player1_id === currentUserId || confirmedResponses.some((r: any) => r.user_id === currentUserId));
-                      
-                      return isMatchConfirmed && isUserParticipant;
-                    })() && (
-                      <View style={[styles.contactInfo, { backgroundColor: colors.background, borderColor: colors.border }]}>
-                        <View style={styles.contactHeader}>
-                          <Ionicons name="call" size={16} color={colors.tint} />
-                          <ThemedText style={[styles.contactTitle, { color: colors.text }]}>
-                            Contact Information
-                          </ThemedText>
-                        </View>
-                        <View style={styles.contactList}>
-                          {match.player1_phone && (
-                            <ThemedText style={[styles.contactItem, { color: colors.textSecondary }]}>
-                              {match.player1_name}: {match.player1_phone}
-                            </ThemedText>
-                          )}
-                          {(match.responses || [])
-                            .filter((r: any) => r.user_phone)
-                            .map((r: any, index: number) => (
-                              <ThemedText key={index} style={[styles.contactItem, { color: colors.textSecondary }]}>
-                                {r.user_name}: {r.user_phone}
-                              </ThemedText>
-                            ))}
-                        </View>
-                      </View>
-                    )}
 
                     {/* Record Match Result Button - Show when enough players have joined */}
                     {(() => {
@@ -940,31 +883,6 @@ const styles = StyleSheet.create({
     fontStyle: 'italic',
     marginBottom: 8,
     paddingHorizontal: 4,
-  },
-  // Contact Information styles
-  contactInfo: {
-    marginTop: 12,
-    marginBottom: 12,
-    padding: 12,
-    borderRadius: 8,
-    borderWidth: 1,
-  },
-  contactHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 8,
-    gap: 6,
-  },
-  contactTitle: {
-    fontSize: 14,
-    fontWeight: '600',
-  },
-  contactList: {
-    gap: 4,
-  },
-  contactItem: {
-    fontSize: 13,
-    fontFamily: 'monospace', // Makes phone numbers easier to read
   },
   // Invitation Record Button styles
   invitationRecordButton: {

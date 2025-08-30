@@ -233,28 +233,18 @@ export const UpcomingMatchesNotification: React.FC<UpcomingMatchesNotificationPr
             </View>
           </View>
 
-          {/* Contact Information */}
-          <View style={styles.contactSection}>
-            <ThemedText style={[styles.contactLabel, { color: colors.textSecondary }]}>
-              📱 Contact players to coordinate:
-            </ThemedText>
-            <View style={styles.playersList}>
-              {match.confirmedPlayers.map((player) => (
-                <View key={player.id} style={styles.playerContact}>
-                  <View style={styles.playerInfo}>
-                    <ThemedText style={[styles.playerName, { color: colors.text }]}>
-                      {player.name}
+          <View style={styles.playersList}>
+            {match.confirmedPlayers.map((player) => (
+              <View key={player.id} style={styles.playerContact}>
+                <View style={styles.playerInfo}>
+                  <ThemedText style={[styles.playerName, { color: colors.text }]}>
+                    {player.name}{player.phone ? ` • ${player.phone}` : ''}
                       {player.isOrganizer && (
                         <ThemedText style={[styles.organizerLabel, { color: colors.tint }]}>
                           {' '}(Organizer)
                         </ThemedText>
                       )}
                     </ThemedText>
-                    {player.phone && (
-                      <ThemedText style={[styles.playerPhone, { color: colors.textSecondary }]}>
-                        {player.phone}
-                      </ThemedText>
-                    )}
                   </View>
                   {player.phone && player.id !== userId && (
                     <TouchableOpacity
@@ -267,7 +257,6 @@ export const UpcomingMatchesNotification: React.FC<UpcomingMatchesNotificationPr
                 </View>
               ))}
             </View>
-          </View>
         </View>
       ))}
 
@@ -345,14 +334,6 @@ const styles = StyleSheet.create({
     fontSize: 12,
     marginTop: 2,
   },
-  contactSection: {
-    marginTop: 8,
-  },
-  contactLabel: {
-    fontSize: 12,
-    fontWeight: '500',
-    marginBottom: 8,
-  },
   playersList: {
     gap: 8,
   },
@@ -371,10 +352,6 @@ const styles = StyleSheet.create({
   organizerLabel: {
     fontSize: 12,
     fontWeight: '500',
-  },
-  playerPhone: {
-    fontSize: 12,
-    marginTop: 2,
   },
   callButton: {
     borderWidth: 1,
