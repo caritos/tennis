@@ -20,7 +20,7 @@ interface ContextualPromptProps {
   style?: any;
 }
 
-const { width: screenWidth } = Dimensions.get('window');
+const { width: _screenWidth } = Dimensions.get('window');
 
 export const ContextualPrompt: React.FC<ContextualPromptProps> = ({
   prompt,
@@ -71,7 +71,7 @@ export const ContextualPrompt: React.FC<ContextualPromptProps> = ({
         }),
       ]).start();
     }
-  }, [prompt]);
+  }, [prompt, opacityAnim, scaleAnim, slideAnim]);
 
   const handleDismiss = () => {
     if (prompt && onDismiss) {
@@ -260,7 +260,7 @@ export const ContextualPrompt: React.FC<ContextualPromptProps> = ({
 // Compact version for smaller spaces
 export const CompactContextualPrompt: React.FC<ContextualPromptProps> = ({
   prompt,
-  onDismiss,
+  _onDismiss,
   style
 }) => {
   const colorScheme = useColorScheme();

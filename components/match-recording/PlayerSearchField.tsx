@@ -26,7 +26,7 @@ const PlayerSearchField = React.memo(function PlayerSearchField({
   label,
   placeholder,
   searchText,
-  selectedPlayer,
+  _selectedPlayer,
   suggestions,
   showSuggestions,
   colors,

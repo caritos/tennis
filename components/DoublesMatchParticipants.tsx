@@ -1,7 +1,6 @@
 import React from 'react';
 import { View, StyleSheet, TouchableOpacity } from 'react-native';
 import { ThemedText } from './ThemedText';
-import { ThemedView } from './ThemedView';
 import { useColorScheme } from '@/hooks/useColorScheme';
 import { Colors } from '@/constants/Colors';
 import { InvitationResponse } from '@/services/matchInvitationService';
@@ -41,8 +40,8 @@ export const DoublesMatchParticipants: React.FC<DoublesMatchParticipantsProps> =
   const colorScheme = useColorScheme();
   const colors = Colors[colorScheme ?? 'light'];
   
-  const requiredPlayers = matchType === 'singles' ? 2 : 4;
-  const currentPlayers = responses.length + 1; // +1 for creator
+  const _requiredPlayers = matchType === 'singles' ? 2 : 4;
+  const _currentPlayers = responses.length + 1; // +1 for creator
   const confirmedResponses = responses.filter(r => r.status === 'confirmed' || r.status === 'interested');
   
   // Check if current user has already responded (any response, including undefined status)

@@ -31,11 +31,6 @@ export default function ResetPasswordScreen() {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
-  useEffect(() => {
-    // Check if we have a valid session from the reset link
-    checkSession();
-  }, []);
-
   const checkSession = async () => {
     const { data: { session } } = await supabase.auth.getSession();
     if (!session) {
@@ -43,6 +38,11 @@ export default function ResetPasswordScreen() {
       router.replace('/email-signin');
     }
   };
+
+  useEffect(() => {
+    // Check if we have a valid session from the reset link
+    checkSession();
+  }, []);
 
   const validateForm = (): boolean => {
     const newErrors: typeof errors = {};

@@ -116,7 +116,7 @@ const NotificationBanner: React.FC<NotificationBannerProps> = ({
 
       return () => clearTimeout(timer);
     }
-  }, [notification]);
+  }, [notification, slideAnim]);
 
   const handleDismiss = () => {
     Animated.timing(slideAnim, {

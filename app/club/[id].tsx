@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useCallback, useRef } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import { View, StyleSheet, TouchableOpacity, ActivityIndicator, Modal } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useLocalSearchParams, router, useFocusEffect } from 'expo-router';
@@ -132,91 +132,50 @@ export default function ClubDetailScreen() {
     } else {
       console.log('🔍 Deep linking conditions not met');
     }
-  }, [matchId, activeTab, allMatches.length, isManualNavigation]);
+  }, [matchId, activeTab, allMatches, isManualNavigation]);
   const [memberSortBy, setMemberSortBy] = useState<'name' | 'wins' | 'matches' | 'joined' | 'ranking'>('name');
   const [memberFilterBy, setMemberFilterBy] = useState<'all' | 'active' | 'new'>('all');
   const [matchFilterType, setMatchFilterType] = useState<'all' | 'singles' | 'doubles'>('all');
   const [matchFilterDate, setMatchFilterDate] = useState<'all' | 'upcoming'>('all');
   const [matchFilterInvolvement, setMatchFilterInvolvement] = useState<'all' | 'my' | 'incomplete'>('all');
 
-  useEffect(() => {
-    loadClubDetails();
-
-    // Set up real-time subscriptions for club data
-    if (id && typeof id === 'string') {
-      const subscriptions = [
-        // Club details changes
-        supabase
-          .channel(`club_${id}`)
-          .on(
-            'postgres_changes',
-            {
-              event: '*',
-              schema: 'public',
-              table: 'clubs',
-              filter: `id=eq.${id}`
-            },
-            (payload) => {
-              console.log('🔔 Club details change detected:', payload);
-              loadClubDetails();
-            }
-          )
-          .subscribe(),
-
-        // Club members changes  
-        supabase
-          .channel(`club_members_${id}`)
-          .on(
-            'postgres_changes',
-            {
-              event: '*',
-              schema: 'public',
-              table: 'club_members',
-              filter: `club_id=eq.${id}`
-            },
-            (payload) => {
-              console.log('🔔 Club members change detected:', payload);
-              loadClubDetails();
-            }
-          )
-          .subscribe(),
-
-        // Matches changes
-        supabase
-          .channel(`matches_${id}`)
-          .on(
-            'postgres_changes',
-            {
-              event: '*',
-              schema: 'public',
-              table: 'matches',
-              filter: `club_id=eq.${id}`
-            },
-            (payload) => {
-              console.log('🔔 Matches change detected:', payload);
-              loadClubDetails();
-            }
-          )
-          .subscribe()
-      ];
-
-      // Cleanup subscriptions on unmount
-      return () => {
-        subscriptions.forEach(sub => sub.unsubscribe());
-      };
+  const loadPendingChallenges = async () => {
+    if (!user?.id || !id) return;
+    
+    try {
+      // Get all pending challenges sent by the current user in this club
+      const sentChallenges = await challengeService.getUserSentChallenges(user.id);
+      const pending = new Set<string>();
+      
+      sentChallenges.forEach(challenge => {
+        if (challenge.status === 'pending' && challenge.club_id === id) {
+          pending.add(challenge.challenged_id);
+        }
+      });
+      
+      // Removed: setPendingChallenges(pending);
+    } catch (error) {
+      console.error('Failed to load pending challenges:', error);
     }
-  }, [id]);
+  };
 
-  // Minimal focus refresh - real-time subscriptions handle most updates
-  useFocusEffect(
-    useCallback(() => {
-      console.log('🎾 ClubDetails: Screen focused - real-time subscriptions active');
-      // Most updates now handled by real-time subscriptions
-      // Only refresh if data seems stale or on first focus
-    }, [id])
-  );
+  const loadChallengeCount = async () => {
+    if (!user?.id || !id) return;
+    
+    try {
+      // Get received challenges count for badge
+      const received = await challengeService.getUserReceivedChallenges(user.id);
+      const unreadCount = received.filter(challenge => 
+        challenge.status === 'pending' && challenge.club_id === id
+      ).length;
+      
+      setUnreadChallengeCount(unreadCount);
+    } catch (error) {
+      console.error('Failed to load challenge count:', error);
+    }
+  };
 
-  const loadClubDetails = async () => {
+  const loadClubDetails = useCallback(async () => {
     if (!id || typeof id !== 'string') {
       setError('Invalid club ID');
       setIsLoading(false);
@@ -591,43 +550,84 @@ export default function ClubDetailScreen() {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [id, user?.id, matchId, club?.name]);
 
-  const loadPendingChallenges = async () => {
-    if (!user?.id || !id) return;
-    
-    try {
-      // Get all pending challenges sent by the current user in this club
-      const sentChallenges = await challengeService.getUserSentChallenges(user.id);
-      const pending = new Set<string>();
-      
-      sentChallenges.forEach(challenge => {
-        if (challenge.status === 'pending' && challenge.club_id === id) {
-          pending.add(challenge.challenged_id);
-        }
-      });
-      
-      // Removed: setPendingChallenges(pending);
-    } catch (error) {
-      console.error('Failed to load pending challenges:', error);
-    }
-  };
+  useEffect(() => {
+    loadClubDetails();
 
-  const loadChallengeCount = async () => {
-    if (!user?.id || !id) return;
-    
-    try {
-      // Get received challenges count for badge
-      const received = await challengeService.getUserReceivedChallenges(user.id);
-      const unreadCount = received.filter(challenge => 
-        challenge.status === 'pending' && challenge.club_id === id
-      ).length;
-      
-      setUnreadChallengeCount(unreadCount);
-    } catch (error) {
-      console.error('Failed to load challenge count:', error);
+    // Set up real-time subscriptions for club data
+    if (id && typeof id === 'string') {
+      const subscriptions = [
+        // Club details changes
+        supabase
+          .channel(`club_${id}`)
+          .on(
+            'postgres_changes',
+            {
+              event: '*',
+              schema: 'public',
+              table: 'clubs',
+              filter: `id=eq.${id}`
+            },
+            (payload) => {
+              console.log('🔔 Club details change detected:', payload);
+              loadClubDetails();
+            }
+          )
+          .subscribe(),
+
+        // Club members changes  
+        supabase
+          .channel(`club_members_${id}`)
+          .on(
+            'postgres_changes',
+            {
+              event: '*',
+              schema: 'public',
+              table: 'club_members',
+              filter: `club_id=eq.${id}`
+            },
+            (payload) => {
+              console.log('🔔 Club members change detected:', payload);
+              loadClubDetails();
+            }
+          )
+          .subscribe(),
+
+        // Matches changes
+        supabase
+          .channel(`matches_${id}`)
+          .on(
+            'postgres_changes',
+            {
+              event: '*',
+              schema: 'public',
+              table: 'matches',
+              filter: `club_id=eq.${id}`
+            },
+            (payload) => {
+              console.log('🔔 Matches change detected:', payload);
+              loadClubDetails();
+            }
+          )
+          .subscribe()
+      ];
+
+      // Cleanup subscriptions on unmount
+      return () => {
+        subscriptions.forEach(sub => sub.unsubscribe());
+      };
     }
-  };
+  }, [id, loadClubDetails]);
+
+  // Minimal focus refresh - real-time subscriptions handle most updates
+  useFocusEffect(
+    useCallback(() => {
+      console.log('🎾 ClubDetails: Screen focused - real-time subscriptions active');
+      // Most updates now handled by real-time subscriptions
+      // Only refresh if data seems stale or on first focus
+    }, [])
+  );
 
   const handleBack = () => {
     router.back();

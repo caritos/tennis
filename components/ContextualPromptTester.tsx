@@ -5,7 +5,6 @@ import { ThemedView } from './ThemedView';
 import { ContextualPrompt } from './ContextualPrompt';
 import { 
   ContextualPromptData, 
-  ContextualPromptType,
   PromptPriority 
 } from '@/types/contextualPrompts';
 

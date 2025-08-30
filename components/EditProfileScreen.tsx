@@ -13,7 +13,6 @@ import {
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
-import { ThemedView } from './ThemedView';
 import { ThemedText } from './ThemedText';
 import { useColorScheme } from '@/hooks/useColorScheme';
 import { Colors } from '@/constants/Colors';
@@ -97,7 +96,7 @@ export const EditProfileScreen: React.FC<EditProfileScreenProps> = ({
     };
 
     checkAndShowPrivacyNotification();
-  }, [user?.id, hasShownNotification]);
+  }, [user?.id, hasShownNotification, showNotification]);
 
   const validateForm = (): boolean => {
     const newErrors: { [key: string]: string } = {};
@@ -110,13 +109,13 @@ export const EditProfileScreen: React.FC<EditProfileScreenProps> = ({
     return Object.keys(newErrors).length === 0;
   };
 
-  const formatPhoneNumber = (text: string): string => {
+  const _formatPhoneNumber = (_text: string): string => {
     // Basic phone number formatting for US numbers
-    const cleaned = text.replace(/\D/g, '');
+    const cleaned = _text.replace(/\D/g, '');
     if (cleaned.length === 10) {
       return cleaned.replace(/(\d{3})(\d{3})(\d{4})/, '($1) $2-$3');
     }
-    return text;
+    return _text;
   };
 
 

@@ -128,7 +128,7 @@ export default function EditMatchScreen() {
     };
 
     loadMatch();
-  }, [user?.id, matchId]);
+  }, [user?.id, matchId, showNotification]);
 
   // Early return AFTER all hooks to avoid violating Rules of Hooks
   if (!matchId) {

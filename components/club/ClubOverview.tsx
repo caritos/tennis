@@ -26,7 +26,7 @@ export default function ClubOverview({
   memberCount,
   colors,
   user,
-  onViewAllMembers,
+  _onViewAllMembers,
   onRecordMatch,
   onInvitePlayers,
   onViewAllMatches,

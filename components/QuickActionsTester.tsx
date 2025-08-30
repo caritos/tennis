@@ -6,7 +6,6 @@ import { QuickActionsCard } from './QuickActionsCard';
 import { 
   QuickActionItem, 
   QuickActionsState,
-  QuickActionType,
   ActionUrgency
 } from '@/types/quickActions';
 

@@ -6,12 +6,10 @@ import {
   ScrollView,
   TouchableOpacity,
   ActivityIndicator,
-  Alert,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
-import { ThemedView } from './ThemedView';
 import { ThemedText } from './ThemedText';
 import { ClubCard } from './ClubCard';
 import { CreateClubButton } from './CreateClubButton';
@@ -21,7 +19,7 @@ import { useLocation } from '@/hooks/useLocation';
 import { useAuth } from '@/contexts/AuthContext';
 import { useOnboarding } from '@/contexts/OnboardingContext';
 import { useNotification } from '@/contexts/NotificationContext';
-import clubService, { joinClub, getNearbyClubs, calculateDistance } from '@/services/clubService';
+import { joinClub, getNearbyClubs, calculateDistance } from '@/services/clubService';
 import { Club } from '@/lib/supabase';
 
 interface ClubDiscoveryScreenProps {
@@ -49,14 +47,7 @@ export const ClubDiscoveryScreen: React.FC<ClubDiscoveryScreenProps> = ({
   const progress = getProgress();
 
   // Location is auto-requested by useLocation hook
-
-  useEffect(() => {
-    // Load clubs when location state changes or permission is determined
-    if (hasLocationPermission !== null) {
-      loadNearbyClubs();
-    }
-  }, [location, hasLocationPermission]);
-
+  
   const loadNearbyClubs = async () => {
     setLoading(true);
     try {
@@ -103,6 +94,13 @@ export const ClubDiscoveryScreen: React.FC<ClubDiscoveryScreenProps> = ({
       setLoading(false);
     }
   };
+
+  useEffect(() => {
+    // Load clubs when location state changes or permission is determined
+    if (hasLocationPermission !== null) {
+      loadNearbyClubs();
+    }
+  }, [location, hasLocationPermission]);
 
   // Location request is now handled automatically by useLocation hook
 

@@ -12,7 +12,6 @@ import { ThemedView } from './ThemedView';
 import { useColorScheme } from '@/hooks/useColorScheme';
 import { Colors } from '@/constants/Colors';
 import { challengeService, ChallengeWithUsers } from '@/services/challengeService';
-import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/lib/supabase';
 
 interface ChallengeNotificationsProps {

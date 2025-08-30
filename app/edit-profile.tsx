@@ -10,10 +10,6 @@ export default function EditProfilePage() {
   const [initialData, setInitialData] = useState<ProfileData | null>(null);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    loadUserProfile();
-  }, [user]);
-
   const loadUserProfile = async () => {
     if (!user?.id) {
       setLoading(false);
@@ -51,6 +47,10 @@ export default function EditProfilePage() {
       setLoading(false);
     }
   };
+
+  useEffect(() => {
+    loadUserProfile();
+  }, [user]);
 
   const handleBack = () => {
     console.log('Back pressed - navigating to profile');

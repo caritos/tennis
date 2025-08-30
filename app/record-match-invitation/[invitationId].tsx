@@ -37,11 +37,7 @@ export default function RecordMatchInvitationScreen() {
   const [loading, setLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [reportModalVisible, setReportModalVisible] = useState(false);
-  const [reportingPlayers, setReportingPlayers] = useState<string[]>([]);
-
-  useEffect(() => {
-    loadInvitation();
-  }, [invitationId]);
+  const [_reportingPlayers, _setReportingPlayers] = useState<string[]>([]);
 
   const loadInvitation = async () => {
     if (!invitationId) return;
@@ -71,6 +67,10 @@ export default function RecordMatchInvitationScreen() {
     }
   };
 
+  useEffect(() => {
+    loadInvitation();
+  }, [invitationId]);
+
   const handleSaveMatch = async (matchData: CreateMatchData, reportData?: { playerIds: string[], type: string, description: string }) => {
     if (!invitation || !user) return;
 
@@ -78,7 +78,7 @@ export default function RecordMatchInvitationScreen() {
       setIsSubmitting(true);
 
       // Save match first
-      const savedMatch = await recordMatch({
+      const _savedMatch = await recordMatch({
         ...matchData,
         invitation_id: invitation.id
       });

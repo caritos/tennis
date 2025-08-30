@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -7,7 +7,6 @@ import {
   TouchableOpacity,
   Modal,
   Keyboard,
-  Platform,
 } from 'react-native';
 import { Colors } from '@/constants/Colors';
 import { useColorScheme } from '@/hooks/useColorScheme';
@@ -85,7 +84,7 @@ export function TennisScoreEntry({
     } else {
       console.log('🎾 No initialSets to process - starting fresh');
     }
-  }, []); // Empty dependency array - only run on mount
+  }, [initialSets]); // Empty dependency array - only run on mount
 
   // Use shared utility function
 
@@ -438,7 +437,7 @@ export function TennisScoreEntry({
                   testID={`set-${index + 1}-player-score`}
                   onSubmitEditing={() => {
                     // Focus next input (opponent score)
-                    const nextInput = `set-${index + 1}-opponent-score`;
+                    const _nextInput = `set-${index + 1}-opponent-score`;
                     // Note: Would need refs to properly focus next input
                   }}
                 />

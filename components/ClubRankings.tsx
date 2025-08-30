@@ -5,7 +5,6 @@ import { ThemedText } from './ThemedText';
 import { ThemedView } from './ThemedView';
 import { useColorScheme } from '@/hooks/useColorScheme';
 import { Colors } from '@/constants/Colors';
-import { PlayerStats } from '@/services/matchService';
 
 // Re-export the type from matchService
 import type { RankedPlayer as ServiceRankedPlayer } from '@/services/matchService';
@@ -52,9 +51,9 @@ const getTrendingPlayers = (rankings: RankedPlayer[]): RankedPlayer[] => {
 
 export function ClubRankings({ 
   rankings, 
-  memberCount, 
+  _memberCount, 
   onViewAll, 
-  onPlayerPress,
+  _onPlayerPress,
   onChallengePress,
   showAll = false,
   currentUserId,

@@ -54,7 +54,7 @@ export default function FAQScreen() {
             
             {faqData
               .filter(item => item.category === category)
-              .map((item, index) => {
+              .map((item, _index) => {
                 const globalIndex = faqData.indexOf(item);
                 const isExpanded = expandedItems.has(globalIndex);
                 

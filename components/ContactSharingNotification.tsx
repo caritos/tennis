@@ -23,6 +23,53 @@ export function ContactSharingNotification({ onViewAll }: ContactSharingNotifica
 
   console.log('📝 ContactSharingNotification: Component rendered, user:', user?.id);
 
+  const loadContactSharingNotifications = async () => {
+    if (!user?.id) {
+      console.log('📝 ContactSharingNotification: No user ID, skipping load');
+      return;
+    }
+
+    try {
+      console.log('📝 ContactSharingNotification: Loading contact sharing notifications for user:', user.id);
+      
+      // Get contact sharing notifications from Supabase
+      const { data: notifications, error } = await supabase
+        .from('notifications')
+        .select('*')
+        .eq('user_id', user.id)
+        .eq('type', 'contact_sharing')
+        .eq('is_read', false) // Only get unread notifications
+        .order('created_at', { ascending: false });
+
+      if (error) {
+        console.error('❌ ContactSharingNotification: Error loading notifications:', error);
+        throw error;
+      }
+
+      console.log('📝 ContactSharingNotification: Loaded', notifications?.length || 0, 'notifications');
+      
+      console.log('📝 ContactSharingNotification: Filtering for contact sharing and match invitation notifications');
+      const contactNotifications = (notifications || []).filter(n => {
+        const isContactSharing = n.title.includes('Contact Info Shared') || n.title.includes('All 4 Players Ready');
+        const isMatchInvitation = n.title.includes('Match Available') || n.title.includes('New ') && (n.title.includes('Singles') || n.title.includes('Doubles'));
+        const shouldShow = isContactSharing || isMatchInvitation;
+        console.log(`📝 ContactSharingNotification: Checking notification "${n.title}" - isContactSharing: ${isContactSharing}, isMatchInvitation: ${isMatchInvitation}, shouldShow: ${shouldShow}`);
+        return shouldShow;
+      });
+      
+      console.log(`📝 ContactSharingNotification: Filtered to ${contactNotifications.length} contact sharing notifications:`, contactNotifications?.map(n => ({ id: n.id, type: n.type, title: n.title })));
+      
+      console.log(`📝 ContactSharingNotification: Setting ${contactNotifications.length} notifications in state`);
+      setNotifications(contactNotifications);
+      
+    } catch (error) {
+      console.error('❌ ContactSharingNotification: Failed to load notifications:', error);
+      setNotifications([]); // Set empty array on error
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   useEffect(() => {
     if (user?.id) {
       console.log('📝 ContactSharingNotification: Setting up subscription for user:', user.id);
@@ -68,7 +115,7 @@ export function ContactSharingNotification({ onViewAll }: ContactSharingNotifica
     } else {
       console.log('📝 ContactSharingNotification: No user ID, skipping subscription setup');
     }
-  }, [user?.id]);
+  }, [user?.id, loadContactSharingNotifications]);
 
   // Handle race condition: refresh notifications when component becomes focused
   // This catches cases where real-time subscription hasn't processed new notifications yet
@@ -82,89 +129,8 @@ export function ContactSharingNotification({ onViewAll }: ContactSharingNotifica
           loadContactSharingNotifications();
         }, 100);
       }
-    }, [user?.id])
+    }, [user?.id, loadContactSharingNotifications])
   );
-
-
-  const loadContactSharingNotifications = async () => {
-    if (!user?.id) {
-      console.log('📝 ContactSharingNotification: No user ID, skipping load');
-      return;
-    }
-
-    try {
-      setIsLoading(true);
-      console.log(`📝 ContactSharingNotification: Loading notifications for user ${user.id}`);
-      
-      const loadStart = Date.now();
-      
-      // Get contact sharing notifications from Supabase
-      console.log('📝 ContactSharingNotification: Querying notifications table with:', {
-        user_id: user.id,
-        is_read: false,
-        types: ['challenge', 'match_invitation']
-      });
-      
-      // First, let's check ALL notifications for this user to see what's there
-      console.log('🔍 ContactSharingNotification: Checking ALL notifications for user (debug)');
-      const { data: debugAllNotifications, error: debugError } = await supabase
-        .from('notifications')
-        .select('*')
-        .eq('user_id', user.id)
-        .order('created_at', { ascending: false })
-        .limit(10);
-      
-      if (debugError) {
-        console.error('❌ Debug query failed:', debugError);
-      } else {
-        console.log('🔍 ALL notifications for user (last 10):', debugAllNotifications?.map(n => ({
-          id: n.id,
-          type: n.type,
-          title: n.title,
-          is_read: n.is_read,
-          created_at: n.created_at,
-          action_type: n.action_type
-        })));
-      }
-      
-      const { data: allNotifications, error } = await supabase
-        .from('notifications')
-        .select('*')
-        .eq('user_id', user.id)
-        .eq('is_read', false)
-        .in('type', ['challenge', 'match_invitation'])
-        .order('created_at', { ascending: false });
-
-      const loadTime = Date.now() - loadStart;
-      console.log(`📝 ContactSharingNotification: Query completed in ${loadTime}ms`);
-
-      if (error) {
-        console.error('❌ ContactSharingNotification: Failed to load notifications:', error);
-        return;
-      }
-      
-      console.log(`📝 ContactSharingNotification: Found ${allNotifications?.length || 0} total notifications (challenge + match_invitation):`, allNotifications?.map(n => ({ id: n.id, type: n.type, title: n.title, created_at: n.created_at })));
-      
-      // Filter for contact sharing and match invitation notifications
-      console.log('📝 ContactSharingNotification: Filtering for contact sharing and match invitation notifications');
-      const contactNotifications = (allNotifications || []).filter(n => {
-        const isContactSharing = n.title.includes('Contact Info Shared') || n.title.includes('All 4 Players Ready');
-        const isMatchInvitation = n.title.includes('Match Available') || n.title.includes('New ') && (n.title.includes('Singles') || n.title.includes('Doubles'));
-        const shouldShow = isContactSharing || isMatchInvitation;
-        console.log(`📝 ContactSharingNotification: Checking notification "${n.title}" - isContactSharing: ${isContactSharing}, isMatchInvitation: ${isMatchInvitation}, shouldShow: ${shouldShow}`);
-        return shouldShow;
-      });
-      
-      console.log(`📝 ContactSharingNotification: Filtered to ${contactNotifications.length} contact sharing notifications:`, contactNotifications?.map(n => ({ id: n.id, type: n.type, title: n.title })));
-      
-      console.log(`📝 ContactSharingNotification: Setting ${contactNotifications.length} notifications in state`);
-      setNotifications(contactNotifications);
-    } catch (error) {
-      console.error('❌ ContactSharingNotification: Failed to load notifications:', error);
-    } finally {
-      setIsLoading(false);
-    }
-  };
 
   const handleMarkAsRead = async (notificationId: string) => {
     try {

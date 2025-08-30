@@ -1,19 +1,14 @@
 import React, { useEffect, useState } from 'react';
 import {
   View,
-  ScrollView,
   StyleSheet,
   Text,
   ActivityIndicator,
-  RefreshControl,
 } from 'react-native';
 import { useColorScheme } from '@/hooks/useColorScheme';
 import { Colors } from '@/constants/Colors';
 import { getMatchHistory } from '@/services/matchService';
-import { Match } from '@/lib/supabase';
 import { TennisScoreDisplay } from './TennisScoreDisplay';
-import { ThemedText } from './ThemedText';
-import { ThemedView } from './ThemedView';
 import { Ionicons } from '@expo/vector-icons';
 import { logError } from '@/utils/errorHandling';
 import { TennisScore } from '@/utils/tennisScore';
@@ -33,7 +28,7 @@ const MatchHistoryViewComponent: React.FC<MatchHistoryViewProps> = ({ playerId, 
     batchUpdates: true,
   });
   const [loading, setLoading] = useState(true);
-  const [refreshing, setRefreshing] = useState(false);
+  const [_refreshing, _setRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const loadMatches = async (isRefreshing = false) => {
@@ -68,21 +63,21 @@ const MatchHistoryViewComponent: React.FC<MatchHistoryViewProps> = ({ playerId, 
       setError('Failed to load match history');
     } finally {
       setLoading(false);
-      if (isRefreshing) setRefreshing(false);
+      if (isRefreshing) _setRefreshing(false);
     }
   };
 
   useEffect(() => {
     loadMatches();
-  }, [playerId, clubId]);
+  }, [playerId, clubId, loadMatches]);
 
-  const onRefresh = () => {
-    setRefreshing(true);
+  const _onRefresh = () => {
+    _setRefreshing(true);
     loadMatches(true);
   };
 
-  const formatMatchDate = (dateString: string) => {
-    const date = new Date(dateString);
+  const _formatMatchDate = (_dateString: string) => {
+    const date = new Date(_dateString);
     return date.toLocaleDateString('en-US', {
       month: 'short',
       day: 'numeric',
@@ -171,7 +166,7 @@ const MatchHistoryViewComponent: React.FC<MatchHistoryViewProps> = ({ playerId, 
           } else if (scoreObj.winner === 'player2') {
             winner = isPlayer1Side ? 2 : 1;
           }
-        } catch (error) {
+        } catch {
           console.warn('Failed to parse tennis score:', match.scores);
         }
 

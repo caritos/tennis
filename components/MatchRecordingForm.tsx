@@ -449,7 +449,7 @@ export function MatchRecordingForm(componentProps: MatchRecordingFormProps) {
         console.log('🤝 No opponent partner found for:', { player4_id: initialData.player4_id, partner4_name: initialData.partner4_name });
       }
     }
-  }, [isEditing, initialData, clubMembers.length]); // Simplified dependencies
+  }, [isEditing, initialData, clubMembers, selectedOpponent, selectedOpponentPartner, selectedPartner]); // Simplified dependencies
   
   console.log('🔧 MatchRecordingForm props type:', typeof componentProps);
   console.log('🔧 MatchRecordingForm raw props:', componentProps);

@@ -177,7 +177,7 @@ export function MatchInvitationNotification({
     }
   };
 
-  const handleViewDetails = () => {
+  const _handleViewDetails = () => {
     onViewDetails?.();
     // Don't auto-dismiss notifications when viewing details
     // User should manually dismiss notifications they want to clear

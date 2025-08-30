@@ -10,7 +10,6 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
-import { router } from 'expo-router';
 import { ThemedText } from './ThemedText';
 import { EditProfileScreen, ProfileData } from './EditProfileScreen';
 import { NotificationPreferencesScreen, NotificationPreferences } from './NotificationPreferencesScreen';
@@ -44,10 +43,6 @@ export const AdvancedProfileScreen: React.FC<AdvancedProfileScreenProps> = ({ on
   const [currentScreen, setCurrentScreen] = useState<ScreenType>('main');
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-
-  useEffect(() => {
-    loadUserProfile();
-  }, [user?.id]);
 
   const loadUserProfile = async () => {
     if (!user?.id) return;
@@ -102,6 +97,10 @@ export const AdvancedProfileScreen: React.FC<AdvancedProfileScreenProps> = ({ on
       setIsLoading(false);
     }
   };
+
+  useEffect(() => {
+    loadUserProfile();
+  }, [user?.id]);
 
   const handleSaveProfile = async (profileData: ProfileData) => {
     if (!user?.id) return;

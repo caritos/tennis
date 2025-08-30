@@ -20,10 +20,6 @@ export default function EditClubScreen() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    loadClubData();
-  }, [id, user]);
-
   const loadClubData = async () => {
     if (!id || typeof id !== 'string' || !user?.id) {
       setError('Invalid club ID or not authenticated');
@@ -71,11 +67,15 @@ export default function EditClubScreen() {
     }
   };
 
+  useEffect(() => {
+    loadClubData();
+  }, [id, user]);
+
   const handleClose = () => {
     router.back();
   };
 
-  const handleSuccess = (updatedClub: any) => {
+  const handleSuccess = (_updatedClub: any) => {
     console.log('✅ Club updated successfully, navigating back');
     // The club details page will refresh when we navigate back
     router.back();

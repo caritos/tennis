@@ -3,7 +3,6 @@ import { View, StyleSheet, TouchableOpacity, TextInput, ScrollView } from 'react
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { ThemedText } from './ThemedText';
-import { ThemedView } from './ThemedView';
 import { useColorScheme } from '@/hooks/useColorScheme';
 import { Colors } from '@/constants/Colors';
 import { matchInvitationService, CreateInvitationData } from '@/services/matchInvitationService';
@@ -37,7 +36,7 @@ const MatchInvitationForm: React.FC<MatchInvitationFormProps> = ({
   const [inviteType, setInviteType] = useState<'open' | 'specific' | 'quick'>('open');
   const [selectedPlayers, setSelectedPlayers] = useState<string[]>([]);
   const [clubMembers, setClubMembers] = useState<any[]>([]);
-  const [showPlayerSelection, setShowPlayerSelection] = useState(false);
+  const [_showPlayerSelection, _setShowPlayerSelection] = useState(false);
   const [playerSearchQuery, setPlayerSearchQuery] = useState('');
 
   // Helper function to convert timing option to date string

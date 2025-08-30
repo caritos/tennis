@@ -24,7 +24,7 @@ export const OnboardingReEngagement: React.FC = () => {
   const colors = Colors[colorScheme ?? 'light'];
   const { steps, isOnboardingComplete, getProgress, markStepCompleted } = useOnboarding();
   const { user } = useAuth();
-  const { hasLocationPermission } = useLocation();
+  const { hasLocationPermission: _hasLocationPermission } = useLocation();
 
   const [visible, setVisible] = useState(false);
   const [dismissed, setDismissed] = useState(false);

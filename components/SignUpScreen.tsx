@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { StyleSheet, View, TouchableOpacity, Platform } from 'react-native';
+import { StyleSheet, View, TouchableOpacity } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { ThemedText } from './ThemedText';
@@ -24,8 +24,8 @@ interface SignUpScreenProps {
 export function SignUpScreen({ 
   onBack,
   onEmailSignUp,
-  onAppleSignUpSuccess,
-  onAppleSignUpError,
+  _onAppleSignUpSuccess,
+  _onAppleSignUpError,
   onSignInPress,
   onTermsPress,
   onPrivacyPress,

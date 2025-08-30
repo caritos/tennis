@@ -21,7 +21,6 @@ import {
   QuickActionsState,
   getUrgencyColor,
   getActionButtonColor,
-  formatDate
 } from '@/types/quickActions';
 
 interface QuickActionsCardProps {
@@ -52,7 +51,7 @@ export const QuickActionsCard: React.FC<QuickActionsCardProps> = ({
       duration: 300,
       useNativeDriver: false,
     }).start();
-  }, [quickActionsState.isCollapsed]);
+  }, [quickActionsState.isCollapsed, animatedHeight]);
 
   const handleRefresh = async () => {
     if (onRefresh) {

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, StyleSheet, Alert, ScrollView, TouchableOpacity } from 'react-native';
+import { View, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
@@ -64,11 +64,7 @@ export default function RecordChallengeMatchScreen() {
   const [loading, setLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [reportModalVisible, setReportModalVisible] = useState(false);
-  const [reportingPlayers, setReportingPlayers] = useState<string[]>([]);
-
-  useEffect(() => {
-    loadChallenge();
-  }, [challengeId]);
+  const [_reportingPlayers, _setReportingPlayers] = useState<string[]>([]);
 
   const loadChallenge = async () => {
     if (!challengeId) return;
@@ -114,23 +110,27 @@ export default function RecordChallengeMatchScreen() {
     }
   };
 
+  useEffect(() => {
+    loadChallenge();
+  }, [challengeId]);
+
   const handleSaveMatch = async (matchData: CreateMatchData, reportData?: { playerIds: string[], type: string, description: string }) => {
     if ((!challenge && !challengeGroup) || !user) return;
 
     try {
       setIsSubmitting(true);
 
-      let players: { id: string; full_name: string; phone?: string }[] = [];
+      let _players: { id: string; full_name: string; phone?: string }[] = [];
       let challengeIdForMatch: string;
       let challengeGroupIdForMatch: string | undefined;
 
       if (isLegacyChallenge && challenge) {
         // Legacy challenge - 2 players
-        players = [challenge.challenger, challenge.challenged];
+        _players = [challenge.challenger, challenge.challenged];
         challengeIdForMatch = challenge.id;
       } else if (!isLegacyChallenge && challengeGroup) {
         // Challenge group - all players
-        players = challengeGroup.players.map(p => ({
+        _players = challengeGroup.players.map(p => ({
           id: p.id,
           full_name: p.full_name,
           phone: p.phone
@@ -271,7 +271,7 @@ export default function RecordChallengeMatchScreen() {
             {new Date(currentChallenge.proposed_date).toLocaleDateString()} at {currentChallenge.club_name}
           </ThemedText>
           <ThemedText style={[styles.playersTitle, { marginTop: 8 }]}>Players:</ThemedText>
-          {players.map((player, index) => (
+          {players.map((player, _index) => (
             <ThemedText key={player.id} style={[styles.playerName, { color: colors.tabIconDefault }]}>
               • {player.full_name}
               {!isLegacyChallenge && challengeGroup && (

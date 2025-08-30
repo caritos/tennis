@@ -139,7 +139,7 @@ export const MultiTypeBadge: React.FC<MultiTypeBadgeProps> = ({
 
   return (
     <View style={[styles.multiTypeBadgeContainer, { gap: sizeStyles.spacing }]}>
-      {sortedBadges.map((badge, index) => (
+      {sortedBadges.map((badge, _index) => (
         <View
           key={badge.type}
           style={[

@@ -57,7 +57,7 @@ export function TennisScoreDisplay({
   scores,
   matchType = 'singles',
   winner,
-  isCompleted = false,
+  _isCompleted = false,
   showDuration = false,
   duration,
   clubName,

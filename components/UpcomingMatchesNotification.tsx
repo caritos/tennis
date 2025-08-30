@@ -5,7 +5,7 @@ import { ThemedText } from './ThemedText';
 import { ThemedView } from './ThemedView';
 import { useColorScheme } from '@/hooks/useColorScheme';
 import { Colors } from '@/constants/Colors';
-import { matchInvitationService, MatchInvitation } from '@/services/matchInvitationService';
+import { MatchInvitation } from '@/services/matchInvitationService';
 import { supabase } from '@/lib/supabase';
 
 interface UpcomingMatchesNotificationProps {
@@ -219,7 +219,7 @@ export const UpcomingMatchesNotification: React.FC<UpcomingMatchesNotificationPr
         </View>
       </View>
 
-      {upcomingMatches.slice(0, 2).map((match, index) => (
+      {upcomingMatches.slice(0, 2).map((match, _index) => (
         <View key={match.invitation.id} style={[styles.matchItem, { borderColor: colors.tabIconDefault }]}>
           <View style={styles.matchHeader}>
             <View>

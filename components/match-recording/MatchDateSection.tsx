@@ -15,7 +15,7 @@ const MatchDateSection = React.memo(function MatchDateSection({
   const getCurrentDate = () => {
     try {
       return new Date().toISOString().split('T')[0];
-    } catch (error) {
+    } catch {
       console.warn('Failed to get current date, using fallback');
       const now = new Date();
       const year = now.getFullYear();

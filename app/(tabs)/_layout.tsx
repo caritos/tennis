@@ -28,7 +28,7 @@ export default function TabLayout() {
         name="index"
         options={{
           title: 'Clubs',
-          tabBarIcon: ({ color, focused }) => (
+          tabBarIcon: ({ color, _focused }) => (
             <View style={{ position: 'relative' }}>
               <Text style={{ fontSize: 24, color }}>🎾</Text>
             </View>
@@ -39,7 +39,7 @@ export default function TabLayout() {
         name="profile"
         options={{
           title: 'Profile',
-          tabBarIcon: ({ color, focused }) => (
+          tabBarIcon: ({ color, _focused }) => (
             <Text style={{ fontSize: 24, color }}>👤</Text>
           ),
         }}

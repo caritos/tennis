@@ -1,26 +1,20 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import {
   View,
-  Text,
   StyleSheet,
   TouchableOpacity,
-  ScrollView,
-  ActivityIndicator,
   Dimensions,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
-import { router } from 'expo-router';
 
-import { ThemedView } from './ThemedView';
 import { ThemedText } from './ThemedText';
 import { useColorScheme } from '@/hooks/useColorScheme';
 import { Colors } from '@/constants/Colors';
 import { useOnboarding } from '@/contexts/OnboardingContext';
 import { useAuth } from '@/contexts/AuthContext';
-import { useLocation } from '@/hooks/useLocation';
 
-const { width } = Dimensions.get('window');
+const { width: _width } = Dimensions.get('window');
 
 interface OnboardingFlowProps {
   onComplete: () => void;
@@ -277,7 +271,7 @@ const FirstMatchStep: React.FC<StepScreenProps> = ({ onNext }) => {
 */
 
 export const EnhancedOnboardingFlow: React.FC<OnboardingFlowProps> = ({ onComplete }) => {
-  const { steps, currentStep, markStepCompleted, getProgress } = useOnboarding();
+  const { _steps, _currentStep, _markStepCompleted, getProgress } = useOnboarding();
   const [currentStepIndex, setCurrentStepIndex] = useState(0);
   const colorScheme = useColorScheme();
   const colors = Colors[colorScheme ?? 'light'];

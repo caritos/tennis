@@ -19,7 +19,7 @@ interface ErrorDisplayProps {
 
 const ErrorDisplay = React.memo(function ErrorDisplay({
   errors,
-  colors,
+  _colors,
 }: ErrorDisplayProps) {
   if (!errors.general) {
     return null;

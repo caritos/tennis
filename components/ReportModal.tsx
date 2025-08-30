@@ -144,7 +144,7 @@ export function ReportModal({
         'Thank you for helping keep our community safe. We will review your report within 24-48 hours.',
         [{ text: 'OK', onPress: handleClose }]
       );
-    } catch (error) {
+    } catch {
       Alert.alert(
         'Error',
         'Failed to submit report. Please try again later.'

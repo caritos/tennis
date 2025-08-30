@@ -21,7 +21,7 @@ export const NotificationBadge: React.FC<NotificationBadgeProps> = ({
   maxCount = 99,
 }) => {
   const colorScheme = useColorScheme();
-  const colors = Colors[colorScheme ?? 'light'];
+  const _colors = Colors[colorScheme ?? 'light'];
 
   if (count <= 0) return null;
 

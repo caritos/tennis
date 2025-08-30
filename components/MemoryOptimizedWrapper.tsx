@@ -52,7 +52,7 @@ export const useDeepMemo = <T,>(factory: () => T, deps: React.DependencyList): T
 // Component wrapper for memory optimization
 export const MemoryOptimizedWrapper: React.FC<MemoryOptimizedWrapperProps> = ({
   children,
-  dependencies = [],
+  _dependencies = [],
   shouldMemo = true
 }) => {
   const memoizedChildren = useMemo(() => children, [children]);

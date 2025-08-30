@@ -150,7 +150,7 @@ export default function AppleSignInButton({
           } else {
             errorMessage = 'Apple Sign In authorization failed. Please ensure you are signed into iCloud and try again. If the problem persists, please contact support.';
           }
-        } catch (deviceError) {
+        } catch {
           // Fallback if Device module is not available (e.g., in Expo Go)
           errorMessage = 'Apple Sign In authorization failed. Please try again or use email sign up.';
         }

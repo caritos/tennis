@@ -68,7 +68,7 @@ export function BlockUserModal({
                 `${targetUserName} has been ${actionText}ed successfully.`,
                 [{ text: 'OK', onPress: onClose }]
               );
-            } catch (error) {
+            } catch {
               Alert.alert(
                 'Error',
                 `Failed to ${actionText} user. Please try again later.`

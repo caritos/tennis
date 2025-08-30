@@ -75,7 +75,7 @@ const MatchContactInfo: React.FC<MatchContactInfoProps> = ({
     try {
       await Linking.openURL(url);
       setModalVisible(false);
-    } catch (error) {
+    } catch {
       showError('Unable to open app', 'Please try again or use a different contact method.');
     }
   };

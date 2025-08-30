@@ -16,7 +16,6 @@ import { useAuth } from '@/contexts/AuthContext';
 import { ClubService } from '@/services/clubService';
 import { Club } from '@/lib/supabase';
 import { useLocation } from '@/hooks/useLocation';
-import { Button } from './ui/Button';
 
 interface CreateClubFormProps {
   onSuccess: (club: Club) => void;
