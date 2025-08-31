@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { View, TouchableOpacity, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { router, useFocusEffect } from 'expo-router';
+import { router } from 'expo-router';
 import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
 import { Colors } from '@/constants/Colors';
@@ -23,7 +23,7 @@ export function ContactSharingNotification({ onViewAll }: ContactSharingNotifica
 
   console.log('📝 ContactSharingNotification: Component rendered, user:', user?.id);
 
-  const loadContactSharingNotifications = async () => {
+  const loadContactSharingNotifications = React.useCallback(async () => {
     if (!user?.id) {
       console.log('📝 ContactSharingNotification: No user ID, skipping load');
       return;
@@ -68,7 +68,7 @@ export function ContactSharingNotification({ onViewAll }: ContactSharingNotifica
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [user?.id]);
 
   useEffect(() => {
     if (user?.id) {
@@ -117,20 +117,6 @@ export function ContactSharingNotification({ onViewAll }: ContactSharingNotifica
     }
   }, [user?.id, loadContactSharingNotifications]);
 
-  // Handle race condition: refresh notifications when component becomes focused
-  // This catches cases where real-time subscription hasn't processed new notifications yet
-  useFocusEffect(
-    React.useCallback(() => {
-      if (user?.id) {
-        console.log('🎯 ContactSharingNotification: Component focused, checking for new notifications');
-        // Small delay to allow any pending real-time events to process first
-        setTimeout(() => {
-          console.log('🎯 ContactSharingNotification: Focus effect timeout triggered, loading notifications');
-          loadContactSharingNotifications();
-        }, 100);
-      }
-    }, [user?.id, loadContactSharingNotifications])
-  );
 
   const handleMarkAsRead = async (notificationId: string) => {
     try {

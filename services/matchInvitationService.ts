@@ -11,6 +11,8 @@ export interface MatchInvitation {
   location?: string;
   notes?: string;
   status: 'active' | 'matched' | 'cancelled';
+  targeted_players?: string[]; // Array of user IDs for targeted invitations
+  targeted_player_names?: string[]; // Array of player names for targeted invitations
   created_at: string;
   expires_at?: string;
   creator_name?: string; // Joined from users table
@@ -153,6 +155,13 @@ export class MatchInvitationService {
         console.error('❌ Failed to get club invitations:', error);
         return [];
       }
+
+      // Log the raw data to debug targeted fields
+      console.log('📝 Raw invitations from database:', invitations?.map(inv => ({
+        id: inv.id,
+        targeted_players: inv.targeted_players,
+        targeted_player_names: inv.targeted_player_names
+      })));
 
       // Map joined data to expected format
       return (invitations || []).map((invitation: any) => ({

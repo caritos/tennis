@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { View, StyleSheet, TouchableOpacity, TextInput, ScrollView } from 'react-native';
+import React, { useState, useEffect, useRef } from 'react';
+import { View, StyleSheet, TouchableOpacity, TextInput, ScrollView, KeyboardAvoidingView, Platform } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { ThemedText } from './ThemedText';
@@ -25,6 +25,7 @@ const MatchInvitationForm: React.FC<MatchInvitationFormProps> = ({
   onClose,
   onSuccess,
 }) => {
+  console.log('🎾 MatchInvitationForm: Component starting to render...');
   const colorScheme = useColorScheme();
   const colors = Colors[colorScheme ?? 'light'];
 
@@ -100,6 +101,10 @@ const MatchInvitationForm: React.FC<MatchInvitationFormProps> = ({
         // Add targeted_players for specific invitations
         ...(inviteType === 'specific' && selectedPlayers.length > 0 && {
           targeted_players: selectedPlayers
+        }),
+        // Add targeted_players for quick match (suggested players)
+        ...(inviteType === 'quick' && suggestedPlayers.length > 0 && {
+          targeted_players: suggestedPlayers.map(p => p.id)
         })
       };
 
@@ -134,13 +139,19 @@ const MatchInvitationForm: React.FC<MatchInvitationFormProps> = ({
             .map(m => m.full_name)
             .join(', ');
           notificationMessage = `${creatorName} challenged ${selectedPlayerNames} to a ${matchType} match on ${dateStr}`;
+        } else if (inviteType === 'quick' && suggestedPlayers.length > 0) {
+          // Get suggested player names for quick match notification
+          const suggestedPlayerNames = suggestedPlayers
+            .map(p => p.full_name)
+            .join(', ');
+          notificationMessage = `${creatorName} is looking for a quick ${matchType} match with ${suggestedPlayerNames} on ${dateStr}`;
         } else {
           notificationMessage = `${creatorName} is looking for ${matchType === 'singles' ? 'a singles partner' : 'players for a doubles match'} on ${dateStr}`;
         }
         
         await matchInvitationService.createClubNotification(clubId, {
-          type: inviteType === 'specific' ? 'challenge_created' : 'invitation_created',
-          title: inviteType === 'specific' ? `New ${matchType} challenge` : `New ${matchType} invitation`,
+          type: (inviteType === 'specific' || inviteType === 'quick') ? 'challenge_created' : 'invitation_created',
+          title: (inviteType === 'specific' || inviteType === 'quick') ? `New ${matchType} challenge` : `New ${matchType} invitation`,
           message: notificationMessage,
           invitation_id: createdInvitation.id,
           match_type: matchType,
@@ -180,12 +191,19 @@ const MatchInvitationForm: React.FC<MatchInvitationFormProps> = ({
 
   // Load club members when component mounts
   useEffect(() => {
+    let isMounted = true;
+    
     const loadMembers = async () => {
       try {
+        console.log('🎾 MatchInvitationForm: Loading club members for clubId:', clubId);
         const members = await getClubMembers(clubId);
+        
+        if (!isMounted) return; // Component unmounted, don't update state
+        
         // Filter out the current user
         const otherMembers = members.filter(m => m.id !== creatorId);
         setClubMembers(otherMembers);
+        console.log('🎾 MatchInvitationForm: Loaded', otherMembers.length, 'club members');
         
         // If we have the current user's rating, we can use it for quick match
         const { data: currentUserData } = await supabase
@@ -194,14 +212,24 @@ const MatchInvitationForm: React.FC<MatchInvitationFormProps> = ({
           .eq('id', creatorId)
           .single();
           
-        if (currentUserData?.elo_rating) {
+        if (isMounted && currentUserData?.elo_rating) {
           setCurrentUserRating(currentUserData.elo_rating);
+          console.log('🎾 MatchInvitationForm: User rating loaded:', currentUserData.elo_rating);
         }
       } catch (error) {
-        console.error('Failed to load club members:', error);
+        if (isMounted) {
+          console.error('🎾 MatchInvitationForm: Failed to load club members:', error);
+          // Don't crash the component, just continue without members
+          setClubMembers([]);
+        }
       }
     };
+    
     loadMembers();
+    
+    return () => {
+      isMounted = false;
+    };
   }, [clubId, creatorId]);
 
   const [currentUserRating, setCurrentUserRating] = useState<number | null>(null);
@@ -250,34 +278,61 @@ const MatchInvitationForm: React.FC<MatchInvitationFormProps> = ({
   };
 
   const suggestedPlayers = inviteType === 'quick' ? getSuggestedPlayers() : [];
+  const scrollViewRef = useRef<ScrollView>(null);
 
   // Form validation
   const canSubmit = inviteType === 'open' || selectedPlayers.length > 0;
 
+  // Function to scroll to bottom when text input is focused
+  const handleTextInputFocus = () => {
+    setTimeout(() => {
+      scrollViewRef.current?.scrollToEnd({ animated: true });
+    }, 100);
+  };
+
+  console.log('🎾 MatchInvitationForm: About to return JSX, canSubmit:', canSubmit);
+  console.log('🎾 MatchInvitationForm: Creating KeyboardAvoidingView...');
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
-      {/* Header */}
-      <View style={styles.header}>
-        <TouchableOpacity onPress={onClose} style={styles.backButton}>
-          <Ionicons name="chevron-back" size={24} color={colors.text} />
-        </TouchableOpacity>
-        <ThemedText style={styles.headerTitle}>Looking to Play</ThemedText>
-        <View style={styles.headerSpacer} />
-      </View>
-
-      {/* Error Message */}
-      {error && (
-        <View style={[styles.errorContainer, { backgroundColor: '#ffebee', borderColor: '#f44336' }]}>
-          <Ionicons name="alert-circle" size={20} color="#f44336" />
-          <ThemedText style={[styles.errorText, { color: '#f44336' }]}>{error}</ThemedText>
-          <TouchableOpacity onPress={() => setError(null)} style={styles.errorDismiss}>
-            <Ionicons name="close" size={16} color="#f44336" />
+    <KeyboardAvoidingView 
+      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+      style={styles.container}
+      keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 20}
+      enabled
+    >
+      {console.log('🎾 MatchInvitationForm: KeyboardAvoidingView rendered, creating SafeAreaView...')}
+      <SafeAreaView style={[styles.safeArea, { backgroundColor: colors.background }]}>
+        {console.log('🎾 MatchInvitationForm: SafeAreaView rendered, creating Header...')}
+        {/* Header */}
+        <View style={styles.header}>
+          <TouchableOpacity onPress={onClose} style={styles.backButton}>
+            <Ionicons name="chevron-back" size={24} color={colors.text} />
           </TouchableOpacity>
+          <ThemedText style={styles.headerTitle}>Looking to Play</ThemedText>
+          <View style={styles.headerSpacer} />
         </View>
-      )}
 
-      <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
-        <View style={styles.formContainer}>
+        {console.log('🎾 MatchInvitationForm: Header rendered, checking for errors:', !!error)}
+        {/* Error Message */}
+        {error && (
+          <View style={[styles.errorContainer, { backgroundColor: '#ffebee', borderColor: '#f44336' }]}>
+            <Ionicons name="alert-circle" size={20} color="#f44336" />
+            <ThemedText style={[styles.errorText, { color: '#f44336' }]}>{error}</ThemedText>
+            <TouchableOpacity onPress={() => setError(null)} style={styles.errorDismiss}>
+              <Ionicons name="close" size={16} color="#f44336" />
+            </TouchableOpacity>
+          </View>
+        )}
+        {console.log('🎾 MatchInvitationForm: Error handling complete, creating ScrollView...')}
+        <ScrollView 
+          ref={scrollViewRef}
+          style={styles.scrollView} 
+          showsVerticalScrollIndicator={false}
+          contentContainerStyle={styles.scrollContent}
+          keyboardShouldPersistTaps="handled"
+        >
+          {console.log('🎾 MatchInvitationForm: ScrollView rendered, creating form container...')}
+          <View style={styles.formContainer}>
+          {console.log('🎾 MatchInvitationForm: Form container rendered, creating match type section...')}
           {/* Match Type - FIRST */}
           <View style={styles.section}>
             <ThemedText style={[styles.sectionLabel, { color: colors.text }]}>Match Type</ThemedText>
@@ -672,14 +727,22 @@ const MatchInvitationForm: React.FC<MatchInvitationFormProps> = ({
               style={[styles.textArea, { borderColor: colors.tabIconDefault, color: colors.text, backgroundColor: colors.card }]}
               value={message}
               onChangeText={setMessage}
+              onFocus={handleTextInputFocus}
               placeholder={matchType === 'singles' ? 'Let your opponent know your skill level, preferences, or any specific requests...' : 'Let everyone know your skill level, preferences, or any specific requests...'}
               placeholderTextColor={colors.tabIconDefault}
               multiline={true}
               numberOfLines={3}
               textAlignVertical="top"
+              returnKeyType="done"
+              blurOnSubmit={true}
+              onSubmitEditing={() => {
+                // Dismiss keyboard when Done is pressed
+                scrollViewRef.current?.scrollToEnd({ animated: true });
+              }}
             />
           </View>
 
+          {console.log('🎾 MatchInvitationForm: All sections rendered, creating submit button...')}
           {/* Submit Button */}
           <View style={styles.submitContainer}>
             <TouchableOpacity
@@ -696,9 +759,14 @@ const MatchInvitationForm: React.FC<MatchInvitationFormProps> = ({
               </ThemedText>
             </TouchableOpacity>
           </View>
-        </View>
-      </ScrollView>
-    </SafeAreaView>
+          {console.log('🎾 MatchInvitationForm: Submit button rendered, finishing form container...')}
+          </View>
+        {console.log('🎾 MatchInvitationForm: Form container complete, finishing ScrollView...')}
+        </ScrollView>
+      {console.log('🎾 MatchInvitationForm: ScrollView complete, finishing SafeAreaView...')}
+      </SafeAreaView>
+    {console.log('🎾 MatchInvitationForm: SafeAreaView complete, finishing KeyboardAvoidingView...')}
+    </KeyboardAvoidingView>
   );
 };
 
@@ -706,6 +774,9 @@ export default MatchInvitationForm;
 
 const styles = StyleSheet.create({
   container: {
+    flex: 1,
+  },
+  safeArea: {
     flex: 1,
   },
   header: {
@@ -746,8 +817,15 @@ const styles = StyleSheet.create({
   errorDismiss: {
     padding: 4,
   },
+  keyboardAvoidingView: {
+    flex: 1,
+  },
   scrollView: {
     flex: 1,
+  },
+  scrollContent: {
+    flexGrow: 1,
+    paddingBottom: 200, // Very large padding to ensure submit button is visible above keyboard
   },
   formContainer: {
     padding: 20,
@@ -862,8 +940,10 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   submitContainer: {
-    marginTop: 20,
-    marginBottom: 20,
+    marginTop: 32,
+    marginBottom: 50, // Much larger bottom margin
+    paddingHorizontal: 20,
+    paddingBottom: 20, // Additional bottom padding
   },
   submitButton: {
     paddingVertical: 16,

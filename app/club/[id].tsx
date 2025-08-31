@@ -329,7 +329,10 @@ export default function ClubDetailScreen() {
           phone: inv.creator_phone
         },
         // Parse responses from JSON
-        responses: inv.responses || []
+        responses: inv.responses || [],
+        // Preserve targeted fields
+        targeted_players: inv.targeted_players,
+        targeted_player_names: inv.targeted_player_names
       }));
 
       // Filter out past invitations (dates before today)
@@ -451,7 +454,9 @@ export default function ClubDetailScreen() {
         id: inv.id,
         creator_name: inv.creator?.full_name,
         match_type: inv.match_type,
-        date: inv.date
+        date: inv.date,
+        targeted_players: inv.targeted_players,
+        targeted_player_names: inv.targeted_player_names
       })));
       const processedInvitations = viableInvitations.map((invitation: any) => ({
         id: invitation.id,
@@ -475,6 +480,8 @@ export default function ClubDetailScreen() {
         status: invitation.status,
         created_at: invitation.created_at,
         responses: invitation.responses, // Include responses for grid display
+        targeted_players: invitation.targeted_players, // Include targeted player IDs
+        targeted_player_names: invitation.targeted_player_names, // Include targeted player names
         isInvitation: true, // Flag to distinguish from completed matches
         processed: true
       }));
@@ -843,7 +850,10 @@ export default function ClubDetailScreen() {
             user={user}
             onViewAllMembers={() => setActiveTab('members')}
             onRecordMatch={handleRecordMatch}
-            onInvitePlayers={() => setShowInviteForm(true)}
+            onInvitePlayers={() => {
+              console.log('🎾 ClubDetailScreen: onInvitePlayers called - opening invite form modal');
+              setShowInviteForm(true);
+            }}
             onViewAllMatches={(matchId?: string) => {
               console.log('🎯 onViewAllMatches called with matchId:', matchId);
               if (matchId) {
@@ -912,6 +922,7 @@ export default function ClubDetailScreen() {
             visible={showInviteForm}
             animationType="slide"
             presentationStyle="pageSheet"
+            onShow={() => console.log('🎾 ClubDetailScreen: Modal is now visible, showing MatchInvitationForm')}
           >
             <MatchInvitationForm
               clubId={id as string}

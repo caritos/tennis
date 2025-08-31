@@ -52,7 +52,10 @@ export default function ClubOverview({
           
           <TouchableOpacity
             style={[styles.actionButton, { backgroundColor: colors.card, borderWidth: 1, borderColor: colors.tint }]}
-            onPress={onInvitePlayers}
+            onPress={() => {
+              console.log('🔘 BUTTON: Looking to Play button pressed');
+              onInvitePlayers();
+            }}
           >
             <Ionicons name="people-outline" size={20} color={colors.tint} />
             <ThemedText style={[styles.actionButtonText, { color: colors.tint }]}>

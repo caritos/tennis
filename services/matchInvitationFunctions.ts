@@ -11,6 +11,8 @@ export interface ClubMatchInvitation {
   match_type: 'singles' | 'doubles';
   notes: string | null;
   status: string;
+  targeted_players: string[] | null;
+  targeted_player_names: string[] | null;
   created_at: string;
   creator_full_name: string;
   creator_phone: string | null;
