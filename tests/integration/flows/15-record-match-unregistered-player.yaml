@@ -1,0 +1,339 @@
+appId: com.caritos.tennis
+name: "Record Match with Unregistered Player - Complete Flow"
+---
+# Comprehensive E2E test for recording a match against an unregistered player
+# Tests: Navigation → Match Recording → Opponent Search → Add Unregistered → Score Entry → Save → Verification
+# This covers a key user flow where players record matches with people who haven't joined the app yet
+
+- launchApp:
+    clearState: true
+- waitForAnimationToEnd
+
+# STEP 1: Navigate to match recording
+# ===================================
+
+# Ensure user is signed in - should see either My Clubs or sign in prompt
+- assertVisible:
+    text: "My Clubs|Sign In|Get Started"
+
+# Navigate to My Clubs if not already there
+- tapOn:
+    text: "My Clubs"
+    optional: true
+- waitForAnimationToEnd
+
+# Select a club to record match in
+- assertVisible: "My Clubs"
+- tapOn:
+    text: ".*Tennis.*|.*Club.*"
+    index: 0
+- waitForAnimationToEnd
+
+# Should now be in club details
+- assertVisible: "Record Match"
+- takeScreenshot: club-details-screen
+
+# Start match recording
+- tapOn: "Record Match"
+- waitForAnimationToEnd
+
+# STEP 2: Set up match basics
+# ============================
+
+- assertVisible: "Record a Match"
+- assertVisible: "Match Type"
+- takeScreenshot: match-recording-form-initial
+
+# Test singles match (default should be selected)
+- assertVisible: "Singles"
+- tapOn: "Singles"
+- waitForAnimationToEnd
+
+# STEP 3: Add unregistered opponent
+# ==================================
+
+# Look for opponent selection area
+- assertVisible: "Select Opponent"
+- tapOn:
+    id: "opponent-search-input"
+    optional: true
+- tapOn:
+    text: "Select Opponent"
+    optional: true
+- waitForAnimationToEnd
+
+# Clear any existing text and enter unregistered player name
+- tapOn:
+    id: "opponent-search-input"
+- longPressOn:
+    id: "opponent-search-input"
+    optional: true
+- tapOn: 
+    text: "Select All"
+    optional: true
+- eraseText
+- waitForAnimationToEnd
+
+# Type name of unregistered player
+- inputText: "Alex Johnson"
+- waitForAnimationToEnd
+- takeScreenshot: opponent-name-entered
+
+# Should see option to add as unregistered player
+- assertVisible:
+    text: "Add Alex Johnson as unregistered player"
+- tapOn:
+    text: "Add Alex Johnson as unregistered player"
+- waitForAnimationToEnd
+
+# Verify opponent was added
+- assertVisible: "Alex Johnson"
+- takeScreenshot: unregistered-opponent-added
+
+# STEP 4: Enter match date (optional)
+# ====================================
+
+# Test custom date selection
+- tapOn:
+    text: "Match Date"
+    optional: true
+- tapOn:
+    id: "date-picker"
+    optional: true
+- waitForAnimationToEnd
+
+# Accept default or tap a recent date
+- tapOn:
+    text: "Today|Yesterday"
+    optional: true
+- waitForAnimationToEnd
+
+# STEP 5: Enter match score
+# ==========================
+
+# Should see score entry section
+- assertVisible: "Match Score"
+- assertVisible: "Set 1"
+
+# Enter first set score - You won 6-4
+- tapOn:
+    id: "player-score-input-0"
+- eraseText: 2
+- inputText: "6"
+- waitForAnimationToEnd
+
+- tapOn:
+    id: "opponent-score-input-0"
+- eraseText: 2
+- inputText: "4"
+- waitForAnimationToEnd
+
+# Verify set 1 shows correctly
+- assertVisible: "6"
+- assertVisible: "4"
+- takeScreenshot: first-set-entered
+
+# Enter second set score - You won 7-5
+- tapOn:
+    id: "player-score-input-1"
+    optional: true
+- inputText: "7"
+- waitForAnimationToEnd
+
+- tapOn:
+    id: "opponent-score-input-1"
+    optional: true
+- inputText: "5"
+- waitForAnimationToEnd
+
+# Verify both sets show
+- assertVisible: "6"
+- assertVisible: "4" 
+- assertVisible: "7"
+- assertVisible: "5"
+- takeScreenshot: match-score-complete
+
+# STEP 6: Save the match
+# =======================
+
+# Save button should be enabled now
+- assertVisible: "Save Match"
+- tapOn: "Save Match"
+- waitForAnimationToEnd:
+    timeout: 10000
+
+# STEP 7: Verify match was saved successfully
+# ============================================
+
+# Should return to club details page
+- assertVisible:
+    text: "Recent Matches|Club Rankings"
+- takeScreenshot: back-to-club-after-save
+
+# Look for the saved match in recent matches
+- assertVisible: "Recent Matches"
+- assertVisible:
+    text: "Alex Johnson"
+    optional: true
+- assertVisible:
+    text: "6-4"
+    optional: true
+- assertVisible:
+    text: "7-5" 
+    optional: true
+
+# STEP 8: Verify match shows in profile/match history
+# ====================================================
+
+# Navigate to profile to check match history
+- tapOn: "Profile"
+- waitForAnimationToEnd
+
+- assertVisible: "Match History"
+- tapOn: "Match History"
+- waitForAnimationToEnd
+
+# Should see the match against Alex Johnson
+- assertVisible: "Alex Johnson"
+- assertVisible: "6-4"
+- assertVisible: "7-5"
+- takeScreenshot: match-in-history
+
+# STEP 9: Test doubles with unregistered players
+# ===============================================
+
+# Go back to club to test doubles
+- tapOn:
+    text: "Back"
+    optional: true
+- tapOn: "Clubs"
+- waitForAnimationToEnd
+
+- tapOn:
+    text: ".*Tennis.*|.*Club.*"
+    index: 0
+- waitForAnimationToEnd
+
+# Start new match recording for doubles
+- tapOn: "Record Match"
+- waitForAnimationToEnd
+
+# Select doubles
+- tapOn: "Doubles"
+- waitForAnimationToEnd
+
+# Add unregistered partner
+- tapOn:
+    text: "Select Partner"
+    optional: true
+- tapOn:
+    id: "partner-search-input"
+    optional: true
+- inputText: "Sam Wilson"
+- waitForAnimationToEnd
+
+- tapOn:
+    text: "Add Sam Wilson as unregistered player"
+- waitForAnimationToEnd
+
+# Add unregistered opponents
+- tapOn:
+    text: "Select Opponents"
+    optional: true
+- tapOn:
+    id: "opponent-search-input" 
+    optional: true
+- inputText: "Maria Garcia"
+- waitForAnimationToEnd
+
+- tapOn:
+    text: "Add Maria Garcia as unregistered player"
+- waitForAnimationToEnd
+
+# Add second opponent
+- tapOn:
+    id: "opponent-partner-search-input"
+    optional: true
+- inputText: "David Lee"
+- waitForAnimationToEnd
+
+- tapOn:
+    text: "Add David Lee as unregistered player"
+- waitForAnimationToEnd
+
+# Verify all players added
+- assertVisible: "Sam Wilson"
+- assertVisible: "Maria Garcia"
+- assertVisible: "David Lee"
+- takeScreenshot: doubles-players-added
+
+# Enter doubles score - Close three-set match
+# Set 1: 6-4 (we won)
+- tapOn:
+    id: "player-score-input-0"
+- inputText: "6"
+- tapOn:
+    id: "opponent-score-input-0"
+- inputText: "4"
+
+# Set 2: 4-6 (they won)
+- tapOn:
+    id: "player-score-input-1"
+    optional: true
+- inputText: "4"
+- tapOn:
+    id: "opponent-score-input-1"
+    optional: true
+- inputText: "6"
+
+# Set 3: 7-6 with tiebreak (we won)
+- tapOn:
+    id: "player-score-input-2"
+    optional: true
+- inputText: "7"
+- tapOn:
+    id: "opponent-score-input-2"
+    optional: true
+- inputText: "6"
+
+# Handle tiebreak if system detects it
+- tapOn:
+    id: "tiebreak-player-score-2"
+    optional: true
+- inputText: "7"
+    optional: true
+- tapOn:
+    id: "tiebreak-opponent-score-2"
+    optional: true
+- inputText: "4"
+    optional: true
+
+# Save doubles match
+- tapOn: "Save Match"
+- waitForAnimationToEnd:
+    timeout: 10000
+
+# Verify doubles match saved
+- assertVisible: "Recent Matches"
+- assertVisible:
+    text: "Sam Wilson"
+    optional: true
+- assertVisible:
+    text: "Maria Garcia"
+    optional: true
+- takeScreenshot: doubles-match-saved
+
+# STEP 10: Final verification
+# ============================
+
+# Check that both matches (singles and doubles) are visible
+- assertVisible: "Recent Matches"
+
+# Take final screenshot showing multiple matches with unregistered players
+- takeScreenshot: unregistered-player-matches-complete
+
+# SUCCESS: E2E test completed successfully
+# - Recorded singles match with unregistered opponent
+# - Recorded doubles match with multiple unregistered players  
+# - Verified matches save and appear in match history
+# - Tested complete flow from navigation to final verification

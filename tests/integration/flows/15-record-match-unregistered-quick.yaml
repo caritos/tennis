@@ -1,0 +1,97 @@
+appId: com.caritos.tennis
+name: "Quick Test - Record Singles Match with Unregistered Player"
+---
+# Quick E2E test for recording a match against an unregistered player
+# Focused on the core flow: Navigation → Add Unregistered Opponent → Record Score → Save
+
+- launchApp:
+    clearState: true
+- waitForAnimationToEnd
+
+# Navigate to match recording
+- assertVisible:
+    text: "My Clubs|Sign In|Get Started"
+
+- tapOn:
+    text: "My Clubs"
+    optional: true
+- waitForAnimationToEnd
+
+# Select a club
+- tapOn:
+    text: ".*Tennis.*|.*Club.*"
+    index: 0
+- waitForAnimationToEnd
+
+# Start match recording
+- assertVisible: "Record Match"
+- tapOn: "Record Match"
+- waitForAnimationToEnd
+- takeScreenshot: match-form-opened
+
+# Ensure singles is selected
+- tapOn: "Singles"
+- waitForAnimationToEnd
+
+# Add unregistered opponent
+- tapOn:
+    text: "Select Opponent"
+    optional: true
+- tapOn:
+    id: "opponent-search-input"
+    optional: true
+- waitForAnimationToEnd
+
+# Clear and enter opponent name
+- longPressOn:
+    id: "opponent-search-input"
+    optional: true
+- tapOn: 
+    text: "Select All"
+    optional: true
+- eraseText
+- inputText: "Mike Thompson"
+- waitForAnimationToEnd
+
+# Add as unregistered player
+- assertVisible:
+    text: "Add Mike Thompson as unregistered player"
+- tapOn:
+    text: "Add Mike Thompson as unregistered player"
+- waitForAnimationToEnd
+- takeScreenshot: unregistered-opponent-added
+
+# Enter simple winning score: 6-3, 6-4
+- tapOn:
+    id: "player-score-input-0"
+- inputText: "6"
+- tapOn:
+    id: "opponent-score-input-0"
+- inputText: "3"
+- waitForAnimationToEnd
+
+- tapOn:
+    id: "player-score-input-1"
+    optional: true
+- inputText: "6"
+- tapOn:
+    id: "opponent-score-input-1"
+    optional: true
+- inputText: "4"
+- waitForAnimationToEnd
+- takeScreenshot: scores-entered
+
+# Save match
+- tapOn: "Save Match"
+- waitForAnimationToEnd:
+    timeout: 8000
+
+# Verify success
+- assertVisible: "Recent Matches"
+- assertVisible:
+    text: "Mike Thompson"
+    optional: true
+- assertVisible:
+    text: "6-3"
+    optional: true
+- takeScreenshot: match-saved-success
