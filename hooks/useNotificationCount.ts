@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { NotificationService } from '@/services/NotificationService';
-// import { initializeDatabase } from '@/database/database'; // Removed - using NotificationService from Supabase
+import { supabase } from '@/lib/supabase';
 
 export const useNotificationCount = () => {
   const [unreadCount, setUnreadCount] = useState(0);
@@ -10,7 +10,7 @@ export const useNotificationCount = () => {
 
   useEffect(() => {
     let notificationService: NotificationService;
-    let intervalId: ReturnType<typeof setInterval>;
+    let subscription: any = null;
 
     const initializeService = async () => {
       try {
@@ -19,8 +19,28 @@ export const useNotificationCount = () => {
         // Load initial count
         await loadUnreadCount();
         
-        // Poll for updates every 30 seconds
-        intervalId = setInterval(loadUnreadCount, 30000);
+        // Set up realtime subscription for notification changes instead of polling
+        if (user?.id) {
+          console.log('🔔 Setting up realtime subscription for notification count');
+          subscription = supabase
+            .channel(`notifications_count_${user.id}`)
+            .on(
+              'postgres_changes',
+              {
+                event: '*',
+                schema: 'public',
+                table: 'notifications',
+                filter: `user_id=eq.${user.id}`
+              },
+              (payload) => {
+                console.log('🔔 Notification change detected, refreshing count:', payload.eventType);
+                loadUnreadCount();
+              }
+            )
+            .subscribe((status) => {
+              console.log(`📡 Notification count subscription status: ${status}`);
+            });
+        }
       } catch (error) {
         console.error('Failed to initialize notification service:', error);
         setLoading(false);
@@ -53,8 +73,9 @@ export const useNotificationCount = () => {
     }
 
     return () => {
-      if (intervalId) {
-        clearInterval(intervalId);
+      if (subscription) {
+        console.log('🧹 Cleaning up notification count subscription');
+        subscription.unsubscribe();
       }
     };
   }, [user?.id]);

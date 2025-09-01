@@ -149,72 +149,60 @@ async function updatePlayerRatings(
 export class MatchService {
 
   async createMatch(matchData: CreateMatchData): Promise<Match> {
-    console.log('🎾 Creating match with ELO rating updates...');
+    console.log('🎾 Creating match using PostgreSQL function...');
     console.log('🎾 Match data:', JSON.stringify(matchData, null, 2));
     
-    const matchId = generateUUID();
-    
-    const newMatch = {
-      id: matchId,
-      club_id: matchData.club_id,
-      player1_id: matchData.player1_id,
-      player2_id: matchData.player2_id || null,
-      opponent2_name: matchData.opponent2_name || null,
-      player3_id: matchData.player3_id || null,
-      partner3_name: matchData.partner3_name || null,
-      player4_id: matchData.player4_id || null,
-      partner4_name: matchData.partner4_name || null,
-      scores: matchData.scores,
-      match_type: matchData.match_type,
-      date: matchData.date,
-      notes: matchData.notes || null,
-      invitation_id: matchData.invitation_id || null,
-      challenge_id: matchData.challenge_id || null,
-      created_at: new Date().toISOString()
-    };
-
     try {
-      // First, create the match
-      const { data: match, error } = await supabase
-        .from('matches')
-        .insert(newMatch)
-        .select()
-        .single();
+      // Use the new PostgreSQL function for match recording, notifications, and club updates
+      const { data: result, error } = await supabase.rpc('record_complete_match', {
+        p_match_data: matchData
+      });
 
       if (error) {
-        console.error('❌ Failed to create match:', error);
+        console.error('❌ Failed to create match via function:', error);
         throw new Error(`Failed to create match: ${error.message}`);
       }
 
-      console.log('✅ Match created successfully:', match);
-      console.log('🎾 Now checking if we should update ELO ratings...');
-      
-      console.log('🎾 Rating update conditions:');
-      console.log('  - Has scores:', !!matchData.scores);
-      console.log('  - Has player2_id:', !!matchData.player2_id);
-      console.log('  - Has opponent2_name:', !!matchData.opponent2_name);
-      console.log('  - Match type:', matchData.match_type);
+      console.log('✅ Match created successfully via PostgreSQL function:', result);
+      console.log('🔔 Function completed - realtime events fired automatically');
+      console.log('📊 Results:');
+      console.log('   - Match ID:', result.match_id);
+      console.log('   - Ratings Updated:', result.ratings_updated);
+      console.log('   - Notifications Created:', result.notifications_created);
 
-      // Update ELO ratings for registered players only
-      if (matchData.scores && (matchData.player2_id || matchData.opponent2_name)) {
-        console.log('✅ Conditions met - proceeding with rating updates...');
-        await this.updateMatchRatings(match);
-      } else {
-        console.log('⚠️ Skipping rating update: incomplete match data or missing opponent');
-        console.log('  - Scores present:', !!matchData.scores);
-        console.log('  - Opponent present:', !!(matchData.player2_id || matchData.opponent2_name));
+      // Fetch the created match
+      const { data: match, error: fetchError } = await supabase
+        .from('matches')
+        .select('*')
+        .eq('id', result.match_id)
+        .single();
+
+      if (fetchError) {
+        console.error('❌ Failed to fetch created match:', fetchError);
+        throw new Error(`Failed to fetch created match: ${fetchError.message}`);
       }
 
-      // Create notifications for match participants using PostgreSQL function
-      if (matchData.scores) {
+      // Handle ELO ratings and notifications client-side
+      if (matchData.scores && (matchData.player2_id || matchData.opponent2_name)) {
+        console.log('🎾 Updating ELO ratings client-side...');
+        try {
+          await this.updateMatchRatings(match);
+          console.log('✅ ELO ratings updated successfully');
+        } catch (ratingError) {
+          console.error('⚠️ ELO rating update failed:', ratingError);
+          // Don't throw - match was created successfully
+        }
+
+        // Create notifications client-side
         try {
           const winner = determineMatchWinner(match.scores);
+          console.log('🔔 Creating match result notifications...');
           const { data: notificationResult, error: notificationError } = await supabase.rpc(
             'create_match_result_notifications',
             {
               p_match_id: match.id,
               p_winner: winner,
-              p_recorder_user_id: matchData.player1_id // Assuming player1 is always the recorder
+              p_recorder_user_id: matchData.player1_id
             }
           );
 
@@ -225,7 +213,7 @@ export class MatchService {
           }
         } catch (notificationErr) {
           console.error('⚠️ Match notification function failed:', notificationErr);
-          // Don't throw - match creation was successful
+          // Don't throw - match was created successfully
         }
       }
 

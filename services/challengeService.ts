@@ -204,6 +204,43 @@ class ChallengeService {
    * Create a new challenge (legacy method - for backward compatibility)
    */
   public async createChallenge(challengeData: CreateChallengeData): Promise<string> {
+    console.log('🎾 Creating challenge using PostgreSQL function...');
+    console.log('🎾 Challenge data:', JSON.stringify(challengeData, null, 2));
+    
+    try {
+      // Use PostgreSQL function for complete challenge creation
+      const { data: result, error } = await supabase.rpc('create_complete_challenge', {
+        p_challenge_data: challengeData
+      });
+
+      if (error) {
+        console.error('❌ Failed to create challenge via function:', error);
+        throw new Error(`Failed to create challenge: ${error.message}`);
+      }
+
+      console.log('✅ Challenge created successfully via PostgreSQL function:', result);
+      console.log('🔔 Function completed - realtime events fired automatically');
+      console.log('📊 Results:');
+      console.log('   - Challenge ID:', result.challenge_id);
+      console.log('   - Challenger:', result.challenger_name);
+      console.log('   - Expires:', result.expires_at);
+      console.log('   - Notifications Created:', result.notifications_created);
+
+      return result.challenge_id;
+
+    } catch (error) {
+      console.error('❌ Challenge creation failed:', error);
+      
+      // Fallback to original client-side logic if function fails
+      console.log('⚠️ Falling back to client-side challenge creation...');
+      return this.createChallengeClientSide(challengeData);
+    }
+  }
+
+  /**
+   * Fallback client-side challenge creation (original logic)
+   */
+  private async createChallengeClientSide(challengeData: CreateChallengeData): Promise<string> {
     // Generate unique challenge ID
     const challengeId = generateUUID();
     

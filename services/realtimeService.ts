@@ -101,7 +101,7 @@ class RealtimeService {
     }
   }
 
-  private async subscribeToChallenges(userId: string, clubIds: string[]): Promise<void> {
+  private async subscribeToChallenges(userId: string, _clubIds: string[]): Promise<void> {
     const channelName = `user_challenges:${userId}`;
     
     const channel = supabase
@@ -202,15 +202,17 @@ class RealtimeService {
         },
         (payload) => {
           const match = payload.new as any;
-          // Only notify if user was involved in the match
-          if (this.isUserInMatch(userId, match)) {
-            console.log('🏆 New match result:', payload);
+          // Only notify if user was involved in the match AND didn't record it themselves
+          if (this.isUserInMatch(userId, match) && !this.isUserMatchRecorder(userId, match)) {
+            console.log('🏆 RealtimeService: New match result for user:', payload);
             this.handleMatchResultInsert(match);
+          } else if (this.isUserMatchRecorder(userId, match)) {
+            console.log('ℹ️ RealtimeService: User recorded their own match, skipping notification');
           }
         }
       )
       .subscribe((status) => {
-        console.log(`📡 Match results subscription status: ${status}`);
+        console.log(`📡 RealtimeService: Match results subscription status: ${status}`);
       });
 
     this.subscriptions.set(channelName, {
@@ -321,6 +323,11 @@ class RealtimeService {
            match.player2_id === userId ||
            match.player3_id === userId ||
            match.player4_id === userId;
+  }
+
+  private isUserMatchRecorder(userId: string, match: any): boolean {
+    // In the app, player1 is always the recorder/person who created the match
+    return match.player1_id === userId;
   }
 
   cleanup(): void {

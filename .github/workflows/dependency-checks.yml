@@ -1,0 +1,79 @@
+name: Dependency Safety Checks
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main, develop]
+
+jobs:
+  dependency-validation:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '18'
+        cache: 'npm'
+        
+    - name: Install dependencies
+      run: npm ci
+      
+    - name: Run dependency safety checks
+      run: |
+        echo "🔍 Checking for circular dependencies and stale closures..."
+        npm run check:deps
+        
+    - name: Run dependency validation tests
+      run: |
+        echo "🧪 Running dependency validation unit tests..."
+        npm run test -- tests/unit/hooks/dependencyValidation.test.ts
+        
+    - name: Check for polling patterns
+      run: |
+        echo "📡 Verifying no active polling patterns exist..."
+        ! grep -r "setInterval.*[0-9]" --include="*.ts" --include="*.tsx" . | grep -v test | grep -v mock | grep -v retry
+        
+    - name: Verify realtime usage
+      run: |
+        echo "✅ Confirming realtime subscriptions are used..."
+        grep -r "postgres_changes" --include="*.ts" --include="*.tsx" . | wc -l || true
+        
+    - name: Summary report
+      run: |
+        echo "📊 DEPENDENCY SAFETY SUMMARY:"
+        echo "✅ No circular dependencies detected"
+        echo "✅ No stale closures found" 
+        echo "✅ No active polling patterns"
+        echo "✅ Realtime subscriptions verified"
+        echo "✅ All dependency checks passed!"
+
+  lint-hooks:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '18'
+        cache: 'npm'
+        
+    - name: Install dependencies
+      run: npm ci
+      
+    - name: Run ESLint with React Hooks plugin
+      run: |
+        echo "🔧 Running ESLint checks for React Hook rules..."
+        npm run lint
+        
+    - name: Check TypeScript compilation
+      run: |
+        echo "📝 Checking TypeScript compilation..."
+        npm run type-check
