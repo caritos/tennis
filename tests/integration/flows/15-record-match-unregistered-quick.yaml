@@ -4,8 +4,7 @@ name: "Quick Test - Record Singles Match with Unregistered Player"
 # Quick E2E test for recording a match against an unregistered player
 # Focused on the core flow: Navigation → Add Unregistered Opponent → Record Score → Save
 
-- launchApp:
-    clearState: true
+- launchApp
 - waitForAnimationToEnd
 
 # Navigate to match recording

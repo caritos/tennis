@@ -5,8 +5,7 @@ name: "Record Match with Unregistered Player - Complete Flow"
 # Tests: Navigation → Match Recording → Opponent Search → Add Unregistered → Score Entry → Save → Verification
 # This covers a key user flow where players record matches with people who haven't joined the app yet
 
-- launchApp:
-    clearState: true
+- launchApp
 - waitForAnimationToEnd
 
 # STEP 1: Navigate to match recording
