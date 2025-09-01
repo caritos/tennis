@@ -321,18 +321,45 @@ export default function ClubDetailScreen() {
         console.error('❌ Error getting match invitations:', invitationError);
       }
       
-      // Convert function response to expected format
-      const matchInvitations = functionInvitations?.map(inv => ({
-        ...inv,
-        creator: {
-          full_name: inv.creator_full_name,
-          phone: inv.creator_phone
-        },
-        // Parse responses from JSON
-        responses: inv.responses || [],
-        // Preserve targeted fields
-        targeted_players: inv.targeted_players,
-        targeted_player_names: inv.targeted_player_names
+      // Convert function response to expected format and fetch creator ELO ratings
+      const matchInvitations = await Promise.all((functionInvitations || []).map(async (inv) => {
+        // Fetch creator's current ELO rating (since function doesn't include it)
+        let creator_elo_rating = undefined;
+        let creator_games_played = undefined;
+        
+        try {
+          const { data: creatorData, error: creatorError } = await supabase
+            .from('users')
+            .select('elo_rating, games_played')
+            .eq('id', inv.creator_id)
+            .single();
+            
+          if (!creatorError && creatorData) {
+            creator_elo_rating = creatorData.elo_rating;
+            creator_games_played = creatorData.games_played;
+            console.log('✅ Fetched ELO for creator:', inv.creator_full_name, '→', creatorData.elo_rating);
+          } else {
+            console.warn('⚠️ Could not fetch ELO for creator:', inv.creator_id, creatorError);
+          }
+        } catch (error) {
+          console.warn('⚠️ Error fetching creator ELO:', error);
+        }
+        
+        return {
+          ...inv,
+          creator: {
+            full_name: inv.creator_full_name,
+            phone: inv.creator_phone
+          },
+          // Parse responses from JSON
+          responses: inv.responses || [],
+          // Preserve targeted fields
+          targeted_players: inv.targeted_players,
+          targeted_player_names: inv.targeted_player_names,
+          // Include fetched ELO rating
+          creator_elo_rating,
+          creator_games_played
+        };
       }));
 
       // Filter out past invitations (dates before today)

@@ -16,6 +16,8 @@ export interface ClubMatchInvitation {
   created_at: string;
   creator_full_name: string;
   creator_phone: string | null;
+  creator_elo_rating?: number;  // Added for ELO display
+  creator_games_played?: number;  // Added for ELO display
   response_count: number;
   responses: Array<{
     id: string;
