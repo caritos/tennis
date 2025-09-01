@@ -102,13 +102,23 @@ read -p "Press ENTER when production app is loaded in simulator..."
 # Run production tests
 echo -e "\n${YELLOW}🧪 Running production E2E tests...${NC}"
 
+# Get the absolute path to the test file
+TEST_FILE="$(pwd)/tests/integration/flows/15-record-match-unregistered-prod.yaml"
+
+# Check if test file exists
+if [ ! -f "$TEST_FILE" ]; then
+    echo -e "${RED}❌ Test file not found: $TEST_FILE${NC}"
+    exit 1
+fi
+
 # Create production screenshots directory
 mkdir -p tests/integration/screenshots/production
 cd tests/integration/screenshots/production
 
-# Run the production test
+# Run the production test with absolute path
 echo -e "\n${BLUE}Running: Production Unregistered Player Test${NC}"
-maestro test "../flows/15-record-match-unregistered-prod.yaml" --debug-output="production-unregistered-$(date +%Y%m%d_%H%M%S)" --flatten-debug-output
+echo "Test file: $TEST_FILE"
+maestro test "$TEST_FILE" --debug-output="production-unregistered-$(date +%Y%m%d_%H%M%S)" --flatten-debug-output
 
 if [ $? -eq 0 ]; then
     echo -e "${GREEN}✅ Production test completed successfully${NC}"
