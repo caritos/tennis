@@ -9,6 +9,7 @@ import { useColorScheme } from '@/hooks/useColorScheme';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase, Notification } from '@/lib/supabase';
 import { challengeService } from '@/services/challengeService';
+import { useRealtimeSubscription } from '@/hooks/useRealtimeSubscription';
 
 interface ContactSharingNotificationProps {
   onViewAll?: () => void;
@@ -70,48 +71,31 @@ export function ContactSharingNotification({ onViewAll }: ContactSharingNotifica
     }
   }, [user?.id]);
 
+  // Set up real-time subscription with automatic reconnection
+  useRealtimeSubscription(
+    {
+      channel: `contact_notifications_${user?.id}`,
+      table: 'notifications',
+      filter: user?.id ? `user_id=eq.${user.id}` : undefined,
+      event: '*',
+    },
+    {
+      onUpdate: (payload) => {
+        console.log('🔔 Contact notification change detected:', payload.eventType);
+        console.log('🔄 Reloading contact sharing notifications due to real-time change');
+        loadContactSharingNotifications();
+      },
+      onError: (error) => {
+        console.error('❌ Contact notification subscription error:', error);
+      },
+      enabled: !!user?.id,
+    }
+  );
+
   useEffect(() => {
     if (user?.id) {
       console.log('📝 ContactSharingNotification: Setting up subscription for user:', user.id);
       loadContactSharingNotifications();
-
-      // Set up real-time subscription for notification changes
-      const subscription = supabase
-        .channel(`contact_notifications_${user.id}`)
-        .on(
-          'postgres_changes',
-          {
-            event: '*',
-            schema: 'public',
-            table: 'notifications',
-            filter: `user_id=eq.${user.id}`
-          },
-          (payload) => {
-            console.log('🔔 Contact notification change detected - Full payload:', JSON.stringify(payload, null, 2));
-            console.log('🔔 Payload event type:', payload.eventType);
-            console.log('🔔 Payload table:', payload.table);
-            console.log('🔔 New record:', payload.new);
-            console.log('🔔 Old record:', payload.old);
-            
-            // Reload notifications when they change
-            console.log('🔄 Reloading contact sharing notifications due to real-time change');
-            loadContactSharingNotifications();
-          }
-        )
-        .subscribe((status, err) => {
-          console.log('📡 Contact notification subscription status:', status);
-          if (err) {
-            console.error('❌ Contact notification subscription error:', err);
-          }
-        });
-
-      console.log('📡 Contact notification subscription created:', subscription);
-
-      // Cleanup subscription on unmount
-      return () => {
-        console.log('🧹 Cleaning up contact notification subscription');
-        subscription.unsubscribe();
-      };
     } else {
       console.log('📝 ContactSharingNotification: No user ID, skipping subscription setup');
     }

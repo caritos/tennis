@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { View, TouchableOpacity, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { ThemedText } from '@/components/ThemedText';
@@ -7,6 +7,7 @@ import { useColorScheme } from '@/hooks/useColorScheme';
 import { Colors } from '@/constants/Colors';
 import { supabase } from '@/lib/supabase';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useRealtimeSubscription } from '@/hooks/useRealtimeSubscription';
 
 // Helper function to create readable match IDs for easy identification
 const getReadableMatchId = (matchId: string): string => {
@@ -66,51 +67,7 @@ export function MatchInvitationNotification({
     }
   };
 
-  useEffect(() => {
-    if (clubId) {
-      console.log('🎯 MatchInvitationNotification: Setting up for club:', clubId);
-      loadInvitationNotifications();
-      
-      // Set up real-time subscription for new invitations
-      const subscription = supabase
-        .channel(`match_invitations_${clubId}`)
-        .on(
-          'postgres_changes',
-          { 
-            event: '*', 
-            schema: 'public', 
-            table: 'match_invitations',
-            filter: `club_id=eq.${clubId}`
-          },
-          (payload) => {
-            console.log('🔔 MatchInvitationNotification: Match invitation change detected - Full payload:', JSON.stringify(payload, null, 2));
-            console.log('🔔 MatchInvitationNotification: Event type:', payload.eventType);
-            console.log('🔔 MatchInvitationNotification: New record:', payload.new);
-            console.log('🔄 MatchInvitationNotification: Reloading invitations due to real-time change');
-            // Reload notifications when invitations change
-            loadInvitationNotifications();
-          }
-        )
-        .subscribe((status, err) => {
-          console.log('📡 MatchInvitationNotification: Subscription status:', status);
-          if (err) {
-            console.error('❌ MatchInvitationNotification: Subscription error:', err);
-          }
-        });
-
-      console.log('📡 MatchInvitationNotification: Subscription created:', subscription);
-
-      // Cleanup subscription on unmount
-      return () => {
-        console.log('🧹 MatchInvitationNotification: Cleaning up subscription');
-        subscription.unsubscribe();
-      };
-    } else {
-      console.log('🎯 MatchInvitationNotification: No clubId provided');
-    }
-  }, [clubId]); // Remove refreshTrigger, only depend on clubId
-
-  const loadInvitationNotifications = async () => {
+  const loadInvitationNotifications = useCallback(async () => {
     try {
       setIsLoading(true);
       
@@ -161,7 +118,37 @@ export function MatchInvitationNotification({
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [clubId]);
+
+  // Set up real-time subscription with automatic reconnection
+  useRealtimeSubscription(
+    {
+      channel: `match_invitations_${clubId}`,
+      table: 'match_invitations',
+      filter: clubId ? `club_id=eq.${clubId}` : undefined,
+      event: '*',
+    },
+    {
+      onUpdate: (payload) => {
+        console.log('🔔 MatchInvitationNotification: Match invitation change detected:', payload.eventType);
+        console.log('🔄 MatchInvitationNotification: Reloading invitations due to real-time change');
+        loadInvitationNotifications();
+      },
+      onError: (error) => {
+        console.error('❌ MatchInvitationNotification: Subscription error:', error);
+      },
+      enabled: !!clubId,
+    }
+  );
+
+  useEffect(() => {
+    if (clubId) {
+      console.log('🎯 MatchInvitationNotification: Setting up for club:', clubId);
+      loadInvitationNotifications();
+    } else {
+      console.log('🎯 MatchInvitationNotification: No clubId provided');
+    }
+  }, [clubId, loadInvitationNotifications]);
 
   const handleDismiss = async (invitationId: string) => {
     try {
