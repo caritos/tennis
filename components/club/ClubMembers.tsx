@@ -2,6 +2,7 @@ import React from 'react';
 import { View, TouchableOpacity, StyleSheet, ScrollView } from 'react-native';
 import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
+import { getInitialRating, getRatingTier } from '@/utils/eloRating';
 
 interface ClubMember {
   id: string;
@@ -30,6 +31,19 @@ export default function ClubMembers({
   onSortChange,
   onFilterChange,
 }: ClubMembersProps) {
+  
+  // Helper function to format ELO rating display (consistent with Matches tab)
+  const formatEloRating = (rating?: number, gamesPlayed?: number) => {
+    if (!rating) {
+      return { rating: getInitialRating(), tier: 'New Player', color: '#2196F3', provisionalText: ' (New)' };
+    }
+    
+    const { tier, color } = getRatingTier(rating);
+    const isProvisional = (gamesPlayed || 0) < 5;
+    const provisionalText = isProvisional ? ' (Provisional)' : '';
+    
+    return { rating, tier, color, provisionalText };
+  };
   // Filter members
   const filteredMembers = members.filter(member => {
     if (filterBy === 'active') {
@@ -158,6 +172,9 @@ export default function ClubMembers({
                 thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
                 return joinedDate > thirtyDaysAgo;
               })();
+              
+              // Get consistent ELO rating display
+              const eloInfo = formatEloRating(member.eloRating, member.match_count);
 
               return (
                 <View
@@ -173,8 +190,8 @@ export default function ClubMembers({
                       <View style={styles.memberNameRow}>
                         <View style={styles.nameWithBadge}>
                           <ThemedText style={styles.memberName}>
-                            <ThemedText style={[styles.rankScore, { color: colors.tint }]}>
-                              {member.eloRating || 1200}{' '}
+                            <ThemedText style={[styles.rankScore, { color: eloInfo.color }]}>
+                              {eloInfo.rating} • {eloInfo.tier}{eloInfo.provisionalText}{' '}
                             </ThemedText>
                             {member.full_name || 'Unknown Member'}
                           </ThemedText>

@@ -5,13 +5,13 @@ name: "PRODUCTION - Record Match with Unregistered Player"
 # Uses production Supabase database and real club data
 # 
 # IMPORTANT: This test connects to PRODUCTION database
-# - Uses real club data
+# - Automated sign-in with production credentials (caritos.eladio@gmail.com)
+# - Uses real club data  
 # - Creates real match records
 # - Test data will persist in production
 
 - launchApp
-- waitForAnimationToEnd:
-    timeout: 10000
+- waitForAnimationToEnd
 
 # Navigate through Expo Go to your project running on production
 - assertVisible:
@@ -23,19 +23,52 @@ name: "PRODUCTION - Record Match with Unregistered Player"
     text: ".*tennis.*|.*Tennis.*|localhost.*8081"
     index: 0
     optional: true
-- waitForAnimationToEnd:
-    timeout: 15000
+- waitForAnimationToEnd
 
 # Wait for production app to load (may take longer)
 - assertVisible:
     text: "My Clubs|Sign In|Get Started|Tennis Club"
-    timeout: 30000
 - takeScreenshot: production-app-loaded
 
 # PRODUCTION TEST SCENARIO:
-# Test with realistic names and scenarios that could happen in production
+# Handle authentication flow - user must sign in to record matches
 
-# Navigate to clubs (handle different possible states)
+# Check if user needs to sign in
+- tapOn:
+    text: "Sign In"
+    optional: true
+- waitForAnimationToEnd
+
+# If sign-in screen appears, authenticate automatically
+- assertVisible:
+    text: "Email|Phone|Password|Continue"
+    optional: true
+- takeScreenshot: production-sign-in-screen
+
+# Automated sign-in with production credentials
+- tapOn:
+    id: "email-input"
+    optional: true
+- inputText: "caritos.eladio@gmail.com"
+- tapOn:
+    id: "password-input" 
+    optional: true
+- inputText: "Test1234"
+- takeScreenshot: production-credentials-entered
+
+# Submit sign-in form
+- tapOn:
+    text: "Sign In|Continue|Log In"
+    optional: true
+- waitForAnimationToEnd
+
+# Wait for successful authentication
+- assertVisible:
+    text: "My Clubs|Tennis Club"
+- takeScreenshot: production-signed-in
+- waitForAnimationToEnd
+
+# Navigate to clubs (handle different possible states) 
 - tapOn:
     text: "My Clubs"
     optional: true
@@ -51,8 +84,7 @@ name: "PRODUCTION - Record Match with Unregistered Player"
     text: ".*Club.*|.*Tennis.*"
     index: 0
     optional: true
-- waitForAnimationToEnd:
-    timeout: 5000
+- waitForAnimationToEnd
 
 # If no clubs, this test documents the production state
 - takeScreenshot: production-clubs-state
@@ -68,7 +100,8 @@ name: "PRODUCTION - Record Match with Unregistered Player"
 - takeScreenshot: production-match-form
 
 # Test unregistered player flow with realistic production scenario
-- tapOn: "Singles"
+- tapOn:
+    text: "Singles"
     optional: true
 - waitForAnimationToEnd
 
@@ -128,10 +161,10 @@ name: "PRODUCTION - Record Match with Unregistered Player"
 
 # Production Test Case 3: Save with production database
 # This creates a real record in production database
-- tapOn: "Save Match"
+- tapOn:
+    text: "Save Match"
     optional: true
-- waitForAnimationToEnd:
-    timeout: 15000  # Production may be slower
+- waitForAnimationToEnd  # Production may be slower
 
 # Production Verification
 - assertVisible:
@@ -144,7 +177,8 @@ name: "PRODUCTION - Record Match with Unregistered Player"
 
 # Production Test Case 4: Verify data persistence
 # Check that match appears correctly in production club
-- assertVisible: "Recent Matches"
+- assertVisible:
+    text: "Recent Matches"
     optional: true
 - assertVisible:
     text: "6-1"
@@ -154,12 +188,15 @@ name: "PRODUCTION - Record Match with Unregistered Player"
     optional: true
 
 # Navigate to profile to verify production match history
-- tapOn: "Profile"
+- tapOn:
+    text: "Profile"
     optional: true
 - waitForAnimationToEnd
-- assertVisible: "Match History"
+- assertVisible:
+    text: "Match History"
     optional: true
-- tapOn: "Match History"
+- tapOn:
+    text: "Match History"
     optional: true
 - waitForAnimationToEnd
 

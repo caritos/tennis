@@ -54,6 +54,7 @@ ios/certs/
 
 logs/expo*.log
 logs/
+production-server.log
 
 # Credentials and sensitive files
 credentials.json
