@@ -18,6 +18,7 @@ import { getClubLeaderboard } from '@/services/matchService';
 import { challengeService } from '@/services/challengeService';
 import { matchInvitationService } from '@/services/matchInvitationService';
 import { getClubMatchInvitations, debugMatchInvitations } from '@/services/matchInvitationFunctions';
+import { useClubRealtimeSubscriptions } from '@/hooks/useClubRealtimeSubscriptions';
 
 type TabType = 'overview' | 'members' | 'matches';
 
@@ -586,136 +587,19 @@ export default function ClubDetailScreen() {
     }
   }, [id, user?.id]);  // Simplified dependencies - removed matchId and club?.name
 
+  // Set up realtime subscriptions using the new hook
+  const _realtimeSubscriptions = useClubRealtimeSubscriptions({
+    clubId: id as string,
+    userId: user?.id,
+    onClubUpdate: loadClubDetails,
+    onMembersUpdate: loadClubDetails,
+    onMatchesUpdate: loadClubDetails,
+    onEloUpdate: loadClubDetails,
+  });
+
   useEffect(() => {
     loadClubDetails();
-
-    // Set up real-time subscriptions for club data
-    if (id && typeof id === 'string') {
-      console.log('🔗 Setting up realtime subscriptions for club:', id);
-      
-      // Create a fresh reference to loadClubDetails for the subscriptions
-      const refreshData = () => {
-        console.log('🔄 Refreshing club data due to realtime event...');
-        loadClubDetails();
-      };
-      
-      const subscriptions = [
-        // Club details changes
-        supabase
-          .channel(`club_details_${id}`)
-          .on(
-            'postgres_changes',
-            {
-              event: '*',
-              schema: 'public',
-              table: 'clubs',
-              filter: `id=eq.${id}`
-            },
-            (payload) => {
-              console.log('🔔 Club details change detected:', payload.eventType, payload.new);
-              refreshData();
-            }
-          )
-          .subscribe((status) => {
-            console.log(`📡 Club details subscription status: ${status}`);
-          }),
-
-        // Club members changes  
-        supabase
-          .channel(`club_members_${id}`)
-          .on(
-            'postgres_changes',
-            {
-              event: '*',
-              schema: 'public',
-              table: 'club_members',
-              filter: `club_id=eq.${id}`
-            },
-            (payload) => {
-              console.log('🔔 Club members change detected:', payload.eventType, payload.new);
-              refreshData();
-            }
-          )
-          .subscribe((status) => {
-            console.log(`📡 Club members subscription status: ${status}`);
-          }),
-
-        // Matches changes (MOST IMPORTANT for your issue)
-        supabase
-          .channel(`club_matches_${id}`)
-          .on(
-            'postgres_changes',
-            {
-              event: '*',
-              schema: 'public',
-              table: 'matches',
-              filter: `club_id=eq.${id}`
-            },
-            (payload) => {
-              console.log('🔔 *** MATCH CHANGE DETECTED ***', payload.eventType, payload.new?.id, payload.new?.scores);
-              console.log('🔔 Match payload full:', JSON.stringify(payload, null, 2));
-              console.log('🔔 Event details:');
-              console.log('   - Event type:', payload.eventType);
-              console.log('   - Table:', payload.table);
-              console.log('   - Schema:', payload.schema);
-              console.log('   - Match club_id:', payload.new?.club_id);
-              console.log('   - Expected club_id:', id);
-              console.log('   - Club IDs match:', payload.new?.club_id === id);
-              refreshData();
-            }
-          )
-          .subscribe((status, error) => {
-            console.log(`📡 *** MATCHES SUBSCRIPTION STATUS: ${status} ***`);
-            if (status === 'SUBSCRIBED') {
-              console.log('✅ Successfully subscribed to matches for club:', id);
-              console.log('✅ Filter applied: club_id=eq.' + id);
-              console.log('✅ Waiting for match INSERT/UPDATE/DELETE events...');
-            }
-            if (status === 'CHANNEL_ERROR') {
-              console.error('❌ Match subscription error:', error);
-            }
-            if (status === 'TIMED_OUT') {
-              console.error('❌ Match subscription timed out');
-            }
-          }),
-
-        // User ELO rating changes (for current user)
-        user?.id ? supabase
-          .channel(`user_elo_${user.id}`)
-          .on(
-            'postgres_changes',
-            {
-              event: 'UPDATE',
-              schema: 'public',
-              table: 'users',
-              filter: `id=eq.${user.id}`
-            },
-            (payload) => {
-              console.log('🔔 ELO rating change detected for user:', payload.new?.elo_rating);
-              // Trigger re-render of user data if needed
-              refreshData();
-            }
-          )
-          .subscribe((status) => {
-            console.log(`📡 User ELO subscription status: ${status}`);
-          }) : null
-      ].filter(Boolean);
-
-      console.log(`🔗 Set up ${subscriptions.length} realtime subscriptions`);
-
-      // Cleanup subscriptions on unmount
-      return () => {
-        console.log('🧹 Cleaning up realtime subscriptions for club:', id);
-        subscriptions.forEach(sub => {
-          try {
-            sub.unsubscribe();
-          } catch (error) {
-            console.error('❌ Error unsubscribing from realtime:', error);
-          }
-        });
-      };
-    }
-  }, [id, user?.id]); // Removed loadClubDetails to prevent circular dependency
+  }, [id, user?.id]);
 
   // Minimal focus refresh - real-time subscriptions handle most updates
   useFocusEffect(

@@ -1,4 +1,4 @@
-import { useEffect, useRef, useCallback } from 'react';
+import { useEffect, useRef, useCallback, useState } from 'react';
 import { supabase } from '@/lib/supabase';
 import type { RealtimeChannel, RealtimePostgresChangesPayload } from '@supabase/supabase-js';
 
@@ -8,6 +8,7 @@ interface SubscriptionConfig {
   filter?: string;
   event?: '*' | 'INSERT' | 'UPDATE' | 'DELETE';
   schema?: string;
+  private?: boolean; // For private channels requiring auth
 }
 
 interface UseRealtimeSubscriptionOptions {
@@ -17,8 +18,10 @@ interface UseRealtimeSubscriptionOptions {
 }
 
 /**
- * Hook for managing Supabase real-time subscriptions with automatic reconnection
- * Handles JWT token expiration and subscription errors
+ * Hook for managing Supabase real-time subscriptions following latest best practices
+ * - Uses async/await for subscribe
+ * - Proper removeChannel cleanup
+ * - Supports private channels with setAuth
  */
 export function useRealtimeSubscription(
   config: SubscriptionConfig,
@@ -27,6 +30,7 @@ export function useRealtimeSubscription(
   const subscriptionRef = useRef<RealtimeChannel | null>(null);
   const reconnectTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const isUnmountedRef = useRef(false);
+  const [isSubscribed, setIsSubscribed] = useState(false);
 
   const { onUpdate, onError, enabled = true } = options;
 
@@ -38,12 +42,14 @@ export function useRealtimeSubscription(
 
     if (subscriptionRef.current) {
       console.log(`🧹 useRealtimeSubscription: Cleaning up subscription for ${config.channel}`);
-      subscriptionRef.current.unsubscribe();
+      // Use removeChannel as per Supabase best practices
+      supabase.removeChannel(subscriptionRef.current);
       subscriptionRef.current = null;
+      setIsSubscribed(false);
     }
   }, [config.channel]);
 
-  const createSubscription = useCallback(() => {
+  const createSubscription = useCallback(async () => {
     if (!enabled || isUnmountedRef.current) {
       return;
     }
@@ -53,63 +59,86 @@ export function useRealtimeSubscription(
 
     console.log(`📡 useRealtimeSubscription: Creating subscription for ${config.channel}`, config);
 
-    const subscription = supabase
-      .channel(config.channel)
-      .on(
-        'postgres_changes',
+    try {
+      // Create channel with proper configuration
+      const channelOptions: any = {};
+      if (config.private) {
+        channelOptions.config = { private: true };
+      }
+
+      const channel = supabase.channel(config.channel, channelOptions);
+
+      // Set up postgres_changes listener
+      channel.on(
+        'postgres_changes' as any,
         {
           event: config.event || '*',
           schema: config.schema || 'public',
           table: config.table,
           filter: config.filter,
-        },
-        (payload) => {
+        } as any,
+        (payload: RealtimePostgresChangesPayload<any>) => {
           if (!isUnmountedRef.current) {
             console.log(`🔔 useRealtimeSubscription: Change detected on ${config.table}:`, payload.eventType);
             onUpdate(payload);
           }
         }
-      )
-      .subscribe((status, err) => {
+      );
+
+      // Set auth for private channels BEFORE subscribing (Supabase best practice)
+      if (config.private) {
+        console.log(`🔐 useRealtimeSubscription: Setting auth for private channel ${config.channel}`);
+        await supabase.realtime.setAuth();
+      }
+
+      // Subscribe with callback to handle status (Supabase pattern)
+      channel.subscribe((status) => {
         if (isUnmountedRef.current) {
+          // Component unmounted during subscription
+          supabase.removeChannel(channel);
           return;
         }
 
-        console.log(`📡 useRealtimeSubscription: Subscription status for ${config.channel}:`, status);
+        console.log(`📡 useRealtimeSubscription: Subscription status for ${config.channel}: ${status}`);
 
-        if (err) {
-          console.error(`❌ useRealtimeSubscription: Subscription error for ${config.channel}:`, err);
-          
-          // Check if it's a JWT token error
-          const isTokenError = 
-            err.message?.includes('InvalidJWTToken') ||
-            err.message?.includes('Token has expired') ||
-            err.message?.includes('JWT expired');
-
-          if (isTokenError) {
-            console.log(`🔄 useRealtimeSubscription: JWT token error detected, will retry after token refresh`);
-            
-            // Set up retry with exponential backoff
-            const retryDelay = 2000; // 2 seconds
-            reconnectTimeoutRef.current = setTimeout(() => {
-              if (!isUnmountedRef.current) {
-                console.log(`🔄 useRealtimeSubscription: Retrying subscription for ${config.channel}`);
-                createSubscription();
-              }
-            }, retryDelay);
-          }
-
-          if (onError) {
-            onError(err);
-          }
-        }
-
+        // Check for exact status (Supabase best practice)
         if (status === 'SUBSCRIBED') {
           console.log(`✅ useRealtimeSubscription: Successfully subscribed to ${config.channel}`);
+          subscriptionRef.current = channel;
+          setIsSubscribed(true);
+        } else if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT') {
+          console.error(`❌ useRealtimeSubscription: Subscription failed for ${config.channel}: ${status}`);
+          throw new Error(`Subscription failed: ${status}`);
+        } else {
+          console.warn(`⚠️ useRealtimeSubscription: Subscription status: ${status}`);
         }
       });
+    } catch (err: any) {
+      console.error(`❌ useRealtimeSubscription: Subscription error for ${config.channel}:`, err);
 
-    subscriptionRef.current = subscription;
+      // Check if it's a JWT token error
+      const isTokenError =
+        err.message?.includes('InvalidJWTToken') ||
+        err.message?.includes('Token has expired') ||
+        err.message?.includes('JWT expired');
+
+      if (isTokenError) {
+        console.log(`🔄 useRealtimeSubscription: JWT token error detected, will retry after token refresh`);
+
+        // Set up retry with exponential backoff
+        const retryDelay = 2000; // 2 seconds
+        reconnectTimeoutRef.current = setTimeout(() => {
+          if (!isUnmountedRef.current) {
+            console.log(`🔄 useRealtimeSubscription: Retrying subscription for ${config.channel}`);
+            createSubscription();
+          }
+        }, retryDelay) as any;
+      }
+
+      if (onError) {
+        onError(err);
+      }
+    }
   }, [config, enabled, onUpdate, onError, cleanup]);
 
   // Listen for auth state changes to reconnect subscriptions when tokens are refreshed
@@ -157,7 +186,9 @@ export function useRealtimeSubscription(
   }, [cleanup]);
 
   return {
+    isSubscribed,
     reconnect: createSubscription,
     cleanup,
+    channel: subscriptionRef.current,
   };
 }
