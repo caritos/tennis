@@ -140,41 +140,50 @@ export function AuthProvider({ children }: AuthProviderProps) {
     // Listen for auth changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
       console.log('🔐 AuthContext: Auth state changed:', event, session?.user?.email);
-      
-      // Handle specific auth events
-      if (event === 'TOKEN_REFRESHED') {
-        console.log('🔄 AuthContext: Token refreshed successfully');
-      } else if (event === 'SIGNED_OUT') {
-        console.log('🚪 AuthContext: User signed out');
-        setUser(null);
-        setIsFirstTimeUser(false);
-        setIsOnboardingComplete(false);
-      } else if (event === 'USER_UPDATED') {
-        console.log('👤 AuthContext: User updated');
-      }
-      
-      if (session?.user) {
-        try {
-          await loadUserProfile(session.user);
-        } catch (error: any) {
-          // Ignore abort errors - they happen when component unmounts
-          if (isAbortError(error)) {
-            console.log('⚠️ AuthContext: Profile load aborted during auth state change (component unmounted)');
-            return;
-          }
-          
-          console.error('❌ AuthContext: Error loading profile:', error);
-          if (AuthErrorHandler.isAuthError(error)) {
-            await AuthErrorHandler.getInstance().handleAuthError(error);
-          }
+
+      try {
+        // Handle specific auth events
+        if (event === 'TOKEN_REFRESHED') {
+          console.log('🔄 AuthContext: Token refreshed successfully');
+          // Skip profile reload for token refresh - user data hasn't changed
+          setIsLoading(false);
+          return;
+        } else if (event === 'SIGNED_OUT') {
+          console.log('🚪 AuthContext: User signed out');
+          setUser(null);
+          setIsFirstTimeUser(false);
+          setIsOnboardingComplete(false);
+        } else if (event === 'USER_UPDATED') {
+          console.log('👤 AuthContext: User updated');
         }
-      } else if (event !== 'SIGNED_OUT') {
-        setUser(null);
-        setIsFirstTimeUser(false);
-        setIsOnboardingComplete(false);
+
+        if (session?.user) {
+          console.log('🔍 AuthContext: Auth state change - loading profile for:', session.user.email);
+          try {
+            await loadUserProfile(session.user);
+          } catch (error: any) {
+            // Ignore abort errors - they happen when component unmounts
+            if (isAbortError(error)) {
+              console.log('⚠️ AuthContext: Profile load aborted during auth state change (component unmounted)');
+              return;
+            }
+
+            console.error('❌ AuthContext: Error loading profile:', error);
+            if (AuthErrorHandler.isAuthError(error)) {
+              await AuthErrorHandler.getInstance().handleAuthError(error);
+            }
+          }
+        } else if (event !== 'SIGNED_OUT') {
+          setUser(null);
+          setIsFirstTimeUser(false);
+          setIsOnboardingComplete(false);
+        }
+      } catch (error: any) {
+        console.error('❌ AuthContext: Unexpected error in auth state change:', error);
+      } finally {
+        // Always set loading to false to prevent infinite loading states
+        setIsLoading(false);
       }
-      
-      setIsLoading(false);
     });
 
     return () => {
@@ -186,12 +195,22 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
 
   const loadUserProfile = async (authUser: User) => {
+    console.log('🔍 AuthContext: Loading user profile for:', authUser.id);
     try {
-      const { data: profile, error } = await supabase
+      // Add timeout to prevent hanging
+      const profilePromise = supabase
         .from('users')
         .select('*')
         .eq('id', authUser.id)
         .single();
+
+      const timeoutPromise = new Promise((_, reject) =>
+        setTimeout(() => reject(new Error('Profile query timeout')), 10000)
+      );
+
+      const { data: profile, error } = await Promise.race([profilePromise, timeoutPromise]) as any;
+
+      console.log('🔍 AuthContext: Profile query result - error:', error?.code, 'data:', !!profile);
 
       if (error && error.code === 'PGRST116') {
         // Profile doesn't exist yet - create it using PostgreSQL function
@@ -262,7 +281,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
         setUser(null);
       } else {
         // Profile exists - create enhanced user object
-        console.log('✅ AuthContext: User profile loaded');
+        console.log('✅ AuthContext: User profile loaded:', profile.full_name);
         const userProfile: UserProfile = {
           ...profile,
           // Add auth metadata for backward compatibility
@@ -271,9 +290,11 @@ export function AuthProvider({ children }: AuthProviderProps) {
             phone: profile.phone
           }
         };
+        console.log('🔍 AuthContext: Setting user state with profile');
         setUser(userProfile);
         setIsFirstTimeUser(false);
         setIsOnboardingComplete(true);
+        console.log('✅ AuthContext: User state updated successfully');
       }
     } catch (error: any) {
       // Ignore abort errors - they happen when component unmounts
