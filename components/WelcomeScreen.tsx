@@ -1,54 +1,34 @@
 import React, { useState } from 'react';
-import { StyleSheet, View, TouchableOpacity } from 'react-native';
+import { StyleSheet, View, TouchableOpacity, TextInput, ScrollView } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { Ionicons } from '@expo/vector-icons';
 import { ThemedText } from './ThemedText';
 import { ThemedView } from './ThemedView';
 import { useColorScheme } from '@/hooks/useColorScheme';
 import { Colors } from '@/constants/Colors';
 
 interface WelcomeScreenProps {
-  onGetStarted: () => void;
-  onSignIn: () => void;
+  onContinue: (email: string, password: string) => void;
   onTermsPress?: () => void;
   onPrivacyPress?: () => void;
+  error?: string | null;
+  isLoading?: boolean;
+  onDismissError?: () => void;
 }
 
-export function WelcomeScreen({ 
-  onGetStarted, 
-  onSignIn, 
-  onTermsPress, 
-  onPrivacyPress 
+export function WelcomeScreen({
+  onContinue,
+  onTermsPress,
+  onPrivacyPress,
+  error,
+  isLoading,
+  onDismissError
 }: WelcomeScreenProps) {
   const colorScheme = useColorScheme();
   const colors = Colors[colorScheme ?? 'light'];
-  const [isPressed, setIsPressed] = useState(false);
-
-  const handleGetStarted = () => {
-    console.log('🔘 BUTTON: Get Started pressed');
-    if (isPressed) {
-      console.log('⚠️ Button press ignored - double-tap prevention');
-      return; // Prevent double-tap
-    }
-    setIsPressed(true);
-    
-    try {
-      onGetStarted();
-    } catch (error) {
-      console.error('Error in onGetStarted:', error);
-    } finally {
-      // Reset after a short delay
-      setTimeout(() => setIsPressed(false), 300);
-    }
-  };
-
-  const handleSignIn = () => {
-    console.log('🔘 BUTTON: Sign In pressed');
-    try {
-      onSignIn();
-    } catch (error) {
-      console.error('Error in onSignIn:', error);
-    }
-  };
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
 
   const handleTermsPress = () => {
     console.log('🔘 BUTTON: Terms of Service pressed');
@@ -68,13 +48,47 @@ export function WelcomeScreen({
     }
   };
 
+  const isValidEmail = (email: string) => {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return emailRegex.test(email.trim());
+  };
+
+  const handleContinue = () => {
+    console.log('🔘 BUTTON: Continue pressed');
+    if (!email.trim() || !password) {
+      return; // Basic validation
+    }
+    try {
+      onContinue(email.trim(), password);
+    } catch (error) {
+      console.error('Error in onContinue:', error);
+    }
+  };
+
   return (
     <ThemedView 
       style={[styles.container, { backgroundColor: colors.background }]}
       testID="welcome-screen-container"
     >
       <SafeAreaView style={styles.safeArea}>
-        <ThemedView style={styles.content} testID="welcome-main-content">
+        <ScrollView
+          style={styles.scrollView}
+          contentContainerStyle={styles.content}
+          showsVerticalScrollIndicator={false}
+          keyboardShouldPersistTaps="handled"
+          testID="welcome-main-content"
+        >
+        {/* Error Message */}
+        {error && (
+          <View style={[styles.errorContainer, { backgroundColor: '#FFEBEE', borderColor: '#F44336' }]}>
+            <Ionicons name="alert-circle" size={20} color="#F44336" />
+            <ThemedText style={[styles.errorText, { color: '#F44336' }]}>{error}</ThemedText>
+            <TouchableOpacity onPress={onDismissError} style={styles.errorDismiss}>
+              <Ionicons name="close" size={16} color="#F44336" />
+            </TouchableOpacity>
+          </View>
+        )}
+
         {/* Header with Tennis Emoji and App Title */}
         <View style={styles.header}>
           <ThemedText type="title" style={styles.appTitle}>
@@ -105,40 +119,104 @@ export function WelcomeScreen({
           </ThemedText>
         </View>
 
-        {/* Main Actions */}
-        <View style={styles.actionsContainer}>
+        {/* Login Form */}
+        <View style={styles.formContainer}>
+          <View style={styles.inputContainer}>
+            <TextInput
+              style={[
+                styles.input,
+                {
+                  backgroundColor: colors.background,
+                  borderColor: colors.tabIconDefault,
+                  color: colors.text
+                }
+              ]}
+              value={email}
+              onChangeText={setEmail}
+              placeholder="Email"
+              placeholderTextColor={colors.tabIconDefault}
+              keyboardType="email-address"
+              autoCapitalize="none"
+              autoCorrect={false}
+              testID="email-input"
+            />
+          </View>
+
+          <View style={styles.inputContainer}>
+            <View style={styles.passwordContainer}>
+              <TextInput
+                style={[
+                  styles.passwordInput,
+                  {
+                    backgroundColor: colors.background,
+                    borderColor: colors.tabIconDefault,
+                    color: colors.text
+                  }
+                ]}
+                value={password}
+                onChangeText={setPassword}
+                placeholder="Password"
+                placeholderTextColor={colors.tabIconDefault}
+                secureTextEntry={!showPassword}
+                autoCapitalize="none"
+                autoCorrect={false}
+                testID="password-input"
+              />
+              <TouchableOpacity
+                style={styles.eyeButton}
+                onPress={() => setShowPassword(!showPassword)}
+                activeOpacity={0.7}
+                hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+              >
+                <Ionicons
+                  name={showPassword ? 'eye-off' : 'eye'}
+                  size={20}
+                  color={colors.tabIconDefault}
+                />
+              </TouchableOpacity>
+            </View>
+          </View>
+
           <TouchableOpacity
-            style={[styles.primaryButton, { backgroundColor: colors.tint }]}
-            onPress={handleGetStarted}
+            style={[
+              styles.forgotPasswordContainer,
+              !isValidEmail(email) && styles.disabledForgotPassword
+            ]}
+            onPress={() => isValidEmail(email) && console.log('Forgot password pressed for:', email)}
+            disabled={!isValidEmail(email)}
             accessibilityRole="button"
-            accessibilityLabel="Get Started"
-            accessibilityHint="Start the sign up process to create a new tennis club account"
-            activeOpacity={0.8}
-            testID="get-started-button"
+            accessibilityLabel="Forgot Password"
+            testID="forgot-password-link"
           >
-            <ThemedText style={styles.primaryButtonText}>
-              Get Started
+            <ThemedText style={[
+              styles.forgotPasswordText,
+              { color: isValidEmail(email) ? colors.tint : colors.tabIconDefault }
+            ]}>
+              Forgot Password?
             </ThemedText>
           </TouchableOpacity>
 
-          <View style={styles.signInContainer}>
-            <ThemedText style={[styles.signInPrompt, { color: colors.tabIconDefault }]}>
-              Already have an account?
+          <TouchableOpacity
+            style={[
+              styles.primaryButton,
+              { backgroundColor: colors.tint },
+              (!isValidEmail(email) || !password || isLoading) && styles.disabledButton
+            ]}
+            onPress={handleContinue}
+            disabled={!isValidEmail(email) || !password || isLoading}
+            accessibilityRole="button"
+            accessibilityLabel="Continue"
+            activeOpacity={0.8}
+            testID="continue-button"
+          >
+            <ThemedText style={styles.primaryButtonText}>
+              {isLoading ? 'Processing...' : 'Continue'}
             </ThemedText>
-            <TouchableOpacity
-              style={styles.secondaryButton}
-              onPress={handleSignIn}
-              accessibilityRole="button"
-              accessibilityLabel="Sign In"
-              accessibilityHint="Sign in to your existing tennis club account"
-              activeOpacity={0.8}
-              testID="sign-in-button"
-            >
-              <ThemedText style={[styles.secondaryButtonText, { color: colors.tint }]}>
-                Sign In
-              </ThemedText>
-            </TouchableOpacity>
-          </View>
+          </TouchableOpacity>
+        </View>
+
+        {/* Alternative Actions */}
+        <View style={styles.actionsContainer}>
         </View>
 
         {/* Footer Links */}
@@ -171,7 +249,7 @@ export function WelcomeScreen({
             </ThemedText>
           </TouchableOpacity>
         </View>
-        </ThemedView>
+        </ScrollView>
       </SafeAreaView>
     </ThemedView>
   );
@@ -184,14 +262,18 @@ const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
   },
-  content: {
+  scrollView: {
     flex: 1,
-    justifyContent: 'center',
+  },
+  content: {
+    flexGrow: 1,
     paddingHorizontal: 16, // iOS standard content margins
-    paddingVertical: 48,
+    paddingTop: 60,
+    paddingBottom: 48,
   },
   header: {
     alignItems: 'center',
+    marginTop: 20,
     marginBottom: 40,
   },
   appTitle: {
@@ -280,5 +362,79 @@ const styles = StyleSheet.create({
   },
   footerSeparator: {
     fontSize: 13, // iOS Caption 1
+  },
+  formContainer: {
+    width: '100%',
+    marginBottom: 30,
+  },
+  inputContainer: {
+    marginBottom: 16,
+  },
+  input: {
+    borderWidth: 1,
+    borderRadius: 12,
+    paddingHorizontal: 16,
+    paddingVertical: 16,
+    fontSize: 17,
+    minHeight: 50,
+  },
+  passwordContainer: {
+    position: 'relative',
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  passwordInput: {
+    flex: 1,
+    borderWidth: 1,
+    borderRadius: 12,
+    paddingHorizontal: 16,
+    paddingVertical: 16,
+    paddingRight: 50,
+    fontSize: 17,
+    minHeight: 50,
+  },
+  eyeButton: {
+    position: 'absolute',
+    right: 12,
+    top: '50%',
+    marginTop: -22,
+    padding: 12,
+    minHeight: 44,
+    minWidth: 44,
+    alignItems: 'center',
+    justifyContent: 'center',
+    zIndex: 1,
+  },
+  disabledButton: {
+    opacity: 0.6,
+  },
+  forgotPasswordContainer: {
+    alignItems: 'flex-end',
+    marginBottom: 20,
+    paddingVertical: 4,
+  },
+  forgotPasswordText: {
+    fontSize: 15,
+    fontWeight: '500',
+    textDecorationLine: 'underline',
+  },
+  disabledForgotPassword: {
+    opacity: 0.5,
+  },
+  errorContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 12,
+    marginBottom: 16,
+    borderRadius: 12,
+    borderWidth: 1,
+  },
+  errorText: {
+    flex: 1,
+    marginLeft: 8,
+    fontSize: 15,
+  },
+  errorDismiss: {
+    padding: 4,
   },
 });

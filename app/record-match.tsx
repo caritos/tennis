@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useCallback } from 'react';
 import { View, StyleSheet, Text, Animated, TouchableOpacity } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter, useLocalSearchParams } from 'expo-router';
@@ -19,7 +19,7 @@ export default function RecordMatchScreen() {
   const [notification, setNotification] = useState<{ type: 'success' | 'error', message: string } | null>(null);
   const [fadeAnim] = useState(new Animated.Value(0));
 
-  const showNotification = (type: 'success' | 'error', message: string) => {
+  const showNotification = useCallback((type: 'success' | 'error', message: string) => {
     setNotification({ type, message });
     Animated.sequence([
       Animated.timing(fadeAnim, {
@@ -39,17 +39,17 @@ export default function RecordMatchScreen() {
         router.back();
       }
     });
-  };
+  }, [fadeAnim, router]);
 
-  const handleSave = async (matchData: CreateMatchData) => {
+  const handleSave = useCallback(async (matchData: CreateMatchData) => {
     console.log('🎾 RecordMatch.handleSave called!');
     console.log('🎾 Received matchData:', JSON.stringify(matchData, null, 2));
-    
+
     try {
       console.log('🎾 Calling recordMatch...');
       const savedMatch = await recordMatch(matchData);
       console.log('🎾 Match saved successfully:', savedMatch);
-      
+
       // Add a small delay to ensure database transaction is fully committed
       // before showing success notification and navigating back
       setTimeout(() => {
@@ -58,7 +58,7 @@ export default function RecordMatchScreen() {
     } catch (error) {
       console.error('🎾 Match save failed:', error);
       logError('RecordMatch.handleSave', error);
-      
+
       let errorMessage = 'Failed to save match. Please try again.';
       if (error instanceof Error) {
         if (error.message.includes('network') || error.message.includes('connection')) {
@@ -67,10 +67,10 @@ export default function RecordMatchScreen() {
           errorMessage = getDatabaseErrorMessage(error);
         }
       }
-      
+
       showNotification('error', errorMessage);
     }
-  };
+  }, [showNotification]);
 
   const handleCancel = () => {
     router.back();
