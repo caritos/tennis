@@ -28,7 +28,7 @@ This guide documents the complete E2E testing setup, patterns, and best practice
 npm run e2e
 
 # Run specific test
-maestro test tests/integration/flows/01-signup-complete.yaml
+maestro test tests/e2e/flows/01-signup-complete.yaml
 
 # Open Maestro Studio for recording
 npm run e2e:record
@@ -182,13 +182,13 @@ import Checkbox from 'expo-checkbox';
 
 ### Reusable Field Clearing Patterns
 
-See `/tests/integration/utils/field-clearing.yaml` for complete reusable patterns.
+See `/tests/e2e/utils/field-clearing.yaml` for complete reusable patterns.
 
 ## Test Writing Standards
 
 ### File Naming Convention
 ```
-tests/integration/flows/
+tests/e2e/flows/
 ├── 00-simple-navigation.yaml          # Basic navigation
 ├── 01-signup-complete.yaml            # Core user flows  
 ├── 02-validation-testing-working.yaml # Form validation
@@ -256,7 +256,7 @@ name: "Descriptive Test Name"
 ## Directory Structure
 
 ```
-tests/integration/
+tests/e2e/
 ├── flows/                    # Main test files
 │   ├── 00-simple-navigation.yaml
 │   ├── 01-signup-complete.yaml

@@ -153,7 +153,7 @@ class AutomatedTestingEnvironment {
     this.log('Running contact sharing E2E test...');
     
     try {
-      const result = await this.runCommand('maestro', ['test', 'tests/integration/flows/14-contact-sharing-system.yaml'], {
+      const result = await this.runCommand('maestro', ['test', 'tests/e2e/flows/14-contact-sharing-system.yaml'], {
         logOutput: true
       });
       

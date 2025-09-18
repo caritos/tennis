@@ -10,7 +10,7 @@ npx expo run:ios
 npm run e2e
 
 # Run specific test
-maestro test tests/integration/flows/01-signup-complete.yaml
+maestro test tests/e2e/flows/01-signup-complete.yaml
 
 # Record new test
 npm run e2e:record
@@ -88,7 +88,7 @@ name: "Test Description"
 ## 📁 Directory Structure
 
 ```
-tests/integration/flows/
+tests/e2e/flows/
 ├── 00-navigation.yaml      # Basic flows
 ├── 01-signup.yaml          # Authentication  
 ├── 02-validation.yaml      # Form validation

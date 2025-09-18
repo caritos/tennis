@@ -8,14 +8,15 @@ module.exports = {
   },
   testMatch: [
     '<rootDir>/tests/unit/**/*.test.{ts,tsx}',
-    '<rootDir>/tests/integration/**/*.test.{ts,tsx}'
+    '<rootDir>/tests/e2e/integration/**/*.test.{ts,tsx}',
+    '<rootDir>/tests/e2e/offline-queue/**/*.test.{ts,tsx}'
   ],
   testPathIgnorePatterns: [
     '<rootDir>/node_modules/',
     '<rootDir>/.expo/',
     '<rootDir>/dist/',
-    '<rootDir>/tests/integration/flows/',
-    '<rootDir>/tests/integration/screenshots/'
+    '<rootDir>/tests/e2e/flows/',
+    '<rootDir>/tests/e2e/screenshots/'
   ],
   transformIgnorePatterns: [
     'node_modules/(?!((jest-)?react-native|@react-native(-community)?)|expo(nent)?|@expo(nent)?/.*|@expo-google-fonts/.*|react-navigation|@react-navigation/.*|@unimodules/.*|unimodules|sentry-expo|native-base|react-native-svg|@supabase/.*|isows)'
@@ -63,7 +64,7 @@ module.exports = {
     {
       displayName: 'integration',
       preset: 'jest-expo',
-      testMatch: ['<rootDir>/tests/integration/**/*.test.{ts,tsx}'],
+      testMatch: ['<rootDir>/tests/e2e/integration/**/*.test.{ts,tsx}', '<rootDir>/tests/e2e/offline-queue/**/*.test.{ts,tsx}'],
       setupFilesAfterEnv: [
         '<rootDir>/jest.setup.js',
         '<rootDir>/tests/setup/testUtils.js',

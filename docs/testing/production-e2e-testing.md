@@ -132,12 +132,12 @@ npm run start:prod
 ### 3. Run Production Test
 ```bash
 export PATH="$PATH":"$HOME/.maestro/bin"
-maestro test tests/integration/flows/15-record-match-unregistered-prod.yaml --debug-output=prod-test
+maestro test tests/e2e/flows/15-record-match-unregistered-prod.yaml --debug-output=prod-test
 ```
 
 ### 4. View Results
 ```bash
-open tests/integration/screenshots/production/
+open tests/e2e/screenshots/production/
 ```
 
 ## 🐛 Troubleshooting Production Testing

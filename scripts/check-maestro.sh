@@ -30,8 +30,8 @@ else
 fi
 
 # Check if E2E test files exist
-if [ ! -d "tests/integration/flows" ] || [ -z "$(ls -A tests/integration/flows/*.yaml 2>/dev/null)" ]; then
-    echo "⚠️  No E2E test files found in tests/integration/flows/"
+if [ ! -d "tests/e2e/flows" ] || [ -z "$(ls -A tests/e2e/flows/*.yaml 2>/dev/null)" ]; then
+    echo "⚠️  No E2E test files found in tests/e2e/flows/"
     exit 1
 fi
 

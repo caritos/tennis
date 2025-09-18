@@ -439,15 +439,15 @@ class AdvancedTestOrchestrator {
     
     const testFlows = {
       'core': [
-        'tests/integration/flows/01-signup-complete.yaml',
-        'tests/integration/flows/14-contact-sharing-system.yaml'
+        'tests/e2e/flows/01-signup-complete.yaml',
+        'tests/e2e/flows/14-contact-sharing-system.yaml'
       ],
       'critical': [
-        'tests/integration/flows/01-signup-complete.yaml',
-        'tests/integration/flows/02-signin-flow.yaml',
-        'tests/integration/flows/14-contact-sharing-system.yaml'
+        'tests/e2e/flows/01-signup-complete.yaml',
+        'tests/e2e/flows/02-signin-flow.yaml',
+        'tests/e2e/flows/14-contact-sharing-system.yaml'
       ],
-      'all': ['tests/integration/flows/*.yaml']
+      'all': ['tests/e2e/flows/*.yaml']
     };
 
     const flows = testFlows[scope] || testFlows['core'];

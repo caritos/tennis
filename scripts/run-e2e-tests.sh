@@ -36,11 +36,11 @@ run_test() {
     # Configure debug output and run from screenshots directory
     # This ensures takeScreenshot commands save files in the right place
     local debug_output="${test_name}"
-    local screenshots_dir="tests/integration/screenshots"
-    
+    local screenshots_dir="tests/e2e/screenshots"
+
     # Create screenshots directory if it doesn't exist
     mkdir -p "$screenshots_dir"
-    
+
     # Run test from screenshots directory so takeScreenshot files land there
     local abs_test_file="$(pwd)/$test_file"
     if (cd "$screenshots_dir" && maestro test "$abs_test_file" --debug-output="$debug_output" --flatten-debug-output); then
@@ -57,12 +57,12 @@ run_test() {
 # Parse command line arguments
 if [ $# -eq 0 ]; then
     # Run all tests
-    echo "Running all tests in tests/integration/flows/"
-    
+    echo "Running all tests in tests/e2e/flows/"
+
     failed_tests=0
     total_tests=0
-    
-    for test in tests/integration/flows/*.yaml; do
+
+    for test in tests/e2e/flows/*.yaml; do
         if [ -f "$test" ]; then
             ((total_tests++))
             if ! run_test "$test"; then
@@ -86,7 +86,7 @@ if [ $# -eq 0 ]; then
     fi
 else
     # Run specific test
-    test_path="tests/integration/flows/$1"
+    test_path="tests/e2e/flows/$1"
     if [[ ! "$1" =~ \.yaml$ ]]; then
         test_path="${test_path}.yaml"
     fi

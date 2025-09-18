@@ -1,0 +1,100 @@
+09:52:39.676 [ INFO] maestro.cli.report.TestDebugReporter.logSystemInfo: Debug output path: /Volumes/robin/src/tennis/tests/integration/screenshots/15-record-match-unregistered-quick
+09:52:39.677 [ INFO] MAESTRO.logSystemInfo: ---- System Info ----
+09:52:39.677 [ INFO] MAESTRO.logSystemInfo: Maestro Version: 2.0.1
+09:52:39.678 [ INFO] MAESTRO.logSystemInfo: CI: Undefined
+09:52:39.678 [ INFO] MAESTRO.logSystemInfo: OS Name: Mac OS X
+09:52:39.678 [ INFO] MAESTRO.logSystemInfo: OS Version: 15.6.1
+09:52:39.678 [ INFO] MAESTRO.logSystemInfo: Architecture: aarch64
+09:52:39.679 [ INFO] MAESTRO.logSystemInfo: Java Version: 21
+09:52:39.856 [DEBUG] io.micrometer.common.util.internal.logging.InternalLoggerFactory.newDefaultFactory: Using SLF4J as the default logging framework
+09:52:39.896 [ INFO] MAESTRO.logSystemInfo: Xcode Version: 16.4
+09:52:39.899 [ INFO] MAESTRO.logSystemInfo: Flutter Version: Undefined
+09:52:39.902 [ INFO] MAESTRO.logSystemInfo: Flutter Channel: Undefined
+09:52:39.902 [ INFO] MAESTRO.logSystemInfo: ---------------------
+09:52:40.570 [ INFO] maestro.cli.command.TestCommand.runShardSuite: [shard 1] Selected device D8E5F22E-4E12-49AF-B430-197BF1C66140 using port 7001 with execution plan ExecutionPlan(flowsToRun=[/Volumes/robin/src/tennis/tests/integration/screenshots/../flows/15-record-match-unregistered-quick.yaml], sequence=FlowSequence(flows=[], continueOnFailure=true), workspaceConfig=WorkspaceConfig(flows=null, includeTags=null, excludeTags=null, local=null, executionOrder=null, baselineBranch=null, notifications=null, disableRetries=false, platform=PlatformConfiguration(android=AndroidConfiguration(disableAnimations=false), ios=IOSConfiguration(disableAnimations=false, snapshotKeyHonorModalViews=null)), testOutputDir=null))
+09:52:40.737 [TRACE] ios.xctest.XCTestIOSDevice.open: Opening a connection
+09:52:40.737 [TRACE] xcuitest.XCTestDriverClient.restartXCTestRunner: Restarting XCTest Runner (uninstalling, installing and starting)
+09:52:40.738 [ INFO] xcuitest.installer.LocalXCTestInstaller.xcTestDriverStatusCheck: [Start] Perform XCUITest driver status check on D8E5F22E-4E12-49AF-B430-197BF1C66140
+09:52:40.739 [ INFO] xcuitest.installer.LocalXCTestInstaller.xcTestDriverStatusCheck: [Failed] Perform XCUITest driver status check on D8E5F22E-4E12-49AF-B430-197BF1C66140, exception: java.net.ConnectException: Failed to connect to /127.0.0.1:7001
+09:52:40.739 [TRACE] xcuitest.XCTestDriverClient.restartXCTestRunner: XCTest Runner uninstalled, will install and start it
+09:52:40.739 [ INFO] xcuitest.installer.LocalXCTestInstaller.start$lambda$3: start()
+09:52:40.739 [ INFO] xcuitest.installer.LocalXCTestInstaller.start$lambda$3: [Start] Install XCUITest runner on D8E5F22E-4E12-49AF-B430-197BF1C66140
+09:52:40.739 [ INFO] xcuitest.installer.LocalXCTestInstaller.xcTestDriverStatusCheck: [Start] Perform XCUITest driver status check on D8E5F22E-4E12-49AF-B430-197BF1C66140
+09:52:40.740 [ INFO] xcuitest.installer.LocalXCTestInstaller.xcTestDriverStatusCheck: [Failed] Perform XCUITest driver status check on D8E5F22E-4E12-49AF-B430-197BF1C66140, exception: java.net.ConnectException: Failed to connect to /127.0.0.1:7001
+09:52:40.740 [ INFO] xcuitest.installer.IOSBuildProductsExtractor.extract: [Start] Writing build products
+09:52:40.771 [ INFO] xcuitest.installer.IOSBuildProductsExtractor.extract: [Done] Writing build products
+09:52:40.771 [ INFO] xcuitest.installer.IOSBuildProductsExtractor.extract: [Start] Writing maestro-driver-iosUITests-Runner app
+09:52:40.890 [ INFO] xcuitest.installer.IOSBuildProductsExtractor.extract: [Done] Writing maestro-driver-iosUITests-Runner app
+09:52:40.890 [ INFO] xcuitest.installer.IOSBuildProductsExtractor.extract: [Start] Writing maestro-driver-ios app
+09:52:40.895 [ INFO] xcuitest.installer.IOSBuildProductsExtractor.extract: [Done] Writing maestro-driver-ios app
+09:52:40.896 [ INFO] xcuitest.installer.LocalXCTestInstaller.startXCTestRunner: Installing driver with xcodebuild
+09:52:40.897 [ INFO] xcuitest.installer.LocalXCTestInstaller.startXCTestRunner: [Start] Running XcUITest with `xcodebuild test-without-building` with 7001 and config: IOSDriverConfig(prebuiltRunner=false, sourceDirectory=driver-iPhoneSimulator, context=CLI, snapshotKeyHonorModalViews=null)
+09:52:40.898 [ INFO] util.CommandLineUtils.runCommand: Running command line operation: [xcodebuild, test-without-building, -xctestrun, /var/folders/mb/fd09y5sj6k5clc29jsftng680000gn/T/D8E5F22E-4E12-49AF-B430-197BF1C6614016220664434858619044/maestro-driver-ios-config.xctestrun, -destination, id=D8E5F22E-4E12-49AF-B430-197BF1C66140, -derivedDataPath, /var/folders/mb/fd09y5sj6k5clc29jsftng680000gn/T/maestro_xctestrunner_xcodebuild_output13670710385497374145] with {TEST_RUNNER_PORT=7001}
+09:52:40.901 [ INFO] xcuitest.installer.LocalXCTestInstaller.startXCTestRunner: [Done] Running XcUITest with `xcodebuild test-without-building`
+09:52:40.901 [ INFO] xcuitest.installer.LocalXCTestInstaller.start$lambda$3: [Done] Install XCUITest runner on D8E5F22E-4E12-49AF-B430-197BF1C66140
+09:52:40.901 [ INFO] xcuitest.installer.LocalXCTestInstaller.xcTestDriverStatusCheck: [Start] Perform XCUITest driver status check on D8E5F22E-4E12-49AF-B430-197BF1C66140
+09:52:40.902 [ INFO] xcuitest.installer.LocalXCTestInstaller.xcTestDriverStatusCheck: [Failed] Perform XCUITest driver status check on D8E5F22E-4E12-49AF-B430-197BF1C66140, exception: java.net.ConnectException: Failed to connect to /127.0.0.1:7001
+09:52:41.407 [ INFO] xcuitest.installer.LocalXCTestInstaller.xcTestDriverStatusCheck: [Start] Perform XCUITest driver status check on D8E5F22E-4E12-49AF-B430-197BF1C66140
+09:52:41.408 [ INFO] xcuitest.installer.LocalXCTestInstaller.xcTestDriverStatusCheck: [Failed] Perform XCUITest driver status check on D8E5F22E-4E12-49AF-B430-197BF1C66140, exception: java.net.ConnectException: Failed to connect to /127.0.0.1:7001
+09:52:41.913 [ INFO] xcuitest.installer.LocalXCTestInstaller.xcTestDriverStatusCheck: [Start] Perform XCUITest driver status check on D8E5F22E-4E12-49AF-B430-197BF1C66140
+09:52:41.914 [ INFO] xcuitest.installer.LocalXCTestInstaller.xcTestDriverStatusCheck: [Failed] Perform XCUITest driver status check on D8E5F22E-4E12-49AF-B430-197BF1C66140, exception: java.net.ConnectException: Failed to connect to /127.0.0.1:7001
+09:52:42.420 [ INFO] xcuitest.installer.LocalXCTestInstaller.xcTestDriverStatusCheck: [Start] Perform XCUITest driver status check on D8E5F22E-4E12-49AF-B430-197BF1C66140
+09:52:42.420 [ INFO] xcuitest.installer.LocalXCTestInstaller.xcTestDriverStatusCheck: [Failed] Perform XCUITest driver status check on D8E5F22E-4E12-49AF-B430-197BF1C66140, exception: java.net.ConnectException: Failed to connect to /127.0.0.1:7001
+09:52:42.922 [ INFO] xcuitest.installer.LocalXCTestInstaller.xcTestDriverStatusCheck: [Start] Perform XCUITest driver status check on D8E5F22E-4E12-49AF-B430-197BF1C66140
+09:52:42.923 [ INFO] xcuitest.installer.LocalXCTestInstaller.xcTestDriverStatusCheck: [Failed] Perform XCUITest driver status check on D8E5F22E-4E12-49AF-B430-197BF1C66140, exception: java.net.ConnectException: Failed to connect to /127.0.0.1:7001
+09:52:43.426 [ INFO] xcuitest.installer.LocalXCTestInstaller.xcTestDriverStatusCheck: [Start] Perform XCUITest driver status check on D8E5F22E-4E12-49AF-B430-197BF1C66140
+09:52:43.427 [ INFO] xcuitest.installer.LocalXCTestInstaller.xcTestDriverStatusCheck: [Failed] Perform XCUITest driver status check on D8E5F22E-4E12-49AF-B430-197BF1C66140, exception: java.net.ConnectException: Failed to connect to /127.0.0.1:7001
+09:52:43.932 [ INFO] xcuitest.installer.LocalXCTestInstaller.xcTestDriverStatusCheck: [Start] Perform XCUITest driver status check on D8E5F22E-4E12-49AF-B430-197BF1C66140
+09:52:43.933 [ INFO] xcuitest.installer.LocalXCTestInstaller.xcTestDriverStatusCheck: [Failed] Perform XCUITest driver status check on D8E5F22E-4E12-49AF-B430-197BF1C66140, exception: java.net.ConnectException: Failed to connect to /127.0.0.1:7001
+09:52:44.439 [ INFO] xcuitest.installer.LocalXCTestInstaller.xcTestDriverStatusCheck: [Start] Perform XCUITest driver status check on D8E5F22E-4E12-49AF-B430-197BF1C66140
+09:52:44.439 [ INFO] xcuitest.installer.LocalXCTestInstaller.xcTestDriverStatusCheck: [Failed] Perform XCUITest driver status check on D8E5F22E-4E12-49AF-B430-197BF1C66140, exception: java.net.ConnectException: Failed to connect to /127.0.0.1:7001
+09:52:44.946 [ INFO] xcuitest.installer.LocalXCTestInstaller.xcTestDriverStatusCheck: [Start] Perform XCUITest driver status check on D8E5F22E-4E12-49AF-B430-197BF1C66140
+09:52:44.949 [ INFO] xcuitest.installer.LocalXCTestInstaller.xcTestDriverStatusCheck: [Failed] Perform XCUITest driver status check on D8E5F22E-4E12-49AF-B430-197BF1C66140, exception: java.net.ConnectException: Failed to connect to /127.0.0.1:7001
+09:52:45.457 [ INFO] xcuitest.installer.LocalXCTestInstaller.xcTestDriverStatusCheck: [Start] Perform XCUITest driver status check on D8E5F22E-4E12-49AF-B430-197BF1C66140
+09:52:45.459 [ INFO] xcuitest.installer.LocalXCTestInstaller.xcTestDriverStatusCheck: [Failed] Perform XCUITest driver status check on D8E5F22E-4E12-49AF-B430-197BF1C66140, exception: java.net.ConnectException: Failed to connect to /127.0.0.1:7001
+09:52:45.965 [ INFO] xcuitest.installer.LocalXCTestInstaller.xcTestDriverStatusCheck: [Start] Perform XCUITest driver status check on D8E5F22E-4E12-49AF-B430-197BF1C66140
+09:52:45.967 [ INFO] xcuitest.installer.LocalXCTestInstaller.xcTestDriverStatusCheck: [Failed] Perform XCUITest driver status check on D8E5F22E-4E12-49AF-B430-197BF1C66140, exception: java.net.ConnectException: Failed to connect to /127.0.0.1:7001
+09:52:46.473 [ INFO] xcuitest.installer.LocalXCTestInstaller.xcTestDriverStatusCheck: [Start] Perform XCUITest driver status check on D8E5F22E-4E12-49AF-B430-197BF1C66140
+09:52:46.476 [ INFO] xcuitest.installer.LocalXCTestInstaller.xcTestDriverStatusCheck: [Failed] Perform XCUITest driver status check on D8E5F22E-4E12-49AF-B430-197BF1C66140, exception: java.net.ConnectException: Failed to connect to /127.0.0.1:7001
+09:52:46.977 [ INFO] xcuitest.installer.LocalXCTestInstaller.xcTestDriverStatusCheck: [Start] Perform XCUITest driver status check on D8E5F22E-4E12-49AF-B430-197BF1C66140
+09:52:46.978 [ INFO] xcuitest.installer.LocalXCTestInstaller.xcTestDriverStatusCheck: [Failed] Perform XCUITest driver status check on D8E5F22E-4E12-49AF-B430-197BF1C66140, exception: java.net.ConnectException: Failed to connect to /127.0.0.1:7001
+09:52:47.480 [ INFO] xcuitest.installer.LocalXCTestInstaller.xcTestDriverStatusCheck: [Start] Perform XCUITest driver status check on D8E5F22E-4E12-49AF-B430-197BF1C66140
+09:52:47.481 [ INFO] xcuitest.installer.LocalXCTestInstaller.xcTestDriverStatusCheck: [Failed] Perform XCUITest driver status check on D8E5F22E-4E12-49AF-B430-197BF1C66140, exception: java.net.ConnectException: Failed to connect to /127.0.0.1:7001
+09:52:47.982 [ INFO] xcuitest.installer.LocalXCTestInstaller.xcTestDriverStatusCheck: [Start] Perform XCUITest driver status check on D8E5F22E-4E12-49AF-B430-197BF1C66140
+09:52:47.983 [ INFO] xcuitest.installer.LocalXCTestInstaller.xcTestDriverStatusCheck: [Failed] Perform XCUITest driver status check on D8E5F22E-4E12-49AF-B430-197BF1C66140, exception: java.net.ConnectException: Failed to connect to /127.0.0.1:7001
+09:52:48.487 [ INFO] xcuitest.installer.LocalXCTestInstaller.xcTestDriverStatusCheck: [Start] Perform XCUITest driver status check on D8E5F22E-4E12-49AF-B430-197BF1C66140
+09:52:48.490 [ INFO] xcuitest.installer.LocalXCTestInstaller.xcTestDriverStatusCheck: [Failed] Perform XCUITest driver status check on D8E5F22E-4E12-49AF-B430-197BF1C66140, exception: java.net.ConnectException: Failed to connect to /127.0.0.1:7001
+09:52:48.995 [ INFO] xcuitest.installer.LocalXCTestInstaller.xcTestDriverStatusCheck: [Start] Perform XCUITest driver status check on D8E5F22E-4E12-49AF-B430-197BF1C66140
+09:52:48.996 [ INFO] xcuitest.installer.LocalXCTestInstaller.xcTestDriverStatusCheck: [Failed] Perform XCUITest driver status check on D8E5F22E-4E12-49AF-B430-197BF1C66140, exception: java.net.ConnectException: Failed to connect to /127.0.0.1:7001
+09:52:49.501 [ INFO] xcuitest.installer.LocalXCTestInstaller.xcTestDriverStatusCheck: [Start] Perform XCUITest driver status check on D8E5F22E-4E12-49AF-B430-197BF1C66140
+09:52:49.513 [ INFO] xcuitest.installer.LocalXCTestInstaller.xcTestDriverStatusCheck: [Done] Perform XCUITest driver status check on D8E5F22E-4E12-49AF-B430-197BF1C66140
+09:52:49.539 [ INFO] maestro.cli.runner.TestRunner.runSingle$lambda$0: Running flow 15-record-match-unregistered-quick.yaml...
+09:52:49.575 [ INFO] maestro.Maestro.cachedDeviceInfo_delegate$lambda$0: Getting device info
+09:52:49.783 [ INFO] ios.xctest.XCTestIOSDevice.deviceInfo$lambda$0: Device info DeviceInfo(widthPixels=1206, heightPixels=2622, widthPoints=402, heightPoints=874)
+09:52:49.784 [ INFO] maestro.Maestro.cachedDeviceInfo_delegate$lambda$0: Got device info: DeviceInfo(platform=IOS, widthPixels=1206, heightPixels=2622, widthGrid=402, heightGrid=874)
+09:52:49.839 [ INFO] maestro.cli.runner.MaestroCommandRunner.runCommands$lambda$0: Define variables RUNNING
+09:52:49.843 [ INFO] maestro.cli.runner.MaestroCommandRunner.runCommands$lambda$11: Define variables metadata CommandMetadata(numberOfRuns=null, evaluatedCommand=MaestroCommand(defineVariablesCommand=DefineVariablesCommand(env={MAESTRO_FILENAME=15-record-match-unregistered-quick}, label=null, optional=false)), logMessages=[], insight=Insight(message=, level=NONE), aiReasoning=null, labeledCommand=null)
+09:52:49.845 [ INFO] maestro.cli.runner.MaestroCommandRunner.runCommands$lambda$2: Define variables COMPLETED
+09:52:49.846 [ INFO] maestro.cli.runner.MaestroCommandRunner.runCommands$lambda$0: Apply configuration RUNNING
+09:52:49.849 [ INFO] maestro.cli.runner.MaestroCommandRunner.runCommands$lambda$11: Apply configuration metadata CommandMetadata(numberOfRuns=null, evaluatedCommand=MaestroCommand(applyConfigurationCommand=ApplyConfigurationCommand(config=MaestroConfig(appId=com.caritos.tennis, name=Quick Test - Record Singles Match with Unregistered Player, tags=[], ext={}, onFlowStart=null, onFlowComplete=null), label=null, optional=false)), logMessages=[], insight=Insight(message=, level=NONE), aiReasoning=null, labeledCommand=null)
+09:52:49.850 [ INFO] maestro.cli.runner.MaestroCommandRunner.runCommands$lambda$2: Apply configuration COMPLETED
+09:52:49.853 [ INFO] maestro.cli.runner.MaestroCommandRunner.runCommands$lambda$0: Launch app "com.caritos.tennis" with clear state RUNNING
+09:52:49.856 [ INFO] maestro.cli.runner.MaestroCommandRunner.runCommands$lambda$11: Launch app "com.caritos.tennis" with clear state metadata CommandMetadata(numberOfRuns=null, evaluatedCommand=MaestroCommand(launchAppCommand=LaunchAppCommand(appId=com.caritos.tennis, clearState=true, clearKeychain=null, stopApp=null, permissions=null, launchArguments=null, label=null, optional=false)), logMessages=[], insight=Insight(message=, level=NONE), aiReasoning=null, labeledCommand=null)
+09:52:49.858 [ INFO] maestro.Maestro.clearAppState: Clearing app state com.caritos.tennis
+09:52:49.858 [ INFO] util.LocalSimulatorUtils.clearAppState: Clearing app com.caritos.tennis state
+09:52:49.858 [ INFO] util.LocalSimulatorUtils.terminate: [Start] Terminating app com.caritos.tennis
+09:52:49.858 [ INFO] util.CommandLineUtils.runCommand: Running command line operation: [xcrun, simctl, terminate, D8E5F22E-4E12-49AF-B430-197BF1C66140, com.caritos.tennis] with {}
+09:52:50.184 [ERROR] util.CommandLineUtils.runCommand: Process failed with exit code 3
+09:52:50.184 [ERROR] util.CommandLineUtils.runCommand: Error output An error was encountered processing the command (domain=NSPOSIXErrorDomain, code=3):
+Simulator device failed to terminate com.caritos.tennis.
+found nothing to terminate
+Underlying error (domain=NSPOSIXErrorDomain, code=3):
+	The request to terminate "com.caritos.tennis" failed. found nothing to terminate
+	found nothing to terminate
+
+09:52:50.184 [ INFO] util.LocalSimulatorUtils.terminate: [Done] Terminating app com.caritos.tennis
+09:52:50.651 [ERROR] maestro.orchestra.Orchestra.executeCommands: [Command execution] CommandFailed: Failed to get app binary directory for bundle com.caritos.tennis on device D8E5F22E-4E12-49AF-B430-197BF1C66140: An error was encountered processing the command (domain=NSPOSIXErrorDomain, code=2):
+The operation couldn’t be completed. No such file or directory
+No such file or directory
+09:52:50.653 [ INFO] maestro.Maestro.takeScreenshot: Taking screenshot
+09:52:50.653 [TRACE] maestro.utils.ScreenshotUtils.takeScreenshot: Taking screenshot to output sink

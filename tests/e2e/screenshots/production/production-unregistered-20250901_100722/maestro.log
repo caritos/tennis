@@ -1,0 +1,13 @@
+10:07:23.252 [ INFO] maestro.cli.report.TestDebugReporter.logSystemInfo: Debug output path: /Volumes/robin/src/tennis/tests/integration/screenshots/production/production-unregistered-20250901_100722
+10:07:23.254 [ INFO] MAESTRO.logSystemInfo: ---- System Info ----
+10:07:23.254 [ INFO] MAESTRO.logSystemInfo: Maestro Version: 2.0.1
+10:07:23.254 [ INFO] MAESTRO.logSystemInfo: CI: Undefined
+10:07:23.255 [ INFO] MAESTRO.logSystemInfo: OS Name: Mac OS X
+10:07:23.255 [ INFO] MAESTRO.logSystemInfo: OS Version: 15.6.1
+10:07:23.255 [ INFO] MAESTRO.logSystemInfo: Architecture: aarch64
+10:07:23.256 [ INFO] MAESTRO.logSystemInfo: Java Version: 21
+10:07:23.462 [DEBUG] io.micrometer.common.util.internal.logging.InternalLoggerFactory.newDefaultFactory: Using SLF4J as the default logging framework
+10:07:23.482 [ INFO] MAESTRO.logSystemInfo: Xcode Version: 16.4
+10:07:23.485 [ INFO] MAESTRO.logSystemInfo: Flutter Version: Undefined
+10:07:23.487 [ INFO] MAESTRO.logSystemInfo: Flutter Channel: Undefined
+10:07:23.488 [ INFO] MAESTRO.logSystemInfo: ---------------------
