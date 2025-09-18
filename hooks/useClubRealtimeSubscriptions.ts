@@ -22,6 +22,8 @@ export function useClubRealtimeSubscriptions({
   onMatchesUpdate,
   onEloUpdate,
 }: UseClubRealtimeSubscriptionsProps) {
+  console.log('🔧 useClubRealtimeSubscriptions: Setting up subscriptions for club:', clubId, 'user:', userId);
+
   // Club details subscription with presence tracking
   const clubDetailsSubscription = useRealtimeSubscription(
     {
@@ -64,6 +66,7 @@ export function useClubRealtimeSubscriptions({
   );
 
   // Matches subscription (CRITICAL for real-time updates)
+  console.log('🔧 useClubRealtimeSubscriptions: Setting up matches subscription for club:', clubId);
   const matchesSubscription = useRealtimeSubscription(
     {
       channel: `club_matches_${clubId}`,
@@ -74,7 +77,7 @@ export function useClubRealtimeSubscriptions({
     {
       enabled: !!clubId,
       onUpdate: (payload) => {
-        console.log('🎾 *** MATCH UPDATE DETECTED ***');
+        console.log('🎾 *** MATCH UPDATE DETECTED IN HOOK ***');
         console.log('Match event type:', payload.eventType);
         console.log('Match data:', payload.new || payload.old);
 
@@ -91,6 +94,11 @@ export function useClubRealtimeSubscriptions({
       },
     }
   );
+
+  console.log('🔧 useClubRealtimeSubscriptions: Matches subscription result:', {
+    isSubscribed: matchesSubscription.isSubscribed,
+    channel: matchesSubscription.channel
+  });
 
   // User ELO subscription (for current user only)
   const eloSubscription = useRealtimeSubscription(

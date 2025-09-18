@@ -588,6 +588,7 @@ export default function ClubDetailScreen() {
   }, [id, user?.id]);  // Simplified dependencies - removed matchId and club?.name
 
   // Set up realtime subscriptions using the new hook
+  console.log('🔧 ClubDetail: About to call useClubRealtimeSubscriptions with clubId:', id, 'userId:', user?.id);
   const _realtimeSubscriptions = useClubRealtimeSubscriptions({
     clubId: id as string,
     userId: user?.id,
@@ -806,6 +807,9 @@ export default function ClubDetailScreen() {
             // Prevent URL parameter effect from overriding manual navigation
             setIsManualNavigation(true);
             setHasInitializedFromURL(true);
+            // TEMP FIX: Manually refresh data when switching to matches tab
+            console.log('🔄 ClubDetail: Manually refreshing data for matches tab');
+            loadClubDetails();
           }}
         >
           <ThemedText style={[styles.tabText, activeTab === 'matches' && { color: colors.tint }]}>
