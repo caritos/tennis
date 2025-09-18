@@ -51,7 +51,7 @@ export default function ForgotPasswordScreen() {
     
     try {
       const { error } = await supabase.auth.resetPasswordForEmail(email, {
-        redirectTo: `${process.env.EXPO_PUBLIC_APP_URL || 'tennis-club://'}reset-password`,
+        redirectTo: 'playserve://reset-password',
       });
       
       if (error) {

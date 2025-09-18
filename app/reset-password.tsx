@@ -33,9 +33,11 @@ export default function ResetPasswordScreen() {
 
   const checkSession = async () => {
     const { data: { session } } = await supabase.auth.getSession();
+    console.log('🔐 Reset Password: Checking session:', session ? 'Session exists' : 'No session');
+
     if (!session) {
-      showError('Invalid Link', 'This password reset link is invalid or has expired.');
-      router.replace('/email-signin');
+      // Don't immediately error - the session might be created by the deep link handler
+      console.log('⚠️ Reset Password: No session found, user may need to request a new reset link');
     }
   };
 

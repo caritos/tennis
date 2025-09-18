@@ -1,5 +1,7 @@
 import React, { createContext, useContext, useEffect, useState, ReactNode } from 'react';
 import { User } from '@supabase/supabase-js';
+import * as Linking from 'expo-linking';
+import { router } from 'expo-router';
 import { supabase } from '@/lib/supabase';
 import { AuthErrorHandler } from '@/services/authErrorHandler';
 import { isAbortError } from '@/utils/errorHandling';
@@ -43,24 +45,75 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
   useEffect(() => {
     let isMounted = true;
-    
+
+    // Handle deep links
+    const handleDeepLink = async (url: string) => {
+      console.log('🔗 AuthContext: Processing deep link:', url);
+
+      // Check if it's a password reset link from Supabase
+      if (url.includes('type=recovery')) {
+        console.log('🔑 AuthContext: Supabase recovery link detected');
+
+        // Extract the token from the URL
+        const urlParams = new URLSearchParams(url.split('?')[1]);
+        const token = urlParams.get('token');
+        const type = urlParams.get('type');
+
+        if (token && type === 'recovery') {
+          try {
+            // Exchange the token for a session
+            const { error } = await supabase.auth.verifyOtp({
+              token_hash: token,
+              type: 'recovery'
+            });
+
+            if (!error) {
+              console.log('✅ AuthContext: Recovery token verified, navigating to reset password');
+              router.push('/reset-password');
+            } else {
+              console.error('❌ AuthContext: Failed to verify recovery token:', error);
+              router.push('/forgot-password');
+            }
+          } catch (err) {
+            console.error('❌ AuthContext: Error handling recovery link:', err);
+            router.push('/forgot-password');
+          }
+        }
+      } else if (url.includes('reset-password')) {
+        console.log('🔑 AuthContext: Direct reset-password deep link detected');
+        router.push('/reset-password');
+      }
+    };
+
+    // Listen for deep links when app is already open
+    const linkingSubscription = Linking.addEventListener('url', ({ url }) => {
+      handleDeepLink(url);
+    });
+
+    // Check if app was opened with a deep link
+    Linking.getInitialURL().then((url) => {
+      if (url) {
+        handleDeepLink(url);
+      }
+    });
+
     // Get initial session
     const getInitialSession = async () => {
       console.log('🔐 AuthContext: Getting initial session...');
-      
+
       try {
         const { data: { session }, error } = await supabase.auth.getSession();
-        
+
         if (error) {
           console.error('❌ AuthContext: Session error:', error);
-          
+
           // Handle auth errors properly
           if (AuthErrorHandler.isAuthError(error)) {
             await AuthErrorHandler.getInstance().handleAuthError(error);
           }
         } else if (session?.user) {
           console.log('✅ AuthContext: Found existing session for:', session.user.email);
-          
+
           // Load full user profile only if component is still mounted
           if (isMounted) {
             await loadUserProfile(session.user);
@@ -70,7 +123,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
         }
       } catch (error: any) {
         console.error('❌ AuthContext: Failed to get session:', error);
-        
+
         // Handle auth errors
         if (AuthErrorHandler.isAuthError(error)) {
           await AuthErrorHandler.getInstance().handleAuthError(error);
@@ -127,6 +180,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
     return () => {
       isMounted = false;
       subscription.unsubscribe();
+      linkingSubscription.remove();
     };
   }, []);
 

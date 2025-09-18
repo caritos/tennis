@@ -52,6 +52,8 @@ function RootLayoutNav() {
               <Stack.Screen name="signup" options={{ headerShown: false, presentation: 'modal' }} />
               <Stack.Screen name="signin" options={{ headerShown: false, presentation: 'modal' }} />
               <Stack.Screen name="email-signin" options={{ headerShown: false, presentation: 'modal' }} />
+              <Stack.Screen name="forgot-password" options={{ headerShown: false, presentation: 'modal' }} />
+              <Stack.Screen name="reset-password" options={{ headerShown: false, presentation: 'modal' }} />
             </>
           ) : (
             <>
@@ -60,6 +62,8 @@ function RootLayoutNav() {
               <Stack.Screen name="signup" options={{ headerShown: false }} />
               <Stack.Screen name="signin" options={{ headerShown: false }} />
               <Stack.Screen name="email-signin" options={{ headerShown: false }} />
+              <Stack.Screen name="forgot-password" options={{ headerShown: false, presentation: 'modal' }} />
+              <Stack.Screen name="reset-password" options={{ headerShown: false, presentation: 'modal' }} />
               <Stack.Screen name="onboarding" options={{ headerShown: false, presentation: 'modal' }} />
               <Stack.Screen name="(tabs)" options={{ headerShown: false, presentation: 'modal' }} />
             </>
