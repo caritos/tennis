@@ -312,24 +312,26 @@ export default function ClubScreen() {
                 </ThemedText>
               </ThemedView>
             ) : (
-              clubs
-                .filter(club => !joinedClubIds.includes(club.id)) // Only show clubs user hasn't joined
-                .sort((a, b) => {
-                  if (!distances || distances.size === 0) return 0;
-                  const distanceA = distances.get(a.id) ?? Infinity;
-                  const distanceB = distances.get(b.id) ?? Infinity;
-                  return distanceA - distanceB;
-                })
-                .map((club) => (
-                  <ClubCard
-                    key={club.id}
-                    club={club}
-                    onPress={handleClubPress}
-                    onJoin={handleJoinClub}
-                    distance={distances?.get(club.id)}
-                    isJoined={false} // These are always unjoined clubs now
-                  />
-                ))
+              <>
+                {clubs
+                  .filter(club => !joinedClubIds.includes(club.id)) // Only show clubs user hasn't joined
+                  .sort((a, b) => {
+                    if (!distances || distances.size === 0) return 0;
+                    const distanceA = distances.get(a.id) ?? Infinity;
+                    const distanceB = distances.get(b.id) ?? Infinity;
+                    return distanceA - distanceB;
+                  })
+                  .map((club) => (
+                    <ClubCard
+                      key={club.id}
+                      club={club}
+                      onPress={handleClubPress}
+                      onJoin={handleJoinClub}
+                      distance={distances?.get(club.id)}
+                      isJoined={false} // These are always unjoined clubs now
+                    />
+                  ))}
+              </>
             )}
           </View>
           

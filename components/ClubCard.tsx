@@ -76,7 +76,6 @@ export function ClubCard({ club, onPress, onJoin, distance, isJoined, isJoining 
       activeOpacity={0.7}
     >
       <ThemedView style={styles.content}>
-        {/* First Row: Tennis emoji + Club name + Distance/Join */}
         <View style={styles.firstRow}>
           <View style={styles.nameContainer}>
             <View style={styles.nameWithBadge}>
@@ -115,12 +114,10 @@ export function ClubCard({ club, onPress, onJoin, distance, isJoined, isJoining 
           </View>
         </View>
 
-        {/* Second Row: Member count + Activity indicators */}
         <View style={styles.secondRow}>
           <ThemedText type="default" style={[styles.memberInfo, { color: colors.tabIconDefault }]}>
             {formatMemberCount((club as any).memberCount || 0)}
           </ThemedText>
-          {/* Activity indicators based on club type */}
           {isJoined && (
             <ThemedText style={[styles.activityIndicator, { color: colors.tabIconDefault }]}>
               • Member since recently

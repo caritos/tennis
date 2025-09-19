@@ -140,6 +140,7 @@ export function MatchRecordingForm(componentProps: MatchRecordingFormProps) {
     if (invitationId && user) {
       loadInvitationData();
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [invitationId, user]);
   
   const loadInvitationData = async () => {
@@ -318,6 +319,7 @@ export function MatchRecordingForm(componentProps: MatchRecordingFormProps) {
   // Load real club members from database
   useEffect(() => {
     loadClubMembers();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [effectiveClubId]);
 
   // Filter players based on active search field

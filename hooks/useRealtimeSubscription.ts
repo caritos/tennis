@@ -108,7 +108,37 @@ export function useRealtimeSubscription(
           setIsSubscribed(true);
         } else if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT') {
           console.error(`❌ useRealtimeSubscription: Subscription failed for ${config.channel}: ${status}`);
-          throw new Error(`Subscription failed: ${status}`);
+
+          // Debug auth state when subscription fails
+          supabase.auth.getSession().then(({ data: { session }, error }) => {
+            console.log(`🔍 useRealtimeSubscription: Auth debug for ${config.channel}:`, {
+              hasSession: !!session,
+              hasAccessToken: !!session?.access_token,
+              tokenExpiry: session?.expires_at ? new Date(session.expires_at * 1000).toISOString() : null,
+              authError: error?.message
+            });
+          });
+
+          // Clean up the failed channel
+          supabase.removeChannel(channel);
+          setIsSubscribed(false);
+
+          // Call error handler if provided
+          if (onError) {
+            onError(new Error(`Subscription failed: ${status}`));
+          }
+
+          // Set up retry with exponential backoff for transient errors only
+          if (status === 'TIMED_OUT') {
+            const retryDelay = 3000; // 3 seconds for timeout
+            reconnectTimeoutRef.current = setTimeout(() => {
+              if (!isUnmountedRef.current) {
+                console.log(`🔄 useRealtimeSubscription: Retrying subscription after timeout for ${config.channel}`);
+                createSubscription();
+              }
+            }, retryDelay) as any;
+          }
+          // Note: Not retrying CHANNEL_ERROR as it's usually a permanent issue
         } else {
           console.warn(`⚠️ useRealtimeSubscription: Subscription status: ${status}`);
         }
