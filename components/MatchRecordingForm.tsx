@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   View,
   Text,
@@ -68,7 +68,7 @@ export function MatchRecordingForm(componentProps: MatchRecordingFormProps) {
     clubId,
     initialData,
     isEditing = false,
-    onCancel,
+    onCancel: _onCancel,
     matchType: propMatchType,
     players = [],
     showReporting = false,
@@ -95,7 +95,7 @@ export function MatchRecordingForm(componentProps: MatchRecordingFormProps) {
     }
     return null;
   };
-  
+
   const getInitialOpponentText = () => {
     if (players.length >= 2 && user) {
       const otherPlayer = players.find(p => p.id !== user.id);
@@ -105,9 +105,9 @@ export function MatchRecordingForm(componentProps: MatchRecordingFormProps) {
     }
     return initialData?.opponent2_name || '';
   };
-  
-  const [selectedOpponent, setSelectedOpponent] = useState<Player | null>(getInitialOpponent());
-  const [opponentSearchText, setOpponentSearchText] = useState(getInitialOpponentText());
+
+  const [selectedOpponent, setSelectedOpponent] = useState<Player | null>(() => getInitialOpponent());
+  const [opponentSearchText, setOpponentSearchText] = useState(() => getInitialOpponentText());
   const [selectedPartner, setSelectedPartner] = useState<Player | null>(null);
   const [partnerSearchText, setPartnerSearchText] = useState(initialData?.partner3_name || '');
   const [selectedOpponentPartner, setSelectedOpponentPartner] = useState<Player | null>(null);
@@ -253,9 +253,6 @@ export function MatchRecordingForm(componentProps: MatchRecordingFormProps) {
     }
   };
 
-  useEffect(() => {
-    console.log('🎾 tennisSets state changed:', tennisSets);
-  }, [tennisSets]);
 
   // Keyboard visibility tracking
   useEffect(() => {
@@ -274,16 +271,19 @@ export function MatchRecordingForm(componentProps: MatchRecordingFormProps) {
     };
   }, []);
 
-  // Initialize tennis sets with existing scores when editing
+  // Initialize tennis sets with existing scores when editing - use ref to prevent re-initialization
+  const hasInitializedSets = useRef(false);
+
   useEffect(() => {
-    console.log('🎾 useEffect triggered with:', { 
-      isEditing, 
-      hasScores: !!initialData?.scores, 
+    console.log('🎾 useEffect triggered with:', {
+      isEditing,
+      hasScores: !!initialData?.scores,
       scores: initialData?.scores,
-      tennisSetsLength: tennisSets.length 
+      tennisSetsLength: tennisSets.length,
+      hasInitialized: hasInitializedSets.current
     });
-    
-    if (isEditing && initialData?.scores && tennisSets.length === 0) {
+
+    if (isEditing && initialData?.scores && !hasInitializedSets.current) {
       console.log('🎾 Parsing initial scores:', initialData.scores);
       try {
         // Parse the score string like "6-4,7-6(7-3),6-2" into TennisSet objects
@@ -310,11 +310,12 @@ export function MatchRecordingForm(componentProps: MatchRecordingFormProps) {
         });
         console.log('🎾 Parsed sets:', sets);
         setTennisSets(sets);
+        hasInitializedSets.current = true;
       } catch (error) {
         console.error('Failed to parse initial scores:', error);
       }
     }
-  }, [isEditing, initialData?.scores, tennisSets.length]);
+  }, [isEditing, initialData?.scores]); // Fixed: removed tennisSets.length dependency
 
   // Load real club members from database
   useEffect(() => {
@@ -347,7 +348,7 @@ export function MatchRecordingForm(componentProps: MatchRecordingFormProps) {
   // Initialize selected players when editing and club members are loaded
   useEffect(() => {
     console.log('🔧 PLAYER INIT USEEFFECT RUNNING!');
-    
+
     if (!isEditing || !initialData) {
       console.log('🔧 Skipping player initialization - not editing or no initial data');
       return;
@@ -363,31 +364,24 @@ export function MatchRecordingForm(componentProps: MatchRecordingFormProps) {
         partner3_name: initialData.partner3_name,
         player4_id: initialData.player4_id,
         partner4_name: initialData.partner4_name,
-      },
-      currentSelections: {
-        selectedOpponent: selectedOpponent?.name,
-        selectedPartner: selectedPartner?.name,
-        selectedOpponentPartner: selectedOpponentPartner?.name,
       }
     });
 
     // Initialize opponent
-    console.log('🎾 Checking opponent initialization:', { 
-      hasPlayer2Id: !!initialData.player2_id, 
-      hasOpponent2Name: !!initialData.opponent2_name,
-      hasSelectedOpponent: !!selectedOpponent,
-      selectedOpponentName: selectedOpponent?.name
+    console.log('🎾 Checking opponent initialization:', {
+      hasPlayer2Id: !!initialData.player2_id,
+      hasOpponent2Name: !!initialData.opponent2_name
     });
-    
-    if ((initialData.player2_id || initialData.opponent2_name) && !selectedOpponent) {
+
+    if (initialData.player2_id || initialData.opponent2_name) {
       console.log('🎾 Initializing opponent...');
       let opponent = null;
-      
+
       if (initialData.player2_id && clubMembers.length > 0) {
         opponent = clubMembers.find(p => p.id === initialData.player2_id);
         console.log('🎾 Found opponent in club members:', opponent);
       }
-      
+
       if (!opponent && initialData.opponent2_name) {
         opponent = {
           id: initialData.player2_id || `external-opponent-${Date.now()}`,
@@ -395,80 +389,69 @@ export function MatchRecordingForm(componentProps: MatchRecordingFormProps) {
         };
         console.log('🎾 Created external opponent:', opponent);
       }
-      
+
       if (opponent) {
         console.log('🎾 Setting opponent:', opponent);
         setSelectedOpponent(opponent);
+        setOpponentSearchText(opponent.name);
       } else {
         console.log('🎾 No opponent found for:', { player2_id: initialData.player2_id, opponent2_name: initialData.opponent2_name });
       }
-    } else {
-      console.log('🎾 Skipping opponent initialization - already have selectedOpponent or no data');
     }
 
     // Initialize partner (doubles)
-    if ((initialData.player3_id || initialData.partner3_name) && !selectedPartner) {
+    if (initialData.player3_id || initialData.partner3_name) {
       let partner = null;
-      
+
       if (initialData.player3_id && clubMembers.length > 0) {
         partner = clubMembers.find(p => p.id === initialData.player3_id);
       }
-      
+
       if (!partner && initialData.partner3_name) {
         partner = {
           id: initialData.player3_id || `external-partner-${Date.now()}`,
           name: initialData.partner3_name
         };
       }
-      
+
       if (partner) {
         console.log('🤝 Setting partner:', partner);
         setSelectedPartner(partner);
+        setPartnerSearchText(partner.name);
       } else {
         console.log('🤝 No partner found for:', { player3_id: initialData.player3_id, partner3_name: initialData.partner3_name });
       }
     }
 
     // Initialize opponent partner (doubles)
-    if ((initialData.player4_id || initialData.partner4_name) && !selectedOpponentPartner) {
+    if (initialData.player4_id || initialData.partner4_name) {
       let opponentPartner = null;
-      
+
       if (initialData.player4_id && clubMembers.length > 0) {
         opponentPartner = clubMembers.find(p => p.id === initialData.player4_id);
       }
-      
+
       if (!opponentPartner && initialData.partner4_name) {
         opponentPartner = {
           id: initialData.player4_id || `external-opponent-partner-${Date.now()}`,
           name: initialData.partner4_name
         };
       }
-      
+
       if (opponentPartner) {
         console.log('🤝 Setting opponent partner:', opponentPartner);
         setSelectedOpponentPartner(opponentPartner);
+        setOpponentPartnerSearchText(opponentPartner.name);
       } else {
         console.log('🤝 No opponent partner found for:', { player4_id: initialData.player4_id, partner4_name: initialData.partner4_name });
       }
     }
-  }, [isEditing, initialData, clubMembers, selectedOpponent, selectedOpponentPartner, selectedPartner]); // Simplified dependencies
-  
-  console.log('🔧 MatchRecordingForm props type:', typeof componentProps);
-  console.log('🔧 MatchRecordingForm raw props:', componentProps);
+  }, [isEditing, initialData, clubMembers]); // Fixed: removed selectedOpponent, selectedOpponentPartner, selectedPartner from dependencies
   
   // Early return AFTER all hooks
   if (!componentProps) {
-    console.error('🔧 MatchRecordingForm received null/undefined props');
     return null;
   }
-  
-  console.log('🔧 MatchRecordingForm destructured:', { 
-    onSave: typeof onSave, 
-    clubId, 
-    initialData: initialData ? Object.keys(initialData) : null, 
-    isEditing, 
-    onCancel: typeof onCancel 
-  });
 
   // Handle match type selection
   const handleMatchTypeChange = (matchType: 'singles' | 'doubles') => {
@@ -1467,7 +1450,6 @@ export function MatchRecordingForm(componentProps: MatchRecordingFormProps) {
               `${selectedOpponent?.name || 'Opponent'} & [Partner not selected]`) : 
             (selectedOpponent?.name || 'Opponent');
 
-          console.log('🎾 TennisScoreEntry props:', { player1Name, player2Name, matchType });
 
           // Only render if we have the required players and valid names
           const canRender = (matchType === 'singles' && selectedOpponent && selectedOpponent.name) || 
@@ -1481,10 +1463,7 @@ export function MatchRecordingForm(componentProps: MatchRecordingFormProps) {
                   player1Name={player1Name}
                   player2Name={player2Name}
                   matchType={matchType}
-                  onScoreChange={(sets) => {
-                    console.log('🎾 MatchRecordingForm: onScoreChange received:', sets);
-                    setTennisSets(sets);
-                  }}
+                  onScoreChange={setTennisSets}
                   initialSets={tennisSets}
                   showPreview={true}
                   compact={false}
@@ -1503,14 +1482,6 @@ export function MatchRecordingForm(componentProps: MatchRecordingFormProps) {
               </View>
             );
           } else {
-            console.log('🎾 Not rendering TennisScoreEntry yet:', { 
-              canRender, 
-              player1Name, 
-              player2Name,
-              selectedOpponent: selectedOpponent?.name,
-              selectedPartner: selectedPartner?.name,
-              selectedOpponentPartner: selectedOpponentPartner?.name
-            });
             return (
               <View style={styles.section}>
                 <View style={styles.placeholderContainer}>

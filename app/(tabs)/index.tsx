@@ -16,7 +16,7 @@ import { Colors } from '@/constants/Colors';
 import { useLocation } from '@/hooks/useLocation';
 import { useAuth } from '@/contexts/AuthContext';
 import { useOnboarding } from '@/contexts/OnboardingContext';
-import { getUserClubs, getClubsByLocation, joinClub, calculateDistance } from '@/services/clubService';
+import { getUserClubs, getClubsByLocation, joinClub, calculateDistance, ClubWithDistance } from '@/services/clubService';
 import { getAuthErrorMessage } from '@/utils/errorHandling';
 
 export default function ClubScreen() {
@@ -24,7 +24,7 @@ export default function ClubScreen() {
   const colors = Colors[colorScheme ?? 'light'];
   const { location, requestLocationPermission } = useLocation(true); // Auto-request enabled
 
-  const [clubs, setClubs] = useState<Club[]>([]);
+  const [clubs, setClubs] = useState<ClubWithDistance[]>([]);
   const [myClubs, setMyClubs] = useState<Club[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);

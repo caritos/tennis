@@ -4,12 +4,12 @@ import { ThemedText } from './ThemedText';
 import { ThemedView } from './ThemedView';
 import { Colors } from '@/constants/Colors';
 import { useColorScheme } from '@/hooks/useColorScheme';
-import { Club } from '@/lib/supabase';
+import { ClubWithDistance } from '@/services/clubService';
 
 interface ClubCardProps {
-  club: Club;
-  onPress: (club: Club) => void;
-  onJoin?: (club: Club) => void;
+  club: ClubWithDistance;
+  onPress: (club: ClubWithDistance) => void;
+  onJoin?: (club: ClubWithDistance) => void;
   distance?: number;
   isJoined?: boolean;
   isJoining?: boolean;
@@ -65,7 +65,7 @@ export function ClubCard({ club, onPress, onJoin, distance, isJoined, isJoining 
     return `${Math.round(count / 100) * 100}+ members`;
   };
 
-  const accessibilityLabel = `${club.name}, ${formatMemberCount((club as any).memberCount || 0)} members${distance ? `, ${formatDistance(distance)} away` : ''}`;
+  const accessibilityLabel = `${club.name || 'Unknown Club'}, ${formatMemberCount(club.member_count || 0)} members${distance ? `, ${formatDistance(distance)} away` : ''}`;
 
   return (
     <TouchableOpacity
@@ -81,7 +81,7 @@ export function ClubCard({ club, onPress, onJoin, distance, isJoined, isJoining 
             <View style={styles.nameWithBadge}>
               <ThemedText style={styles.tennisEmoji}>🎾</ThemedText>
               <ThemedText type="defaultSemiBold" style={styles.clubName} numberOfLines={1}>
-                {club.name}
+                {club.name || 'Unknown Club'}
               </ThemedText>
             </View>
           </View>
@@ -116,7 +116,7 @@ export function ClubCard({ club, onPress, onJoin, distance, isJoined, isJoining 
 
         <View style={styles.secondRow}>
           <ThemedText type="default" style={[styles.memberInfo, { color: colors.tabIconDefault }]}>
-            {formatMemberCount((club as any).memberCount || 0)}
+            {formatMemberCount(club.member_count || 0)}
           </ThemedText>
           {isJoined && (
             <ThemedText style={[styles.activityIndicator, { color: colors.tabIconDefault }]}>
